@@ -9,38 +9,113 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MatchesIndexRouteImport } from './routes/matches.index'
+import { Route as MatchesNewRouteImport } from './routes/matches.new'
+import { Route as MatchesIdRouteImport } from './routes/matches.$id'
+import { Route as MatchesIdStatsRouteImport } from './routes/matches.$id.stats'
 
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchesIndexRoute = MatchesIndexRouteImport.update({
+  id: '/matches/',
+  path: '/matches/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchesNewRoute = MatchesNewRouteImport.update({
+  id: '/matches/new',
+  path: '/matches/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchesIdRoute = MatchesIdRouteImport.update({
+  id: '/matches/$id',
+  path: '/matches/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchesIdStatsRoute = MatchesIdStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => MatchesIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/teams': typeof TeamsRoute
+  '/matches/$id': typeof MatchesIdRouteWithChildren
+  '/matches/new': typeof MatchesNewRoute
+  '/matches/': typeof MatchesIndexRoute
+  '/matches/$id/stats': typeof MatchesIdStatsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/teams': typeof TeamsRoute
+  '/matches/$id': typeof MatchesIdRouteWithChildren
+  '/matches/new': typeof MatchesNewRoute
+  '/matches': typeof MatchesIndexRoute
+  '/matches/$id/stats': typeof MatchesIdStatsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/teams': typeof TeamsRoute
+  '/matches/$id': typeof MatchesIdRouteWithChildren
+  '/matches/new': typeof MatchesNewRoute
+  '/matches/': typeof MatchesIndexRoute
+  '/matches/$id/stats': typeof MatchesIdStatsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/teams'
+    | '/matches/$id'
+    | '/matches/new'
+    | '/matches/'
+    | '/matches/$id/stats'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/teams'
+    | '/matches/$id'
+    | '/matches/new'
+    | '/matches'
+    | '/matches/$id/stats'
+  id:
+    | '__root__'
+    | '/'
+    | '/teams'
+    | '/matches/$id'
+    | '/matches/new'
+    | '/matches/'
+    | '/matches/$id/stats'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  TeamsRoute: typeof TeamsRoute
+  MatchesIdRoute: typeof MatchesIdRouteWithChildren
+  MatchesNewRoute: typeof MatchesNewRoute
+  MatchesIndexRoute: typeof MatchesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +123,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/matches/': {
+      id: '/matches/'
+      path: '/matches'
+      fullPath: '/matches/'
+      preLoaderRoute: typeof MatchesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matches/new': {
+      id: '/matches/new'
+      path: '/matches/new'
+      fullPath: '/matches/new'
+      preLoaderRoute: typeof MatchesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matches/$id': {
+      id: '/matches/$id'
+      path: '/matches/$id'
+      fullPath: '/matches/$id'
+      preLoaderRoute: typeof MatchesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matches/$id/stats': {
+      id: '/matches/$id/stats'
+      path: '/stats'
+      fullPath: '/matches/$id/stats'
+      preLoaderRoute: typeof MatchesIdStatsRouteImport
+      parentRoute: typeof MatchesIdRoute
+    }
   }
 }
 
+interface MatchesIdRouteChildren {
+  MatchesIdStatsRoute: typeof MatchesIdStatsRoute
+}
+
+const MatchesIdRouteChildren: MatchesIdRouteChildren = {
+  MatchesIdStatsRoute: MatchesIdStatsRoute,
+}
+
+const MatchesIdRouteWithChildren = MatchesIdRoute._addFileChildren(
+  MatchesIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  TeamsRoute: TeamsRoute,
+  MatchesIdRoute: MatchesIdRouteWithChildren,
+  MatchesNewRoute: MatchesNewRoute,
+  MatchesIndexRoute: MatchesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
