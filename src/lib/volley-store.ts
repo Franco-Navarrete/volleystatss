@@ -24,6 +24,15 @@ export interface Player {
   id: string;
   name: string;
   number: number;
+  /** Optional player photo as data URL (uploaded from device). */
+  photoUrl?: string;
+}
+
+export interface League {
+  id: string;
+  name: string;
+  season?: string;
+  color?: string;
 }
 
 export interface Team {
@@ -32,7 +41,10 @@ export interface Team {
   shortName: string;
   color: string;
   players: Player[];
+  /** Optional league this team belongs to. */
+  leagueId?: string;
 }
+
 
 export interface PointEvent {
   id: string;
@@ -120,10 +132,15 @@ export interface Match {
 interface VolleyState {
   teams: Team[];
   matches: Match[];
+  leagues: League[];
+  addLeague: (l: Omit<League, "id">) => string;
+  updateLeague: (id: string, patch: Partial<League>) => void;
+  removeLeague: (id: string) => void;
   addTeam: (t: Omit<Team, "id" | "players">) => string;
   updateTeam: (id: string, patch: Partial<Team>) => void;
   removeTeam: (id: string) => void;
   addPlayer: (teamId: string, p: Omit<Player, "id">) => void;
+  updatePlayer: (teamId: string, playerId: string, patch: Partial<Player>) => void;
   removePlayer: (teamId: string, playerId: string) => void;
   createMatch: (
     m: Omit<
@@ -141,8 +158,6 @@ interface VolleyState {
     > & { initialServingSide?: "A" | "B" }
   ) => string;
   startMatch: (id: string) => void;
-  /** Records a point. `playerSide` is the side of the clicked player.
-   *  For error types (serve_error, unforced_error) the opposing side scores. */
   recordPoint: (
     matchId: string,
     playerSide: "A" | "B",
@@ -167,6 +182,7 @@ interface VolleyState {
   deleteMatch: (id: string) => void;
   seedDemo: () => void;
 }
+
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
