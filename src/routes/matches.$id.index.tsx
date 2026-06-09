@@ -463,16 +463,16 @@ function CourtHalf({ team, onCourt, columns, serverPlayerId, onClick }: {
   serverPlayerId: string | null; onClick: (playerId: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1.5 sm:gap-2 h-full">
+    <div className="grid grid-cols-2 gap-1 sm:gap-1.5 h-full">
       {columns.map((col, ci) => (
-        <div key={ci} className="grid grid-rows-3 gap-1.5 sm:gap-2 h-full">
+        <div key={ci} className="grid grid-rows-3 gap-1 sm:gap-1.5 h-full">
           {col.map((idx) => {
             const pid = onCourt[idx];
             const p = team.players.find((x) => x.id === pid);
             const isServer = pid && pid === serverPlayerId;
             return (
               <button key={`${ci}-${idx}`} onClick={() => p && onClick(p.id)} disabled={!p}
-                className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full max-h-[88px] ${isServer ? "ring-4 ring-primary" : ""}`}
+                className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-sm sm:text-xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full max-h-[64px] sm:max-h-[88px] ${isServer ? "ring-4 ring-primary" : ""}`}
                 style={{ background: team.color }} title={p ? `#${p.number} ${p.name}` : ""}>
                 {p?.number ?? "?"}
                 {isServer && (
