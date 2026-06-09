@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { Volleyball } from "lucide-react";
 import {
   useVolley,
   setsWon,
@@ -66,12 +66,12 @@ function LiveMatch() {
 
   if (!match || !teamA || !teamB) {
     return (
-      <AppShell>
+      <CompactShell>
         <div className="text-center py-20">
           <p className="text-muted-foreground">Partido no encontrado.</p>
           <Button asChild className="mt-4"><Link to="/matches">Volver</Link></Button>
         </div>
-      </AppShell>
+      </CompactShell>
     );
   }
 
@@ -100,22 +100,21 @@ function LiveMatch() {
   };
 
   return (
-    <AppShell>
-      <div className="flex flex-col gap-2 h-[calc(100vh-7rem)] min-h-[560px]">
+    <CompactShell>
+      <div className="flex flex-col gap-1.5 h-full min-h-0 px-2 py-2">
         {/* Scoreboard header */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl bg-card border border-border/60 px-3 sm:px-5 py-2">
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg bg-card border border-border/60 px-2 sm:px-4 py-1.5 shrink-0">
           <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
-          <div className="text-center px-2">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
-            <div className="text-base font-extrabold text-primary leading-none mt-0.5">RALLY</div>
+          <div className="text-center px-1.5">
+            <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
             {match.status === "live" ? (
-              <span className="mt-1 inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-destructive">
-                <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> En vivo
+              <span className="mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-destructive">
+                <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> Live
               </span>
             ) : match.status === "finished" ? (
-              <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest text-success">Final</span>
+              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-success">Final</span>
             ) : (
-              <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Programado</span>
+              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
             )}
           </div>
           <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
@@ -161,31 +160,31 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          <Button size="sm" variant="secondary" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
-            <Undo2 className="size-4" /> Deshacer
+        <div className="grid grid-cols-5 gap-1.5 shrink-0">
+          <Button size="sm" variant="secondary" className="h-8 text-xs" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
+            <Undo2 className="size-3.5" /> Deshacer
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setShowLiveStats(true)}>
-            <ChartBarBig className="size-4" /> Stats en vivo
+          <Button size="sm" variant="secondary" className="h-8 text-xs" onClick={() => setShowLiveStats(true)}>
+            <ChartBarBig className="size-3.5" /> Stats vivo
           </Button>
-          <Button asChild size="sm" variant="secondary">
+          <Button asChild size="sm" variant="secondary" className="h-8 text-xs">
             <Link to="/matches/$id/stats" params={{ id: match.id }}>
-              <ChartBarBig className="size-4" /> Stats finales
+              <ChartBarBig className="size-3.5" /> Stats final
             </Link>
           </Button>
-          <Button size="sm" variant="outline" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
-            <StopCircle className="size-4" /> Fin Set
+          <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
+            <StopCircle className="size-3.5" /> Fin Set
           </Button>
-          <Button size="sm" variant="destructive" disabled={match.status === "finished"}
+          <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={match.status === "finished"}
             onClick={() => { if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id); }}>
-            <Flag className="size-4" /> Fin Partido
+            <Flag className="size-3.5" /> Fin Partido
           </Button>
         </div>
 
         {match.sets.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1.5">
+          <div className="flex flex-wrap justify-center gap-1 shrink-0">
             {match.sets.map((s) => (
-              <div key={s.number} className={`px-2.5 py-1 rounded-md text-[11px] scoreboard-digit font-bold tabular-nums border ${
+              <div key={s.number} className={`px-2 py-0.5 rounded text-[10px] scoreboard-digit font-bold tabular-nums border ${
                 s.number === match.currentSet ? "border-primary text-primary bg-primary/5" : "border-border/60 text-muted-foreground"
               }`}>
                 Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
@@ -333,7 +332,26 @@ function LiveMatch() {
           <LiveStatsPanel match={match} teamA={teamA} teamB={teamB} />
         </DialogContent>
       </Dialog>
-    </AppShell>
+    </CompactShell>
+  );
+}
+
+function CompactShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-[100dvh] flex flex-col bg-background">
+      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 h-10 flex items-center justify-between shrink-0">
+        <Link to="/matches" className="flex items-center gap-2">
+          <div className="size-6 rounded-md bg-gradient-primary flex items-center justify-center">
+            <Volleyball className="size-3.5 text-primary-foreground" />
+          </div>
+          <span className="font-bold text-xs tracking-tight">RALLY</span>
+        </Link>
+        <Link to="/matches" className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold">
+          ← Partidos
+        </Link>
+      </header>
+      <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
+    </div>
   );
 }
 
@@ -341,19 +359,19 @@ function ScoreColumn({ team, score, sets, align, serving }: {
   team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-3 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
-      <div className="size-10 sm:size-12 rounded-md flex items-center justify-center font-black text-white text-xs sm:text-sm shrink-0" style={{ background: team.color }}>
+    <div className={`flex items-center gap-2 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
+      <div className="size-9 rounded-md flex items-center justify-center font-black text-white text-xs shrink-0" style={{ background: team.color }}>
         {team.shortName}
       </div>
-      <div>
-        <div className="text-xs sm:text-sm font-bold truncate flex items-center gap-1.5">
+      <div className="min-w-0">
+        <div className="text-xs font-bold truncate flex items-center gap-1.5">
           {team.name}
           {serving && <span className="text-[9px] uppercase tracking-widest text-primary">● Saque</span>}
         </div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="scoreboard-digit text-5xl sm:text-7xl font-black leading-none mt-1 text-primary">{score}</div>
+        <div className="scoreboard-digit text-4xl sm:text-5xl font-black leading-none mt-0.5 text-primary">{score}</div>
       </div>
     </div>
   );
@@ -365,17 +383,17 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSanci
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-2 w-[88px] sm:w-[120px]">
-      <SideButton icon={<ArrowLeftRight className="size-4" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
+    <div className="flex flex-col gap-1.5 w-[78px] sm:w-[100px] shrink-0">
+      <SideButton icon={<ArrowLeftRight className="size-3.5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton
-        icon={<Hourglass className="size-4" />}
+        icon={<Hourglass className="size-3.5" />}
         label="Tiempo"
         badge={`${timeoutsUsed}/2`}
         onClick={onTiempo}
         disabled={disabled || timeoutsUsed >= 2}
         reverse={reverse}
       />
-      <SideButton icon={<X className="size-4" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
+      <SideButton icon={<X className="size-3.5" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
     </div>
   );
 }
@@ -386,12 +404,12 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-2 px-3 py-2.5 rounded-lg bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold`}>
+      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-1.5 px-2 py-1.5 rounded-md bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold flex-1 min-h-0`}>
       <span className="truncate flex flex-col items-start leading-tight">
-        <span>{label}</span>
+        <span className="text-[11px]">{label}</span>
         {badge && <span className="text-[9px] font-bold text-muted-foreground tabular-nums">{badge}</span>}
       </span>
-      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-muted-foreground shrink-0">{icon}</span>
     </button>
   );
 }
@@ -406,7 +424,7 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
   const sideAColumns: number[][] = [[4, 5, 0], [3, 2, 1]];
   const sideBColumns: number[][] = [[1, 2, 3], [0, 5, 4]];
   return (
-    <div className="relative rounded-xl border border-court-line/40 bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-2 sm:p-3 overflow-hidden h-full min-h-[280px]">
+    <div className="relative rounded-lg border border-court-line/40 bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-1.5 sm:p-2 overflow-hidden h-full min-h-[180px]">
       <div className="absolute inset-2 sm:inset-3 rounded-md border-2 border-court-line/60 pointer-events-none" />
       <div className="absolute left-1/2 top-2 bottom-2 sm:top-3 sm:bottom-3 w-1 bg-primary -translate-x-1/2 pointer-events-none" />
       <div className="relative grid grid-cols-2 gap-3 sm:gap-5 h-full">
