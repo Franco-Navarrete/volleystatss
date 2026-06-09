@@ -64,7 +64,26 @@ export interface TimeoutEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent;
+export type SanctionType = "yellow" | "red" | "yellow_red" | "red_expulsion";
+
+export const SANCTION_LABEL: Record<SanctionType, string> = {
+  yellow: "Amarilla (amonestación)",
+  red: "Roja (punto al rival)",
+  yellow_red: "Amarilla + Roja (expulsión del set)",
+  red_expulsion: "Roja sola (descalificación)",
+};
+
+export interface SanctionEvent {
+  id: string;
+  kind: "sanction";
+  side: "A" | "B";
+  playerId: string | null;
+  sanction: SanctionType;
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent;
 
 export interface MatchSet {
   number: number;
@@ -136,7 +155,13 @@ interface VolleyState {
     playerInId: string,
     playerOutId: string
   ) => void;
-  recordTimeout: (matchId: string, side: "A" | "B") => void;
+  recordTimeout: (matchId: string, side: "A" | "B") => boolean;
+  recordSanction: (
+    matchId: string,
+    side: "A" | "B",
+    playerId: string | null,
+    sanction: SanctionType
+  ) => void;
   undoLastEvent: (matchId: string) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
@@ -149,6 +174,12 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 function rotateClockwise(arr: string[]): string[] {
   if (arr.length < 2) return [...arr];
   return [arr[1], arr[2], arr[3], arr[4], arr[5], arr[0]];
+}
+
+export function timeoutsUsedInSet(match: Match, side: "A" | "B", setNumber: number): number {
+  return match.events.filter(
+    (e) => "kind" in e && e.kind === "timeout" && e.side === side && e.setNumber === setNumber
+  ).length;
 }
 
 function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
@@ -306,17 +337,57 @@ export const useVolley = create<VolleyState>()(
       },
 
       recordTimeout: (matchId, side) => {
+        const m = get().matches.find((x) => x.id === matchId);
+        if (!m) return false;
+        const used = timeoutsUsedInSet(m, side, m.currentSet);
+        if (used >= 2) return false;
+        const ev: TimeoutEvent = {
+          id: uid(),
+          kind: "timeout",
+          side,
+          setNumber: m.currentSet,
+          timestamp: Date.now(),
+        };
+        set((s) => ({
+          matches: s.matches.map((mm) =>
+            mm.id === matchId ? { ...mm, events: [...mm.events, ev] } : mm
+          ),
+        }));
+        return true;
+      },
+
+      recordSanction: (matchId, side, playerId, sanction) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
-            const ev: TimeoutEvent = {
+            const ev: SanctionEvent = {
               id: uid(),
-              kind: "timeout",
+              kind: "sanction",
               side,
+              playerId,
+              sanction,
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
-            return { ...m, events: [...m.events, ev] };
+            // Red card and yellow_red award a point to the opponent.
+            const awardsPoint = sanction === "red" || sanction === "yellow_red" || sanction === "red_expulsion";
+            let next: Match = { ...m, events: [...m.events, ev] };
+            if (awardsPoint) {
+              const scoringSide: "A" | "B" = side === "A" ? "B" : "A";
+              const pev: PointEvent = {
+                id: uid(),
+                scoringSide,
+                playerSide: side,
+                playerId,
+                type: "opponent_error",
+                setNumber: m.currentSet,
+                timestamp: Date.now() + 1,
+              };
+              next = { ...next, events: [...next.events, pev] };
+              const r = replayMatch(next);
+              next = { ...next, ...r };
+            }
+            return next;
           }),
         }));
       },
