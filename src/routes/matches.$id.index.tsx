@@ -35,6 +35,26 @@ export const Route = createFileRoute("/matches/$id/")({
   component: LiveMatch,
 });
 
+function useForceLandscape(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const mq = window.matchMedia("(orientation: portrait) and (max-width: 900px)");
+    const apply = () => {
+      document.documentElement.classList.toggle("force-landscape", mq.matches);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    // Best-effort native orientation lock (works in fullscreen on some Android browsers).
+    const so: any = (screen as any).orientation;
+    so?.lock?.("landscape").catch(() => {});
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.documentElement.classList.remove("force-landscape");
+      so?.unlock?.();
+    };
+  }, [active]);
+}
+
 function LiveMatch() {
   const { id } = Route.useParams();
   const match = useVolley((s) => s.matches.find((m) => m.id === id));
