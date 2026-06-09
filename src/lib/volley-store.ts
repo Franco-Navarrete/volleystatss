@@ -494,7 +494,7 @@ export const useVolley = create<VolleyState>()(
           shortName,
           color,
           leagueId,
-          players: names.map((n, i) => ({ id: uid(), name: n, number: i + 1 })),
+          players: names.map((n, i) => ({ id: uid(), name: n, number: i + 1, position: PLAYER_POSITIONS[i % PLAYER_POSITIONS.length] })),
         });
         const teams = [
           mkTeam("Tiburones FC", "TIB", "#ff7a3d", [
