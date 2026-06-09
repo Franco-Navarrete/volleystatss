@@ -236,6 +236,7 @@ function LiveMatch() {
               ...(isServer ? ([{ type: "ace", label: "Saque (Ace)", tone: "primary" }] as const) : []),
               { type: "opponent_error", label: `Error rival (${other.shortName})`, tone: "neutral" },
               { type: "opponent_rotation_error", label: `Error rotación rival (${other.shortName})`, tone: "neutral" },
+              { type: "attack_error", label: "Error de ataque", tone: "danger" },
               { type: "unforced_error", label: "Error no forzado", tone: "danger" },
               { type: "rotation_error", label: "Error de rotación", tone: "danger" },
               ...(isServer ? ([{ type: "serve_error", label: "Error de saque", tone: "danger" }] as const) : []),

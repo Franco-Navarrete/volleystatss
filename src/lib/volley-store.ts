@@ -10,7 +10,8 @@ export type PointType =
   | "opponent_rotation_error"
   | "serve_error"
   | "unforced_error"
-  | "rotation_error";
+  | "rotation_error"
+  | "attack_error";
 
 export const POINT_TYPE_LABEL: Record<PointType, string> = {
   attack: "Ataque",
@@ -22,9 +23,10 @@ export const POINT_TYPE_LABEL: Record<PointType, string> = {
   serve_error: "Error de saque",
   unforced_error: "Error no forzado",
   rotation_error: "Error de rotación",
+  attack_error: "Error de ataque",
 };
 
-export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error"];
+export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error", "attack_error"];
 
 export interface Player {
   id: string;
@@ -211,7 +213,7 @@ export function timeoutsUsedInSet(match: Match, side: "A" | "B", setNumber: numb
 }
 
 function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
-  if (type === "serve_error" || type === "unforced_error" || type === "rotation_error") {
+  if (type === "serve_error" || type === "unforced_error" || type === "rotation_error" || type === "attack_error") {
     return playerSide === "A" ? "B" : "A";
   }
   return playerSide;
@@ -579,7 +581,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
     if (ev.type === "opponent_rotation_error") scoringTeam.opponentErrors++;
 
-    if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error") {
+    if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error" || ev.type === "attack_error") {
       const errorTeamId = ev.playerSide === "A" ? match.teamAId : match.teamBId;
       const et = ensureTeam(errorTeamId);
       if (ev.type === "serve_error") et.serveErrors++;
