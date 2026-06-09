@@ -5,20 +5,24 @@ export type PointType =
   | "attack"
   | "block"
   | "ace"
+  | "counter_attack"
   | "opponent_error"
   | "serve_error"
-  | "unforced_error";
+  | "unforced_error"
+  | "rotation_error";
 
 export const POINT_TYPE_LABEL: Record<PointType, string> = {
   attack: "Ataque",
   block: "Bloqueo",
   ace: "Saque",
+  counter_attack: "Contraataque",
   opponent_error: "Error rival",
   serve_error: "Error de saque",
   unforced_error: "Error no forzado",
+  rotation_error: "Error de rotación",
 };
 
-export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error"];
+export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error"];
 
 export interface Player {
   id: string;
