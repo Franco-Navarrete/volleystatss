@@ -171,10 +171,43 @@ function TeamsPage() {
           {activeTeam ? (
             <>
               <div className="flex items-center gap-4 mb-5">
-                <TeamBadge team={activeTeam} size="lg" />
+                <button
+                  type="button"
+                  onClick={() => teamLogoFileRef.current?.click()}
+                  className="relative group rounded-lg overflow-hidden"
+                  title="Cambiar escudo"
+                >
+                  <TeamBadge team={activeTeam} size="lg" />
+                  <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Camera className="size-4 text-white" />
+                  </span>
+                </button>
+                <input
+                  ref={teamLogoFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f) return;
+                    try {
+                      const data = await fileToCompressedDataUrl(f);
+                      updateTeam(activeTeam.id, { logoUrl: data });
+                    } catch { alert("No se pudo procesar la imagen."); }
+                  }}
+                />
                 <div className="flex-1">
                   <h2 className="font-bold text-xl">{activeTeam.name}</h2>
                   <p className="text-xs text-muted-foreground uppercase tracking-widest">{activeTeam.shortName} · {activeTeam.players.length} jugadores</p>
+                  {activeTeam.logoUrl && (
+                    <button
+                      onClick={() => updateTeam(activeTeam.id, { logoUrl: undefined })}
+                      className="text-[10px] text-muted-foreground hover:text-destructive mt-1"
+                    >
+                      Quitar escudo
+                    </button>
+                  )}
                 </div>
                 <select
                   value={activeTeam.leagueId ?? ""}
