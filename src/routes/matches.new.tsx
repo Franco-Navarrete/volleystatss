@@ -332,9 +332,9 @@ function SlotCell({
                 )}
                 <span className="truncate flex-1 flex flex-col">
                   <span className="truncate">#{pl.number} {pl.name}</span>
-                  {pl.position && (
-                    <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{PLAYER_POSITION_LABEL[pl.position]}</span>
-                  )}
+                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                    {pl.position ? PLAYER_POSITION_LABEL[pl.position] : "Sin posición"}
+                  </span>
                 </span>
                 {taken && <span className="text-[9px] uppercase text-muted-foreground">en cancha</span>}
                 {isCurrent && <Check className="size-3.5 text-primary" />}
