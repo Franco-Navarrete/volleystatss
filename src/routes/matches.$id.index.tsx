@@ -183,7 +183,7 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-5 gap-1.5 shrink-0">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 shrink-0">
           <Button size="sm" variant="secondary" className="h-8 text-xs" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3.5" /> Deshacer
           </Button>
