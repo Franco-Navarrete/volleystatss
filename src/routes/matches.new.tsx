@@ -133,6 +133,12 @@ function NewMatch() {
               startingLineupB: lineupB.filter((x): x is string => !!x),
               setsToWin, pointsPerSet,
               scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
+              captainAId: captainA || null,
+              captainBId: captainB || null,
+              liberoA1Id: liberoA1 || null,
+              liberoA2Id: liberoA2 || null,
+              liberoB1Id: liberoB1 || null,
+              liberoB2Id: liberoB2 || null,
             });
             navigate({ to: "/matches/$id", params: { id } });
           }}
