@@ -134,12 +134,23 @@ html.force-landscape body {
   transform-origin: top left;
 }
 
+/* Body is rotated 90deg so its fixed-positioned children (the Radix dialog
+   portal) live in a rotated coordinate system where width = 100vh and
+   height = 100vw. We size/position the dialog in those rotated units so it
+   appears centered and horizontal to the user holding the phone in portrait. */
+html.force-landscape [data-slot="dialog-overlay"],
+html.force-landscape [data-radix-dialog-overlay] {
+  width: 100vh !important;
+  height: 100vw !important;
+  left: 0 !important;
+  top: 0 !important;
+}
 html.force-landscape .live-action-dialog {
   left: 50vh !important;
   top: 50vw !important;
-  width: min(374px, calc(100vw - 24px)) !important;
-  max-width: calc(100vw - 24px) !important;
-  max-height: calc(100vh - 24px);
-  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  width: min(420px, calc(100vh - 24px)) !important;
+  max-width: calc(100vh - 24px) !important;
+  max-height: calc(100vw - 24px) !important;
+  transform: translate(-50%, -50%) !important;
   transform-origin: center;
 }
