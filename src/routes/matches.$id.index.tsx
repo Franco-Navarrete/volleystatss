@@ -223,7 +223,7 @@ function LiveMatch() {
 
       {/* Action menu when a player is tapped */}
       <Dialog open={!!pendingPlayer} onOpenChange={(o) => !o && setPendingPlayer(null)}>
-        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto p-4">
+        <DialogContent className="live-action-dialog w-[calc(100dvw-24px)] max-w-[374px] max-h-[calc(100dvh-16px)] overflow-visible rounded-xl border-border/60 p-3 gap-2">
           {pendingPlayer && (() => {
             const t = pendingPlayer.side === "A" ? teamA : teamB;
             const other = pendingPlayer.side === "A" ? teamB : teamA;
@@ -239,12 +239,12 @@ function LiveMatch() {
             ];
             return (
               <>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-3">
-                    <span className="size-9 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
+                <DialogHeader className="pr-8 space-y-0 text-left">
+                  <DialogTitle className="flex items-center gap-3 min-w-0">
+                    <span className="size-9 shrink-0 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
                       {player?.number}
                     </span>
-                    <span className="truncate">
+                     <span className="min-w-0 truncate">
                       <span className="block text-sm font-bold">{player?.name}</span>
                       <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
                         {t.name} {isServer && "· saca"}
@@ -252,10 +252,10 @@ function LiveMatch() {
                     </span>
                   </DialogTitle>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="grid grid-cols-2 gap-2 mt-5">
                   {actions.map((a) => (
                     <button key={a.type} onClick={() => submitAction(a.type)}
-                      className={`w-full text-center px-3 py-2.5 rounded-lg font-semibold text-xs sm:text-sm leading-tight transition-all active:scale-[0.98] ${
+                      className={`min-h-9 w-full text-center px-2 py-2 rounded-lg font-semibold text-[13px] leading-tight transition-all active:scale-[0.98] ${
                         a.tone === "primary" ? "bg-primary text-primary-foreground hover:opacity-90"
                           : a.tone === "danger" ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
                           : "bg-secondary hover:bg-secondary/70"
