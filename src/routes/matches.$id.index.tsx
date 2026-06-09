@@ -55,6 +55,14 @@ function LiveMatch() {
   const [timeoutSide, setTimeoutSide] = useState<"A" | "B" | null>(null);
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
+  const navigate = useNavigate();
+  const autoNavigatedRef = useRef(false);
+  useEffect(() => {
+    if (match?.status === "finished" && !autoNavigatedRef.current) {
+      autoNavigatedRef.current = true;
+      navigate({ to: "/matches/$id/stats", params: { id: match.id } });
+    }
+  }, [match?.status, match?.id, navigate]);
 
   if (!match || !teamA || !teamB) {
     return (
