@@ -452,14 +452,32 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
     { side: "B", team: teamB, idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg border-2 border-court-line/60 bg-[#b8b8b8] p-2 sm:p-3 overflow-hidden h-full min-h-[180px]">
-      <div className="absolute top-2 bottom-2 sm:top-3 sm:bottom-3 left-1/2 -translate-x-1/2 w-0 border-l-2 border-dashed border-white pointer-events-none" />
-      <div className="relative grid grid-cols-4 gap-1.5 sm:gap-3 h-full">
+    <div className="relative rounded-lg overflow-hidden h-full min-h-[180px] bg-[#1e5fa8] p-3 sm:p-5">
+      {/* court inner (orange) with white perimeter line */}
+      <div className="absolute inset-3 sm:inset-5 bg-[#f4a36a] border-2 border-white rounded-sm" />
+      {/* attack zones (darker orange) — the two front-row columns */}
+      <div className="absolute inset-y-3 sm:inset-y-5 left-1/2 -translate-x-1/2 flex pointer-events-none">
+        <div className="h-full w-[calc(50vw)] max-w-none" />
+      </div>
+      {/* dashed center net line */}
+      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0 border-l-2 border-dashed border-white pointer-events-none z-10" />
+      {/* antenna dots top/bottom of net */}
+      <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white z-10" />
+      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white z-10" />
+      {/* attack-line dashes (3m lines) */}
+      <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
+      <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
+
+      <div className="relative grid grid-cols-4 h-full z-20">
         {columns.map((col, ci) => {
           const onCourt = col.side === "A" ? a : b;
           const serverPid = serverSide === col.side ? serverPlayerId : null;
+          const isFront = ci === 1 || ci === 2;
           return (
-            <div key={ci} className="grid grid-rows-3 gap-1.5 sm:gap-3 h-full">
+            <div
+              key={ci}
+              className={`grid grid-rows-3 gap-1.5 sm:gap-3 h-full px-1 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+            >
               {col.idxs.map((idx) => {
                 const pid = onCourt[idx];
                 const p = col.team.players.find((x) => x.id === pid);
