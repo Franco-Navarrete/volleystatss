@@ -1,14 +1,24 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type PointType = "attack" | "block" | "ace" | "opponent_error";
+export type PointType =
+  | "attack"
+  | "block"
+  | "ace"
+  | "opponent_error"
+  | "serve_error"
+  | "unforced_error";
 
 export const POINT_TYPE_LABEL: Record<PointType, string> = {
   attack: "Ataque",
   block: "Bloqueo",
-  ace: "Ace de saque",
+  ace: "Saque",
   opponent_error: "Error rival",
+  serve_error: "Error de saque",
+  unforced_error: "Error no forzado",
 };
+
+export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error"];
 
 export interface Player {
   id: string;
@@ -26,8 +36,11 @@ export interface Team {
 
 export interface PointEvent {
   id: string;
-  teamId: string;
-  playerId: string | null; // null for opponent_error
+  /** Side that scored the point. */
+  scoringSide: "A" | "B";
+  /** Side of the player involved (errors are charged to losing side). */
+  playerSide: "A" | "B" | null;
+  playerId: string | null;
   type: PointType;
   setNumber: number;
   timestamp: number;
@@ -36,7 +49,7 @@ export interface PointEvent {
 export interface SubstitutionEvent {
   id: string;
   kind: "sub";
-  teamId: string;
+  side: "A" | "B";
   playerInId: string;
   playerOutId: string;
   setNumber: number;
@@ -46,7 +59,7 @@ export interface SubstitutionEvent {
 export interface TimeoutEvent {
   id: string;
   kind: "timeout";
-  teamId: string;
+  side: "A" | "B";
   setNumber: number;
   timestamp: number;
 }
@@ -66,16 +79,21 @@ export interface Match {
   id: string;
   teamAId: string;
   teamBId: string;
-  startingLineupA: string[]; // player IDs
+  /** Ordered: index 0 = position 1 (back-right, server). */
+  startingLineupA: string[];
   startingLineupB: string[];
   onCourtA: string[];
   onCourtB: string[];
   status: MatchStatus;
   currentSet: number;
-  setsToWin: number; // best of 5 -> 3
-  pointsPerSet: number; // 25
+  setsToWin: number;
+  pointsPerSet: number;
   sets: MatchSet[];
   events: MatchEvent[];
+  /** Side currently serving. */
+  servingSide: "A" | "B";
+  /** Side serving at start of match (for replay). */
+  initialServingSide: "A" | "B";
   scheduledAt: number;
   createdAt: number;
 }
@@ -83,18 +101,42 @@ export interface Match {
 interface VolleyState {
   teams: Team[];
   matches: Match[];
-  // teams
   addTeam: (t: Omit<Team, "id" | "players">) => string;
   updateTeam: (id: string, patch: Partial<Team>) => void;
   removeTeam: (id: string) => void;
   addPlayer: (teamId: string, p: Omit<Player, "id">) => void;
   removePlayer: (teamId: string, playerId: string) => void;
-  // matches
-  createMatch: (m: Omit<Match, "id" | "events" | "sets" | "currentSet" | "status" | "onCourtA" | "onCourtB" | "createdAt">) => string;
+  createMatch: (
+    m: Omit<
+      Match,
+      | "id"
+      | "events"
+      | "sets"
+      | "currentSet"
+      | "status"
+      | "onCourtA"
+      | "onCourtB"
+      | "createdAt"
+      | "servingSide"
+      | "initialServingSide"
+    > & { initialServingSide?: "A" | "B" }
+  ) => string;
   startMatch: (id: string) => void;
-  recordPoint: (matchId: string, teamSide: "A" | "B", type: PointType, playerId: string | null) => void;
-  recordSubstitution: (matchId: string, teamSide: "A" | "B", playerInId: string, playerOutId: string) => void;
-  recordTimeout: (matchId: string, teamSide: "A" | "B") => void;
+  /** Records a point. `playerSide` is the side of the clicked player.
+   *  For error types (serve_error, unforced_error) the opposing side scores. */
+  recordPoint: (
+    matchId: string,
+    playerSide: "A" | "B",
+    type: PointType,
+    playerId: string | null
+  ) => void;
+  recordSubstitution: (
+    matchId: string,
+    side: "A" | "B",
+    playerInId: string,
+    playerOutId: string
+  ) => void;
+  recordTimeout: (matchId: string, side: "A" | "B") => void;
   undoLastEvent: (matchId: string) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
@@ -102,6 +144,72 @@ interface VolleyState {
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+/** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
+function rotateClockwise(arr: string[]): string[] {
+  if (arr.length < 2) return [...arr];
+  return [arr[1], arr[2], arr[3], arr[4], arr[5], arr[0]];
+}
+
+function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
+  if (type === "serve_error" || type === "unforced_error") {
+    return playerSide === "A" ? "B" : "A";
+  }
+  return playerSide;
+}
+
+function replayMatch(m: Match): {
+  sets: MatchSet[];
+  currentSet: number;
+  status: MatchStatus;
+  onCourtA: string[];
+  onCourtB: string[];
+  servingSide: "A" | "B";
+} {
+  let sets: MatchSet[] = [{ number: 1, scoreA: 0, scoreB: 0, finished: false }];
+  let currentSet = 1;
+  let status: MatchStatus = m.events.length === 0 && m.status === "scheduled" ? "scheduled" : "live";
+  let onCourtA = [...m.startingLineupA];
+  let onCourtB = [...m.startingLineupB];
+  let servingSide: "A" | "B" = m.initialServingSide;
+  const target = m.pointsPerSet;
+
+  for (const ev of m.events) {
+    if ("kind" in ev) {
+      if (ev.kind === "sub") {
+        if (ev.side === "A") onCourtA = onCourtA.map((p) => (p === ev.playerOutId ? ev.playerInId : p));
+        else onCourtB = onCourtB.map((p) => (p === ev.playerOutId ? ev.playerInId : p));
+      }
+      continue;
+    }
+    const cur = sets[sets.length - 1];
+    if (ev.scoringSide === "A") cur.scoreA++;
+    else cur.scoreB++;
+    // Rotation: scoring side rotates only if they were NOT serving.
+    if (ev.scoringSide !== servingSide) {
+      if (ev.scoringSide === "A") onCourtA = rotateClockwise(onCourtA);
+      else onCourtB = rotateClockwise(onCourtB);
+      servingSide = ev.scoringSide;
+    }
+    if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
+      cur.finished = true;
+      const setsWonA = sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
+      const setsWonB = sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
+      if (setsWonA >= m.setsToWin || setsWonB >= m.setsToWin) {
+        status = "finished";
+      } else {
+        currentSet++;
+        sets.push({ number: currentSet, scoreA: 0, scoreB: 0, finished: false });
+        // Reset rotation each set to starting lineup
+        onCourtA = [...m.startingLineupA];
+        onCourtB = [...m.startingLineupB];
+        // Alternate first server each set
+        servingSide = currentSet % 2 === 1 ? m.initialServingSide : (m.initialServingSide === "A" ? "B" : "A");
+      }
+    }
+  }
+  return { sets, currentSet, status, onCourtA, onCourtB, servingSide };
+}
 
 export const useVolley = create<VolleyState>()(
   persist(
@@ -133,6 +241,7 @@ export const useVolley = create<VolleyState>()(
 
       createMatch: (m) => {
         const id = uid();
+        const initialServingSide = m.initialServingSide ?? "A";
         const match: Match = {
           ...m,
           id,
@@ -142,6 +251,8 @@ export const useVolley = create<VolleyState>()(
           onCourtA: [...m.startingLineupA],
           onCourtB: [...m.startingLineupB],
           events: [],
+          servingSide: initialServingSide,
+          initialServingSide,
           createdAt: Date.now(),
         };
         set((s) => ({ matches: [...s.matches, match] }));
@@ -153,101 +264,60 @@ export const useVolley = create<VolleyState>()(
           matches: s.matches.map((m) => (m.id === id ? { ...m, status: "live" } : m)),
         })),
 
-      recordPoint: (matchId, teamSide, type, playerId) => {
-        const state = get();
-        const match = state.matches.find((m) => m.id === matchId);
-        if (!match || match.status === "finished") return;
-        const teamId = teamSide === "A" ? match.teamAId : match.teamBId;
-        const ev: PointEvent = {
-          id: uid(),
-          teamId,
-          playerId,
-          type,
-          setNumber: match.currentSet,
-          timestamp: Date.now(),
-        };
-        const sets = match.sets.map((s) => {
-          if (s.number !== match.currentSet) return s;
-          return {
-            ...s,
-            scoreA: teamSide === "A" ? s.scoreA + 1 : s.scoreA,
-            scoreB: teamSide === "B" ? s.scoreB + 1 : s.scoreB,
-          };
-        });
-        // Check set win
-        const cur = sets.find((s) => s.number === match.currentSet)!;
-        let currentSet = match.currentSet;
-        let status: MatchStatus = match.status;
-        const target = match.pointsPerSet;
-        const setWon =
-          (cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2;
-        if (setWon) {
-          cur.finished = true;
-          // count sets
-          const setsWonA = sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
-          const setsWonB = sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
-          if (setsWonA >= match.setsToWin || setsWonB >= match.setsToWin) {
-            status = "finished";
-          } else {
-            currentSet = match.currentSet + 1;
-            sets.push({ number: currentSet, scoreA: 0, scoreB: 0, finished: false });
-          }
-        }
-        set((s) => ({
-          matches: s.matches.map((m) =>
-            m.id === matchId
-              ? { ...m, sets, events: [...m.events, ev], currentSet, status }
-              : m
-          ),
-        }));
-      },
-
-      recordSubstitution: (matchId, teamSide, playerInId, playerOutId) => {
-        const state = get();
-        const match = state.matches.find((m) => m.id === matchId);
-        if (!match) return;
-        const teamId = teamSide === "A" ? match.teamAId : match.teamBId;
-        const ev: SubstitutionEvent = {
-          id: uid(),
-          kind: "sub",
-          teamId,
-          playerInId,
-          playerOutId,
-          setNumber: match.currentSet,
-          timestamp: Date.now(),
-        };
+      recordPoint: (matchId, playerSide, type, playerId) => {
         set((s) => ({
           matches: s.matches.map((m) => {
-            if (m.id !== matchId) return m;
-            const onCourtA =
-              teamSide === "A"
-                ? m.onCourtA.map((p) => (p === playerOutId ? playerInId : p))
-                : m.onCourtA;
-            const onCourtB =
-              teamSide === "B"
-                ? m.onCourtB.map((p) => (p === playerOutId ? playerInId : p))
-                : m.onCourtB;
-            return { ...m, onCourtA, onCourtB, events: [...m.events, ev] };
+            if (m.id !== matchId || m.status === "finished") return m;
+            const scoringSide = scoringSideFor(playerSide, type);
+            const ev: PointEvent = {
+              id: uid(),
+              scoringSide,
+              playerSide,
+              playerId,
+              type,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            const next = { ...m, events: [...m.events, ev] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
           }),
         }));
       },
 
-      recordTimeout: (matchId, teamSide) => {
-        const state = get();
-        const match = state.matches.find((m) => m.id === matchId);
-        if (!match) return;
-        const teamId = teamSide === "A" ? match.teamAId : match.teamBId;
-        const ev: TimeoutEvent = {
-          id: uid(),
-          kind: "timeout",
-          teamId,
-          setNumber: match.currentSet,
-          timestamp: Date.now(),
-        };
+      recordSubstitution: (matchId, side, playerInId, playerOutId) => {
         set((s) => ({
-          matches: s.matches.map((m) =>
-            m.id === matchId ? { ...m, events: [...m.events, ev] } : m
-          ),
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: SubstitutionEvent = {
+              id: uid(),
+              kind: "sub",
+              side,
+              playerInId,
+              playerOutId,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            const next = { ...m, events: [...m.events, ev] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
+          }),
+        }));
+      },
+
+      recordTimeout: (matchId, side) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: TimeoutEvent = {
+              id: uid(),
+              kind: "timeout",
+              side,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            return { ...m, events: [...m.events, ev] };
+          }),
         }));
       },
 
@@ -256,36 +326,11 @@ export const useVolley = create<VolleyState>()(
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
             const events = [...m.events];
-            const last = events.pop();
-            if (!last) return m;
-            // recompute sets from scratch
-            let sets: MatchSet[] = [{ number: 1, scoreA: 0, scoreB: 0, finished: false }];
-            let currentSet = 1;
-            let status: MatchStatus = "live";
-            for (const ev of events) {
-              if ("type" in ev) {
-                const isA = ev.teamId === m.teamAId;
-                const cur = sets[sets.length - 1];
-                cur.scoreA += isA ? 1 : 0;
-                cur.scoreB += isA ? 0 : 1;
-                const target = m.pointsPerSet;
-                if (
-                  (cur.scoreA >= target || cur.scoreB >= target) &&
-                  Math.abs(cur.scoreA - cur.scoreB) >= 2
-                ) {
-                  cur.finished = true;
-                  const setsWonA = sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
-                  const setsWonB = sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
-                  if (setsWonA >= m.setsToWin || setsWonB >= m.setsToWin) {
-                    status = "finished";
-                  } else {
-                    currentSet++;
-                    sets.push({ number: currentSet, scoreA: 0, scoreB: 0, finished: false });
-                  }
-                }
-              }
-            }
-            return { ...m, events, sets, currentSet, status };
+            events.pop();
+            const next = { ...m, events };
+            const r = replayMatch(next);
+            // If still has events, stay live; if no events and was finished, revert
+            return { ...next, ...r };
           }),
         }));
       },
@@ -328,7 +373,7 @@ export const useVolley = create<VolleyState>()(
         set({ teams });
       },
     }),
-    { name: "volley-stats-store-v1" }
+    { name: "volley-stats-store-v2" }
   )
 );
 
@@ -337,16 +382,18 @@ export const useVolley = create<VolleyState>()(
 export function getTeam(state: VolleyState, id: string) {
   return state.teams.find((t) => t.id === id);
 }
-
 export function getPlayer(team: Team | undefined, id: string | null) {
   if (!team || !id) return undefined;
   return team.players.find((p) => p.id === id);
 }
-
 export function setsWon(match: Match) {
   const a = match.sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
   const b = match.sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
   return { a, b };
+}
+export function currentServer(match: Match): { side: "A" | "B"; playerId: string | null } {
+  const lineup = match.servingSide === "A" ? match.onCourtA : match.onCourtB;
+  return { side: match.servingSide, playerId: lineup[0] ?? null };
 }
 
 export interface PlayerStat {
@@ -356,6 +403,8 @@ export interface PlayerStat {
   attack: number;
   block: number;
   ace: number;
+  serveError: number;
+  unforcedError: number;
   total: number;
 }
 
@@ -366,7 +415,8 @@ export interface TeamStat {
   ace: number;
   opponentErrors: number;
   total: number;
-  unforcedErrors: number; // points the opponent got via opponent_error against this team
+  unforcedErrors: number;
+  serveErrors: number;
 }
 
 export function computeMatchStats(match: Match) {
@@ -375,30 +425,44 @@ export function computeMatchStats(match: Match) {
   const ensureTeam = (id: string): TeamStat => {
     let t = teams.get(id);
     if (!t) {
-      t = { teamId: id, attack: 0, block: 0, ace: 0, opponentErrors: 0, total: 0, unforcedErrors: 0 };
+      t = {
+        teamId: id, attack: 0, block: 0, ace: 0,
+        opponentErrors: 0, total: 0, unforcedErrors: 0, serveErrors: 0,
+      };
       teams.set(id, t);
     }
     return t;
   };
+  const ensurePlayer = (pid: string): PlayerStat => {
+    let p = players.get(pid);
+    if (!p) {
+      p = { playerId: pid, name: "", number: 0, attack: 0, block: 0, ace: 0, serveError: 0, unforcedError: 0, total: 0 };
+      players.set(pid, p);
+    }
+    return p;
+  };
   for (const ev of match.events) {
     if (!("type" in ev)) continue;
-    const t = ensureTeam(ev.teamId);
-    t.total++;
-    if (ev.type === "attack") t.attack++;
-    if (ev.type === "block") t.block++;
-    if (ev.type === "ace") t.ace++;
-    if (ev.type === "opponent_error") {
-      t.opponentErrors++;
-      // Attribute unforced error to the OTHER team
-      const otherId = ev.teamId === match.teamAId ? match.teamBId : match.teamAId;
-      ensureTeam(otherId).unforcedErrors++;
-    }
-    if (ev.playerId) {
-      let p = players.get(ev.playerId);
-      if (!p) {
-        p = { playerId: ev.playerId, name: "", number: 0, attack: 0, block: 0, ace: 0, total: 0 };
-        players.set(ev.playerId, p);
+    const scoringTeamId = ev.scoringSide === "A" ? match.teamAId : match.teamBId;
+    const scoringTeam = ensureTeam(scoringTeamId);
+    scoringTeam.total++;
+    if (ev.type === "attack") scoringTeam.attack++;
+    if (ev.type === "block") scoringTeam.block++;
+    if (ev.type === "ace") scoringTeam.ace++;
+    if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
+
+    if (ev.type === "serve_error" || ev.type === "unforced_error") {
+      const errorTeamId = ev.playerSide === "A" ? match.teamAId : match.teamBId;
+      const et = ensureTeam(errorTeamId);
+      if (ev.type === "serve_error") et.serveErrors++;
+      else et.unforcedErrors++;
+      if (ev.playerId) {
+        const pp = ensurePlayer(ev.playerId);
+        if (ev.type === "serve_error") pp.serveError++;
+        else pp.unforcedError++;
       }
+    } else if (ev.playerId) {
+      const p = ensurePlayer(ev.playerId);
       if (ev.type === "attack") p.attack++;
       if (ev.type === "block") p.block++;
       if (ev.type === "ace") p.ace++;
@@ -417,7 +481,7 @@ export interface StandingRow {
   setsAgainst: number;
   pointsFor: number;
   pointsAgainst: number;
-  leaguePoints: number; // 3 for 3-0/3-1, 2 for 3-2, 1 for 2-3, 0 for 0-3/1-3
+  leaguePoints: number;
 }
 
 export function computeStandings(teams: Team[], matches: Match[]): StandingRow[] {
