@@ -100,8 +100,8 @@ function LiveMatch() {
   };
 
   return (
-    <AppShell>
-      <div className="flex flex-col gap-2 h-[calc(100vh-7rem)] min-h-[560px]">
+    <CompactShell>
+      <div className="flex flex-col gap-1.5 h-[100dvh] min-h-[420px] px-2 py-2 landscape:gap-1">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl bg-card border border-border/60 px-3 sm:px-5 py-2">
           <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
