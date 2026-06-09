@@ -4,7 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, Plus, X } from "lucide-react";
 
 export const Route = createFileRoute("/matches/new")({
   head: () => ({ meta: [{ title: "Nuevo partido · RALLY" }] }),
