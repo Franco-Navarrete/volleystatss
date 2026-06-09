@@ -86,147 +86,147 @@ function LiveMatch() {
 
   return (
     <AppShell>
-      {/* Scoreboard header */}
-      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mb-4 rounded-2xl bg-card border border-border/60 px-4 sm:px-8 py-4">
-        <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
-        <div className="text-center px-2">
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-            Set {match.currentSet}
-          </div>
-          <div className="text-lg font-extrabold text-primary leading-none mt-1">RALLY</div>
-          {match.status === "live" ? (
-            <span className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-destructive">
-              <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> En vivo
-            </span>
-          ) : match.status === "finished" ? (
-            <span className="mt-2 inline-block text-[10px] font-bold uppercase tracking-widest text-success">
-              Final
-            </span>
-          ) : (
-            <span className="mt-2 inline-block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Programado
-            </span>
-          )}
-        </div>
-        <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
-      </header>
-
-      {match.status === "scheduled" && (
-        <div className="rounded-xl border border-dashed border-border/60 p-6 text-center mb-4">
-          <p className="text-muted-foreground mb-3">
-            Iniciá el partido para registrar puntos sobre la cancha.
-          </p>
-          <Button onClick={() => startMatch(match.id)} className="bg-gradient-primary text-primary-foreground shadow-glow">
-            <Play className="size-4" /> Iniciar partido
-          </Button>
-        </div>
-      )}
-
-      {/* Court + side controls */}
-      <div className="grid grid-cols-[auto_1fr_auto] gap-3 sm:gap-4 items-start">
-        <SideActions
-          side="left"
-          disabled={!isLive}
-          onCambio={() => {
-            // Choose player to take out from side A
-            const first = match.onCourtA[0];
-            if (first) setSubState({ side: "A", playerOutId: "" });
-          }}
-          onTiempo={() => recordTimeout(match.id, "A")}
-          onSancion={() => alert("Sanción: registrada (placeholder)")}
-        />
-
-        <CourtView
-          match={match}
-          teamA={teamA}
-          teamB={teamB}
-          serverPlayerId={server.playerId}
-          serverSide={server.side}
-          onPlayerClick={onPlayerClick}
-        />
-
-        <SideActions
-          side="right"
-          disabled={!isLive}
-          onCambio={() => setSubState({ side: "B", playerOutId: "" })}
-          onTiempo={() => recordTimeout(match.id, "B")}
-          onSancion={() => alert("Sanción: registrada (placeholder)")}
-        />
-      </div>
-
-      {/* Bottom action row */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Button
-          variant="secondary"
-          disabled={!isLive || match.events.length === 0}
-          onClick={() => undo(match.id)}
-        >
-          <Undo2 className="size-4" /> Deshacer
-        </Button>
-        <Button asChild variant="secondary">
-          <Link to="/matches/$id/stats" params={{ id: match.id }}>
-            <ChartBarBig className="size-4" /> Estadísticas
-          </Link>
-        </Button>
-        <Button
-          variant="outline"
-          disabled={!isLive}
-          onClick={() => {
-            if (confirm("¿Forzar fin de set actual?")) {
-              // Heuristic: push points so set closes? Simpler: just leave to engine.
-              alert("El set se cierra automáticamente al alcanzar la meta de puntos.");
-            }
-          }}
-        >
-          <StopCircle className="size-4" /> Fin Set
-        </Button>
-        <Button
-          variant="destructive"
-          disabled={match.status === "finished"}
-          onClick={() => {
-            if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id);
-          }}
-        >
-          <Flag className="size-4" /> Fin Partido
-        </Button>
-      </div>
-
-      {/* Sets history */}
-      {match.sets.length > 0 && (
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          {match.sets.map((s) => (
-            <div
-              key={s.number}
-              className={`px-3 py-1.5 rounded-md text-xs scoreboard-digit font-bold tabular-nums border ${
-                s.number === match.currentSet
-                  ? "border-primary text-primary bg-primary/5"
-                  : "border-border/60 text-muted-foreground"
-              }`}
-            >
-              Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
-              {s.finished && (
-                <span className="ml-1 text-success">
-                  {s.scoreA > s.scoreB ? `▲${teamA.shortName}` : `▲${teamB.shortName}`}
-                </span>
-              )}
+      <div className="flex flex-col gap-2 h-[calc(100vh-7rem)] min-h-[560px]">
+        {/* Scoreboard header */}
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl bg-card border border-border/60 px-3 sm:px-5 py-2">
+          <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
+          <div className="text-center px-2">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              Set {match.currentSet}
             </div>
-          ))}
-        </div>
-      )}
+            <div className="text-base font-extrabold text-primary leading-none mt-0.5">RALLY</div>
+            {match.status === "live" ? (
+              <span className="mt-1 inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-destructive">
+                <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> En vivo
+              </span>
+            ) : match.status === "finished" ? (
+              <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest text-success">
+                Final
+              </span>
+            ) : (
+              <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                Programado
+              </span>
+            )}
+          </div>
+          <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
+        </header>
 
-      {match.status === "finished" && (
-        <div className="mt-6 flex justify-center">
+        {match.status === "scheduled" && (
+          <div className="rounded-xl border border-dashed border-border/60 p-4 text-center">
+            <p className="text-muted-foreground mb-3 text-sm">
+              Iniciá el partido para registrar puntos sobre la cancha.
+            </p>
+            <Button onClick={() => startMatch(match.id)} className="bg-gradient-primary text-primary-foreground shadow-glow">
+              <Play className="size-4" /> Iniciar partido
+            </Button>
+          </div>
+        )}
+
+        {/* Court + side controls */}
+        <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 items-stretch flex-1 min-h-0">
+          <SideActions
+            side="left"
+            disabled={!isLive}
+            onCambio={() => {
+              const first = match.onCourtA[0];
+              if (first) setSubState({ side: "A", playerOutId: "" });
+            }}
+            onTiempo={() => recordTimeout(match.id, "A")}
+            onSancion={() => alert("Sanción: registrada (placeholder)")}
+          />
+
+          <CourtView
+            match={match}
+            teamA={teamA}
+            teamB={teamB}
+            serverPlayerId={server.playerId}
+            serverSide={server.side}
+            onPlayerClick={onPlayerClick}
+          />
+
+          <SideActions
+            side="right"
+            disabled={!isLive}
+            onCambio={() => setSubState({ side: "B", playerOutId: "" })}
+            onTiempo={() => recordTimeout(match.id, "B")}
+            onSancion={() => alert("Sanción: registrada (placeholder)")}
+          />
+        </div>
+
+        {/* Bottom action row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Button
-            asChild
-            size="lg"
-            className="bg-gradient-primary text-primary-foreground shadow-glow"
+            size="sm"
+            variant="secondary"
+            disabled={!isLive || match.events.length === 0}
+            onClick={() => undo(match.id)}
           >
+            <Undo2 className="size-4" /> Deshacer
+          </Button>
+          <Button asChild size="sm" variant="secondary">
             <Link to="/matches/$id/stats" params={{ id: match.id }}>
-              <ChartBarBig className="size-4" /> Ver estadísticas finales
+              <ChartBarBig className="size-4" /> Estadísticas
             </Link>
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isLive}
+            onClick={() => {
+              alert("El set se cierra automáticamente al alcanzar la meta de puntos.");
+            }}
+          >
+            <StopCircle className="size-4" /> Fin Set
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            disabled={match.status === "finished"}
+            onClick={() => {
+              if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id);
+            }}
+          >
+            <Flag className="size-4" /> Fin Partido
+          </Button>
         </div>
-      )}
+
+        {match.sets.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {match.sets.map((s) => (
+              <div
+                key={s.number}
+                className={`px-2.5 py-1 rounded-md text-[11px] scoreboard-digit font-bold tabular-nums border ${
+                  s.number === match.currentSet
+                    ? "border-primary text-primary bg-primary/5"
+                    : "border-border/60 text-muted-foreground"
+                }`}
+              >
+                Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
+                {s.finished && (
+                  <span className="ml-1 text-success">
+                    {s.scoreA > s.scoreB ? `▲${teamA.shortName}` : `▲${teamB.shortName}`}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {match.status === "finished" && (
+          <div className="flex justify-center">
+            <Button
+              asChild
+              size="sm"
+              className="bg-gradient-primary text-primary-foreground shadow-glow"
+            >
+              <Link to="/matches/$id/stats" params={{ id: match.id }}>
+                <ChartBarBig className="size-4" /> Ver estadísticas finales
+              </Link>
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Action menu when a player is tapped */}
       <Dialog open={!!pendingPlayer} onOpenChange={(o) => !o && setPendingPlayer(null)}>
