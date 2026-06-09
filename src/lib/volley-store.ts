@@ -118,6 +118,7 @@ interface VolleyState {
       | "onCourtB"
       | "createdAt"
       | "servingSide"
+      | "initialServingSide"
     > & { initialServingSide?: "A" | "B" }
   ) => string;
   startMatch: (id: string) => void;
