@@ -156,21 +156,13 @@ function TeamPicker({
 }
 
 function LineupPicker({
-  team, lineup, onToggle, onReorder,
+  team, lineup, onAssign,
 }: {
   team: ReturnType<typeof useVolley.getState>["teams"][number] | undefined;
-  lineup: string[];
-  onToggle: (id: string) => void;
-  onReorder: (next: string[]) => void;
+  lineup: Slot[];
+  onAssign: (slotIdx: number, playerId: string | null) => void;
 }) {
-  const swap = (i: number, j: number) => {
-    if (j < 0 || j >= lineup.length) return;
-    const next = [...lineup];
-    [next[i], next[j]] = [next[j], next[i]];
-    onReorder(next);
-  };
   // Posiciones de voley (rotación antihoraria 1→6→5→4→3→2→1).
-  // Cancha vista desde el banco: arriba la red.
   // Fila delantera: P4 (izq), P3 (centro), P2 (der).
   // Fila trasera:   P5 (izq), P6 (centro), P1 (der, saca).
   const grid: { idx: number; label: string; sub?: string }[][] = [
@@ -181,6 +173,7 @@ function LineupPicker({
       { idx: 4, label: "5" }, { idx: 5, label: "6" }, { idx: 0, label: "1", sub: "saca" },
     ],
   ];
+  const filled = lineup.filter(Boolean).length;
   return (
     <section className="rounded-2xl bg-card border border-border/60 p-5">
       <div className="flex items-center justify-between mb-3">
@@ -188,7 +181,7 @@ function LineupPicker({
           Formación · {team?.shortName ?? "—"}
         </h2>
         <span className="text-xs scoreboard-digit font-bold">
-          <span className={lineup.length === LINEUP_SIZE ? "text-success" : "text-primary"}>{lineup.length}</span>
+          <span className={filled === LINEUP_SIZE ? "text-success" : "text-primary"}>{filled}</span>
           <span className="text-muted-foreground"> / {LINEUP_SIZE}</span>
         </span>
       </div>
@@ -196,68 +189,129 @@ function LineupPicker({
         <p className="text-sm text-muted-foreground text-center py-8">Elegí un equipo.</p>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-1.5 mb-4">
-            {team.players.map((p) => {
-              const active = lineup.includes(p.id);
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => onToggle(p.id)}
-                  disabled={!active && lineup.length >= LINEUP_SIZE}
-                  className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-all ${active ? "bg-primary text-primary-foreground font-semibold" : "bg-secondary/40 hover:bg-secondary disabled:opacity-40"}`}
-                >
-                  {p.photoUrl ? (
-                    <img src={p.photoUrl} alt="" className="size-7 rounded-full object-cover shrink-0" />
-                  ) : (
-                    <span className={`size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0 ${active ? "bg-primary-foreground/15" : "bg-background"}`}>{p.number}</span>
-                  )}
-                  <span className="truncate">{p.name}</span>
-                </button>
-              );
-            })}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              Posiciones 1–6 (antihorario)
+            </p>
+            <p className="text-[10px] text-muted-foreground">↺ 1→6→5→4→3→2→1</p>
           </div>
-          {lineup.length === LINEUP_SIZE && (
-            <>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                  Posiciones 1–6 (antihorario)
-                </p>
-                <p className="text-[10px] text-muted-foreground">↺ 1→6→5→4→3→2→1</p>
+          <div className="rounded-lg bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
+            <div className="text-center text-[9px] uppercase tracking-widest text-muted-foreground mb-1">— red —</div>
+            {grid.map((row, ri) => (
+              <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
+                {row.map(({ idx, label, sub }) => {
+                  const pid = lineup[idx];
+                  const p = team.players.find((x) => x.id === pid);
+                  return (
+                    <SlotCell
+                      key={idx}
+                      label={label}
+                      sub={sub}
+                      teamColor={team.color}
+                      player={p}
+                      players={team.players}
+                      takenIds={lineup.filter((x): x is string => !!x && x !== pid)}
+                      onPick={(playerId) => onAssign(idx, playerId)}
+                      onClear={() => onAssign(idx, null)}
+                    />
+                  );
+                })}
               </div>
-              <div className="rounded-lg bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
-                <div className="text-center text-[9px] uppercase tracking-widest text-muted-foreground mb-1">— red —</div>
-                {grid.map((row, ri) => (
-                  <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
-                    {row.map(({ idx, label, sub }) => {
-                      const pid = lineup[idx];
-                      const p = team.players.find((x) => x.id === pid);
-                      return (
-                        <div key={idx} className="rounded-md bg-background/40 border border-border/40 p-2 text-center relative">
-                          <div className="absolute top-1 left-1 text-[9px] scoreboard-digit font-bold text-primary px-1 rounded bg-background/80">P{label}</div>
-                          {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold">{sub}</div>}
-                          {p?.photoUrl ? (
-                            <img src={p.photoUrl} alt="" className="size-10 mx-auto rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: team.color }} />
-                          ) : (
-                            <div className="size-10 mx-auto rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: team.color }}>
-                              {p?.number}
-                            </div>
-                          )}
-                          <div className="text-[10px] truncate mt-1 font-semibold">#{p?.number} {p?.name}</div>
-                          <div className="flex justify-center gap-1 mt-1">
-                            <button type="button" title="Rotar atrás" onClick={() => swap(idx, idx === 0 ? lineup.length - 1 : idx - 1)} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/70">←</button>
-                            <button type="button" title="Rotar adelante" onClick={() => swap(idx, (idx + 1) % lineup.length)} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/70">→</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+            ))}
+          </div>
         </>
       )}
     </section>
   );
 }
+
+function SlotCell({
+  label, sub, teamColor, player, players, takenIds, onPick, onClear,
+}: {
+  label: string;
+  sub?: string;
+  teamColor: string;
+  player: ReturnType<typeof useVolley.getState>["teams"][number]["players"][number] | undefined;
+  players: ReturnType<typeof useVolley.getState>["teams"][number]["players"];
+  takenIds: string[];
+  onPick: (playerId: string) => void;
+  onClear: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-md bg-background/40 border border-border/40 p-2 text-center relative min-h-[92px] flex flex-col">
+      <div className="absolute top-1 left-1 text-[9px] scoreboard-digit font-bold text-primary px-1 rounded bg-background/80 z-10">P{label}</div>
+      {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold z-10">{sub}</div>}
+      {player && (
+        <button
+          type="button"
+          onClick={onClear}
+          title="Quitar jugador"
+          className="absolute bottom-1 right-1 text-muted-foreground hover:text-destructive z-10"
+        >
+          <X className="size-3.5" />
+        </button>
+      )}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex-1 flex flex-col items-center justify-center gap-1 w-full rounded hover:bg-background/30 transition-colors pt-3"
+          >
+            {player ? (
+              <>
+                {player.photoUrl ? (
+                  <img src={player.photoUrl} alt="" className="size-10 rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: teamColor }} />
+                ) : (
+                  <div className="size-10 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: teamColor }}>
+                    {player.number}
+                  </div>
+                )}
+                <div className="text-[10px] truncate max-w-full font-semibold px-1">#{player.number} {player.name}</div>
+              </>
+            ) : (
+              <>
+                <div className="size-10 rounded-full border-2 border-dashed border-border/60 flex items-center justify-center text-muted-foreground">
+                  <Plus className="size-4" />
+                </div>
+                <div className="text-[10px] text-muted-foreground">Asignar</div>
+              </>
+            )}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-60 p-1 max-h-72 overflow-y-auto" align="center">
+          <div className="px-2 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+            Elegir jugador · P{label}
+          </div>
+          {players.length === 0 && (
+            <p className="text-xs text-muted-foreground px-2 py-3 text-center">Sin jugadores en el equipo.</p>
+          )}
+          {players.map((pl) => {
+            const taken = takenIds.includes(pl.id);
+            const isCurrent = player?.id === pl.id;
+            return (
+              <button
+                key={pl.id}
+                type="button"
+                disabled={taken}
+                onClick={() => { onPick(pl.id); setOpen(false); }}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left transition-colors ${isCurrent ? "bg-primary/10" : "hover:bg-secondary"} disabled:opacity-40 disabled:cursor-not-allowed`}
+              >
+                {pl.photoUrl ? (
+                  <img src={pl.photoUrl} alt="" className="size-7 rounded-full object-cover shrink-0" />
+                ) : (
+                  <span className="size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0 bg-secondary">{pl.number}</span>
+                )}
+                <span className="truncate flex-1">#{pl.number} {pl.name}</span>
+                {taken && <span className="text-[9px] uppercase text-muted-foreground">en cancha</span>}
+                {isCurrent && <Check className="size-3.5 text-primary" />}
+              </button>
+            );
+          })}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 
