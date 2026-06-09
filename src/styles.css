@@ -135,11 +135,6 @@ html.force-landscape body {
 }
 
 @media (max-width: 640px) {
-  .live-action-dialog {
-    left: 50dvw;
-    top: 50dvh;
-  }
-
   html.force-landscape .live-action-dialog {
     max-width: min(374px, calc(100dvh - 16px));
     max-height: calc(100dvw - 16px);
