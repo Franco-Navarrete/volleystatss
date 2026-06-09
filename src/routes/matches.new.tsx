@@ -107,8 +107,8 @@ function NewMatch() {
             const ts = new Date(scheduledAt).getTime();
             const id = createMatch({
               teamAId, teamBId,
-              startingLineupA: lineupA,
-              startingLineupB: lineupB,
+              startingLineupA: lineupA.filter((x): x is string => !!x),
+              startingLineupB: lineupB.filter((x): x is string => !!x),
               setsToWin, pointsPerSet,
               scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
             });
