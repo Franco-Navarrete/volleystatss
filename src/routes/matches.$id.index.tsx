@@ -383,17 +383,17 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSanci
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-2 w-[88px] sm:w-[120px]">
-      <SideButton icon={<ArrowLeftRight className="size-4" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
+    <div className="flex flex-col gap-1.5 w-[78px] sm:w-[100px] shrink-0">
+      <SideButton icon={<ArrowLeftRight className="size-3.5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton
-        icon={<Hourglass className="size-4" />}
+        icon={<Hourglass className="size-3.5" />}
         label="Tiempo"
         badge={`${timeoutsUsed}/2`}
         onClick={onTiempo}
         disabled={disabled || timeoutsUsed >= 2}
         reverse={reverse}
       />
-      <SideButton icon={<X className="size-4" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
+      <SideButton icon={<X className="size-3.5" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
     </div>
   );
 }
