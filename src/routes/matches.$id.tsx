@@ -466,52 +466,19 @@ function CourtView({
   serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
 }) {
-  // Volleyball position grid per side, mapped to onCourt indices [0..5].
-  // Index 0 = position 1 (server, back-right). Clockwise positions:
-  // 1 (back-right), 2 (front-right), 3 (front-middle), 4 (front-left),
-  // 5 (back-left), 6 (back-middle).
-  //
-  // For team A (left of court), the net is on the right edge of A's half.
-  //   Front row (closer to net = right column):  pos4 (top), pos3 (mid), pos2 (bot)
-  //   Back row  (left column):                  pos5 (top), pos6 (mid), pos1 (bot)
-  // For team B (right of court), the net is on the left edge of B's half. Mirror it.
-
-  const cellOrderA = [
-    // 2 columns × 3 rows: [col0 row0, col0 row1, col0 row2, col1 row0, col1 row1, col1 row2]
-    4, // back top
-    5, // back mid (pos6)
-    0, // back bot (pos1 server)
-    3, // front top (pos4)
-    2, // front mid (pos3)
-    1, // front bot (pos2)
-  ];
-  const cellOrderB = [
-    // mirror: front col first
-    1, // front top (pos2)
-    2, // front mid (pos3)
-    3, // front bot (pos4)
-    0, // back top would be pos1 (server) bottom-back-right from B's perspective.
-    5, // back mid (pos6)
-    4, // back bot (pos5)
-  ];
-  // Simpler: just render same 2x3 mirrored
-  // We'll use: A columns = [back, front], B columns = [front, back] with same vertical ordering [pos4/3/2 or pos5/6/1].
-  // Redo cleanly below.
-
+  // Rotation positions: index 0 = pos1 (server, back-right).
+  // 2 columns × 3 rows per side. Net runs down the middle of the whole court.
+  // For each half: column near net = front row [pos4, pos3, pos2] (indices 3,2,1)
+  //                column away from net = back row [pos5, pos6, pos1] (indices 4,5,0)
   const a = match.onCourtA;
   const b = match.onCourtB;
-
-  // Final layout per side: 2 columns × 3 rows of indices into onCourt
-  // For both sides we'll show same pattern; visually the net is in the middle of the court image.
-  // Column near net = front row [pos4 top, pos3 mid, pos2 bot] -> indices [3,2,1]
-  // Column away from net = back row [pos5 top, pos6 mid, pos1 bot] -> indices [4,5,0]
   const sideAColumns: number[][] = [
-    [4, 5, 0], // back (left)
-    [3, 2, 1], // front (right, near net)
+    [4, 5, 0], // back column (left edge)
+    [3, 2, 1], // front column (near net, right edge)
   ];
   const sideBColumns: number[][] = [
-    [3, 2, 1], // front (left, near net)
-    [4, 5, 0], // back (right)
+    [3, 2, 1], // front column (near net, left edge)
+    [4, 5, 0], // back column (right edge)
   ];
 
   return (
