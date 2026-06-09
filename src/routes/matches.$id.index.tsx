@@ -444,45 +444,46 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
-  const sideAColumns: number[][] = [[4, 5, 0], [3, 2, 1]];
-  const sideBColumns: number[][] = [[1, 2, 3], [0, 5, 4]];
+  // 4 columns left→right: A back, A front, B front, B back
+  const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
+    { side: "A", team: teamA, idxs: [4, 5, 0] },
+    { side: "A", team: teamA, idxs: [3, 2, 1] },
+    { side: "B", team: teamB, idxs: [1, 2, 3] },
+    { side: "B", team: teamB, idxs: [0, 5, 4] },
+  ];
   return (
-    <div className="relative rounded-lg border border-court-line/40 bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-1 sm:p-2 overflow-hidden h-full min-h-[180px]">
-      <div className="absolute inset-1.5 sm:inset-3 rounded-md border-2 border-court-line/60 pointer-events-none" />
-      <div className="absolute left-1/2 top-1.5 bottom-1.5 sm:top-3 sm:bottom-3 w-1 bg-primary -translate-x-1/2 pointer-events-none" />
-      <div className="relative grid grid-cols-2 gap-2 sm:gap-4 h-full">
-        <CourtHalf team={teamA} onCourt={a} columns={sideAColumns} serverPlayerId={serverSide === "A" ? serverPlayerId : null} onClick={(pid) => onPlayerClick("A", pid)} />
-        <CourtHalf team={teamB} onCourt={b} columns={sideBColumns} serverPlayerId={serverSide === "B" ? serverPlayerId : null} onClick={(pid) => onPlayerClick("B", pid)} />
+    <div className="relative rounded-lg border-2 border-court-line/60 bg-[#b8b8b8] p-2 sm:p-3 overflow-hidden h-full min-h-[180px]">
+      <div className="absolute top-2 bottom-2 sm:top-3 sm:bottom-3 left-1/2 -translate-x-1/2 w-0 border-l-2 border-dashed border-white pointer-events-none" />
+      <div className="relative grid grid-cols-4 gap-1.5 sm:gap-3 h-full">
+        {columns.map((col, ci) => {
+          const onCourt = col.side === "A" ? a : b;
+          const serverPid = serverSide === col.side ? serverPlayerId : null;
+          return (
+            <div key={ci} className="grid grid-rows-3 gap-1.5 sm:gap-3 h-full">
+              {col.idxs.map((idx) => {
+                const pid = onCourt[idx];
+                const p = col.team.players.find((x) => x.id === pid);
+                const isServer = pid && pid === serverPid;
+                return (
+                  <button
+                    key={`${ci}-${idx}`}
+                    onClick={() => p && onPlayerClick(col.side, p.id)}
+                    disabled={!p}
+                    className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-2xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full ${isServer ? "ring-4 ring-primary border-2 border-white" : ""}`}
+                    style={{ background: col.team.color }}
+                    title={p ? `#${p.number} ${p.name}` : ""}
+                  >
+                    {p?.number ?? "?"}
+                    {isServer && (
+                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[8px] font-bold uppercase tracking-widest">Saque</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
-    </div>
-  );
-}
-
-function CourtHalf({ team, onCourt, columns, serverPlayerId, onClick }: {
-  team: Team; onCourt: string[]; columns: number[][];
-  serverPlayerId: string | null; onClick: (playerId: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-1 sm:gap-1.5 h-full">
-      {columns.map((col, ci) => (
-        <div key={ci} className="grid grid-rows-3 gap-1 sm:gap-1.5 h-full">
-          {col.map((idx) => {
-            const pid = onCourt[idx];
-            const p = team.players.find((x) => x.id === pid);
-            const isServer = pid && pid === serverPlayerId;
-            return (
-              <button key={`${ci}-${idx}`} onClick={() => p && onClick(p.id)} disabled={!p}
-                className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-sm sm:text-xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full max-h-[64px] sm:max-h-[88px] ${isServer ? "ring-4 ring-primary" : ""}`}
-                style={{ background: team.color }} title={p ? `#${p.number} ${p.name}` : ""}>
-                {p?.number ?? "?"}
-                {isServer && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[8px] font-bold uppercase tracking-widest">Saque</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      ))}
     </div>
   );
 }
