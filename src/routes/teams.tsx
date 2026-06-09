@@ -58,6 +58,7 @@ function TeamsPage() {
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
+  const [logo, setLogo] = useState<string | undefined>(undefined);
   const [newLeagueId, setNewLeagueId] = useState<string>("");
   const [selected, setSelected] = useState<string | null>(null);
   const [pName, setPName] = useState("");
@@ -65,6 +66,8 @@ function TeamsPage() {
   const [pPhoto, setPPhoto] = useState<string | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const editFileRef = useRef<HTMLInputElement | null>(null);
+  const logoFileRef = useRef<HTMLInputElement | null>(null);
+  const teamLogoFileRef = useRef<HTMLInputElement | null>(null);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
 
   const activeTeam = teams.find((t) => t.id === selected) ?? teams[0];
