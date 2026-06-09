@@ -359,19 +359,19 @@ function ScoreColumn({ team, score, sets, align, serving }: {
   team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-3 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
-      <div className="size-10 sm:size-12 rounded-md flex items-center justify-center font-black text-white text-xs sm:text-sm shrink-0" style={{ background: team.color }}>
+    <div className={`flex items-center gap-2 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
+      <div className="size-9 rounded-md flex items-center justify-center font-black text-white text-xs shrink-0" style={{ background: team.color }}>
         {team.shortName}
       </div>
-      <div>
-        <div className="text-xs sm:text-sm font-bold truncate flex items-center gap-1.5">
+      <div className="min-w-0">
+        <div className="text-xs font-bold truncate flex items-center gap-1.5">
           {team.name}
           {serving && <span className="text-[9px] uppercase tracking-widest text-primary">● Saque</span>}
         </div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="scoreboard-digit text-5xl sm:text-7xl font-black leading-none mt-1 text-primary">{score}</div>
+        <div className="scoreboard-digit text-4xl sm:text-5xl font-black leading-none mt-0.5 text-primary">{score}</div>
       </div>
     </div>
   );
