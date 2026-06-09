@@ -176,6 +176,12 @@ function rotateClockwise(arr: string[]): string[] {
   return [arr[1], arr[2], arr[3], arr[4], arr[5], arr[0]];
 }
 
+export function timeoutsUsedInSet(match: Match, side: "A" | "B", setNumber: number): number {
+  return match.events.filter(
+    (e) => "kind" in e && e.kind === "timeout" && e.side === side && e.setNumber === setNumber
+  ).length;
+}
+
 function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
   if (type === "serve_error" || type === "unforced_error") {
     return playerSide === "A" ? "B" : "A";
