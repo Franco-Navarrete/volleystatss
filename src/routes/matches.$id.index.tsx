@@ -333,7 +333,26 @@ function LiveMatch() {
           <LiveStatsPanel match={match} teamA={teamA} teamB={teamB} />
         </DialogContent>
       </Dialog>
-    </AppShell>
+    </CompactShell>
+  );
+}
+
+function CompactShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-[100dvh] flex flex-col bg-background">
+      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 h-10 flex items-center justify-between shrink-0">
+        <Link to="/matches" className="flex items-center gap-2">
+          <div className="size-6 rounded-md bg-gradient-primary flex items-center justify-center">
+            <Volleyball className="size-3.5 text-primary-foreground" />
+          </div>
+          <span className="font-bold text-xs tracking-tight">RALLY</span>
+        </Link>
+        <Link to="/matches" className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold">
+          ← Partidos
+        </Link>
+      </header>
+      <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
+    </div>
   );
 }
 
