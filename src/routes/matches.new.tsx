@@ -25,6 +25,12 @@ function NewMatch() {
   const [teamBId, setTeamBId] = useState<string>("");
   const [lineupA, setLineupA] = useState<Slot[]>(emptyLineup);
   const [lineupB, setLineupB] = useState<Slot[]>(emptyLineup);
+  const [captainA, setCaptainA] = useState<string>("");
+  const [captainB, setCaptainB] = useState<string>("");
+  const [liberoA1, setLiberoA1] = useState<string>("");
+  const [liberoA2, setLiberoA2] = useState<string>("");
+  const [liberoB1, setLiberoB1] = useState<string>("");
+  const [liberoB2, setLiberoB2] = useState<string>("");
   const [setsToWin, setSetsToWin] = useState(3);
   const [pointsPerSet, setPointsPerSet] = useState(25);
   const [scheduledAt, setScheduledAt] = useState<string>(() => {
