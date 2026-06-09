@@ -521,9 +521,9 @@ function CourtHalf({
   onClick: (playerId: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+    <div className="grid grid-cols-2 gap-1.5 sm:gap-2 h-full">
       {columns.map((col, ci) => (
-        <div key={ci} className="flex flex-col gap-2 sm:gap-3">
+        <div key={ci} className="grid grid-rows-3 gap-1.5 sm:gap-2 h-full">
           {col.map((idx) => {
             const pid = onCourt[idx];
             const p = team.players.find((x) => x.id === pid);
@@ -533,7 +533,7 @@ function CourtHalf({
                 key={`${ci}-${idx}`}
                 onClick={() => p && onClick(p.id)}
                 disabled={!p}
-                className={`relative aspect-square rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-xl sm:text-2xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 ${
+                className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full max-h-[88px] ${
                   isServer ? "ring-4 ring-primary" : ""
                 }`}
                 style={{ background: team.color }}
