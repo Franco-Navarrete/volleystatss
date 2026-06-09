@@ -3,9 +3,10 @@ import { useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import {
-  computeMatchStats, setsWon, useVolley, type PlayerStat,
+  computeMatchStats, computeSetStats, setsWon, useVolley, type PlayerStat, type Team,
 } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Crown, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
