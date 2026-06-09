@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
-import { useVolley } from "@/lib/volley-store";
+import { useVolley, PLAYER_POSITION_LABEL } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, Plus, X } from "lucide-react";
@@ -330,7 +330,12 @@ function SlotCell({
                 ) : (
                   <span className="size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0 bg-secondary">{pl.number}</span>
                 )}
-                <span className="truncate flex-1">#{pl.number} {pl.name}</span>
+                <span className="truncate flex-1 flex flex-col">
+                  <span className="truncate">#{pl.number} {pl.name}</span>
+                  {pl.position && (
+                    <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{PLAYER_POSITION_LABEL[pl.position]}</span>
+                  )}
+                </span>
                 {taken && <span className="text-[9px] uppercase text-muted-foreground">en cancha</span>}
                 {isCurrent && <Check className="size-3.5 text-primary" />}
               </button>
