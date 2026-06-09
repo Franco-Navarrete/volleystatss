@@ -24,13 +24,22 @@ function NewMatch() {
   const [lineupB, setLineupB] = useState<string[]>([]);
   const [setsToWin, setSetsToWin] = useState(3);
   const [pointsPerSet, setPointsPerSet] = useState(25);
+  // Default scheduled date: today + 1h, rounded to local minute.
+  const [scheduledAt, setScheduledAt] = useState<string>(() => {
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    d.setSeconds(0, 0);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
 
   const teamA = useMemo(() => teams.find((t) => t.id === teamAId), [teams, teamAId]);
   const teamB = useMemo(() => teams.find((t) => t.id === teamBId), [teams, teamBId]);
 
   const canStart =
     teamAId && teamBId && teamAId !== teamBId &&
-    lineupA.length === LINEUP_SIZE && lineupB.length === LINEUP_SIZE;
+    lineupA.length === LINEUP_SIZE && lineupB.length === LINEUP_SIZE &&
+    !!scheduledAt;
+
 
   const toggle = (lineup: string[], setLineup: (v: string[]) => void, id: string) => {
     if (lineup.includes(id)) setLineup(lineup.filter((x) => x !== id));
