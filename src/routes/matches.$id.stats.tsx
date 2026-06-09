@@ -111,24 +111,39 @@ function StatsPage() {
       </section>
 
       {/* MVP */}
-      {topScorer && topScorerTeam && (
+      {mvp && (
         <section className="rounded-2xl bg-gradient-primary p-[1px] mb-6 shadow-glow">
           <div className="rounded-[calc(theme(borderRadius.2xl)-1px)] bg-card p-5 flex items-center gap-4">
             <div className="size-14 rounded-full bg-gradient-primary flex items-center justify-center">
               <Crown className="size-7 text-primary-foreground" />
             </div>
-            <div className="flex-1">
-              <div className="text-[10px] uppercase tracking-widest text-primary font-bold">Máximo anotador del partido</div>
-              <div className="text-xl font-extrabold mt-0.5">#{topScorer.number} {topScorer.name}</div>
-              <div className="text-xs text-muted-foreground">{topScorerTeam.name} · {topScorer.attack} ataques · {topScorer.block} bloqueos · {topScorer.ace} aces</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-widest text-primary font-bold flex items-center gap-1">
+                <Sparkles className="size-3" /> MVP del partido
+              </div>
+              <div className="text-xl font-extrabold mt-0.5 truncate">#{mvp.number} {mvp.name}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {mvp.teamName} · {mvp.attack} ATK · {mvp.block} BLK · {mvp.ace} ACE · {mvp.unforcedError} errores
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">
+                Fórmula: ATK×1 + BLK×1.2 + ACE×1.5 − Errores×0.5
+              </div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Puntos</div>
-              <div className="scoreboard-digit text-5xl font-black text-primary">{topScorer.total}</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Índice MVP</div>
+              <div className="scoreboard-digit text-5xl font-black text-primary tabular-nums">{mvpScore(mvp).toFixed(1)}</div>
+              <div className="text-[10px] text-muted-foreground">{mvp.total} pts totales</div>
             </div>
           </div>
         </section>
       )}
+
+      {/* Rankings */}
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <RankingCard title="Máximos anotadores" icon={Zap} rows={topScorers} valueKey="total" />
+        <RankingCard title="Mejores bloqueadores" icon={Shield} rows={topBlockers} valueKey="block" />
+        <RankingCard title="Mejores sacadores" icon={Target} rows={topServers} valueKey="ace" />
+      </div>
 
       {/* Team totals */}
       <div className="grid sm:grid-cols-2 gap-4 mb-6">
@@ -142,6 +157,41 @@ function StatsPage() {
         <PlayerStatsTable team={teamB} rows={playersB} />
       </div>
     </AppShell>
+  );
+}
+
+function RankingCard({
+  title, icon: Icon, rows, valueKey,
+}: {
+  title: string;
+  icon: typeof Trophy;
+  rows: EnrichedPlayer[];
+  valueKey: "total" | "block" | "ace";
+}) {
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header className="px-4 py-3 flex items-center gap-2 border-b border-border/60 bg-secondary/30">
+        <Icon className="size-4 text-primary" />
+        <h3 className="font-bold text-sm uppercase tracking-wider">{title}</h3>
+      </header>
+      <ol className="divide-y divide-border/40">
+        {rows.map((p, i) => (
+          <li key={p.playerId} className="px-4 py-2.5 flex items-center gap-3">
+            <span className={`scoreboard-digit font-black text-sm w-5 text-center ${i === 0 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
+            <span className="size-2 rounded-full shrink-0" style={{ background: p.teamColor }} />
+            <span className="size-6 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-[11px] shrink-0">{p.number}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">{p.name}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{p.teamName}</div>
+            </div>
+            <span className="scoreboard-digit font-black text-xl text-primary tabular-nums">{p[valueKey]}</span>
+          </li>
+        ))}
+        {rows.length === 0 && (
+          <li className="px-4 py-6 text-center text-xs text-muted-foreground">Sin registros.</li>
+        )}
+      </ol>
+    </section>
   );
 }
 
