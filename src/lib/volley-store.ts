@@ -573,9 +573,10 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (ev.type === "attack") scoringTeam.attack++;
     if (ev.type === "block") scoringTeam.block++;
     if (ev.type === "ace") scoringTeam.ace++;
+    if (ev.type === "counter_attack") scoringTeam.attack++;
     if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
 
-    if (ev.type === "serve_error" || ev.type === "unforced_error") {
+    if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error") {
       const errorTeamId = ev.playerSide === "A" ? match.teamAId : match.teamBId;
       const et = ensureTeam(errorTeamId);
       if (ev.type === "serve_error") et.serveErrors++;
@@ -587,7 +588,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
       }
     } else if (ev.playerId) {
       const p = ensurePlayer(ev.playerId);
-      if (ev.type === "attack") p.attack++;
+      if (ev.type === "attack" || ev.type === "counter_attack") p.attack++;
       if (ev.type === "block") p.block++;
       if (ev.type === "ace") p.ace++;
       p.total++;
