@@ -227,7 +227,7 @@ function TeamsPage() {
                 </Button>
               </div>
 
-              <div className="grid sm:grid-cols-[auto_1fr_120px_auto] gap-2 mb-4 items-center">
+              <div className="grid sm:grid-cols-[auto_1fr_90px_130px_auto] gap-2 mb-4 items-center">
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
@@ -253,11 +253,21 @@ function TeamsPage() {
                 />
                 <Input placeholder="Nombre del jugador" value={pName} onChange={(e) => setPName(e.target.value.slice(0, 60))} />
                 <Input type="number" placeholder="#" value={pNum} onChange={(e) => setPNum(e.target.value ? parseInt(e.target.value) : "")} />
+                <select
+                  value={pPos}
+                  onChange={(e) => setPPos(e.target.value as PlayerPosition | "")}
+                  className="bg-background border border-input rounded-md px-3 py-2 text-sm h-9"
+                >
+                  <option value="">Posición</option>
+                  {PLAYER_POSITIONS.map((pos) => (
+                    <option key={pos} value={pos}>{PLAYER_POSITION_LABEL[pos]}</option>
+                  ))}
+                </select>
                 <Button
                   disabled={!pName || !pNum}
                   onClick={() => {
-                    addPlayer(activeTeam.id, { name: pName, number: Number(pNum), photoUrl: pPhoto });
-                    setPName(""); setPNum(""); setPPhoto(undefined);
+                    addPlayer(activeTeam.id, { name: pName, number: Number(pNum), photoUrl: pPhoto, position: pPos || undefined });
+                    setPName(""); setPNum(""); setPPhoto(undefined); setPPos("");
                   }}
                 >
                   <UserPlus className="size-4" /> Agregar
@@ -296,7 +306,19 @@ function TeamsPage() {
                         : <Camera className="size-4 text-muted-foreground" />}
                     </button>
                     <div className="size-9 rounded-md bg-background border border-border flex items-center justify-center font-bold scoreboard-digit text-primary shrink-0">{p.number}</div>
-                    <span className="flex-1 truncate font-medium">{p.name}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-medium">{p.name}</div>
+                      <select
+                        value={p.position ?? ""}
+                        onChange={(e) => updatePlayer(activeTeam.id, p.id, { position: (e.target.value || undefined) as PlayerPosition | undefined })}
+                        className="bg-transparent text-[11px] text-muted-foreground border-0 p-0 cursor-pointer focus:outline-none"
+                      >
+                        <option value="">Sin posición</option>
+                        {PLAYER_POSITIONS.map((pos) => (
+                          <option key={pos} value={pos}>{PLAYER_POSITION_LABEL[pos]}</option>
+                        ))}
+                      </select>
+                    </div>
                     {p.photoUrl && (
                       <button
                         onClick={() => updatePlayer(activeTeam.id, p.id, { photoUrl: undefined })}
