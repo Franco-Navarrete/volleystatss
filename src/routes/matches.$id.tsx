@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import {
-  POINT_TYPE_LABEL,
   useVolley,
   setsWon,
   currentServer,
@@ -22,7 +21,6 @@ import {
   ChartBarBig,
   Flag,
   Hourglass,
-  LogOut,
   Play,
   StopCircle,
   Undo2,
