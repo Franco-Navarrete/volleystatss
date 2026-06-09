@@ -23,9 +23,10 @@ export const POINT_TYPE_LABEL: Record<PointType, string> = {
   serve_error: "Error de saque",
   unforced_error: "Error no forzado",
   rotation_error: "Error de rotación",
+  attack_error: "Error de ataque",
 };
 
-export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error"];
+export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error", "attack_error"];
 
 export interface Player {
   id: string;
@@ -212,7 +213,7 @@ export function timeoutsUsedInSet(match: Match, side: "A" | "B", setNumber: numb
 }
 
 function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
-  if (type === "serve_error" || type === "unforced_error" || type === "rotation_error") {
+  if (type === "serve_error" || type === "unforced_error" || type === "rotation_error" || type === "attack_error") {
     return playerSide === "A" ? "B" : "A";
   }
   return playerSide;
