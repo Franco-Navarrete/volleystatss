@@ -6,7 +6,16 @@ import {
   computeMatchStats, setsWon, useVolley, type PlayerStat,
 } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Crown, Shield, Target, Trophy, Zap } from "lucide-react";
+import { ArrowLeft, Crown, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
+
+type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
+
+const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
+const mvpScore = (p: PlayerStat) =>
+  p.attack * MVP_WEIGHTS.attack +
+  p.block * MVP_WEIGHTS.block +
+  p.ace * MVP_WEIGHTS.ace +
+  p.unforcedError * MVP_WEIGHTS.unforcedError;
 
 export const Route = createFileRoute("/matches/$id/stats")({
   head: () => ({ meta: [{ title: "Estadísticas · RALLY" }] }),
