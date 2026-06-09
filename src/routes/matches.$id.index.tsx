@@ -406,7 +406,7 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSanci
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1.5 w-[78px] sm:w-[100px] shrink-0">
+    <div className="flex flex-col gap-1.5 w-[68px] sm:w-[92px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3.5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton
         icon={<Hourglass className="size-3.5" />}
