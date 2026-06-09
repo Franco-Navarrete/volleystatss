@@ -137,6 +137,9 @@ html.force-landscape body {
 html.force-landscape .live-action-dialog {
   left: 50vh !important;
   top: 50vw !important;
-  max-width: min(374px, calc(100vh - 16px));
-  max-height: calc(100vw - 16px);
+  width: min(374px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: calc(100vh - 24px);
+  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  transform-origin: center;
 }
