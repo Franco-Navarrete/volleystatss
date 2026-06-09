@@ -363,18 +363,18 @@ function LiveMatch() {
 function CompactShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
-      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 h-10 flex items-center justify-between shrink-0">
-        <Link to="/matches" className="flex items-center gap-2">
-          <div className="size-6 rounded-md bg-gradient-primary flex items-center justify-center">
-            <Volleyball className="size-3.5 text-primary-foreground" />
+      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-10 md:h-14 flex items-center justify-between shrink-0">
+        <Link to="/matches" className="flex items-center gap-2 md:gap-3">
+          <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
+            <Volleyball className="size-3.5 md:size-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-xs tracking-tight">RALLY</span>
+          <span className="font-bold text-xs md:text-base tracking-tight">RALLY</span>
         </Link>
-        <Link to="/matches" className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold">
+        <Link to="/matches" className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold">
           ← Partidos
         </Link>
       </header>
-      <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
+      <main className="flex-1 min-h-0 overflow-hidden md:overflow-auto">{children}</main>
     </div>
   );
 }
@@ -383,19 +383,19 @@ function ScoreColumn({ team, score, sets, align, serving }: {
   team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-2 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
-      <div className="size-9 rounded-md flex items-center justify-center font-black text-white text-xs shrink-0" style={{ background: team.color }}>
+    <div className={`flex items-center gap-2 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
+      <div className="size-9 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-xs md:text-base shrink-0" style={{ background: team.color }}>
         {team.shortName}
       </div>
       <div className="min-w-0">
-        <div className="text-xs font-bold truncate flex items-center gap-1.5">
+        <div className="text-xs md:text-lg font-bold truncate flex items-center gap-1.5">
           {team.name}
-          {serving && <span className="text-[9px] uppercase tracking-widest text-primary">● Saque</span>}
+          {serving && <span className="text-[9px] md:text-[11px] uppercase tracking-widest text-primary">● Saque</span>}
         </div>
-        <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
+        <div className="text-[9px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="scoreboard-digit text-4xl sm:text-5xl font-black leading-none mt-0.5 text-primary">{score}</div>
+        <div className="scoreboard-digit text-4xl sm:text-5xl md:text-7xl font-black leading-none mt-0.5 md:mt-1 text-primary">{score}</div>
       </div>
     </div>
   );
@@ -407,17 +407,17 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSanci
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1.5 w-[68px] sm:w-[92px] shrink-0">
-      <SideButton icon={<ArrowLeftRight className="size-3.5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
+    <div className="flex flex-col gap-1.5 md:gap-2.5 w-[68px] sm:w-[92px] md:w-[140px] shrink-0">
+      <SideButton icon={<ArrowLeftRight className="size-3.5 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton
-        icon={<Hourglass className="size-3.5" />}
+        icon={<Hourglass className="size-3.5 md:size-5" />}
         label="Tiempo"
         badge={`${timeoutsUsed}/2`}
         onClick={onTiempo}
         disabled={disabled || timeoutsUsed >= 2}
         reverse={reverse}
       />
-      <SideButton icon={<X className="size-3.5" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
+      <SideButton icon={<X className="size-3.5 md:size-5" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
     </div>
   );
 }
@@ -428,15 +428,16 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-1.5 px-2 py-1.5 rounded-md bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold flex-1 min-h-0`}>
+      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-1.5 md:gap-3 px-2 md:px-4 py-1.5 md:py-3 rounded-md md:rounded-lg bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs md:text-sm font-semibold flex-1 min-h-0`}>
       <span className="truncate flex flex-col items-start leading-tight">
-        <span className="text-[11px]">{label}</span>
-        {badge && <span className="text-[9px] font-bold text-muted-foreground tabular-nums">{badge}</span>}
+        <span className="text-[11px] md:text-sm">{label}</span>
+        {badge && <span className="text-[9px] md:text-[11px] font-bold text-muted-foreground tabular-nums">{badge}</span>}
       </span>
       <span className="text-muted-foreground shrink-0">{icon}</span>
     </button>
   );
 }
+
 
 function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerClick }: {
   match: Match; teamA: Team; teamB: Team;
