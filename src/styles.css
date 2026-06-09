@@ -133,3 +133,13 @@ html.force-landscape body {
   transform: rotate(90deg);
   transform-origin: top left;
 }
+
+html.force-landscape .live-action-dialog {
+  left: 50vh !important;
+  top: 50vw !important;
+  width: min(374px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: calc(100vh - 24px);
+  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  transform-origin: center;
+}
