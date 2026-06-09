@@ -209,7 +209,7 @@ export function timeoutsUsedInSet(match: Match, side: "A" | "B", setNumber: numb
 }
 
 function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
-  if (type === "serve_error" || type === "unforced_error") {
+  if (type === "serve_error" || type === "unforced_error" || type === "rotation_error") {
     return playerSide === "A" ? "B" : "A";
   }
   return playerSide;
