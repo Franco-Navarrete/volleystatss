@@ -406,7 +406,7 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSanci
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1.5 w-[78px] sm:w-[100px] shrink-0">
+    <div className="flex flex-col gap-1.5 w-[68px] sm:w-[92px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3.5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton
         icon={<Hourglass className="size-3.5" />}
@@ -447,10 +447,10 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
   const sideAColumns: number[][] = [[4, 5, 0], [3, 2, 1]];
   const sideBColumns: number[][] = [[1, 2, 3], [0, 5, 4]];
   return (
-    <div className="relative rounded-lg border border-court-line/40 bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-1.5 sm:p-2 overflow-hidden h-full min-h-[180px]">
-      <div className="absolute inset-2 sm:inset-3 rounded-md border-2 border-court-line/60 pointer-events-none" />
-      <div className="absolute left-1/2 top-2 bottom-2 sm:top-3 sm:bottom-3 w-1 bg-primary -translate-x-1/2 pointer-events-none" />
-      <div className="relative grid grid-cols-2 gap-3 sm:gap-5 h-full">
+    <div className="relative rounded-lg border border-court-line/40 bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-1 sm:p-2 overflow-hidden h-full min-h-[180px]">
+      <div className="absolute inset-1.5 sm:inset-3 rounded-md border-2 border-court-line/60 pointer-events-none" />
+      <div className="absolute left-1/2 top-1.5 bottom-1.5 sm:top-3 sm:bottom-3 w-1 bg-primary -translate-x-1/2 pointer-events-none" />
+      <div className="relative grid grid-cols-2 gap-2 sm:gap-4 h-full">
         <CourtHalf team={teamA} onCourt={a} columns={sideAColumns} serverPlayerId={serverSide === "A" ? serverPlayerId : null} onClick={(pid) => onPlayerClick("A", pid)} />
         <CourtHalf team={teamB} onCourt={b} columns={sideBColumns} serverPlayerId={serverSide === "B" ? serverPlayerId : null} onClick={(pid) => onPlayerClick("B", pid)} />
       </div>
@@ -463,16 +463,16 @@ function CourtHalf({ team, onCourt, columns, serverPlayerId, onClick }: {
   serverPlayerId: string | null; onClick: (playerId: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1.5 sm:gap-2 h-full">
+    <div className="grid grid-cols-2 gap-1 sm:gap-1.5 h-full">
       {columns.map((col, ci) => (
-        <div key={ci} className="grid grid-rows-3 gap-1.5 sm:gap-2 h-full">
+        <div key={ci} className="grid grid-rows-3 gap-1 sm:gap-1.5 h-full">
           {col.map((idx) => {
             const pid = onCourt[idx];
             const p = team.players.find((x) => x.id === pid);
             const isServer = pid && pid === serverPlayerId;
             return (
               <button key={`${ci}-${idx}`} onClick={() => p && onClick(p.id)} disabled={!p}
-                className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full max-h-[88px] ${isServer ? "ring-4 ring-primary" : ""}`}
+                className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-sm sm:text-xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full max-h-[64px] sm:max-h-[88px] ${isServer ? "ring-4 ring-primary" : ""}`}
                 style={{ background: team.color }} title={p ? `#${p.number} ${p.name}` : ""}>
                 {p?.number ?? "?"}
                 {isServer && (
