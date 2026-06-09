@@ -342,4 +342,55 @@ function SlotCell({
   );
 }
 
+function RolePicker({
+  team, label, captain, setCaptain, libero1, setLibero1, libero2, setLibero2,
+}: {
+  team: ReturnType<typeof useVolley.getState>["teams"][number] | undefined;
+  label: string;
+  captain: string; setCaptain: (v: string) => void;
+  libero1: string; setLibero1: (v: string) => void;
+  libero2: string; setLibero2: (v: string) => void;
+}) {
+  const players = team?.players ?? [];
+  const renderSelect = (value: string, onChange: (v: string) => void, exclude: string[]) => (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={!team}
+      className="w-full bg-background border border-input rounded-md px-2 py-2 text-sm disabled:opacity-50"
+    >
+      <option value="">— Sin asignar —</option>
+      {players.map((p) => (
+        <option key={p.id} value={p.id} disabled={exclude.includes(p.id)}>
+          #{p.number} {p.name}
+        </option>
+      ))}
+    </select>
+  );
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 p-5">
+      <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">{label}</h2>
+      {!team ? (
+        <p className="text-sm text-muted-foreground text-center py-4">Elegí un equipo.</p>
+      ) : (
+        <div className="grid sm:grid-cols-3 gap-3">
+          <label className="text-sm">
+            <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Capitán</span>
+            {renderSelect(captain, setCaptain, [])}
+          </label>
+          <label className="text-sm">
+            <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 1</span>
+            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean))}
+          </label>
+          <label className="text-sm">
+            <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 2</span>
+            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean))}
+          </label>
+        </div>
+      )}
+    </section>
+  );
+}
+
+
 
