@@ -160,31 +160,31 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          <Button size="sm" variant="secondary" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
-            <Undo2 className="size-4" /> Deshacer
+        <div className="grid grid-cols-5 gap-1.5 shrink-0">
+          <Button size="sm" variant="secondary" className="h-8 text-xs" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
+            <Undo2 className="size-3.5" /> Deshacer
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setShowLiveStats(true)}>
-            <ChartBarBig className="size-4" /> Stats en vivo
+          <Button size="sm" variant="secondary" className="h-8 text-xs" onClick={() => setShowLiveStats(true)}>
+            <ChartBarBig className="size-3.5" /> Stats vivo
           </Button>
-          <Button asChild size="sm" variant="secondary">
+          <Button asChild size="sm" variant="secondary" className="h-8 text-xs">
             <Link to="/matches/$id/stats" params={{ id: match.id }}>
-              <ChartBarBig className="size-4" /> Stats finales
+              <ChartBarBig className="size-3.5" /> Stats final
             </Link>
           </Button>
-          <Button size="sm" variant="outline" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
-            <StopCircle className="size-4" /> Fin Set
+          <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
+            <StopCircle className="size-3.5" /> Fin Set
           </Button>
-          <Button size="sm" variant="destructive" disabled={match.status === "finished"}
+          <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={match.status === "finished"}
             onClick={() => { if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id); }}>
-            <Flag className="size-4" /> Fin Partido
+            <Flag className="size-3.5" /> Fin Partido
           </Button>
         </div>
 
         {match.sets.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1.5">
+          <div className="flex flex-wrap justify-center gap-1 shrink-0">
             {match.sets.map((s) => (
-              <div key={s.number} className={`px-2.5 py-1 rounded-md text-[11px] scoreboard-digit font-bold tabular-nums border ${
+              <div key={s.number} className={`px-2 py-0.5 rounded text-[10px] scoreboard-digit font-bold tabular-nums border ${
                 s.number === match.currentSet ? "border-primary text-primary bg-primary/5" : "border-border/60 text-muted-foreground"
               }`}>
                 Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
