@@ -28,12 +28,6 @@ const LeaguesRoute = LeaguesRouteImport.update({
   path: '/leagues',
   getParentRoute: () => rootRouteImport,
 } as any)
-
-const LeaguesRoute = LeaguesRouteImport.update({
-  id: '/leagues',
-  path: '/leagues',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
