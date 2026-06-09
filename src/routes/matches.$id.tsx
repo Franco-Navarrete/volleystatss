@@ -482,12 +482,12 @@ function CourtView({
   ];
 
   return (
-    <div className="relative rounded-xl border border-court-line/40 bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 sm:p-4 overflow-hidden">
+    <div className="relative rounded-xl border border-court-line/40 bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-2 sm:p-3 overflow-hidden h-full min-h-[280px]">
       {/* Court markings */}
-      <div className="absolute inset-3 sm:inset-4 rounded-md border-2 border-court-line/60 pointer-events-none" />
-      <div className="absolute left-1/2 top-3 bottom-3 sm:top-4 sm:bottom-4 w-1 bg-primary -translate-x-1/2 pointer-events-none" />
+      <div className="absolute inset-2 sm:inset-3 rounded-md border-2 border-court-line/60 pointer-events-none" />
+      <div className="absolute left-1/2 top-2 bottom-2 sm:top-3 sm:bottom-3 w-1 bg-primary -translate-x-1/2 pointer-events-none" />
 
-      <div className="relative grid grid-cols-2 gap-4 sm:gap-6">
+      <div className="relative grid grid-cols-2 gap-3 sm:gap-5 h-full">
         <CourtHalf
           team={teamA}
           onCourt={a}
