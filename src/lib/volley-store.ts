@@ -455,11 +455,14 @@ export const useVolley = create<VolleyState>()(
 
       seedDemo: () => {
         if (get().teams.length > 0) return;
+        const leagueId = uid();
+        const league: League = { id: leagueId, name: "Liga Apertura", season: "2026" };
         const mkTeam = (name: string, shortName: string, color: string, names: string[]): Team => ({
           id: uid(),
           name,
           shortName,
           color,
+          leagueId,
           players: names.map((n, i) => ({ id: uid(), name: n, number: i + 1 })),
         });
         const teams = [
@@ -480,8 +483,9 @@ export const useVolley = create<VolleyState>()(
             "T. Aguirre", "R. Mansilla", "S. Quiroga",
           ]),
         ];
-        set({ teams });
+        set({ teams, leagues: [league] });
       },
+
     }),
     { name: "volley-stats-store-v2" }
   )
