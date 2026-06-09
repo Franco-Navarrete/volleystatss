@@ -293,45 +293,96 @@ function TeamsPage() {
               />
 
               <ul className="grid sm:grid-cols-2 gap-2">
-                {activeTeam.players.map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 bg-secondary/40 rounded-lg px-3 py-2">
-                    <button
-                      type="button"
-                      title="Cambiar foto"
-                      onClick={() => { setEditingPlayerId(p.id); editFileRef.current?.click(); }}
-                      className="size-10 rounded-full overflow-hidden bg-background border border-border flex items-center justify-center shrink-0"
-                    >
-                      {p.photoUrl
-                        ? <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover" />
-                        : <Camera className="size-4 text-muted-foreground" />}
-                    </button>
-                    <div className="size-9 rounded-md bg-background border border-border flex items-center justify-center font-bold scoreboard-digit text-primary shrink-0">{p.number}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate font-medium">{p.name}</div>
-                      <select
-                        value={p.position ?? ""}
-                        onChange={(e) => updatePlayer(activeTeam.id, p.id, { position: (e.target.value || undefined) as PlayerPosition | undefined })}
-                        className="bg-transparent text-[11px] text-muted-foreground border-0 p-0 cursor-pointer focus:outline-none"
-                      >
-                        <option value="">Sin posición</option>
-                        {PLAYER_POSITIONS.map((pos) => (
-                          <option key={pos} value={pos}>{PLAYER_POSITION_LABEL[pos]}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {p.photoUrl && (
+                {activeTeam.players.map((p) => {
+                  const isEditing = editingPlayerId === p.id;
+                  return (
+                    <li key={p.id} className="flex items-center gap-3 bg-secondary/40 rounded-lg px-3 py-2">
                       <button
-                        onClick={() => updatePlayer(activeTeam.id, p.id, { photoUrl: undefined })}
-                        className="text-[10px] text-muted-foreground hover:text-destructive"
+                        type="button"
+                        title="Cambiar foto"
+                        onClick={() => { setEditingPlayerId(p.id); editFileRef.current?.click(); }}
+                        className="size-10 rounded-full overflow-hidden bg-background border border-border flex items-center justify-center shrink-0"
                       >
-                        Quitar foto
+                        {p.photoUrl
+                          ? <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover" />
+                          : <Camera className="size-4 text-muted-foreground" />}
                       </button>
-                    )}
-                    <button onClick={() => removePlayer(activeTeam.id, p.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="size-4" />
-                    </button>
-                  </li>
-                ))}
+
+                      {isEditing ? (
+                        <>
+                          <Input
+                            type="number"
+                            className="w-16 h-9 text-center"
+                            defaultValue={p.number}
+                            onBlur={(e) => {
+                              const num = parseInt(e.target.value);
+                              if (!isNaN(num) && num > 0) updatePlayer(activeTeam.id, p.id, { number: num });
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                const num = parseInt((e.target as HTMLInputElement).value);
+                                if (!isNaN(num) && num > 0) updatePlayer(activeTeam.id, p.id, { number: num });
+                              }
+                            }}
+                          />
+                          <div className="flex-1 min-w-0 flex flex-col gap-1">
+                            <Input
+                              className="h-8 text-sm"
+                              defaultValue={p.name}
+                              onBlur={(e) => updatePlayer(activeTeam.id, p.id, { name: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") updatePlayer(activeTeam.id, p.id, { name: (e.target as HTMLInputElement).value });
+                              }}
+                            />
+                            <select
+                              value={p.position ?? ""}
+                              onChange={(e) => updatePlayer(activeTeam.id, p.id, { position: (e.target.value || undefined) as PlayerPosition | undefined })}
+                              className="bg-background border border-input rounded-md px-2 py-0.5 text-xs h-7"
+                            >
+                              <option value="">Sin posición</option>
+                              {PLAYER_POSITIONS.map((pos) => (
+                                <option key={pos} value={pos}>{PLAYER_POSITION_LABEL[pos]}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <button
+                            onClick={() => setEditingPlayerId(null)}
+                            className="text-xs text-muted-foreground hover:text-foreground shrink-0"
+                          >
+                            Listo
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="size-9 rounded-md bg-background border border-border flex items-center justify-center font-bold scoreboard-digit text-primary shrink-0">{p.number}</div>
+                          <button
+                            onClick={() => setEditingPlayerId(p.id)}
+                            className="flex-1 min-w-0 text-left"
+                          >
+                            <div className="truncate font-medium">{p.name}</div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {p.position ? PLAYER_POSITION_LABEL[p.position] : "Sin posición"}
+                            </div>
+                          </button>
+                        </>
+                      )}
+
+                      {p.photoUrl && !isEditing && (
+                        <button
+                          onClick={() => updatePlayer(activeTeam.id, p.id, { photoUrl: undefined })}
+                          className="text-[10px] text-muted-foreground hover:text-destructive"
+                        >
+                          Quitar foto
+                        </button>
+                      )}
+                      {!isEditing && (
+                        <button onClick={() => removePlayer(activeTeam.id, p.id)} className="text-muted-foreground hover:text-destructive">
+                          <Trash2 className="size-4" />
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
                 {activeTeam.players.length === 0 && (
                   <li className="col-span-full text-center py-10 text-sm text-muted-foreground">Sin jugadores cargados.</li>
                 )}
