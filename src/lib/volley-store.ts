@@ -155,7 +155,13 @@ interface VolleyState {
     playerInId: string,
     playerOutId: string
   ) => void;
-  recordTimeout: (matchId: string, side: "A" | "B") => void;
+  recordTimeout: (matchId: string, side: "A" | "B") => boolean;
+  recordSanction: (
+    matchId: string,
+    side: "A" | "B",
+    playerId: string | null,
+    sanction: SanctionType
+  ) => void;
   undoLastEvent: (matchId: string) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
