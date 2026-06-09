@@ -490,7 +490,7 @@ export interface TeamStat {
   serveErrors: number;
 }
 
-export function computeMatchStats(match: Match) {
+function aggregateEvents(events: MatchEvent[], match: Match) {
   const players = new Map<string, PlayerStat>();
   const teams = new Map<string, TeamStat>();
   const ensureTeam = (id: string): TeamStat => {
@@ -512,7 +512,7 @@ export function computeMatchStats(match: Match) {
     }
     return p;
   };
-  for (const ev of match.events) {
+  for (const ev of events) {
     if (!("type" in ev)) continue;
     const scoringTeamId = ev.scoringSide === "A" ? match.teamAId : match.teamBId;
     const scoringTeam = ensureTeam(scoringTeamId);
@@ -541,6 +541,15 @@ export function computeMatchStats(match: Match) {
     }
   }
   return { players, teams };
+}
+
+export function computeMatchStats(match: Match) {
+  return aggregateEvents(match.events, match);
+}
+
+export function computeSetStats(match: Match, setNumber: number) {
+  const setEvents = match.events.filter((e) => ("setNumber" in e) && e.setNumber === setNumber);
+  return aggregateEvents(setEvents, match);
 }
 
 export interface StandingRow {
