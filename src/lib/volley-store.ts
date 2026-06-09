@@ -603,9 +603,15 @@ export interface StandingRow {
   leaguePoints: number;
 }
 
-export function computeStandings(teams: Team[], matches: Match[]): StandingRow[] {
+export function computeStandings(
+  teams: Team[],
+  matches: Match[],
+  leagueId?: string
+): StandingRow[] {
+  const scopedTeams = leagueId ? teams.filter((t) => t.leagueId === leagueId) : teams;
+  const teamSet = new Set(scopedTeams.map((t) => t.id));
   const rows = new Map<string, StandingRow>();
-  for (const t of teams) {
+  for (const t of scopedTeams) {
     rows.set(t.id, {
       teamId: t.id, played: 0, won: 0, lost: 0,
       setsFor: 0, setsAgainst: 0, pointsFor: 0, pointsAgainst: 0, leaguePoints: 0,
@@ -613,6 +619,7 @@ export function computeStandings(teams: Team[], matches: Match[]): StandingRow[]
   }
   for (const m of matches) {
     if (m.status !== "finished") continue;
+    if (leagueId && (!teamSet.has(m.teamAId) || !teamSet.has(m.teamBId))) continue;
     const a = rows.get(m.teamAId);
     const b = rows.get(m.teamBId);
     if (!a || !b) continue;
@@ -642,3 +649,4 @@ export function computeStandings(teams: Team[], matches: Match[]): StandingRow[]
       (y.pointsFor - y.pointsAgainst) - (x.pointsFor - x.pointsAgainst)
   );
 }
+
