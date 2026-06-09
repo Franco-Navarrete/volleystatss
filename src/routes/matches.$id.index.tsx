@@ -35,6 +35,26 @@ export const Route = createFileRoute("/matches/$id/")({
   component: LiveMatch,
 });
 
+function useForceLandscape(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const mq = window.matchMedia("(orientation: portrait) and (max-width: 900px)");
+    const apply = () => {
+      document.documentElement.classList.toggle("force-landscape", mq.matches);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    // Best-effort native orientation lock (works in fullscreen on some Android browsers).
+    const so: any = (screen as any).orientation;
+    so?.lock?.("landscape").catch(() => {});
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.documentElement.classList.remove("force-landscape");
+      so?.unlock?.();
+    };
+  }, [active]);
+}
+
 function LiveMatch() {
   const { id } = Route.useParams();
   const match = useVolley((s) => s.matches.find((m) => m.id === id));
@@ -63,6 +83,9 @@ function LiveMatch() {
       navigate({ to: "/matches/$id/stats", params: { id: match.id } });
     }
   }, [match?.status, match?.id, navigate]);
+
+  // Auto-rotate to landscape on portrait phones during live scoring.
+  useForceLandscape(match?.status === "live");
 
   if (!match || !teamA || !teamB) {
     return (
@@ -160,7 +183,7 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-5 gap-1.5 shrink-0">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 shrink-0">
           <Button size="sm" variant="secondary" className="h-8 text-xs" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3.5" /> Deshacer
           </Button>

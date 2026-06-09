@@ -119,3 +119,17 @@
     font-feature-settings: "tnum";
   }
 }
+
+/* Force landscape orientation on portrait mobile devices (used during live match scoring). */
+html.force-landscape, html.force-landscape body {
+  overflow: hidden;
+}
+html.force-landscape body {
+  position: fixed;
+  top: 0;
+  left: 100vw;
+  width: 100vh;
+  height: 100vw;
+  transform: rotate(90deg);
+  transform-origin: top left;
+}
