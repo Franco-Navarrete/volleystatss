@@ -7,6 +7,7 @@ export type PointType =
   | "ace"
   | "counter_attack"
   | "opponent_error"
+  | "opponent_rotation_error"
   | "serve_error"
   | "unforced_error"
   | "rotation_error";
@@ -17,6 +18,7 @@ export const POINT_TYPE_LABEL: Record<PointType, string> = {
   ace: "Saque",
   counter_attack: "Contraataque",
   opponent_error: "Error rival",
+  opponent_rotation_error: "Error de rotación rival",
   serve_error: "Error de saque",
   unforced_error: "Error no forzado",
   rotation_error: "Error de rotación",
