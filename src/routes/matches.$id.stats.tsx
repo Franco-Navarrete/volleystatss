@@ -3,9 +3,10 @@ import { useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import {
-  computeMatchStats, setsWon, useVolley, type PlayerStat,
+  computeMatchStats, computeSetStats, setsWon, useVolley, type PlayerStat, type Team,
 } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Crown, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
@@ -156,8 +157,52 @@ function StatsPage() {
         <PlayerStatsTable team={teamA} rows={playersA} />
         <PlayerStatsTable team={teamB} rows={playersB} />
       </div>
+
+      {/* Set breakdown */}
+      <section className="mt-8">
+        <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Desglose por set</h2>
+        <Tabs defaultValue={`set-${match.sets[0]?.number ?? 1}`}>
+          <TabsList className="mb-4 flex-wrap h-auto">
+            {match.sets.map((s) => (
+              <TabsTrigger key={s.number} value={`set-${s.number}`}>
+                Set {s.number}
+                <span className="ml-1.5 text-[10px] tabular-nums text-muted-foreground">({s.scoreA}-{s.scoreB})</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {match.sets.map((s) => {
+            const setStats = computeSetStats(match, s.number);
+            const setPlayersA = enrichTeamPlayers(teamA, setStats.players);
+            const setPlayersB = enrichTeamPlayers(teamB, setStats.players);
+            const setTeamA = setStats.teams.get(teamA.id) ?? null;
+            const setTeamB = setStats.teams.get(teamB.id) ?? null;
+            return (
+              <TabsContent key={s.number} value={`set-${s.number}`}>
+                <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                  <TeamSummary team={teamA} stat={setTeamA} />
+                  <TeamSummary team={teamB} stat={setTeamB} />
+                </div>
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <PlayerStatsTable team={teamA} rows={setPlayersA} />
+                  <PlayerStatsTable team={teamB} rows={setPlayersB} />
+                </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      </section>
     </AppShell>
   );
+}
+
+function enrichTeamPlayers(team: Team, playerMap: Map<string, PlayerStat>): PlayerStat[] {
+  return [...playerMap.values()]
+    .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+    .map((p) => {
+      const tp = team.players.find((x) => x.id === p.playerId)!;
+      return { ...p, name: tp.name, number: tp.number };
+    })
+    .sort((a, b) => b.total - a.total);
 }
 
 function RankingCard({
