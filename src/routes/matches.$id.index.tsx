@@ -223,7 +223,7 @@ function LiveMatch() {
 
       {/* Action menu when a player is tapped */}
       <Dialog open={!!pendingPlayer} onOpenChange={(o) => !o && setPendingPlayer(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto p-4">
           {pendingPlayer && (() => {
             const t = pendingPlayer.side === "A" ? teamA : teamB;
             const other = pendingPlayer.side === "A" ? teamB : teamA;
@@ -233,7 +233,7 @@ function LiveMatch() {
               { type: "attack", label: "Ataque", tone: "primary" },
               { type: "block", label: "Bloqueo", tone: "primary" },
               ...(isServer ? ([{ type: "ace", label: "Saque (Ace)", tone: "primary" }] as const) : []),
-              { type: "opponent_error", label: `Error del rival (${other.shortName})`, tone: "neutral" },
+              { type: "opponent_error", label: `Error rival (${other.shortName})`, tone: "neutral" },
               { type: "unforced_error", label: "Error no forzado", tone: "danger" },
               ...(isServer ? ([{ type: "serve_error", label: "Error de saque", tone: "danger" }] as const) : []),
             ];
@@ -241,7 +241,7 @@ function LiveMatch() {
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-3">
-                    <span className="size-10 rounded-full flex items-center justify-center scoreboard-digit font-black text-white" style={{ background: t.color }}>
+                    <span className="size-9 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
                       {player?.number}
                     </span>
                     <span className="truncate">
@@ -252,10 +252,10 @@ function LiveMatch() {
                     </span>
                   </DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-2 mt-2">
+                <div className="grid grid-cols-2 gap-2 mt-3">
                   {actions.map((a) => (
                     <button key={a.type} onClick={() => submitAction(a.type)}
-                      className={`w-full text-left px-4 py-3 rounded-lg font-semibold text-sm transition-all active:scale-[0.98] ${
+                      className={`w-full text-center px-3 py-2.5 rounded-lg font-semibold text-xs sm:text-sm leading-tight transition-all active:scale-[0.98] ${
                         a.tone === "primary" ? "bg-primary text-primary-foreground hover:opacity-90"
                           : a.tone === "danger" ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
                           : "bg-secondary hover:bg-secondary/70"
@@ -269,6 +269,7 @@ function LiveMatch() {
           })()}
         </DialogContent>
       </Dialog>
+
 
       {/* Substitution dialog */}
       <Dialog open={!!subState} onOpenChange={(o) => !o && setSubState(null)}>
