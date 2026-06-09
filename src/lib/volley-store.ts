@@ -7,6 +7,7 @@ export type PointType =
   | "ace"
   | "counter_attack"
   | "opponent_error"
+  | "opponent_rotation_error"
   | "serve_error"
   | "unforced_error"
   | "rotation_error";
@@ -17,6 +18,7 @@ export const POINT_TYPE_LABEL: Record<PointType, string> = {
   ace: "Saque",
   counter_attack: "Contraataque",
   opponent_error: "Error rival",
+  opponent_rotation_error: "Error de rotación rival",
   serve_error: "Error de saque",
   unforced_error: "Error no forzado",
   rotation_error: "Error de rotación",
@@ -575,6 +577,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (ev.type === "ace") scoringTeam.ace++;
     if (ev.type === "counter_attack") scoringTeam.attack++;
     if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
+    if (ev.type === "opponent_rotation_error") scoringTeam.opponentErrors++;
 
     if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error") {
       const errorTeamId = ev.playerSide === "A" ? match.teamAId : match.teamBId;
