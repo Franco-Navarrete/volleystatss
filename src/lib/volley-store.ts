@@ -575,6 +575,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (ev.type === "attack") scoringTeam.attack++;
     if (ev.type === "block") scoringTeam.block++;
     if (ev.type === "ace") scoringTeam.ace++;
+    if (ev.type === "counter_attack") scoringTeam.attack++;
     if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
     if (ev.type === "opponent_rotation_error") scoringTeam.opponentErrors++;
 
