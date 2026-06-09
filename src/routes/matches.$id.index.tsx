@@ -124,36 +124,36 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <div className="flex flex-col gap-1.5 h-full min-h-0 px-2 py-2">
+      <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px]">
         {/* Scoreboard header */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg bg-card border border-border/60 px-2 sm:px-4 py-1.5 shrink-0">
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1.5 md:py-4 shrink-0">
           <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
-          <div className="text-center px-1.5">
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
+          <div className="text-center px-1.5 md:px-4">
+            <div className="text-[9px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
             {match.status === "live" ? (
-              <span className="mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-destructive">
-                <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> Live
+              <span className="mt-0.5 md:mt-1 inline-flex items-center gap-1 text-[9px] md:text-xs font-bold uppercase tracking-widest text-destructive">
+                <span className="size-1.5 md:size-2 rounded-full bg-destructive animate-pulse" /> Live
               </span>
             ) : match.status === "finished" ? (
-              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-success">Final</span>
+              <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-success">Final</span>
             ) : (
-              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
+              <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
             )}
           </div>
           <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
         </header>
 
         {match.status === "scheduled" && (
-          <div className="rounded-xl border border-dashed border-border/60 p-4 text-center">
-            <p className="text-muted-foreground mb-3 text-sm">Iniciá el partido para registrar puntos sobre la cancha.</p>
-            <Button onClick={() => startMatch(match.id)} className="bg-gradient-primary text-primary-foreground shadow-glow">
-              <Play className="size-4" /> Iniciar partido
+          <div className="rounded-xl border border-dashed border-border/60 p-4 md:p-8 text-center">
+            <p className="text-muted-foreground mb-3 md:mb-5 text-sm md:text-base">Iniciá el partido para registrar puntos sobre la cancha.</p>
+            <Button onClick={() => startMatch(match.id)} size="lg" className="bg-gradient-primary text-primary-foreground shadow-glow">
+              <Play className="size-4 md:size-5" /> Iniciar partido
             </Button>
           </div>
         )}
 
         {/* Court + side controls */}
-        <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 items-stretch flex-1 min-h-0">
+        <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 md:min-h-[420px]">
           <SideActions
             side="left"
             disabled={!isLive}
@@ -183,31 +183,31 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 shrink-0">
-          <Button size="sm" variant="secondary" className="h-8 text-xs" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
-            <Undo2 className="size-3.5" /> Deshacer
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-3 shrink-0">
+          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
+            <Undo2 className="size-3.5 md:size-4" /> Deshacer
           </Button>
-          <Button size="sm" variant="secondary" className="h-8 text-xs" onClick={() => setShowLiveStats(true)}>
-            <ChartBarBig className="size-3.5" /> Stats vivo
+          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
+            <ChartBarBig className="size-3.5 md:size-4" /> Stats vivo
           </Button>
-          <Button asChild size="sm" variant="secondary" className="h-8 text-xs">
+          <Button asChild size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm">
             <Link to="/matches/$id/stats" params={{ id: match.id }}>
-              <ChartBarBig className="size-3.5" /> Stats final
+              <ChartBarBig className="size-3.5 md:size-4" /> Stats final
             </Link>
           </Button>
-          <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
-            <StopCircle className="size-3.5" /> Fin Set
+          <Button size="sm" variant="outline" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
+            <StopCircle className="size-3.5 md:size-4" /> Fin Set
           </Button>
-          <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={match.status === "finished"}
+          <Button size="sm" variant="destructive" className="h-8 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"}
             onClick={() => { if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id); }}>
-            <Flag className="size-3.5" /> Fin Partido
+            <Flag className="size-3.5 md:size-4" /> Fin Partido
           </Button>
         </div>
 
         {match.sets.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1 shrink-0">
+          <div className="flex flex-wrap justify-center gap-1 md:gap-2 shrink-0">
             {match.sets.map((s) => (
-              <div key={s.number} className={`px-2 py-0.5 rounded text-[10px] scoreboard-digit font-bold tabular-nums border ${
+              <div key={s.number} className={`px-2 md:px-3 py-0.5 md:py-1 rounded text-[10px] md:text-xs scoreboard-digit font-bold tabular-nums border ${
                 s.number === match.currentSet ? "border-primary text-primary bg-primary/5" : "border-border/60 text-muted-foreground"
               }`}>
                 Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
@@ -219,6 +219,7 @@ function LiveMatch() {
           </div>
         )}
       </div>
+
 
       {/* Action menu when a player is tapped */}
       <Dialog open={!!pendingPlayer} onOpenChange={(o) => !o && setPendingPlayer(null)}>
@@ -362,18 +363,18 @@ function LiveMatch() {
 function CompactShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
-      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 h-10 flex items-center justify-between shrink-0">
-        <Link to="/matches" className="flex items-center gap-2">
-          <div className="size-6 rounded-md bg-gradient-primary flex items-center justify-center">
-            <Volleyball className="size-3.5 text-primary-foreground" />
+      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-10 md:h-14 flex items-center justify-between shrink-0">
+        <Link to="/matches" className="flex items-center gap-2 md:gap-3">
+          <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
+            <Volleyball className="size-3.5 md:size-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-xs tracking-tight">RALLY</span>
+          <span className="font-bold text-xs md:text-base tracking-tight">RALLY</span>
         </Link>
-        <Link to="/matches" className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold">
+        <Link to="/matches" className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold">
           ← Partidos
         </Link>
       </header>
-      <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
+      <main className="flex-1 min-h-0 overflow-hidden md:overflow-auto">{children}</main>
     </div>
   );
 }
@@ -382,19 +383,19 @@ function ScoreColumn({ team, score, sets, align, serving }: {
   team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-2 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
-      <div className="size-9 rounded-md flex items-center justify-center font-black text-white text-xs shrink-0" style={{ background: team.color }}>
+    <div className={`flex items-center gap-2 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
+      <div className="size-9 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-xs md:text-base shrink-0" style={{ background: team.color }}>
         {team.shortName}
       </div>
       <div className="min-w-0">
-        <div className="text-xs font-bold truncate flex items-center gap-1.5">
+        <div className="text-xs md:text-lg font-bold truncate flex items-center gap-1.5">
           {team.name}
-          {serving && <span className="text-[9px] uppercase tracking-widest text-primary">● Saque</span>}
+          {serving && <span className="text-[9px] md:text-[11px] uppercase tracking-widest text-primary">● Saque</span>}
         </div>
-        <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
+        <div className="text-[9px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="scoreboard-digit text-4xl sm:text-5xl font-black leading-none mt-0.5 text-primary">{score}</div>
+        <div className="scoreboard-digit text-4xl sm:text-5xl md:text-7xl font-black leading-none mt-0.5 md:mt-1 text-primary">{score}</div>
       </div>
     </div>
   );
@@ -406,17 +407,17 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSanci
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1.5 w-[68px] sm:w-[92px] shrink-0">
-      <SideButton icon={<ArrowLeftRight className="size-3.5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
+    <div className="flex flex-col gap-1.5 md:gap-2.5 w-[68px] sm:w-[92px] md:w-[140px] shrink-0">
+      <SideButton icon={<ArrowLeftRight className="size-3.5 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton
-        icon={<Hourglass className="size-3.5" />}
+        icon={<Hourglass className="size-3.5 md:size-5" />}
         label="Tiempo"
         badge={`${timeoutsUsed}/2`}
         onClick={onTiempo}
         disabled={disabled || timeoutsUsed >= 2}
         reverse={reverse}
       />
-      <SideButton icon={<X className="size-3.5" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
+      <SideButton icon={<X className="size-3.5 md:size-5" />} label="Sanción" onClick={onSancion} disabled={disabled} reverse={reverse} />
     </div>
   );
 }
@@ -427,15 +428,16 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-1.5 px-2 py-1.5 rounded-md bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold flex-1 min-h-0`}>
+      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-1.5 md:gap-3 px-2 md:px-4 py-1.5 md:py-3 rounded-md md:rounded-lg bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs md:text-sm font-semibold flex-1 min-h-0`}>
       <span className="truncate flex flex-col items-start leading-tight">
-        <span className="text-[11px]">{label}</span>
-        {badge && <span className="text-[9px] font-bold text-muted-foreground tabular-nums">{badge}</span>}
+        <span className="text-[11px] md:text-sm">{label}</span>
+        {badge && <span className="text-[9px] md:text-[11px] font-bold text-muted-foreground tabular-nums">{badge}</span>}
       </span>
       <span className="text-muted-foreground shrink-0">{icon}</span>
     </button>
   );
 }
+
 
 function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerClick }: {
   match: Match; teamA: Team; teamB: Team;
@@ -452,11 +454,12 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
     { side: "B", team: teamB, idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg overflow-hidden h-full min-h-[180px] bg-[#1e5fa8] p-3 sm:p-5">
+    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[180px] md:min-h-[420px] bg-[#1e5fa8] p-3 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
-      <div className="absolute inset-3 sm:inset-5 bg-[#f4a36a] border-2 border-white rounded-sm" />
+      <div className="absolute inset-3 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — the two front-row columns */}
-      <div className="absolute inset-y-3 sm:inset-y-5 left-1/2 -translate-x-1/2 flex pointer-events-none">
+      <div className="absolute inset-y-3 sm:inset-y-5 md:inset-y-7 left-1/2 -translate-x-1/2 flex pointer-events-none">
+
         <div className="h-full w-[calc(50vw)] max-w-none" />
       </div>
       {/* dashed center net line */}
@@ -487,7 +490,7 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
                     key={`${ci}-${idx}`}
                     onClick={() => p && onPlayerClick(col.side, p.id)}
                     disabled={!p}
-                    className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-2xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full ${isServer ? "ring-4 ring-primary border-2 border-white" : ""}`}
+                    className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-2xl md:text-4xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full ${isServer ? "ring-4 ring-primary border-2 border-white" : ""}`}
                     style={{ background: col.team.color }}
                     title={p ? `#${p.number} ${p.name}` : ""}
                   >
