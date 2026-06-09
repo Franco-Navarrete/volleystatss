@@ -6,7 +6,7 @@ export function TeamBadge({
   size = "md",
   className,
 }: {
-  team: Pick<Team, "shortName" | "color"> | undefined;
+  team: Pick<Team, "shortName" | "color" | "logoUrl"> | undefined;
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
@@ -15,6 +15,21 @@ export function TeamBadge({
     md: "size-10 text-xs",
     lg: "size-14 text-sm",
   };
+
+  if (team?.logoUrl) {
+    return (
+      <div
+        className={cn(
+          "rounded-lg overflow-hidden shrink-0 ring-1 ring-white/10 bg-background flex items-center justify-center",
+          sizes[size],
+          className,
+        )}
+      >
+        <img src={team.logoUrl} alt={team.shortName ?? "logo"} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
