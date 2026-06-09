@@ -404,12 +404,12 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-2 px-3 py-2.5 rounded-lg bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold`}>
+      className={`flex items-center ${reverse ? "flex-row-reverse" : ""} justify-between gap-1.5 px-2 py-1.5 rounded-md bg-card border border-border/60 hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold flex-1 min-h-0`}>
       <span className="truncate flex flex-col items-start leading-tight">
-        <span>{label}</span>
+        <span className="text-[11px]">{label}</span>
         {badge && <span className="text-[9px] font-bold text-muted-foreground tabular-nums">{badge}</span>}
       </span>
-      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-muted-foreground shrink-0">{icon}</span>
     </button>
   );
 }
