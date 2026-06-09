@@ -490,7 +490,7 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
                     key={`${ci}-${idx}`}
                     onClick={() => p && onPlayerClick(col.side, p.id)}
                     disabled={!p}
-                    className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-2xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full ${isServer ? "ring-4 ring-primary border-2 border-white" : ""}`}
+                    className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-2xl md:text-4xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full ${isServer ? "ring-4 ring-primary border-2 border-white" : ""}`}
                     style={{ background: col.team.color }}
                     title={p ? `#${p.number} ${p.name}` : ""}
                   >
