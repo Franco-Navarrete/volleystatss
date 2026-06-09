@@ -30,12 +30,25 @@ export const POINT_TYPE_LABEL: Record<PointType, string> = {
 
 export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error", "attack_error"];
 
+export type PlayerPosition = "punta" | "central" | "opuesto" | "armador" | "libero";
+
+export const PLAYER_POSITIONS: PlayerPosition[] = ["punta", "central", "opuesto", "armador", "libero"];
+
+export const PLAYER_POSITION_LABEL: Record<PlayerPosition, string> = {
+  punta: "Punta",
+  central: "Central",
+  opuesto: "Opuesto",
+  armador: "Armador",
+  libero: "Líbero",
+};
+
 export interface Player {
   id: string;
   name: string;
   number: number;
   /** Optional player photo as data URL (uploaded from device). */
   photoUrl?: string;
+  position?: PlayerPosition;
 }
 
 export interface League {
