@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Volleyball } from "lucide-react";
-import { AppShell } from "@/components/AppShell";
 import {
   useVolley,
   setsWon,
