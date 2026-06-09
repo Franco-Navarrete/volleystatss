@@ -48,8 +48,8 @@ function NewMatch() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <LineupPicker team={teamA} lineup={lineupA} onToggle={(id) => toggle(lineupA, setLineupA, id)} />
-        <LineupPicker team={teamB} lineup={lineupB} onToggle={(id) => toggle(lineupB, setLineupB, id)} />
+        <LineupPicker team={teamA} lineup={lineupA} onToggle={(id) => toggle(lineupA, setLineupA, id)} onReorder={setLineupA} />
+        <LineupPicker team={teamB} lineup={lineupB} onToggle={(id) => toggle(lineupB, setLineupB, id)} onReorder={setLineupB} />
       </div>
 
       <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-2 gap-4">
