@@ -24,13 +24,22 @@ function NewMatch() {
   const [lineupB, setLineupB] = useState<string[]>([]);
   const [setsToWin, setSetsToWin] = useState(3);
   const [pointsPerSet, setPointsPerSet] = useState(25);
+  // Default scheduled date: today + 1h, rounded to local minute.
+  const [scheduledAt, setScheduledAt] = useState<string>(() => {
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    d.setSeconds(0, 0);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
 
   const teamA = useMemo(() => teams.find((t) => t.id === teamAId), [teams, teamAId]);
   const teamB = useMemo(() => teams.find((t) => t.id === teamBId), [teams, teamBId]);
 
   const canStart =
     teamAId && teamBId && teamAId !== teamBId &&
-    lineupA.length === LINEUP_SIZE && lineupB.length === LINEUP_SIZE;
+    lineupA.length === LINEUP_SIZE && lineupB.length === LINEUP_SIZE &&
+    !!scheduledAt;
+
 
   const toggle = (lineup: string[], setLineup: (v: string[]) => void, id: string) => {
     if (lineup.includes(id)) setLineup(lineup.filter((x) => x !== id));
@@ -52,7 +61,16 @@ function NewMatch() {
         <LineupPicker team={teamB} lineup={lineupB} onToggle={(id) => toggle(lineupB, setLineupB, id)} onReorder={setLineupB} />
       </div>
 
-      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-2 gap-4">
+      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-3 gap-4">
+        <label className="text-sm">
+          <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Fecha y hora</span>
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            className="w-full bg-background border border-input rounded-md px-3 py-2"
+          />
+        </label>
         <label className="text-sm">
           <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Sets para ganar</span>
           <select value={setsToWin} onChange={(e) => setSetsToWin(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2">
@@ -76,12 +94,13 @@ function NewMatch() {
           disabled={!canStart}
           className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow"
           onClick={() => {
+            const ts = new Date(scheduledAt).getTime();
             const id = createMatch({
               teamAId, teamBId,
               startingLineupA: lineupA,
               startingLineupB: lineupB,
               setsToWin, pointsPerSet,
-              scheduledAt: Date.now(),
+              scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
             });
             navigate({ to: "/matches/$id", params: { id } });
           }}
@@ -92,6 +111,7 @@ function NewMatch() {
     </AppShell>
   );
 }
+
 
 function TeamPicker({
   label, teams, excludeId, selectedId, onSelect,
@@ -139,13 +159,16 @@ function LineupPicker({
     [next[i], next[j]] = [next[j], next[i]];
     onReorder(next);
   };
-  // Court display: front row [pos4, pos3, pos2] = indices [3,2,1]; back row [pos5, pos6, pos1] = [4,5,0]
-  const grid: { idx: number; label: string }[][] = [
+  // Posiciones de voley (rotación antihoraria 1→6→5→4→3→2→1).
+  // Cancha vista desde el banco: arriba la red.
+  // Fila delantera: P4 (izq), P3 (centro), P2 (der).
+  // Fila trasera:   P5 (izq), P6 (centro), P1 (der, saca).
+  const grid: { idx: number; label: string; sub?: string }[][] = [
     [
-      { idx: 3, label: "P4" }, { idx: 2, label: "P3" }, { idx: 1, label: "P2" },
+      { idx: 3, label: "4" }, { idx: 2, label: "3" }, { idx: 1, label: "2" },
     ],
     [
-      { idx: 4, label: "P5" }, { idx: 5, label: "P6" }, { idx: 0, label: "P1 (saca)" },
+      { idx: 4, label: "5" }, { idx: 5, label: "6" }, { idx: 0, label: "1", sub: "saca" },
     ],
   ];
   return (
@@ -173,7 +196,11 @@ function LineupPicker({
                   disabled={!active && lineup.length >= LINEUP_SIZE}
                   className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-all ${active ? "bg-primary text-primary-foreground font-semibold" : "bg-secondary/40 hover:bg-secondary disabled:opacity-40"}`}
                 >
-                  <span className={`size-7 rounded scoreboard-digit font-bold flex items-center justify-center text-xs ${active ? "bg-primary-foreground/15" : "bg-background"}`}>{p.number}</span>
+                  {p.photoUrl ? (
+                    <img src={p.photoUrl} alt="" className="size-7 rounded-full object-cover shrink-0" />
+                  ) : (
+                    <span className={`size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0 ${active ? "bg-primary-foreground/15" : "bg-background"}`}>{p.number}</span>
+                  )}
                   <span className="truncate">{p.name}</span>
                 </button>
               );
@@ -181,25 +208,34 @@ function LineupPicker({
           </div>
           {lineup.length === LINEUP_SIZE && (
             <>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
-                Posicioná a los jugadores en cancha
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                  Posiciones 1–6 (antihorario)
+                </p>
+                <p className="text-[10px] text-muted-foreground">↺ 1→6→5→4→3→2→1</p>
+              </div>
               <div className="rounded-lg bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
+                <div className="text-center text-[9px] uppercase tracking-widest text-muted-foreground mb-1">— red —</div>
                 {grid.map((row, ri) => (
                   <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
-                    {row.map(({ idx, label }) => {
+                    {row.map(({ idx, label, sub }) => {
                       const pid = lineup[idx];
                       const p = team.players.find((x) => x.id === pid);
                       return (
-                        <div key={idx} className="rounded-md bg-background/40 border border-border/40 p-2 text-center">
-                          <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-1">{label}</div>
-                          <div className="size-9 mx-auto rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: team.color }}>
-                            {p?.number}
-                          </div>
-                          <div className="text-[10px] truncate mt-1">{p?.name}</div>
+                        <div key={idx} className="rounded-md bg-background/40 border border-border/40 p-2 text-center relative">
+                          <div className="absolute top-1 left-1 text-[9px] scoreboard-digit font-bold text-primary px-1 rounded bg-background/80">P{label}</div>
+                          {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold">{sub}</div>}
+                          {p?.photoUrl ? (
+                            <img src={p.photoUrl} alt="" className="size-10 mx-auto rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: team.color }} />
+                          ) : (
+                            <div className="size-10 mx-auto rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: team.color }}>
+                              {p?.number}
+                            </div>
+                          )}
+                          <div className="text-[10px] truncate mt-1 font-semibold">#{p?.number} {p?.name}</div>
                           <div className="flex justify-center gap-1 mt-1">
-                            <button type="button" onClick={() => swap(idx, idx === 0 ? lineup.length - 1 : idx - 1)} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/70">←</button>
-                            <button type="button" onClick={() => swap(idx, (idx + 1) % lineup.length)} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/70">→</button>
+                            <button type="button" title="Rotar atrás" onClick={() => swap(idx, idx === 0 ? lineup.length - 1 : idx - 1)} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/70">←</button>
+                            <button type="button" title="Rotar adelante" onClick={() => swap(idx, (idx + 1) % lineup.length)} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary hover:bg-secondary/70">→</button>
                           </div>
                         </div>
                       );
@@ -214,3 +250,4 @@ function LineupPicker({
     </section>
   );
 }
+

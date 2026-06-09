@@ -24,6 +24,15 @@ export interface Player {
   id: string;
   name: string;
   number: number;
+  /** Optional player photo as data URL (uploaded from device). */
+  photoUrl?: string;
+}
+
+export interface League {
+  id: string;
+  name: string;
+  season?: string;
+  color?: string;
 }
 
 export interface Team {
@@ -32,7 +41,10 @@ export interface Team {
   shortName: string;
   color: string;
   players: Player[];
+  /** Optional league this team belongs to. */
+  leagueId?: string;
 }
+
 
 export interface PointEvent {
   id: string;
@@ -120,10 +132,15 @@ export interface Match {
 interface VolleyState {
   teams: Team[];
   matches: Match[];
+  leagues: League[];
+  addLeague: (l: Omit<League, "id">) => string;
+  updateLeague: (id: string, patch: Partial<League>) => void;
+  removeLeague: (id: string) => void;
   addTeam: (t: Omit<Team, "id" | "players">) => string;
   updateTeam: (id: string, patch: Partial<Team>) => void;
   removeTeam: (id: string) => void;
   addPlayer: (teamId: string, p: Omit<Player, "id">) => void;
+  updatePlayer: (teamId: string, playerId: string, patch: Partial<Player>) => void;
   removePlayer: (teamId: string, playerId: string) => void;
   createMatch: (
     m: Omit<
@@ -141,8 +158,6 @@ interface VolleyState {
     > & { initialServingSide?: "A" | "B" }
   ) => string;
   startMatch: (id: string) => void;
-  /** Records a point. `playerSide` is the side of the clicked player.
-   *  For error types (serve_error, unforced_error) the opposing side scores. */
   recordPoint: (
     matchId: string,
     playerSide: "A" | "B",
@@ -167,6 +182,7 @@ interface VolleyState {
   deleteMatch: (id: string) => void;
   seedDemo: () => void;
 }
+
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -247,6 +263,20 @@ export const useVolley = create<VolleyState>()(
     (set, get) => ({
       teams: [],
       matches: [],
+      leagues: [],
+
+      addLeague: (l) => {
+        const id = uid();
+        set((s) => ({ leagues: [...s.leagues, { ...l, id }] }));
+        return id;
+      },
+      updateLeague: (id, patch) =>
+        set((s) => ({ leagues: s.leagues.map((l) => (l.id === id ? { ...l, ...patch } : l)) })),
+      removeLeague: (id) =>
+        set((s) => ({
+          leagues: s.leagues.filter((l) => l.id !== id),
+          teams: s.teams.map((t) => (t.leagueId === id ? { ...t, leagueId: undefined } : t)),
+        })),
 
       addTeam: (t) => {
         const id = uid();
@@ -263,12 +293,21 @@ export const useVolley = create<VolleyState>()(
             t.id === teamId ? { ...t, players: [...t.players, { ...p, id: uid() }] } : t
           ),
         })),
+      updatePlayer: (teamId, playerId, patch) =>
+        set((s) => ({
+          teams: s.teams.map((t) =>
+            t.id === teamId
+              ? { ...t, players: t.players.map((p) => (p.id === playerId ? { ...p, ...patch } : p)) }
+              : t
+          ),
+        })),
       removePlayer: (teamId, playerId) =>
         set((s) => ({
           teams: s.teams.map((t) =>
             t.id === teamId ? { ...t, players: t.players.filter((p) => p.id !== playerId) } : t
           ),
         })),
+
 
       createMatch: (m) => {
         const id = uid();
@@ -416,11 +455,14 @@ export const useVolley = create<VolleyState>()(
 
       seedDemo: () => {
         if (get().teams.length > 0) return;
+        const leagueId = uid();
+        const league: League = { id: leagueId, name: "Liga Apertura", season: "2026" };
         const mkTeam = (name: string, shortName: string, color: string, names: string[]): Team => ({
           id: uid(),
           name,
           shortName,
           color,
+          leagueId,
           players: names.map((n, i) => ({ id: uid(), name: n, number: i + 1 })),
         });
         const teams = [
@@ -441,8 +483,9 @@ export const useVolley = create<VolleyState>()(
             "T. Aguirre", "R. Mansilla", "S. Quiroga",
           ]),
         ];
-        set({ teams });
+        set({ teams, leagues: [league] });
       },
+
     }),
     { name: "volley-stats-store-v2" }
   )
@@ -564,9 +607,15 @@ export interface StandingRow {
   leaguePoints: number;
 }
 
-export function computeStandings(teams: Team[], matches: Match[]): StandingRow[] {
+export function computeStandings(
+  teams: Team[],
+  matches: Match[],
+  leagueId?: string
+): StandingRow[] {
+  const scopedTeams = leagueId ? teams.filter((t) => t.leagueId === leagueId) : teams;
+  const teamSet = new Set(scopedTeams.map((t) => t.id));
   const rows = new Map<string, StandingRow>();
-  for (const t of teams) {
+  for (const t of scopedTeams) {
     rows.set(t.id, {
       teamId: t.id, played: 0, won: 0, lost: 0,
       setsFor: 0, setsAgainst: 0, pointsFor: 0, pointsAgainst: 0, leaguePoints: 0,
@@ -574,6 +623,7 @@ export function computeStandings(teams: Team[], matches: Match[]): StandingRow[]
   }
   for (const m of matches) {
     if (m.status !== "finished") continue;
+    if (leagueId && (!teamSet.has(m.teamAId) || !teamSet.has(m.teamBId))) continue;
     const a = rows.get(m.teamAId);
     const b = rows.get(m.teamBId);
     if (!a || !b) continue;
@@ -603,3 +653,4 @@ export function computeStandings(teams: Team[], matches: Match[]): StandingRow[]
       (y.pointsFor - y.pointsAgainst) - (x.pointsFor - x.pointsAgainst)
   );
 }
+

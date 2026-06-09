@@ -20,9 +20,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <nav className="flex items-center gap-1 text-sm">
             <NavLink to="/">Liga</NavLink>
+            <NavLink to="/leagues">Ligas</NavLink>
             <NavLink to="/teams">Equipos</NavLink>
             <NavLink to="/matches">Partidos</NavLink>
           </nav>
+
         </div>
       </header>
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
