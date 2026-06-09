@@ -124,36 +124,36 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <div className="flex flex-col gap-1.5 h-full min-h-0 px-2 py-2">
+      <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px]">
         {/* Scoreboard header */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg bg-card border border-border/60 px-2 sm:px-4 py-1.5 shrink-0">
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1.5 md:py-4 shrink-0">
           <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
-          <div className="text-center px-1.5">
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
+          <div className="text-center px-1.5 md:px-4">
+            <div className="text-[9px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
             {match.status === "live" ? (
-              <span className="mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-destructive">
-                <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> Live
+              <span className="mt-0.5 md:mt-1 inline-flex items-center gap-1 text-[9px] md:text-xs font-bold uppercase tracking-widest text-destructive">
+                <span className="size-1.5 md:size-2 rounded-full bg-destructive animate-pulse" /> Live
               </span>
             ) : match.status === "finished" ? (
-              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-success">Final</span>
+              <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-success">Final</span>
             ) : (
-              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
+              <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
             )}
           </div>
           <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
         </header>
 
         {match.status === "scheduled" && (
-          <div className="rounded-xl border border-dashed border-border/60 p-4 text-center">
-            <p className="text-muted-foreground mb-3 text-sm">Iniciá el partido para registrar puntos sobre la cancha.</p>
-            <Button onClick={() => startMatch(match.id)} className="bg-gradient-primary text-primary-foreground shadow-glow">
-              <Play className="size-4" /> Iniciar partido
+          <div className="rounded-xl border border-dashed border-border/60 p-4 md:p-8 text-center">
+            <p className="text-muted-foreground mb-3 md:mb-5 text-sm md:text-base">Iniciá el partido para registrar puntos sobre la cancha.</p>
+            <Button onClick={() => startMatch(match.id)} size="lg" className="bg-gradient-primary text-primary-foreground shadow-glow">
+              <Play className="size-4 md:size-5" /> Iniciar partido
             </Button>
           </div>
         )}
 
         {/* Court + side controls */}
-        <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 items-stretch flex-1 min-h-0">
+        <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 md:min-h-[420px]">
           <SideActions
             side="left"
             disabled={!isLive}
@@ -183,31 +183,31 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 shrink-0">
-          <Button size="sm" variant="secondary" className="h-8 text-xs" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
-            <Undo2 className="size-3.5" /> Deshacer
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-3 shrink-0">
+          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
+            <Undo2 className="size-3.5 md:size-4" /> Deshacer
           </Button>
-          <Button size="sm" variant="secondary" className="h-8 text-xs" onClick={() => setShowLiveStats(true)}>
-            <ChartBarBig className="size-3.5" /> Stats vivo
+          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
+            <ChartBarBig className="size-3.5 md:size-4" /> Stats vivo
           </Button>
-          <Button asChild size="sm" variant="secondary" className="h-8 text-xs">
+          <Button asChild size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm">
             <Link to="/matches/$id/stats" params={{ id: match.id }}>
-              <ChartBarBig className="size-3.5" /> Stats final
+              <ChartBarBig className="size-3.5 md:size-4" /> Stats final
             </Link>
           </Button>
-          <Button size="sm" variant="outline" className="h-8 text-xs" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
-            <StopCircle className="size-3.5" /> Fin Set
+          <Button size="sm" variant="outline" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
+            <StopCircle className="size-3.5 md:size-4" /> Fin Set
           </Button>
-          <Button size="sm" variant="destructive" className="h-8 text-xs" disabled={match.status === "finished"}
+          <Button size="sm" variant="destructive" className="h-8 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"}
             onClick={() => { if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id); }}>
-            <Flag className="size-3.5" /> Fin Partido
+            <Flag className="size-3.5 md:size-4" /> Fin Partido
           </Button>
         </div>
 
         {match.sets.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1 shrink-0">
+          <div className="flex flex-wrap justify-center gap-1 md:gap-2 shrink-0">
             {match.sets.map((s) => (
-              <div key={s.number} className={`px-2 py-0.5 rounded text-[10px] scoreboard-digit font-bold tabular-nums border ${
+              <div key={s.number} className={`px-2 md:px-3 py-0.5 md:py-1 rounded text-[10px] md:text-xs scoreboard-digit font-bold tabular-nums border ${
                 s.number === match.currentSet ? "border-primary text-primary bg-primary/5" : "border-border/60 text-muted-foreground"
               }`}>
                 Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
@@ -219,6 +219,7 @@ function LiveMatch() {
           </div>
         )}
       </div>
+
 
       {/* Action menu when a player is tapped */}
       <Dialog open={!!pendingPlayer} onOpenChange={(o) => !o && setPendingPlayer(null)}>
