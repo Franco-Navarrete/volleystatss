@@ -13,6 +13,8 @@ export const Route = createFileRoute("/matches/new")({
 });
 
 const LINEUP_SIZE = 6;
+type Slot = string | null;
+const emptyLineup = (): Slot[] => Array(LINEUP_SIZE).fill(null);
 
 function NewMatch() {
   const navigate = useNavigate();
@@ -21,11 +23,10 @@ function NewMatch() {
 
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
-  const [lineupA, setLineupA] = useState<string[]>([]);
-  const [lineupB, setLineupB] = useState<string[]>([]);
+  const [lineupA, setLineupA] = useState<Slot[]>(emptyLineup);
+  const [lineupB, setLineupB] = useState<Slot[]>(emptyLineup);
   const [setsToWin, setSetsToWin] = useState(3);
   const [pointsPerSet, setPointsPerSet] = useState(25);
-  // Default scheduled date: today + 1h, rounded to local minute.
   const [scheduledAt, setScheduledAt] = useState<string>(() => {
     const d = new Date(Date.now() + 60 * 60 * 1000);
     d.setSeconds(0, 0);
@@ -36,31 +37,39 @@ function NewMatch() {
   const teamA = useMemo(() => teams.find((t) => t.id === teamAId), [teams, teamAId]);
   const teamB = useMemo(() => teams.find((t) => t.id === teamBId), [teams, teamBId]);
 
+  const lineupAFull = lineupA.every((x): x is string => !!x);
+  const lineupBFull = lineupB.every((x): x is string => !!x);
+
   const canStart =
     teamAId && teamBId && teamAId !== teamBId &&
-    lineupA.length === LINEUP_SIZE && lineupB.length === LINEUP_SIZE &&
-    !!scheduledAt;
+    lineupAFull && lineupBFull && !!scheduledAt;
 
-
-  const toggle = (lineup: string[], setLineup: (v: string[]) => void, id: string) => {
-    if (lineup.includes(id)) setLineup(lineup.filter((x) => x !== id));
-    else if (lineup.length < LINEUP_SIZE) setLineup([...lineup, id]);
+  const assignSlot = (lineup: Slot[], setLineup: (v: Slot[]) => void, slotIdx: number, playerId: string | null) => {
+    const next = [...lineup];
+    // If player already placed elsewhere, clear that slot first.
+    if (playerId) {
+      const prev = next.indexOf(playerId);
+      if (prev >= 0) next[prev] = null;
+    }
+    next[slotIdx] = playerId;
+    setLineup(next);
   };
 
   return (
     <AppShell>
       <h1 className="text-3xl font-extrabold mb-1">Nuevo partido</h1>
-      <p className="text-muted-foreground text-sm mb-6">Elegí los equipos y la formación inicial (6 jugadores).</p>
+      <p className="text-muted-foreground text-sm mb-6">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <TeamPicker label="Equipo local" teams={teams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA([]); }} />
-        <TeamPicker label="Equipo visitante" teams={teams} excludeId={teamAId} selectedId={teamBId} onSelect={(id) => { setTeamBId(id); setLineupB([]); }} />
+        <TeamPicker label="Equipo local" teams={teams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA(emptyLineup()); }} />
+        <TeamPicker label="Equipo visitante" teams={teams} excludeId={teamAId} selectedId={teamBId} onSelect={(id) => { setTeamBId(id); setLineupB(emptyLineup()); }} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <LineupPicker team={teamA} lineup={lineupA} onToggle={(id) => toggle(lineupA, setLineupA, id)} onReorder={setLineupA} />
-        <LineupPicker team={teamB} lineup={lineupB} onToggle={(id) => toggle(lineupB, setLineupB, id)} onReorder={setLineupB} />
+        <LineupPicker team={teamA} lineup={lineupA} onAssign={(i, pid) => assignSlot(lineupA, setLineupA, i, pid)} />
+        <LineupPicker team={teamB} lineup={lineupB} onAssign={(i, pid) => assignSlot(lineupB, setLineupB, i, pid)} />
       </div>
+
 
       <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-3 gap-4">
         <label className="text-sm">
