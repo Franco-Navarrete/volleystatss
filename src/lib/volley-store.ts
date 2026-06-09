@@ -51,6 +51,8 @@ export interface Team {
   players: Player[];
   /** Optional league this team belongs to. */
   leagueId?: string;
+  /** Optional team logo/crest as data URL or remote URL. */
+  logoUrl?: string;
 }
 
 
