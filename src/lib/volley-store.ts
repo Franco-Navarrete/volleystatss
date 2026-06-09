@@ -263,6 +263,20 @@ export const useVolley = create<VolleyState>()(
     (set, get) => ({
       teams: [],
       matches: [],
+      leagues: [],
+
+      addLeague: (l) => {
+        const id = uid();
+        set((s) => ({ leagues: [...s.leagues, { ...l, id }] }));
+        return id;
+      },
+      updateLeague: (id, patch) =>
+        set((s) => ({ leagues: s.leagues.map((l) => (l.id === id ? { ...l, ...patch } : l)) })),
+      removeLeague: (id) =>
+        set((s) => ({
+          leagues: s.leagues.filter((l) => l.id !== id),
+          teams: s.teams.map((t) => (t.leagueId === id ? { ...t, leagueId: undefined } : t)),
+        })),
 
       addTeam: (t) => {
         const id = uid();
@@ -279,12 +293,21 @@ export const useVolley = create<VolleyState>()(
             t.id === teamId ? { ...t, players: [...t.players, { ...p, id: uid() }] } : t
           ),
         })),
+      updatePlayer: (teamId, playerId, patch) =>
+        set((s) => ({
+          teams: s.teams.map((t) =>
+            t.id === teamId
+              ? { ...t, players: t.players.map((p) => (p.id === playerId ? { ...p, ...patch } : p)) }
+              : t
+          ),
+        })),
       removePlayer: (teamId, playerId) =>
         set((s) => ({
           teams: s.teams.map((t) =>
             t.id === teamId ? { ...t, players: t.players.filter((p) => p.id !== playerId) } : t
           ),
         })),
+
 
       createMatch: (m) => {
         const id = uid();
