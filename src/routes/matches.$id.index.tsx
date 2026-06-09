@@ -389,9 +389,15 @@ function ScoreColumn({ team, score, sets, align, serving }: {
 }) {
   return (
     <div className={`flex items-center gap-2 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
-      <div className="size-9 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-xs md:text-base shrink-0" style={{ background: team.color }}>
-        {team.shortName}
-      </div>
+      {team.logoUrl ? (
+        <div className="size-9 md:size-14 rounded-md md:rounded-lg overflow-hidden bg-background border border-border/60 shrink-0">
+          <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="size-9 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-xs md:text-base shrink-0" style={{ background: team.color }}>
+          {team.shortName}
+        </div>
+      )}
       <div className="min-w-0">
         <div className="text-xs md:text-lg font-bold truncate flex items-center gap-1.5">
           {team.name}
