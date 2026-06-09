@@ -13,6 +13,7 @@ import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MatchesIndexRouteImport } from './routes/matches.index'
 import { Route as MatchesNewRouteImport } from './routes/matches.new'
+import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 import { Route as MatchesIdIndexRouteImport } from './routes/matches.$id.index'
 import { Route as MatchesIdStatsRouteImport } from './routes/matches.$id.stats'
 
@@ -36,20 +37,26 @@ const MatchesNewRoute = MatchesNewRouteImport.update({
   path: '/matches/new',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MatchesIdIndexRoute = MatchesIdIndexRouteImport.update({
-  id: '/matches/$id/',
-  path: '/matches/$id/',
+const MatchesIdRoute = MatchesIdRouteImport.update({
+  id: '/matches/$id',
+  path: '/matches/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchesIdIndexRoute = MatchesIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MatchesIdRoute,
+} as any)
 const MatchesIdStatsRoute = MatchesIdStatsRouteImport.update({
-  id: '/matches/$id/stats',
-  path: '/matches/$id/stats',
-  getParentRoute: () => rootRouteImport,
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => MatchesIdRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/teams': typeof TeamsRoute
+  '/matches/$id': typeof MatchesIdRouteWithChildren
   '/matches/new': typeof MatchesNewRoute
   '/matches/': typeof MatchesIndexRoute
   '/matches/$id/stats': typeof MatchesIdStatsRoute
@@ -67,6 +74,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/teams': typeof TeamsRoute
+  '/matches/$id': typeof MatchesIdRouteWithChildren
   '/matches/new': typeof MatchesNewRoute
   '/matches/': typeof MatchesIndexRoute
   '/matches/$id/stats': typeof MatchesIdStatsRoute
@@ -77,6 +85,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/teams'
+    | '/matches/$id'
     | '/matches/new'
     | '/matches/'
     | '/matches/$id/stats'
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/teams'
+    | '/matches/$id'
     | '/matches/new'
     | '/matches/'
     | '/matches/$id/stats'
@@ -102,10 +112,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TeamsRoute: typeof TeamsRoute
+  MatchesIdRoute: typeof MatchesIdRouteWithChildren
   MatchesNewRoute: typeof MatchesNewRoute
   MatchesIndexRoute: typeof MatchesIndexRoute
-  MatchesIdStatsRoute: typeof MatchesIdStatsRoute
-  MatchesIdIndexRoute: typeof MatchesIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -138,30 +147,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/matches/$id': {
+      id: '/matches/$id'
+      path: '/matches/$id'
+      fullPath: '/matches/$id'
+      preLoaderRoute: typeof MatchesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/matches/$id/': {
       id: '/matches/$id/'
-      path: '/matches/$id'
+      path: '/'
       fullPath: '/matches/$id/'
       preLoaderRoute: typeof MatchesIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MatchesIdRoute
     }
     '/matches/$id/stats': {
       id: '/matches/$id/stats'
-      path: '/matches/$id/stats'
+      path: '/stats'
       fullPath: '/matches/$id/stats'
       preLoaderRoute: typeof MatchesIdStatsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MatchesIdRoute
     }
   }
 }
 
+interface MatchesIdRouteChildren {
+  MatchesIdStatsRoute: typeof MatchesIdStatsRoute
+  MatchesIdIndexRoute: typeof MatchesIdIndexRoute
+}
+
+const MatchesIdRouteChildren: MatchesIdRouteChildren = {
+  MatchesIdStatsRoute: MatchesIdStatsRoute,
+  MatchesIdIndexRoute: MatchesIdIndexRoute,
+}
+
+const MatchesIdRouteWithChildren = MatchesIdRoute._addFileChildren(
+  MatchesIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TeamsRoute: TeamsRoute,
+  MatchesIdRoute: MatchesIdRouteWithChildren,
   MatchesNewRoute: MatchesNewRoute,
   MatchesIndexRoute: MatchesIndexRoute,
-  MatchesIdStatsRoute: MatchesIdStatsRoute,
-  MatchesIdIndexRoute: MatchesIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
