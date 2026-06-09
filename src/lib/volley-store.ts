@@ -581,7 +581,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
     if (ev.type === "opponent_rotation_error") scoringTeam.opponentErrors++;
 
-    if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error") {
+    if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error" || ev.type === "attack_error") {
       const errorTeamId = ev.playerSide === "A" ? match.teamAId : match.teamBId;
       const et = ensureTeam(errorTeamId);
       if (ev.type === "serve_error") et.serveErrors++;
