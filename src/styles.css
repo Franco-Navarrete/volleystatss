@@ -146,11 +146,14 @@ html.force-landscape [data-radix-dialog-overlay] {
   top: 0 !important;
 }
 html.force-landscape .live-action-dialog {
-  left: 50vh !important;
-  top: 50vw !important;
-  width: min(420px, calc(100vh - 24px)) !important;
-  max-width: calc(100vh - 24px) !important;
-  max-height: calc(100vw - 24px) !important;
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(460px, calc(100% - 24px)) !important;
+  max-width: calc(100% - 24px) !important;
+  max-height: calc(100% - 24px) !important;
   transform: translate(-50%, -50%) !important;
   transform-origin: center;
+  margin: 0 !important;
 }
