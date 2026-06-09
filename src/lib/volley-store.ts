@@ -1,13 +1,21 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type PointType = "attack" | "block" | "ace" | "opponent_error";
+export type PointType =
+  | "attack"
+  | "block"
+  | "ace"
+  | "opponent_error"
+  | "serve_error"
+  | "unforced_error";
 
 export const POINT_TYPE_LABEL: Record<PointType, string> = {
   attack: "Ataque",
   block: "Bloqueo",
-  ace: "Ace de saque",
+  ace: "Saque",
   opponent_error: "Error rival",
+  serve_error: "Error de saque",
+  unforced_error: "Error no forzado",
 };
 
 export interface Player {
