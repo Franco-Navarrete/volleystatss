@@ -58,8 +58,16 @@ function StatsPage() {
   const teamStatA = stats.teams.get(teamA.id) ?? null;
   const teamStatB = stats.teams.get(teamB.id) ?? null;
   const w = setsWon(match);
-  const topScorer = [...playersA, ...playersB].sort((a, b) => b.total - a.total)[0];
-  const topScorerTeam = topScorer ? (playersA.includes(topScorer) ? teamA : teamB) : null;
+
+  const allPlayers: EnrichedPlayer[] = [
+    ...playersA.map((p) => ({ ...p, teamId: teamA.id, teamName: teamA.name, teamColor: teamA.color })),
+    ...playersB.map((p) => ({ ...p, teamId: teamB.id, teamName: teamB.name, teamColor: teamB.color })),
+  ];
+  const mvpRanking = [...allPlayers].sort((a, b) => mvpScore(b) - mvpScore(a));
+  const mvp = mvpRanking[0];
+  const topScorers = [...allPlayers].filter((p) => p.total > 0).sort((a, b) => b.total - a.total).slice(0, 5);
+  const topBlockers = [...allPlayers].filter((p) => p.block > 0).sort((a, b) => b.block - a.block).slice(0, 5);
+  const topServers = [...allPlayers].filter((p) => p.ace > 0).sort((a, b) => b.ace - a.ace).slice(0, 5);
 
   return (
     <AppShell>
