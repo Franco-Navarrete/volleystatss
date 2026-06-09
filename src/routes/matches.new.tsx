@@ -76,6 +76,22 @@ function NewMatch() {
         <LineupPicker team={teamB} lineup={lineupB} onAssign={(i, pid) => assignSlot(lineupB, setLineupB, i, pid)} />
       </div>
 
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <RolePicker
+          team={teamA}
+          label="Roles · local"
+          captain={captainA} setCaptain={setCaptainA}
+          libero1={liberoA1} setLibero1={setLiberoA1}
+          libero2={liberoA2} setLibero2={setLiberoA2}
+        />
+        <RolePicker
+          team={teamB}
+          label="Roles · visitante"
+          captain={captainB} setCaptain={setCaptainB}
+          libero1={liberoB1} setLibero1={setLiberoB1}
+          libero2={liberoB2} setLibero2={setLiberoB2}
+        />
+      </div>
 
       <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-3 gap-4">
         <label className="text-sm">
