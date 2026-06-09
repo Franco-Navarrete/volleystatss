@@ -64,7 +64,26 @@ export interface TimeoutEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent;
+export type SanctionType = "yellow" | "red" | "yellow_red" | "red_expulsion";
+
+export const SANCTION_LABEL: Record<SanctionType, string> = {
+  yellow: "Amarilla (amonestación)",
+  red: "Roja (punto al rival)",
+  yellow_red: "Amarilla + Roja (expulsión del set)",
+  red_expulsion: "Roja sola (descalificación)",
+};
+
+export interface SanctionEvent {
+  id: string;
+  kind: "sanction";
+  side: "A" | "B";
+  playerId: string | null;
+  sanction: SanctionType;
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent;
 
 export interface MatchSet {
   number: number;
