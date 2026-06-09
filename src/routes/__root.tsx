@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "vstats" },
+      { name: "description", content: "Volley Stats Live: Real-time volleyball statistics and league management." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "vstats" },
+      { property: "og:description", content: "Volley Stats Live: Real-time volleyball statistics and league management." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "vstats" },
+      { name: "twitter:description", content: "Volley Stats Live: Real-time volleyball statistics and league management." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/799c247b-3d7a-4bf9-8f99-0581884c1137" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/799c247b-3d7a-4bf9-8f99-0581884c1137" },
     ],
     links: [
       {
