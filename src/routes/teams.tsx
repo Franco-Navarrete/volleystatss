@@ -108,7 +108,33 @@ function TeamsPage() {
           </ul>
           <div className="space-y-2 border-t border-border/60 pt-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nuevo equipo</p>
-            <Input placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value.slice(0, 60))} />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => logoFileRef.current?.click()}
+                className="size-11 rounded-lg bg-secondary/40 hover:bg-secondary border border-border/60 flex items-center justify-center overflow-hidden shrink-0"
+                aria-label="Subir escudo"
+                title="Escudo del equipo"
+              >
+                {logo
+                  ? <img src={logo} alt="" className="w-full h-full object-cover" />
+                  : <Camera className="size-4 text-muted-foreground" />}
+              </button>
+              <input
+                ref={logoFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try { setLogo(await fileToCompressedDataUrl(f)); }
+                  catch { alert("No se pudo procesar la imagen."); }
+                  e.target.value = "";
+                }}
+              />
+              <Input placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value.slice(0, 60))} />
+            </div>
             <Input placeholder="Abreviatura (3 letras)" maxLength={4} value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase())} />
             <select
               value={newLeagueId}
@@ -132,8 +158,8 @@ function TeamsPage() {
               className="w-full"
               disabled={!name || !shortName}
               onClick={() => {
-                const id = addTeam({ name, shortName, color, leagueId: newLeagueId || undefined });
-                setName(""); setShortName(""); setNewLeagueId(""); setSelected(id);
+                const id = addTeam({ name, shortName, color, leagueId: newLeagueId || undefined, logoUrl: logo });
+                setName(""); setShortName(""); setNewLeagueId(""); setLogo(undefined); setSelected(id);
               }}
             >
               <Plus className="size-4" /> Crear equipo
