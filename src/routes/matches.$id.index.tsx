@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 
-export const Route = createFileRoute("/matches/$id")({
+export const Route = createFileRoute("/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
   component: LiveMatch,
 });
