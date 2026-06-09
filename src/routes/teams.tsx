@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
-import { useVolley } from "@/lib/volley-store";
+import { useVolley, PLAYER_POSITIONS, PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Camera, Plus, Trash2, UserPlus, Users } from "lucide-react";
