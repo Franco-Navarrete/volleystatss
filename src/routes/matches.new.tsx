@@ -61,7 +61,16 @@ function NewMatch() {
         <LineupPicker team={teamB} lineup={lineupB} onToggle={(id) => toggle(lineupB, setLineupB, id)} onReorder={setLineupB} />
       </div>
 
-      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-2 gap-4">
+      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-3 gap-4">
+        <label className="text-sm">
+          <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Fecha y hora</span>
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            className="w-full bg-background border border-input rounded-md px-3 py-2"
+          />
+        </label>
         <label className="text-sm">
           <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Sets para ganar</span>
           <select value={setsToWin} onChange={(e) => setSetsToWin(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2">
@@ -85,12 +94,13 @@ function NewMatch() {
           disabled={!canStart}
           className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow"
           onClick={() => {
+            const ts = new Date(scheduledAt).getTime();
             const id = createMatch({
               teamAId, teamBId,
               startingLineupA: lineupA,
               startingLineupB: lineupB,
               setsToWin, pointsPerSet,
-              scheduledAt: Date.now(),
+              scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
             });
             navigate({ to: "/matches/$id", params: { id } });
           }}
@@ -101,6 +111,7 @@ function NewMatch() {
     </AppShell>
   );
 }
+
 
 function TeamPicker({
   label, teams, excludeId, selectedId, onSelect,
