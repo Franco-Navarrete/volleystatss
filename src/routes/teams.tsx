@@ -58,6 +58,7 @@ function TeamsPage() {
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
+  const [logo, setLogo] = useState<string | undefined>(undefined);
   const [newLeagueId, setNewLeagueId] = useState<string>("");
   const [selected, setSelected] = useState<string | null>(null);
   const [pName, setPName] = useState("");
@@ -65,6 +66,8 @@ function TeamsPage() {
   const [pPhoto, setPPhoto] = useState<string | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const editFileRef = useRef<HTMLInputElement | null>(null);
+  const logoFileRef = useRef<HTMLInputElement | null>(null);
+  const teamLogoFileRef = useRef<HTMLInputElement | null>(null);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
 
   const activeTeam = teams.find((t) => t.id === selected) ?? teams[0];
@@ -105,7 +108,33 @@ function TeamsPage() {
           </ul>
           <div className="space-y-2 border-t border-border/60 pt-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nuevo equipo</p>
-            <Input placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value.slice(0, 60))} />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => logoFileRef.current?.click()}
+                className="size-11 rounded-lg bg-secondary/40 hover:bg-secondary border border-border/60 flex items-center justify-center overflow-hidden shrink-0"
+                aria-label="Subir escudo"
+                title="Escudo del equipo"
+              >
+                {logo
+                  ? <img src={logo} alt="" className="w-full h-full object-cover" />
+                  : <Camera className="size-4 text-muted-foreground" />}
+              </button>
+              <input
+                ref={logoFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try { setLogo(await fileToCompressedDataUrl(f)); }
+                  catch { alert("No se pudo procesar la imagen."); }
+                  e.target.value = "";
+                }}
+              />
+              <Input placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value.slice(0, 60))} />
+            </div>
             <Input placeholder="Abreviatura (3 letras)" maxLength={4} value={shortName} onChange={(e) => setShortName(e.target.value.toUpperCase())} />
             <select
               value={newLeagueId}
@@ -129,8 +158,8 @@ function TeamsPage() {
               className="w-full"
               disabled={!name || !shortName}
               onClick={() => {
-                const id = addTeam({ name, shortName, color, leagueId: newLeagueId || undefined });
-                setName(""); setShortName(""); setNewLeagueId(""); setSelected(id);
+                const id = addTeam({ name, shortName, color, leagueId: newLeagueId || undefined, logoUrl: logo });
+                setName(""); setShortName(""); setNewLeagueId(""); setLogo(undefined); setSelected(id);
               }}
             >
               <Plus className="size-4" /> Crear equipo
@@ -142,10 +171,43 @@ function TeamsPage() {
           {activeTeam ? (
             <>
               <div className="flex items-center gap-4 mb-5">
-                <TeamBadge team={activeTeam} size="lg" />
+                <button
+                  type="button"
+                  onClick={() => teamLogoFileRef.current?.click()}
+                  className="relative group rounded-lg overflow-hidden"
+                  title="Cambiar escudo"
+                >
+                  <TeamBadge team={activeTeam} size="lg" />
+                  <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Camera className="size-4 text-white" />
+                  </span>
+                </button>
+                <input
+                  ref={teamLogoFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f) return;
+                    try {
+                      const data = await fileToCompressedDataUrl(f);
+                      updateTeam(activeTeam.id, { logoUrl: data });
+                    } catch { alert("No se pudo procesar la imagen."); }
+                  }}
+                />
                 <div className="flex-1">
                   <h2 className="font-bold text-xl">{activeTeam.name}</h2>
                   <p className="text-xs text-muted-foreground uppercase tracking-widest">{activeTeam.shortName} · {activeTeam.players.length} jugadores</p>
+                  {activeTeam.logoUrl && (
+                    <button
+                      onClick={() => updateTeam(activeTeam.id, { logoUrl: undefined })}
+                      className="text-[10px] text-muted-foreground hover:text-destructive mt-1"
+                    >
+                      Quitar escudo
+                    </button>
+                  )}
                 </div>
                 <select
                   value={activeTeam.leagueId ?? ""}
