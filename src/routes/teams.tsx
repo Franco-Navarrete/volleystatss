@@ -63,6 +63,7 @@ function TeamsPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [pName, setPName] = useState("");
   const [pNum, setPNum] = useState<number | "">("");
+  const [pPos, setPPos] = useState<PlayerPosition | "">("");
   const [pPhoto, setPPhoto] = useState<string | undefined>(undefined);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const editFileRef = useRef<HTMLInputElement | null>(null);
