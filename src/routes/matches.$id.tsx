@@ -477,8 +477,8 @@ function CourtView({
     [3, 2, 1], // front column (near net, right edge)
   ];
   const sideBColumns: number[][] = [
-    [3, 2, 1], // front column (near net, left edge)
-    [4, 5, 0], // back column (right edge)
+    [1, 2, 3], // front column (near net, left edge) — mirrored
+    [0, 5, 4], // back column (right edge) — pos1 (server) at top-right
   ];
 
   return (
