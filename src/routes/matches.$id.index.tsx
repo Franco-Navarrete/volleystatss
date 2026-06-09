@@ -64,6 +64,9 @@ function LiveMatch() {
     }
   }, [match?.status, match?.id, navigate]);
 
+  // Auto-rotate to landscape on portrait phones during live scoring.
+  useForceLandscape(match?.status === "live");
+
   if (!match || !teamA || !teamB) {
     return (
       <CompactShell>
