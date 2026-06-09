@@ -66,12 +66,12 @@ function LiveMatch() {
 
   if (!match || !teamA || !teamB) {
     return (
-      <AppShell>
+      <CompactShell>
         <div className="text-center py-20">
           <p className="text-muted-foreground">Partido no encontrado.</p>
           <Button asChild className="mt-4"><Link to="/matches">Volver</Link></Button>
         </div>
-      </AppShell>
+      </CompactShell>
     );
   }
 
