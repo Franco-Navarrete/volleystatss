@@ -331,17 +331,57 @@ export const useVolley = create<VolleyState>()(
       },
 
       recordTimeout: (matchId, side) => {
+        const m = get().matches.find((x) => x.id === matchId);
+        if (!m) return false;
+        const used = timeoutsUsedInSet(m, side, m.currentSet);
+        if (used >= 2) return false;
+        const ev: TimeoutEvent = {
+          id: uid(),
+          kind: "timeout",
+          side,
+          setNumber: m.currentSet,
+          timestamp: Date.now(),
+        };
+        set((s) => ({
+          matches: s.matches.map((mm) =>
+            mm.id === matchId ? { ...mm, events: [...mm.events, ev] } : mm
+          ),
+        }));
+        return true;
+      },
+
+      recordSanction: (matchId, side, playerId, sanction) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
-            const ev: TimeoutEvent = {
+            const ev: SanctionEvent = {
               id: uid(),
-              kind: "timeout",
+              kind: "sanction",
               side,
+              playerId,
+              sanction,
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
-            return { ...m, events: [...m.events, ev] };
+            // Red card and yellow_red award a point to the opponent.
+            const awardsPoint = sanction === "red" || sanction === "yellow_red" || sanction === "red_expulsion";
+            let next: Match = { ...m, events: [...m.events, ev] };
+            if (awardsPoint) {
+              const scoringSide: "A" | "B" = side === "A" ? "B" : "A";
+              const pev: PointEvent = {
+                id: uid(),
+                scoringSide,
+                playerSide: side,
+                playerId,
+                type: "opponent_error",
+                setNumber: m.currentSet,
+                timestamp: Date.now() + 1,
+              };
+              next = { ...next, events: [...next.events, pev] };
+              const r = replayMatch(next);
+              next = { ...next, ...r };
+            }
+            return next;
           }),
         }));
       },
