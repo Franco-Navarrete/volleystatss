@@ -103,19 +103,18 @@ function LiveMatch() {
     <CompactShell>
       <div className="flex flex-col gap-1.5 h-full min-h-0 px-2 py-2">
         {/* Scoreboard header */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl bg-card border border-border/60 px-3 sm:px-5 py-2">
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg bg-card border border-border/60 px-2 sm:px-4 py-1.5 shrink-0">
           <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
-          <div className="text-center px-2">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
-            <div className="text-base font-extrabold text-primary leading-none mt-0.5">RALLY</div>
+          <div className="text-center px-1.5">
+            <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
             {match.status === "live" ? (
-              <span className="mt-1 inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-destructive">
-                <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> En vivo
+              <span className="mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-destructive">
+                <span className="size-1.5 rounded-full bg-destructive animate-pulse" /> Live
               </span>
             ) : match.status === "finished" ? (
-              <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest text-success">Final</span>
+              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-success">Final</span>
             ) : (
-              <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Programado</span>
+              <span className="mt-0.5 inline-block text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
             )}
           </div>
           <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
