@@ -127,6 +127,12 @@ export interface Match {
   initialServingSide: "A" | "B";
   scheduledAt: number;
   createdAt: number;
+  captainAId?: string | null;
+  captainBId?: string | null;
+  liberoA1Id?: string | null;
+  liberoA2Id?: string | null;
+  liberoB1Id?: string | null;
+  liberoB2Id?: string | null;
 }
 
 interface VolleyState {
