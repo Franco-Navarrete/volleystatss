@@ -58,8 +58,9 @@ function MatchesIndex() {
                       >
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                            {new Date(m.scheduledAt).toLocaleDateString()}
+                            {new Date(m.scheduledAt).toLocaleString([], { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                           </span>
+
                           {isLive && (
                             <span className="text-[10px] uppercase tracking-widest font-bold text-destructive flex items-center gap-1.5">
                               <Radio className="size-3 animate-pulse" /> En vivo
