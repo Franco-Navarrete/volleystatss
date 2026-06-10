@@ -554,9 +554,9 @@ function ScoreColumn({ team, score, sets, align, serving }: {
         <div className="text-[8px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
+        <div className="hidden md:block scoreboard-digit md:text-7xl font-black leading-none md:mt-1 text-primary">{score}</div>
       </div>
-      <div className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl font-black leading-none text-primary shrink-0 md:hidden">{score}</div>
-      <div className="hidden md:block" />
+      <div className="scoreboard-digit text-3xl sm:text-4xl font-black leading-none text-primary shrink-0 md:hidden">{score}</div>
     </div>
   );
 }
