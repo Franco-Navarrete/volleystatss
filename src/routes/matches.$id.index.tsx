@@ -537,14 +537,15 @@ function ScoreColumn({ team, score, sets, align, serving }: {
   );
 }
 
-function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSancion }: {
+function SideActions({ side, disabled, timeoutsUsed, onCambio, onLibero, onTiempo, onSancion }: {
   side: "left" | "right"; disabled: boolean; timeoutsUsed: number;
-  onCambio: () => void; onTiempo: () => void; onSancion: () => void;
+  onCambio: () => void; onLibero: () => void; onTiempo: () => void; onSancion: () => void;
 }) {
   const reverse = side === "right";
   return (
     <div className="flex flex-col gap-1.5 md:gap-2.5 w-[68px] sm:w-[92px] md:w-[140px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3.5 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
+      <SideButton icon={<Shirt className="size-3.5 md:size-5" />} label="Líbero" onClick={onLibero} disabled={disabled} reverse={reverse} />
       <SideButton
         icon={<Hourglass className="size-3.5 md:size-5" />}
         label="Tiempo"
@@ -575,19 +576,21 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerClick }: {
-  match: Match; teamA: Team; teamB: Team;
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick }: {
+  match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
-  // 4 columns left→right: A back, A front, B front, B back
+  const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
+  const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
+  // 4 columns left→right: left back, left front, right front, right back
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
-    { side: "A", team: teamA, idxs: [4, 5, 0] },
-    { side: "A", team: teamA, idxs: [3, 2, 1] },
-    { side: "B", team: teamB, idxs: [1, 2, 3] },
-    { side: "B", team: teamB, idxs: [0, 5, 4] },
+    { side: leftSide, team: teamFor(leftSide), idxs: [4, 5, 0] },
+    { side: leftSide, team: teamFor(leftSide), idxs: [3, 2, 1] },
+    { side: rightSide, team: teamFor(rightSide), idxs: [1, 2, 3] },
+    { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
     <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[180px] md:min-h-[420px] bg-[#1e5fa8] p-3 sm:p-5 md:p-7">
