@@ -72,11 +72,25 @@ function StatsPage() {
   const topBlockers = [...allPlayers].filter((p) => p.block > 0).sort((a, b) => b.block - a.block).slice(0, 5);
   const topServers = [...allPlayers].filter((p) => p.ace > 0).sort((a, b) => b.ace - a.ace).slice(0, 5);
 
+  const handleDownloadPdf = async () => {
+    try {
+      await downloadMatchPdf(match, teamA, teamB);
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el PDF");
+    }
+  };
+
   return (
     <AppShell>
-      <Button asChild variant="ghost" size="sm" className="mb-4">
-        <Link to="/matches/$id" params={{ id: match.id }}><ArrowLeft className="size-4" /> Volver al partido</Link>
-      </Button>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/matches/$id" params={{ id: match.id }}><ArrowLeft className="size-4" /> Volver al partido</Link>
+        </Button>
+        <Button size="sm" onClick={handleDownloadPdf}>
+          <Download className="size-4" /> Descargar PDF
+        </Button>
+      </div>
 
       {/* Final */}
       <section className="rounded-3xl bg-gradient-surface border border-border/60 p-6 sm:p-8 shadow-elevated mb-6">
