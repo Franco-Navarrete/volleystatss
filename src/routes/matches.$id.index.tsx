@@ -649,7 +649,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
 }
 
 function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; onClose: () => void }) {
-  const [seconds, setSeconds] = useState(15);
+  const [seconds, setSeconds] = useState(30);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     timer.current = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
@@ -672,6 +672,69 @@ function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; o
     </div>
   );
 }
+
+function LineupEditor({ match, teamA, teamB, onSave }: {
+  match: Match; teamA: Team; teamB: Team;
+  onSave: (lineupA: string[], lineupB: string[]) => void;
+}) {
+  const [lineupA, setLineupA] = useState<string[]>([...match.onCourtA]);
+  const [lineupB, setLineupB] = useState<string[]>([...match.onCourtB]);
+  const posLabels = ["Pos 1 (Saque)", "Pos 2", "Pos 3", "Pos 4", "Pos 5", "Pos 6"];
+  const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l).size === 6;
+  const valid = validSide(lineupA) && validSide(lineupB);
+
+  const renderSide = (team: Team, lineup: string[], setLineup: (l: string[]) => void) => (
+    <div className="rounded-xl border border-border/60 overflow-hidden">
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-border/60" style={{ background: `${team.color}22` }}>
+        <span className="size-6 rounded text-white text-[10px] font-black flex items-center justify-center" style={{ background: team.color }}>{team.shortName}</span>
+        <h3 className="font-bold text-sm truncate">{team.name}</h3>
+      </div>
+      <div className="p-3 flex flex-col gap-2">
+        {posLabels.map((label, i) => (
+          <label key={i} className="flex items-center gap-2 text-xs">
+            <span className="w-24 shrink-0 uppercase tracking-wider text-muted-foreground font-bold text-[10px]">{label}</span>
+            <select
+              value={lineup[i] ?? ""}
+              onChange={(e) => {
+                const next = [...lineup];
+                next[i] = e.target.value;
+                setLineup(next);
+              }}
+              className="flex-1 min-w-0 rounded-md border border-border/60 bg-background px-2 py-1.5 text-xs"
+            >
+              <option value="">— Elegir —</option>
+              {team.players.map((p) => (
+                <option key={p.id} value={p.id} disabled={lineup.includes(p.id) && lineup[i] !== p.id}>
+                  #{p.number} {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Formación · Set {match.currentSet}</DialogTitle>
+      </DialogHeader>
+      <p className="text-xs text-muted-foreground">Definí la formación inicial de cada equipo para este set (6 jugadores distintos por equipo).</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {renderSide(teamA, lineupA, setLineupA)}
+        {renderSide(teamB, lineupB, setLineupB)}
+      </div>
+      <Button disabled={!valid} onClick={() => onSave(lineupA, lineupB)} className="w-full">
+        Guardar formación
+      </Button>
+      {!valid && (
+        <p className="text-[10px] text-center text-muted-foreground">Cada equipo necesita 6 jugadores distintos.</p>
+      )}
+    </>
+  );
+}
+
 
 function SanctionDialog({ team, onCourt, onSubmit }: {
   team: Team; onCourt: string[];
