@@ -145,7 +145,24 @@ function LiveMatch() {
 
         {match.status === "scheduled" && (
           <div className="rounded-xl border border-dashed border-border/60 p-4 md:p-8 text-center">
-            <p className="text-muted-foreground mb-3 md:mb-5 text-sm md:text-base">Iniciá el partido para registrar puntos sobre la cancha.</p>
+            <p className="text-muted-foreground mb-3 md:mb-4 text-sm md:text-base">Elegí quién saca primero e iniciá el partido.</p>
+            <div className="flex items-center justify-center gap-2 mb-4 md:mb-5">
+              <span className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold mr-1">Saque inicial:</span>
+              {(["A", "B"] as const).map((side) => {
+                const t = side === "A" ? teamA : teamB;
+                const active = match.initialServingSide === side;
+                return (
+                  <button
+                    key={side}
+                    type="button"
+                    onClick={() => setInitialServingSide(match.id, side)}
+                    className={`px-3 py-1.5 rounded-md border-2 text-xs md:text-sm font-semibold transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
+                  >
+                    {t.shortName}
+                  </button>
+                );
+              })}
+            </div>
             <Button onClick={() => startMatch(match.id)} size="lg" className="bg-gradient-primary text-primary-foreground shadow-glow">
               <Play className="size-4 md:size-5" /> Iniciar partido
             </Button>
