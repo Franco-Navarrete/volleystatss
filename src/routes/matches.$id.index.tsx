@@ -801,13 +801,22 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
   const stats = useMemo(() => computeMatchStats(match), [match]);
   const renderTeam = (team: Team) => {
     const tStat = stats.teams.get(team.id);
-    const players = [...stats.players.values()]
-      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
-      .map((p) => {
-        const tp = team.players.find((x) => x.id === p.playerId)!;
-        return { ...p, name: tp.name, number: tp.number };
+    const players = team.players
+      .map((tp) => {
+        const p = stats.players.get(tp.id);
+        return {
+          playerId: tp.id,
+          name: tp.name,
+          number: tp.number,
+          attack: p?.attack ?? 0,
+          block: p?.block ?? 0,
+          ace: p?.ace ?? 0,
+          serveError: p?.serveError ?? 0,
+          unforcedError: p?.unforcedError ?? 0,
+          total: p?.total ?? 0,
+        };
       })
-      .sort((a, b) => b.total - a.total);
+      .sort((a, b) => b.total - a.total || a.number - b.number);
     return (
       <div className="rounded-xl border border-border/60 overflow-hidden">
         <div className="px-4 py-2 flex items-center gap-2 border-b border-border/60" style={{ background: `${team.color}22` }}>
