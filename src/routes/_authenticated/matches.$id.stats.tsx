@@ -7,7 +7,9 @@ import {
 } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Crown, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
+import { ArrowLeft, Crown, Download, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
+import { downloadMatchPdf } from "@/lib/match-pdf";
+import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
 
