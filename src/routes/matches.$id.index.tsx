@@ -25,8 +25,10 @@ import {
   Flag,
   Hourglass,
   Play,
+  Shirt,
   StopCircle,
   Undo2,
+  Users,
   X,
 } from "lucide-react";
 
@@ -61,6 +63,8 @@ function LiveMatch() {
   const teams = useVolley((s) => s.teams);
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
+  const setSetLineup = useVolley((s) => s.setSetLineup);
+  const toggleSidesFlipped = useVolley((s) => s.toggleSidesFlipped);
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
   const recordTimeout = useVolley((s) => s.recordTimeout);
@@ -73,6 +77,8 @@ function LiveMatch() {
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
+  const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
+  const [showLineupEditor, setShowLineupEditor] = useState(false);
   const [timeoutSide, setTimeoutSide] = useState<"A" | "B" | null>(null);
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
@@ -105,6 +111,11 @@ function LiveMatch() {
   const isLive = match.status === "live";
   const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
   const toUsedB = timeoutsUsedInSet(match, "B", match.currentSet);
+  const leftSide: "A" | "B" = match.sidesFlipped ? "B" : "A";
+  const rightSide: "A" | "B" = match.sidesFlipped ? "A" : "B";
+  const leftTeam = leftSide === "A" ? teamA : teamB;
+  const rightTeam = rightSide === "A" ? teamA : teamB;
+  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
@@ -128,7 +139,7 @@ function LiveMatch() {
       <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px]">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1.5 md:py-4 shrink-0">
-          <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
+          <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} />
           <div className="text-center px-1.5 md:px-4">
             <div className="text-[9px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
             {match.status === "live" ? (
@@ -140,8 +151,18 @@ function LiveMatch() {
             ) : (
               <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
             )}
+            <div>
+              <button
+                type="button"
+                onClick={() => toggleSidesFlipped(match.id)}
+                title="Invertir lados"
+                className="mt-1 md:mt-2 inline-flex items-center justify-center size-6 md:size-9 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
+              >
+                <ArrowLeftRight className="size-3.5 md:size-5" />
+              </button>
+            </div>
           </div>
-          <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
+          <ScoreColumn team={rightTeam} score={rightSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={rightSide === "A" ? w.a : w.b} align="left" serving={server.side === rightSide} />
         </header>
 
         {match.status === "scheduled" && (
@@ -175,16 +196,18 @@ function LiveMatch() {
           <SideActions
             side="left"
             disabled={!isLive}
-            timeoutsUsed={toUsedA}
-            onCambio={() => setSubState({ side: "A", playerOutId: "" })}
-            onTiempo={() => handleTimeout("A")}
-            onSancion={() => setSanctionSide("A")}
+            timeoutsUsed={leftSide === "A" ? toUsedA : toUsedB}
+            onCambio={() => setSubState({ side: leftSide, playerOutId: "" })}
+            onLibero={() => setLiberoState({ side: leftSide, liberoId: null })}
+            onTiempo={() => handleTimeout(leftSide)}
+            onSancion={() => setSanctionSide(leftSide)}
           />
 
           <CourtView
             match={match}
             teamA={teamA}
             teamB={teamB}
+            leftSide={leftSide}
             serverPlayerId={server.playerId}
             serverSide={server.side}
             onPlayerClick={onPlayerClick}
@@ -193,17 +216,21 @@ function LiveMatch() {
           <SideActions
             side="right"
             disabled={!isLive}
-            timeoutsUsed={toUsedB}
-            onCambio={() => setSubState({ side: "B", playerOutId: "" })}
-            onTiempo={() => handleTimeout("B")}
-            onSancion={() => setSanctionSide("B")}
+            timeoutsUsed={rightSide === "A" ? toUsedA : toUsedB}
+            onCambio={() => setSubState({ side: rightSide, playerOutId: "" })}
+            onLibero={() => setLiberoState({ side: rightSide, liberoId: null })}
+            onTiempo={() => handleTimeout(rightSide)}
+            onSancion={() => setSanctionSide(rightSide)}
           />
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-3 shrink-0">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 md:gap-3 shrink-0">
           <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3.5 md:size-4" /> Deshacer
+          </Button>
+          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || !setNotStarted} onClick={() => setShowLineupEditor(true)}>
+            <Users className="size-3.5 md:size-4" /> Formación
           </Button>
           <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
             <ChartBarBig className="size-3.5 md:size-4" /> Stats vivo
