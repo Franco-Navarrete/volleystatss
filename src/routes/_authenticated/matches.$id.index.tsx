@@ -146,25 +146,27 @@ function LiveMatch() {
     <CompactShell>
       <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px] select-none">
         {/* Scoreboard header */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1.5 md:py-4 shrink-0">
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1 md:py-4 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} />
-          <div className="text-center px-1.5 md:px-4">
-            <div className="text-[9px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
-            {match.status === "live" ? (
-              <span className="mt-0.5 md:mt-1 inline-flex items-center gap-1 text-[9px] md:text-xs font-bold uppercase tracking-widest text-destructive">
-                <span className="size-1.5 md:size-2 rounded-full bg-destructive animate-pulse" /> Live
-              </span>
-            ) : match.status === "finished" ? (
-              <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-success">Final</span>
-            ) : (
-              <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
-            )}
+          <div className="text-center px-1 md:px-4 flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0">
+            <div className="flex flex-col items-center">
+              <div className="text-[8px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
+              {match.status === "live" ? (
+                <span className="md:mt-1 inline-flex items-center gap-1 text-[8px] md:text-xs font-bold uppercase tracking-widest text-destructive">
+                  <span className="size-1 md:size-2 rounded-full bg-destructive animate-pulse" /> Live
+                </span>
+              ) : match.status === "finished" ? (
+                <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-success">Final</span>
+              ) : (
+                <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
+              )}
+            </div>
             <div>
               <button
                 type="button"
                 onClick={() => toggleSidesFlipped(match.id)}
                 title="Invertir lados"
-                className="mt-1 md:mt-2 inline-flex items-center justify-center size-6 md:size-9 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
+                className="md:mt-2 inline-flex items-center justify-center size-6 md:size-9 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
               >
                 <ArrowLeftRight className="size-3.5 md:size-5" />
               </button>
@@ -514,7 +516,7 @@ function LiveMatch() {
 function CompactShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
-      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-10 md:h-14 flex items-center justify-between shrink-0">
+      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-8 md:h-14 flex items-center justify-between shrink-0">
         <Link to="/matches" className="flex items-center gap-2 md:gap-3 min-h-10">
           <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
             <Volleyball className="size-3.5 md:size-5 text-primary-foreground" />
@@ -534,26 +536,27 @@ function ScoreColumn({ team, score, sets, align, serving }: {
   team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-2 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
+    <div className={`flex items-center gap-1.5 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
       {team.logoUrl ? (
-        <div className="size-9 md:size-14 rounded-md md:rounded-lg overflow-hidden bg-background border border-border/60 shrink-0">
+        <div className="size-7 md:size-14 rounded-md md:rounded-lg overflow-hidden bg-background border border-border/60 shrink-0">
           <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="size-9 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-xs md:text-base shrink-0" style={{ background: team.color }}>
+        <div className="size-7 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-[10px] md:text-base shrink-0" style={{ background: team.color }}>
           {team.shortName}
         </div>
       )}
       <div className="min-w-0">
-        <div className="text-xs md:text-lg font-bold truncate flex items-center gap-1.5">
+        <div className="text-[11px] md:text-lg font-bold truncate flex items-center gap-1 md:gap-1.5">
           {team.name}
-          {serving && <span className="text-[9px] md:text-[11px] uppercase tracking-widest text-primary">● Saque</span>}
+          {serving && <span className="text-[8px] md:text-[11px] uppercase tracking-widest text-primary">● Saque</span>}
         </div>
-        <div className="text-[9px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
+        <div className="text-[8px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="scoreboard-digit text-4xl sm:text-5xl md:text-7xl font-black leading-none mt-0.5 md:mt-1 text-primary">{score}</div>
+        <div className="hidden md:block scoreboard-digit md:text-7xl font-black leading-none md:mt-1 text-primary">{score}</div>
       </div>
+      <div className="scoreboard-digit text-3xl sm:text-4xl font-black leading-none text-primary shrink-0 md:hidden">{score}</div>
     </div>
   );
 }
