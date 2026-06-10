@@ -152,6 +152,8 @@ export interface Match {
   initialServingSide: "A" | "B";
   /** Optional per-set starting lineups (overrides startingLineup for that set). */
   lineupsBySet?: Record<number, { A?: string[]; B?: string[] }>;
+  /** Set numbers whose starting formation was confirmed. */
+  confirmedLineupSets?: number[];
   /** UI: display sides inverted (B on the left). */
   sidesFlipped?: boolean;
   scheduledAt: number;
@@ -195,6 +197,7 @@ interface VolleyState {
   startMatch: (id: string) => void;
   setInitialServingSide: (id: string, side: "A" | "B") => void;
   setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  confirmSetLineup: (matchId: string) => void;
   toggleSidesFlipped: (matchId: string) => void;
   recordPoint: (
     matchId: string,
