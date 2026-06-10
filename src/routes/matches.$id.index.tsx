@@ -144,7 +144,7 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px]">
+      <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px] select-none">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1.5 md:py-4 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} />
@@ -324,7 +324,7 @@ function LiveMatch() {
                 <div className="grid grid-cols-2 gap-2 mt-5">
                   {actions.map((a) => (
                     <button key={a.type} onClick={() => submitAction(a.type)}
-                      className={`min-h-9 w-full text-center px-2 py-2 rounded-lg font-semibold text-[13px] leading-tight transition-all active:scale-[0.98] ${
+                      className={`min-h-11 w-full text-center px-2 py-2 rounded-lg font-semibold text-[13px] leading-tight transition-all active:scale-[0.98] ${
                         a.tone === "primary" ? "bg-primary text-primary-foreground hover:opacity-90"
                           : a.tone === "danger" ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
                           : "bg-secondary hover:bg-secondary/70"
@@ -513,15 +513,15 @@ function LiveMatch() {
 
 function CompactShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background">
+    <div className="min-h-[100dvh] flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-10 md:h-14 flex items-center justify-between shrink-0">
-        <Link to="/matches" className="flex items-center gap-2 md:gap-3">
+        <Link to="/matches" className="flex items-center gap-2 md:gap-3 min-h-10">
           <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
             <Volleyball className="size-3.5 md:size-5 text-primary-foreground" />
           </div>
           <span className="font-bold text-xs md:text-base tracking-tight">RALLY</span>
         </Link>
-        <Link to="/matches" className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold">
+        <Link to="/matches" className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold min-h-10 flex items-center">
           ← Partidos
         </Link>
       </header>
