@@ -194,6 +194,8 @@ interface VolleyState {
   ) => string;
   startMatch: (id: string) => void;
   setInitialServingSide: (id: string, side: "A" | "B") => void;
+  setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  toggleSidesFlipped: (matchId: string) => void;
   recordPoint: (
     matchId: string,
     playerSide: "A" | "B",
@@ -249,11 +251,13 @@ function replayMatch(m: Match): {
   onCourtB: string[];
   servingSide: "A" | "B";
 } {
+  const lineupFor = (setNum: number, side: "A" | "B"): string[] =>
+    m.lineupsBySet?.[setNum]?.[side] ?? (side === "A" ? m.startingLineupA : m.startingLineupB);
   let sets: MatchSet[] = [{ number: 1, scoreA: 0, scoreB: 0, finished: false }];
   let currentSet = 1;
   let status: MatchStatus = m.events.length === 0 && m.status === "scheduled" ? "scheduled" : "live";
-  let onCourtA = [...m.startingLineupA];
-  let onCourtB = [...m.startingLineupB];
+  let onCourtA = [...lineupFor(1, "A")];
+  let onCourtB = [...lineupFor(1, "B")];
   let servingSide: "A" | "B" = m.initialServingSide;
   const target = m.pointsPerSet;
 
@@ -283,9 +287,9 @@ function replayMatch(m: Match): {
       } else {
         currentSet++;
         sets.push({ number: currentSet, scoreA: 0, scoreB: 0, finished: false });
-        // Reset rotation each set to starting lineup
-        onCourtA = [...m.startingLineupA];
-        onCourtB = [...m.startingLineupB];
+        // Reset rotation each set to that set's lineup (or starting lineup)
+        onCourtA = [...lineupFor(currentSet, "A")];
+        onCourtB = [...lineupFor(currentSet, "B")];
         // Alternate first server each set
         servingSide = currentSet % 2 === 1 ? m.initialServingSide : (m.initialServingSide === "A" ? "B" : "A");
       }
@@ -376,6 +380,25 @@ export const useVolley = create<VolleyState>()(
             m.id === id && m.status === "scheduled"
               ? { ...m, initialServingSide: side, servingSide: side }
               : m
+          ),
+        })),
+
+      setSetLineup: (matchId, side, lineup) =>
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const lineupsBySet = { ...(m.lineupsBySet ?? {}) };
+            lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: lineup };
+            const next = { ...m, lineupsBySet };
+            const r = replayMatch(next);
+            return { ...next, ...r, status: m.status };
+          }),
+        })),
+
+      toggleSidesFlipped: (matchId) =>
+        set((s) => ({
+          matches: s.matches.map((m) =>
+            m.id === matchId ? { ...m, sidesFlipped: !m.sidesFlipped } : m
           ),
         })),
 
