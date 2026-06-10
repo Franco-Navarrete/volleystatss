@@ -199,11 +199,23 @@ function LiveMatch() {
           </div>
         )}
 
+        {/* Lineup confirmation required before the set can start */}
+        {needsLineup && (
+          <div className="rounded-lg md:rounded-xl border-2 border-primary/60 bg-primary/10 px-3 py-2 md:px-5 md:py-3 flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 shrink-0">
+            <p className="text-xs md:text-sm font-semibold text-center">
+              Confirmá la formación inicial del <span className="text-primary font-bold">Set {match.currentSet}</span> para poder dar inicio.
+            </p>
+            <Button size="sm" className="h-8 md:h-10 bg-gradient-primary text-primary-foreground shadow-glow" onClick={() => setShowLineupEditor(true)}>
+              <Users className="size-3.5 md:size-4" /> Confirmar formación
+            </Button>
+          </div>
+        )}
+
         {/* Court + side controls */}
         <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 md:min-h-[420px]">
           <SideActions
             side="left"
-            disabled={!isLive}
+            disabled={actionsDisabled}
             timeoutsUsed={leftSide === "A" ? toUsedA : toUsedB}
             onCambio={() => setSubState({ side: leftSide, playerOutId: "" })}
             onLibero={() => setLiberoState({ side: leftSide, liberoId: null })}
@@ -223,7 +235,7 @@ function LiveMatch() {
 
           <SideActions
             side="right"
-            disabled={!isLive}
+            disabled={actionsDisabled}
             timeoutsUsed={rightSide === "A" ? toUsedA : toUsedB}
             onCambio={() => setSubState({ side: rightSide, playerOutId: "" })}
             onLibero={() => setLiberoState({ side: rightSide, liberoId: null })}
