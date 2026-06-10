@@ -120,6 +120,15 @@
   }
 }
 
+/* Mobile: avoid pull-to-refresh / overscroll bounce losing taps mid-rally. */
+html, body {
+  overscroll-behavior-y: none;
+}
+/* Mobile: kill the 300ms delay + double-tap zoom on all tap targets. */
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
 /* Force landscape orientation on portrait mobile devices (used during live match scoring). */
 html.force-landscape, html.force-landscape body {
   overflow: hidden;
@@ -136,8 +145,8 @@ html.force-landscape body {
 
 /* Body is rotated 90deg so its fixed-positioned children (the Radix dialog
    portal) live in a rotated coordinate system where width = 100vh and
-   height = 100vw. We size/position the dialog in those rotated units so it
-   appears centered and horizontal to the user holding the phone in portrait. */
+   height = 100vw. We size/position dialogs in those rotated units so they
+   appear centered and horizontal to the user holding the phone in portrait. */
 html.force-landscape [data-slot="dialog-overlay"],
 html.force-landscape [data-radix-dialog-overlay] {
   width: 100vh !important;
@@ -145,14 +154,17 @@ html.force-landscape [data-radix-dialog-overlay] {
   left: 0 !important;
   top: 0 !important;
 }
-html.force-landscape .live-action-dialog {
+html.force-landscape .live-action-dialog,
+html.force-landscape [data-slot="dialog-content"],
+html.force-landscape [role="dialog"][data-state] {
   left: 50% !important;
   top: 50% !important;
   right: auto !important;
   bottom: auto !important;
-  width: min(460px, calc(100% - 24px)) !important;
-  max-width: calc(100% - 24px) !important;
-  max-height: calc(100% - 24px) !important;
+  width: min(460px, calc(100vh - 24px)) !important;
+  max-width: calc(100vh - 24px) !important;
+  max-height: calc(100vw - 24px) !important;
+  overflow-y: auto;
   transform: translate(-50%, -50%) !important;
   transform-origin: center;
   margin: 0 !important;
