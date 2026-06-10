@@ -152,6 +152,7 @@ function NewMatch() {
               startingLineupA: lineupA.filter((x): x is string => !!x),
               startingLineupB: lineupB.filter((x): x is string => !!x),
               setsToWin, pointsPerSet,
+              initialServingSide: servingSide,
               scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
               captainAId: captainA || null,
               captainBId: captainB || null,
