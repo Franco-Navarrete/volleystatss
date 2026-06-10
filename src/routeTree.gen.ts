@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as ApiSeedAdminRouteImport } from './routes/api/seed-admin'
 import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
 import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedMatchesNewRouteImport } from './routes/_authenticated/matches.new'
 import { Route as AuthenticatedMatchesIdRouteImport } from './routes/_authenticated/matches.$id'
@@ -34,6 +36,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiSeedAdminRoute = ApiSeedAdminRouteImport.update({
+  id: '/api/seed-admin',
+  path: '/api/seed-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
   id: '/teams',
   path: '/teams',
@@ -42,6 +49,11 @@ const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
 const AuthenticatedLeaguesRoute = AuthenticatedLeaguesRouteImport.update({
   id: '/leagues',
   path: '/leagues',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMatchesIndexRoute =
@@ -76,8 +88,10 @@ const AuthenticatedMatchesIdStatsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
   '/teams': typeof AuthenticatedTeamsRoute
+  '/api/seed-admin': typeof ApiSeedAdminRoute
   '/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/matches/new': typeof AuthenticatedMatchesNewRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
@@ -86,8 +100,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
   '/teams': typeof AuthenticatedTeamsRoute
+  '/api/seed-admin': typeof ApiSeedAdminRoute
   '/': typeof AuthenticatedIndexRoute
   '/matches/new': typeof AuthenticatedMatchesNewRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
@@ -98,8 +114,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/leagues': typeof AuthenticatedLeaguesRoute
   '/_authenticated/teams': typeof AuthenticatedTeamsRoute
+  '/api/seed-admin': typeof ApiSeedAdminRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/_authenticated/matches/new': typeof AuthenticatedMatchesNewRoute
@@ -112,8 +130,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/leagues'
     | '/teams'
+    | '/api/seed-admin'
     | '/matches/$id'
     | '/matches/new'
     | '/matches/'
@@ -122,8 +142,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/admin'
     | '/leagues'
     | '/teams'
+    | '/api/seed-admin'
     | '/'
     | '/matches/new'
     | '/matches'
@@ -133,8 +155,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/leagues'
     | '/_authenticated/teams'
+    | '/api/seed-admin'
     | '/_authenticated/'
     | '/_authenticated/matches/$id'
     | '/_authenticated/matches/new'
@@ -146,6 +170,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiSeedAdminRoute: typeof ApiSeedAdminRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -171,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/seed-admin': {
+      id: '/api/seed-admin'
+      path: '/api/seed-admin'
+      fullPath: '/api/seed-admin'
+      preLoaderRoute: typeof ApiSeedAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/teams': {
       id: '/_authenticated/teams'
       path: '/teams'
@@ -183,6 +215,13 @@ declare module '@tanstack/react-router' {
       path: '/leagues'
       fullPath: '/leagues'
       preLoaderRoute: typeof AuthenticatedLeaguesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/matches/': {
@@ -240,6 +279,7 @@ const AuthenticatedMatchesIdRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedLeaguesRoute: typeof AuthenticatedLeaguesRoute
   AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -249,6 +289,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedLeaguesRoute: AuthenticatedLeaguesRoute,
   AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
@@ -263,6 +304,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiSeedAdminRoute: ApiSeedAdminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
