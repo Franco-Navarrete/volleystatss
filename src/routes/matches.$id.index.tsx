@@ -747,7 +747,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         {renderSide(teamB, lineupB, setLineupB)}
       </div>
       <Button disabled={!valid} onClick={() => onSave(lineupA, lineupB)} className="w-full">
-        Guardar formación
+        Confirmar formación
       </Button>
       {!valid && (
         <p className="text-[10px] text-center text-muted-foreground">Cada equipo necesita 6 jugadores distintos.</p>
