@@ -645,16 +645,43 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 const pid = onCourt[idx];
                 const p = col.team.players.find((x) => x.id === pid);
                 const isServer = pid && pid === serverPid;
+                const designated = (col.side === "A"
+                  ? [match.liberoA1Id, match.liberoA2Id]
+                  : [match.liberoB1Id, match.liberoB2Id]
+                ).filter(Boolean) as string[];
+                const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
+                let replacedName: string | null = null;
+                if (isLibero && pid) {
+                  for (let i = match.events.length - 1; i >= 0; i--) {
+                    const ev = match.events[i];
+                    if ("kind" in ev && ev.kind === "sub" && ev.side === col.side && ev.playerInId === pid) {
+                      const rp = col.team.players.find((x) => x.id === ev.playerOutId);
+                      replacedName = rp ? `#${rp.number} ${rp.name}` : null;
+                      break;
+                    }
+                  }
+                }
                 return (
                   <button
                     key={`${ci}-${idx}`}
                     onClick={() => p && onPlayerClick(col.side, p.id)}
                     disabled={!p}
-                    className={`relative rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg sm:text-2xl md:text-4xl shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full ${isServer ? "ring-4 ring-primary border-2 border-white" : ""}`}
-                    style={{ background: col.team.color }}
+                    className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full overflow-hidden ${isServer ? "ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
+                    style={isLibero
+                      ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
+                      : { background: col.team.color }}
                     title={p ? `#${p.number} ${p.name}` : ""}
                   >
-                    {p?.number ?? "?"}
+                    <span className="scoreboard-digit leading-none text-base sm:text-xl md:text-3xl">{p?.number ?? "?"}</span>
+                    {p && (
+                      <span className="max-w-[90%] truncate text-[7px] sm:text-[9px] md:text-[11px] font-bold leading-tight">{p.name}</span>
+                    )}
+                    {isLibero && replacedName && (
+                      <span className="max-w-[90%] truncate text-[6px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
+                    )}
+                    {isLibero && (
+                      <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[6px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
+                    )}
                     {isServer && (
                       <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[8px] font-bold uppercase tracking-widest">Saque</span>
                     )}
