@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Camera, Plus, Trash2, UserPlus, Users } from "lucide-react";
 
-export const Route = createFileRoute("/teams")({
+export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({ meta: [{ title: "Equipos · RALLY" }] }),
   component: TeamsPage,
 });

@@ -1,30 +1,61 @@
-import { Link } from "@tanstack/react-router";
-import { Volleyball } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { LogOut, ShieldCheck, Volleyball } from "lucide-react";
 import type { ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { stopCloudSync } from "@/lib/cloud-sync";
+import { useIsAdmin } from "@/hooks/use-auth";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const { user, isAdmin } = useIsAdmin();
+
+  const signOut = async () => {
+    stopCloudSync();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl sticky top-0 z-40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="size-9 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
               <Volleyball className="size-5 text-primary-foreground" />
             </div>
-            <div className="leading-tight">
+            <div className="leading-tight hidden sm:block">
               <div className="font-bold text-sm tracking-tight">RALLY</div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
                 Live Stats
               </div>
             </div>
           </Link>
-          <nav className="flex items-center gap-1 text-sm">
+          <nav className="flex items-center gap-1 text-sm overflow-x-auto">
             <NavLink to="/">Liga</NavLink>
             <NavLink to="/leagues">Ligas</NavLink>
             <NavLink to="/teams">Equipos</NavLink>
             <NavLink to="/matches">Partidos</NavLink>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors font-medium flex items-center gap-1"
+                activeProps={{
+                  className:
+                    "px-3 py-2 rounded-md text-foreground bg-secondary font-semibold flex items-center gap-1",
+                }}
+              >
+                <ShieldCheck className="size-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
+            )}
           </nav>
-
+          <button
+            onClick={() => void signOut()}
+            title={user?.email ? `Cerrar sesión (${user.email})` : "Cerrar sesión"}
+            className="shrink-0 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+          >
+            <LogOut className="size-4" />
+          </button>
         </div>
       </header>
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -32,6 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <footer className="border-t border-border/40 py-6 text-center text-xs text-muted-foreground">
         RALLY · estadísticas en tiempo real
+        {user?.email ? ` · ${user.email}` : ""}
       </footer>
     </div>
   );

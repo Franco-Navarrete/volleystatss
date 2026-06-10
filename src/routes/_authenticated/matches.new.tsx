@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, Plus, X } from "lucide-react";
 
-export const Route = createFileRoute("/matches/new")({
+export const Route = createFileRoute("/_authenticated/matches/new")({
   head: () => ({ meta: [{ title: "Nuevo partido · RALLY" }] }),
   component: NewMatch,
 });

@@ -18,7 +18,7 @@ const mvpScore = (p: PlayerStat) =>
   p.ace * MVP_WEIGHTS.ace +
   p.unforcedError * MVP_WEIGHTS.unforcedError;
 
-export const Route = createFileRoute("/matches/$id/stats")({
+export const Route = createFileRoute("/_authenticated/matches/$id/stats")({
   head: () => ({ meta: [{ title: "Estadísticas · RALLY" }] }),
   component: StatsPage,
 });

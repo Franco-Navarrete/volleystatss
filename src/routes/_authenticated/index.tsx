@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Plus, Trophy } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "RALLY · Liga de Vóley en Vivo" },

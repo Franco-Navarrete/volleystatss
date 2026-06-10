@@ -9,90 +9,119 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TeamsRouteImport } from './routes/teams'
-import { Route as LeaguesRouteImport } from './routes/leagues'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as MatchesIndexRouteImport } from './routes/matches.index'
-import { Route as MatchesNewRouteImport } from './routes/matches.new'
-import { Route as MatchesIdRouteImport } from './routes/matches.$id'
-import { Route as MatchesIdIndexRouteImport } from './routes/matches.$id.index'
-import { Route as MatchesIdStatsRouteImport } from './routes/matches.$id.stats'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
+import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
+import { Route as AuthenticatedMatchesNewRouteImport } from './routes/_authenticated/matches.new'
+import { Route as AuthenticatedMatchesIdRouteImport } from './routes/_authenticated/matches.$id'
+import { Route as AuthenticatedMatchesIdIndexRouteImport } from './routes/_authenticated/matches.$id.index'
+import { Route as AuthenticatedMatchesIdStatsRouteImport } from './routes/_authenticated/matches.$id.stats'
 
-const TeamsRoute = TeamsRouteImport.update({
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
   id: '/teams',
   path: '/teams',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const LeaguesRoute = LeaguesRouteImport.update({
+const AuthenticatedLeaguesRoute = AuthenticatedLeaguesRouteImport.update({
   id: '/leagues',
   path: '/leagues',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const MatchesIndexRoute = MatchesIndexRouteImport.update({
-  id: '/matches/',
-  path: '/matches/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MatchesNewRoute = MatchesNewRouteImport.update({
+const AuthenticatedMatchesIndexRoute =
+  AuthenticatedMatchesIndexRouteImport.update({
+    id: '/matches/',
+    path: '/matches/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMatchesNewRoute = AuthenticatedMatchesNewRouteImport.update({
   id: '/matches/new',
   path: '/matches/new',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const MatchesIdRoute = MatchesIdRouteImport.update({
+const AuthenticatedMatchesIdRoute = AuthenticatedMatchesIdRouteImport.update({
   id: '/matches/$id',
   path: '/matches/$id',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const MatchesIdIndexRoute = MatchesIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => MatchesIdRoute,
-} as any)
-const MatchesIdStatsRoute = MatchesIdStatsRouteImport.update({
-  id: '/stats',
-  path: '/stats',
-  getParentRoute: () => MatchesIdRoute,
-} as any)
+const AuthenticatedMatchesIdIndexRoute =
+  AuthenticatedMatchesIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMatchesIdRoute,
+  } as any)
+const AuthenticatedMatchesIdStatsRoute =
+  AuthenticatedMatchesIdStatsRouteImport.update({
+    id: '/stats',
+    path: '/stats',
+    getParentRoute: () => AuthenticatedMatchesIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/leagues': typeof LeaguesRoute
-  '/teams': typeof TeamsRoute
-  '/matches/$id': typeof MatchesIdRouteWithChildren
-  '/matches/new': typeof MatchesNewRoute
-  '/matches/': typeof MatchesIndexRoute
-  '/matches/$id/stats': typeof MatchesIdStatsRoute
-  '/matches/$id/': typeof MatchesIdIndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/leagues': typeof AuthenticatedLeaguesRoute
+  '/teams': typeof AuthenticatedTeamsRoute
+  '/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
+  '/matches/new': typeof AuthenticatedMatchesNewRoute
+  '/matches/': typeof AuthenticatedMatchesIndexRoute
+  '/matches/$id/stats': typeof AuthenticatedMatchesIdStatsRoute
+  '/matches/$id/': typeof AuthenticatedMatchesIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/leagues': typeof LeaguesRoute
-  '/teams': typeof TeamsRoute
-  '/matches/new': typeof MatchesNewRoute
-  '/matches': typeof MatchesIndexRoute
-  '/matches/$id/stats': typeof MatchesIdStatsRoute
-  '/matches/$id': typeof MatchesIdIndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/leagues': typeof AuthenticatedLeaguesRoute
+  '/teams': typeof AuthenticatedTeamsRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/matches/new': typeof AuthenticatedMatchesNewRoute
+  '/matches': typeof AuthenticatedMatchesIndexRoute
+  '/matches/$id/stats': typeof AuthenticatedMatchesIdStatsRoute
+  '/matches/$id': typeof AuthenticatedMatchesIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/leagues': typeof LeaguesRoute
-  '/teams': typeof TeamsRoute
-  '/matches/$id': typeof MatchesIdRouteWithChildren
-  '/matches/new': typeof MatchesNewRoute
-  '/matches/': typeof MatchesIndexRoute
-  '/matches/$id/stats': typeof MatchesIdStatsRoute
-  '/matches/$id/': typeof MatchesIdIndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/leagues': typeof AuthenticatedLeaguesRoute
+  '/_authenticated/teams': typeof AuthenticatedTeamsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
+  '/_authenticated/matches/new': typeof AuthenticatedMatchesNewRoute
+  '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
+  '/_authenticated/matches/$id/stats': typeof AuthenticatedMatchesIdStatsRoute
+  '/_authenticated/matches/$id/': typeof AuthenticatedMatchesIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/admin'
     | '/leagues'
     | '/teams'
     | '/matches/$id'
@@ -102,117 +131,170 @@ export interface FileRouteTypes {
     | '/matches/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
+    | '/auth'
+    | '/admin'
     | '/leagues'
     | '/teams'
+    | '/'
     | '/matches/new'
     | '/matches'
     | '/matches/$id/stats'
     | '/matches/$id'
   id:
     | '__root__'
-    | '/'
-    | '/leagues'
-    | '/teams'
-    | '/matches/$id'
-    | '/matches/new'
-    | '/matches/'
-    | '/matches/$id/stats'
-    | '/matches/$id/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/admin'
+    | '/_authenticated/leagues'
+    | '/_authenticated/teams'
+    | '/_authenticated/'
+    | '/_authenticated/matches/$id'
+    | '/_authenticated/matches/new'
+    | '/_authenticated/matches/'
+    | '/_authenticated/matches/$id/stats'
+    | '/_authenticated/matches/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  LeaguesRoute: typeof LeaguesRoute
-  TeamsRoute: typeof TeamsRoute
-  MatchesIdRoute: typeof MatchesIdRouteWithChildren
-  MatchesNewRoute: typeof MatchesNewRoute
-  MatchesIndexRoute: typeof MatchesIndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/teams': {
-      id: '/teams'
-      path: '/teams'
-      fullPath: '/teams'
-      preLoaderRoute: typeof TeamsRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/leagues': {
-      id: '/leagues'
-      path: '/leagues'
-      fullPath: '/leagues'
-      preLoaderRoute: typeof LeaguesRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/matches/': {
-      id: '/matches/'
+    '/_authenticated/teams': {
+      id: '/_authenticated/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof AuthenticatedTeamsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leagues': {
+      id: '/_authenticated/leagues'
+      path: '/leagues'
+      fullPath: '/leagues'
+      preLoaderRoute: typeof AuthenticatedLeaguesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/matches/': {
+      id: '/_authenticated/matches/'
       path: '/matches'
       fullPath: '/matches/'
-      preLoaderRoute: typeof MatchesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedMatchesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/matches/new': {
-      id: '/matches/new'
+    '/_authenticated/matches/new': {
+      id: '/_authenticated/matches/new'
       path: '/matches/new'
       fullPath: '/matches/new'
-      preLoaderRoute: typeof MatchesNewRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedMatchesNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/matches/$id': {
-      id: '/matches/$id'
+    '/_authenticated/matches/$id': {
+      id: '/_authenticated/matches/$id'
       path: '/matches/$id'
       fullPath: '/matches/$id'
-      preLoaderRoute: typeof MatchesIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedMatchesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/matches/$id/': {
-      id: '/matches/$id/'
+    '/_authenticated/matches/$id/': {
+      id: '/_authenticated/matches/$id/'
       path: '/'
       fullPath: '/matches/$id/'
-      preLoaderRoute: typeof MatchesIdIndexRouteImport
-      parentRoute: typeof MatchesIdRoute
+      preLoaderRoute: typeof AuthenticatedMatchesIdIndexRouteImport
+      parentRoute: typeof AuthenticatedMatchesIdRoute
     }
-    '/matches/$id/stats': {
-      id: '/matches/$id/stats'
+    '/_authenticated/matches/$id/stats': {
+      id: '/_authenticated/matches/$id/stats'
       path: '/stats'
       fullPath: '/matches/$id/stats'
-      preLoaderRoute: typeof MatchesIdStatsRouteImport
-      parentRoute: typeof MatchesIdRoute
+      preLoaderRoute: typeof AuthenticatedMatchesIdStatsRouteImport
+      parentRoute: typeof AuthenticatedMatchesIdRoute
     }
   }
 }
 
-interface MatchesIdRouteChildren {
-  MatchesIdStatsRoute: typeof MatchesIdStatsRoute
-  MatchesIdIndexRoute: typeof MatchesIdIndexRoute
+interface AuthenticatedMatchesIdRouteChildren {
+  AuthenticatedMatchesIdStatsRoute: typeof AuthenticatedMatchesIdStatsRoute
+  AuthenticatedMatchesIdIndexRoute: typeof AuthenticatedMatchesIdIndexRoute
 }
 
-const MatchesIdRouteChildren: MatchesIdRouteChildren = {
-  MatchesIdStatsRoute: MatchesIdStatsRoute,
-  MatchesIdIndexRoute: MatchesIdIndexRoute,
+const AuthenticatedMatchesIdRouteChildren: AuthenticatedMatchesIdRouteChildren =
+  {
+    AuthenticatedMatchesIdStatsRoute: AuthenticatedMatchesIdStatsRoute,
+    AuthenticatedMatchesIdIndexRoute: AuthenticatedMatchesIdIndexRoute,
+  }
+
+const AuthenticatedMatchesIdRouteWithChildren =
+  AuthenticatedMatchesIdRoute._addFileChildren(
+    AuthenticatedMatchesIdRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedLeaguesRoute: typeof AuthenticatedLeaguesRoute
+  AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedMatchesIdRoute: typeof AuthenticatedMatchesIdRouteWithChildren
+  AuthenticatedMatchesNewRoute: typeof AuthenticatedMatchesNewRoute
+  AuthenticatedMatchesIndexRoute: typeof AuthenticatedMatchesIndexRoute
 }
 
-const MatchesIdRouteWithChildren = MatchesIdRoute._addFileChildren(
-  MatchesIdRouteChildren,
-)
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedLeaguesRoute: AuthenticatedLeaguesRoute,
+  AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedMatchesIdRoute: AuthenticatedMatchesIdRouteWithChildren,
+  AuthenticatedMatchesNewRoute: AuthenticatedMatchesNewRoute,
+  AuthenticatedMatchesIndexRoute: AuthenticatedMatchesIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  LeaguesRoute: LeaguesRoute,
-  TeamsRoute: TeamsRoute,
-  MatchesIdRoute: MatchesIdRouteWithChildren,
-  MatchesNewRoute: MatchesNewRoute,
-  MatchesIndexRoute: MatchesIndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
