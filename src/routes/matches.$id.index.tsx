@@ -25,8 +25,10 @@ import {
   Flag,
   Hourglass,
   Play,
+  Shirt,
   StopCircle,
   Undo2,
+  Users,
   X,
 } from "lucide-react";
 
@@ -61,6 +63,8 @@ function LiveMatch() {
   const teams = useVolley((s) => s.teams);
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
+  const setSetLineup = useVolley((s) => s.setSetLineup);
+  const toggleSidesFlipped = useVolley((s) => s.toggleSidesFlipped);
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
   const recordTimeout = useVolley((s) => s.recordTimeout);
@@ -73,6 +77,8 @@ function LiveMatch() {
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
+  const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
+  const [showLineupEditor, setShowLineupEditor] = useState(false);
   const [timeoutSide, setTimeoutSide] = useState<"A" | "B" | null>(null);
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
@@ -105,6 +111,11 @@ function LiveMatch() {
   const isLive = match.status === "live";
   const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
   const toUsedB = timeoutsUsedInSet(match, "B", match.currentSet);
+  const leftSide: "A" | "B" = match.sidesFlipped ? "B" : "A";
+  const rightSide: "A" | "B" = match.sidesFlipped ? "A" : "B";
+  const leftTeam = leftSide === "A" ? teamA : teamB;
+  const rightTeam = rightSide === "A" ? teamA : teamB;
+  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
@@ -128,7 +139,7 @@ function LiveMatch() {
       <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px]">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1.5 md:py-4 shrink-0">
-          <ScoreColumn team={teamA} score={currentSet.scoreA} sets={w.a} align="right" serving={server.side === "A"} />
+          <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} />
           <div className="text-center px-1.5 md:px-4">
             <div className="text-[9px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
             {match.status === "live" ? (
@@ -140,8 +151,18 @@ function LiveMatch() {
             ) : (
               <span className="mt-0.5 md:mt-1 inline-block text-[9px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
             )}
+            <div>
+              <button
+                type="button"
+                onClick={() => toggleSidesFlipped(match.id)}
+                title="Invertir lados"
+                className="mt-1 md:mt-2 inline-flex items-center justify-center size-6 md:size-9 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
+              >
+                <ArrowLeftRight className="size-3.5 md:size-5" />
+              </button>
+            </div>
           </div>
-          <ScoreColumn team={teamB} score={currentSet.scoreB} sets={w.b} align="left" serving={server.side === "B"} />
+          <ScoreColumn team={rightTeam} score={rightSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={rightSide === "A" ? w.a : w.b} align="left" serving={server.side === rightSide} />
         </header>
 
         {match.status === "scheduled" && (
@@ -175,16 +196,18 @@ function LiveMatch() {
           <SideActions
             side="left"
             disabled={!isLive}
-            timeoutsUsed={toUsedA}
-            onCambio={() => setSubState({ side: "A", playerOutId: "" })}
-            onTiempo={() => handleTimeout("A")}
-            onSancion={() => setSanctionSide("A")}
+            timeoutsUsed={leftSide === "A" ? toUsedA : toUsedB}
+            onCambio={() => setSubState({ side: leftSide, playerOutId: "" })}
+            onLibero={() => setLiberoState({ side: leftSide, liberoId: null })}
+            onTiempo={() => handleTimeout(leftSide)}
+            onSancion={() => setSanctionSide(leftSide)}
           />
 
           <CourtView
             match={match}
             teamA={teamA}
             teamB={teamB}
+            leftSide={leftSide}
             serverPlayerId={server.playerId}
             serverSide={server.side}
             onPlayerClick={onPlayerClick}
@@ -193,17 +216,21 @@ function LiveMatch() {
           <SideActions
             side="right"
             disabled={!isLive}
-            timeoutsUsed={toUsedB}
-            onCambio={() => setSubState({ side: "B", playerOutId: "" })}
-            onTiempo={() => handleTimeout("B")}
-            onSancion={() => setSanctionSide("B")}
+            timeoutsUsed={rightSide === "A" ? toUsedA : toUsedB}
+            onCambio={() => setSubState({ side: rightSide, playerOutId: "" })}
+            onLibero={() => setLiberoState({ side: rightSide, liberoId: null })}
+            onTiempo={() => handleTimeout(rightSide)}
+            onSancion={() => setSanctionSide(rightSide)}
           />
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-3 shrink-0">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 md:gap-3 shrink-0">
           <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3.5 md:size-4" /> Deshacer
+          </Button>
+          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || !setNotStarted} onClick={() => setShowLineupEditor(true)}>
+            <Users className="size-3.5 md:size-4" /> Formación
           </Button>
           <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
             <ChartBarBig className="size-3.5 md:size-4" /> Stats vivo
@@ -372,6 +399,86 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Libero entry dialog */}
+      <Dialog open={!!liberoState} onOpenChange={(o) => !o && setLiberoState(null)}>
+        <DialogContent>
+          {liberoState && (() => {
+            const t = liberoState.side === "A" ? teamA : teamB;
+            const onCourt = liberoState.side === "A" ? match.onCourtA : match.onCourtB;
+            const onCourtSet = new Set(onCourt);
+            const designated = (liberoState.side === "A"
+              ? [match.liberoA1Id, match.liberoA2Id]
+              : [match.liberoB1Id, match.liberoB2Id]
+            ).filter(Boolean) as string[];
+            const liberos = t.players.filter(
+              (p) =>
+                !onCourtSet.has(p.id) &&
+                (designated.length > 0 ? designated.includes(p.id) : p.position === "libero")
+            );
+            return (
+              <>
+                <DialogHeader><DialogTitle>Líbero · {t.name}</DialogTitle></DialogHeader>
+                {!liberoState.liberoId ? (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-2">Líbero que ENTRA</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {liberos.map((p) => (
+                        <button key={p.id} onClick={() => setLiberoState({ ...liberoState, liberoId: p.id })}
+                          className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-success/20">
+                          <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
+                          <span className="text-sm truncate">{p.name}</span>
+                        </button>
+                      ))}
+                      {liberos.length === 0 && (
+                        <p className="col-span-2 text-center text-sm text-muted-foreground py-4">
+                          No hay líberos disponibles. Asigná la posición "Líbero" a un jugador del plantel.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-2">Jugador que SALE (reemplazado por el líbero)</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {onCourt.map((pid) => {
+                        const p = t.players.find((x) => x.id === pid);
+                        if (!p) return null;
+                        return (
+                          <button key={p.id}
+                            onClick={() => { recordSub(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
+                            className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-destructive/20">
+                            <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
+                            <span className="text-sm truncate">{p.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Set lineup editor */}
+      <Dialog open={showLineupEditor} onOpenChange={setShowLineupEditor}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {showLineupEditor && (
+            <LineupEditor
+              match={match}
+              teamA={teamA}
+              teamB={teamB}
+              onSave={(lineupA, lineupB) => {
+                setSetLineup(match.id, "A", lineupA);
+                setSetLineup(match.id, "B", lineupB);
+                setShowLineupEditor(false);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Live stats */}
       <Dialog open={showLiveStats} onOpenChange={setShowLiveStats}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
@@ -430,14 +537,15 @@ function ScoreColumn({ team, score, sets, align, serving }: {
   );
 }
 
-function SideActions({ side, disabled, timeoutsUsed, onCambio, onTiempo, onSancion }: {
+function SideActions({ side, disabled, timeoutsUsed, onCambio, onLibero, onTiempo, onSancion }: {
   side: "left" | "right"; disabled: boolean; timeoutsUsed: number;
-  onCambio: () => void; onTiempo: () => void; onSancion: () => void;
+  onCambio: () => void; onLibero: () => void; onTiempo: () => void; onSancion: () => void;
 }) {
   const reverse = side === "right";
   return (
     <div className="flex flex-col gap-1.5 md:gap-2.5 w-[68px] sm:w-[92px] md:w-[140px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3.5 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
+      <SideButton icon={<Shirt className="size-3.5 md:size-5" />} label="Líbero" onClick={onLibero} disabled={disabled} reverse={reverse} />
       <SideButton
         icon={<Hourglass className="size-3.5 md:size-5" />}
         label="Tiempo"
@@ -468,19 +576,21 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerClick }: {
-  match: Match; teamA: Team; teamB: Team;
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick }: {
+  match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
-  // 4 columns left→right: A back, A front, B front, B back
+  const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
+  const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
+  // 4 columns left→right: left back, left front, right front, right back
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
-    { side: "A", team: teamA, idxs: [4, 5, 0] },
-    { side: "A", team: teamA, idxs: [3, 2, 1] },
-    { side: "B", team: teamB, idxs: [1, 2, 3] },
-    { side: "B", team: teamB, idxs: [0, 5, 4] },
+    { side: leftSide, team: teamFor(leftSide), idxs: [4, 5, 0] },
+    { side: leftSide, team: teamFor(leftSide), idxs: [3, 2, 1] },
+    { side: rightSide, team: teamFor(rightSide), idxs: [1, 2, 3] },
+    { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
     <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[180px] md:min-h-[420px] bg-[#1e5fa8] p-3 sm:p-5 md:p-7">
@@ -539,7 +649,7 @@ function CourtView({ match, teamA, teamB, serverPlayerId, serverSide, onPlayerCl
 }
 
 function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; onClose: () => void }) {
-  const [seconds, setSeconds] = useState(15);
+  const [seconds, setSeconds] = useState(30);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     timer.current = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
@@ -562,6 +672,69 @@ function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; o
     </div>
   );
 }
+
+function LineupEditor({ match, teamA, teamB, onSave }: {
+  match: Match; teamA: Team; teamB: Team;
+  onSave: (lineupA: string[], lineupB: string[]) => void;
+}) {
+  const [lineupA, setLineupA] = useState<string[]>([...match.onCourtA]);
+  const [lineupB, setLineupB] = useState<string[]>([...match.onCourtB]);
+  const posLabels = ["Pos 1 (Saque)", "Pos 2", "Pos 3", "Pos 4", "Pos 5", "Pos 6"];
+  const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l).size === 6;
+  const valid = validSide(lineupA) && validSide(lineupB);
+
+  const renderSide = (team: Team, lineup: string[], setLineup: (l: string[]) => void) => (
+    <div className="rounded-xl border border-border/60 overflow-hidden">
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-border/60" style={{ background: `${team.color}22` }}>
+        <span className="size-6 rounded text-white text-[10px] font-black flex items-center justify-center" style={{ background: team.color }}>{team.shortName}</span>
+        <h3 className="font-bold text-sm truncate">{team.name}</h3>
+      </div>
+      <div className="p-3 flex flex-col gap-2">
+        {posLabels.map((label, i) => (
+          <label key={i} className="flex items-center gap-2 text-xs">
+            <span className="w-24 shrink-0 uppercase tracking-wider text-muted-foreground font-bold text-[10px]">{label}</span>
+            <select
+              value={lineup[i] ?? ""}
+              onChange={(e) => {
+                const next = [...lineup];
+                next[i] = e.target.value;
+                setLineup(next);
+              }}
+              className="flex-1 min-w-0 rounded-md border border-border/60 bg-background px-2 py-1.5 text-xs"
+            >
+              <option value="">— Elegir —</option>
+              {team.players.map((p) => (
+                <option key={p.id} value={p.id} disabled={lineup.includes(p.id) && lineup[i] !== p.id}>
+                  #{p.number} {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Formación · Set {match.currentSet}</DialogTitle>
+      </DialogHeader>
+      <p className="text-xs text-muted-foreground">Definí la formación inicial de cada equipo para este set (6 jugadores distintos por equipo).</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {renderSide(teamA, lineupA, setLineupA)}
+        {renderSide(teamB, lineupB, setLineupB)}
+      </div>
+      <Button disabled={!valid} onClick={() => onSave(lineupA, lineupB)} className="w-full">
+        Guardar formación
+      </Button>
+      {!valid && (
+        <p className="text-[10px] text-center text-muted-foreground">Cada equipo necesita 6 jugadores distintos.</p>
+      )}
+    </>
+  );
+}
+
 
 function SanctionDialog({ team, onCourt, onSubmit }: {
   team: Team; onCourt: string[];
