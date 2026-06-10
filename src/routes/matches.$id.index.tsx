@@ -492,6 +492,7 @@ function LiveMatch() {
               onSave={(lineupA, lineupB) => {
                 setSetLineup(match.id, "A", lineupA);
                 setSetLineup(match.id, "B", lineupB);
+                confirmSetLineup(match.id);
                 setShowLineupEditor(false);
               }}
             />
