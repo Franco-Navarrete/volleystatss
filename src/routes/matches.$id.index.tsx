@@ -824,14 +824,15 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
           <h3 className="font-bold text-sm truncate flex-1">{team.name}</h3>
           <span className="scoreboard-digit text-lg font-black text-primary">{tStat?.total ?? 0}</span>
         </div>
-        <div className="grid grid-cols-5 text-center text-[10px] uppercase tracking-widest text-muted-foreground font-bold border-b border-border/40 py-1.5">
-          <div>ATK</div><div>BLK</div><div>ACE</div><div>Err Rival</div><div>Err NF</div>
+        <div className="grid grid-cols-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground font-bold border-b border-border/40 py-1.5">
+          <div>ATK</div><div>BLK</div><div>ACE</div><div>Err Rival</div><div>Err Saq</div><div>Err NF</div>
         </div>
-        <div className="grid grid-cols-5 text-center scoreboard-digit font-black text-lg py-2 border-b border-border/40">
+        <div className="grid grid-cols-6 text-center scoreboard-digit font-black text-lg py-2 border-b border-border/40">
           <div>{tStat?.attack ?? 0}</div>
           <div>{tStat?.block ?? 0}</div>
           <div>{tStat?.ace ?? 0}</div>
           <div>{tStat?.opponentErrors ?? 0}</div>
+          <div className="text-destructive">{tStat?.serveErrors ?? 0}</div>
           <div className="text-destructive">{tStat?.unforcedErrors ?? 0}</div>
         </div>
         <table className="w-full text-xs">
@@ -839,7 +840,9 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
             <tr>
               <th className="text-left py-1.5 px-3">Jugador</th>
               <th className="text-center">ATK</th><th className="text-center">BLK</th>
-              <th className="text-center">ACE</th><th className="text-center px-3 text-primary">TOT</th>
+              <th className="text-center">ACE</th>
+              <th className="text-center text-destructive">E.SAQ</th>
+              <th className="text-center px-3 text-primary">TOT</th>
             </tr>
           </thead>
           <tbody>
@@ -849,11 +852,12 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
                 <td className="text-center tabular-nums">{p.attack}</td>
                 <td className="text-center tabular-nums">{p.block}</td>
                 <td className="text-center tabular-nums">{p.ace}</td>
+                <td className={`text-center tabular-nums ${p.serveError > 0 ? "text-destructive font-bold" : ""}`}>{p.serveError}</td>
                 <td className="text-center tabular-nums font-bold text-primary px-3">{p.total}</td>
               </tr>
             ))}
             {players.length === 0 && (
-              <tr><td colSpan={5} className="text-center py-3 text-muted-foreground">Sin puntos aún.</td></tr>
+              <tr><td colSpan={6} className="text-center py-3 text-muted-foreground">Sin puntos aún.</td></tr>
             )}
           </tbody>
         </table>
