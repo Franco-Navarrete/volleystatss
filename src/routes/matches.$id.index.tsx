@@ -246,24 +246,24 @@ function LiveMatch() {
 
         {/* Bottom action row */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 md:gap-3 shrink-0">
-          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
+          <Button size="sm" variant="secondary" className="h-10 md:h-11 text-xs md:text-sm" disabled={!isLive || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3.5 md:size-4" /> Deshacer
           </Button>
-          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive || !setNotStarted} onClick={() => setShowLineupEditor(true)}>
+          <Button size="sm" variant="secondary" className="h-10 md:h-11 text-xs md:text-sm" disabled={!isLive || !setNotStarted} onClick={() => setShowLineupEditor(true)}>
             <Users className="size-3.5 md:size-4" /> Formación
           </Button>
-          <Button size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
+          <Button size="sm" variant="secondary" className="h-10 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
             <ChartBarBig className="size-3.5 md:size-4" /> Stats vivo
           </Button>
-          <Button asChild size="sm" variant="secondary" className="h-8 md:h-11 text-xs md:text-sm">
+          <Button asChild size="sm" variant="secondary" className="h-10 md:h-11 text-xs md:text-sm">
             <Link to="/matches/$id/stats" params={{ id: match.id }}>
               <ChartBarBig className="size-3.5 md:size-4" /> Stats final
             </Link>
           </Button>
-          <Button size="sm" variant="outline" className="h-8 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
+          <Button size="sm" variant="outline" className="h-10 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
             <StopCircle className="size-3.5 md:size-4" /> Fin Set
           </Button>
-          <Button size="sm" variant="destructive" className="h-8 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"}
+          <Button size="sm" variant="destructive" className="h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"}
             onClick={() => { if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id); }}>
             <Flag className="size-3.5 md:size-4" /> Fin Partido
           </Button>
