@@ -150,6 +150,10 @@ export interface Match {
   servingSide: "A" | "B";
   /** Side serving at start of match (for replay). */
   initialServingSide: "A" | "B";
+  /** Optional per-set starting lineups (overrides startingLineup for that set). */
+  lineupsBySet?: Record<number, { A?: string[]; B?: string[] }>;
+  /** UI: display sides inverted (B on the left). */
+  sidesFlipped?: boolean;
   scheduledAt: number;
   createdAt: number;
   captainAId?: string | null;
