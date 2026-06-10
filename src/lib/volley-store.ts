@@ -374,7 +374,11 @@ export const useVolley = create<VolleyState>()(
 
       startMatch: (id) =>
         set((s) => ({
-          matches: s.matches.map((m) => (m.id === id ? { ...m, status: "live" } : m)),
+          matches: s.matches.map((m) =>
+            m.id === id
+              ? { ...m, status: "live", confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), 1])] }
+              : m
+          ),
         })),
 
       setInitialServingSide: (id, side) =>
@@ -396,6 +400,15 @@ export const useVolley = create<VolleyState>()(
             const r = replayMatch(next);
             return { ...next, ...r, status: m.status };
           }),
+        })),
+
+      confirmSetLineup: (matchId) =>
+        set((s) => ({
+          matches: s.matches.map((m) =>
+            m.id === matchId
+              ? { ...m, confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), m.currentSet])] }
+              : m
+          ),
         })),
 
       toggleSidesFlipped: (matchId) =>
