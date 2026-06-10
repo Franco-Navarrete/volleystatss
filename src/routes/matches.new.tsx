@@ -33,6 +33,7 @@ function NewMatch() {
   const [liberoB2, setLiberoB2] = useState<string>("");
   const [setsToWin, setSetsToWin] = useState(3);
   const [pointsPerSet, setPointsPerSet] = useState(25);
+  const [servingSide, setServingSide] = useState<"A" | "B">("A");
   const [scheduledAt, setScheduledAt] = useState<string>(() => {
     const d = new Date(Date.now() + 60 * 60 * 1000);
     d.setSeconds(0, 0);
@@ -93,7 +94,7 @@ function NewMatch() {
         />
       </div>
 
-      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-3 gap-4">
+      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <label className="text-sm">
           <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Fecha y hora</span>
           <input
@@ -118,6 +119,25 @@ function NewMatch() {
             <option value={15}>15 puntos</option>
           </select>
         </label>
+        <div className="text-sm">
+          <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Saque inicial</span>
+          <div className="grid grid-cols-2 gap-2">
+            {(["A", "B"] as const).map((side) => {
+              const t = side === "A" ? teamA : teamB;
+              const active = servingSide === side;
+              return (
+                <button
+                  key={side}
+                  type="button"
+                  onClick={() => setServingSide(side)}
+                  className={`px-2 py-2 rounded-md border-2 text-xs font-semibold truncate transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
+                >
+                  {t?.shortName ?? (side === "A" ? "Local" : "Visitante")}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       <div className="mt-6 flex justify-end">
@@ -132,6 +152,7 @@ function NewMatch() {
               startingLineupA: lineupA.filter((x): x is string => !!x),
               startingLineupB: lineupB.filter((x): x is string => !!x),
               setsToWin, pointsPerSet,
+              initialServingSide: servingSide,
               scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
               captainAId: captainA || null,
               captainBId: captainB || null,
