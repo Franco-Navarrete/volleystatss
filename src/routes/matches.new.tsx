@@ -33,6 +33,7 @@ function NewMatch() {
   const [liberoB2, setLiberoB2] = useState<string>("");
   const [setsToWin, setSetsToWin] = useState(3);
   const [pointsPerSet, setPointsPerSet] = useState(25);
+  const [servingSide, setServingSide] = useState<"A" | "B">("A");
   const [scheduledAt, setScheduledAt] = useState<string>(() => {
     const d = new Date(Date.now() + 60 * 60 * 1000);
     d.setSeconds(0, 0);
