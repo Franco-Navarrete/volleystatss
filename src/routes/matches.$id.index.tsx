@@ -64,6 +64,7 @@ function LiveMatch() {
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const setSetLineup = useVolley((s) => s.setSetLineup);
+  const confirmSetLineup = useVolley((s) => s.confirmSetLineup);
   const toggleSidesFlipped = useVolley((s) => s.toggleSidesFlipped);
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
@@ -116,9 +117,16 @@ function LiveMatch() {
   const leftTeam = leftSide === "A" ? teamA : teamB;
   const rightTeam = rightSide === "A" ? teamA : teamB;
   const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  // The set can't start until the formation for this set is confirmed.
+  const needsLineup = isLive && setNotStarted && !(match.confirmedLineupSets ?? []).includes(match.currentSet);
+  const actionsDisabled = !isLive || needsLineup;
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
+    if (needsLineup) {
+      setShowLineupEditor(true);
+      return;
+    }
     setPendingPlayer({ side, playerId });
   };
 
