@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Trophy } from "lucide-react";
 
-export const Route = createFileRoute("/leagues")({
+export const Route = createFileRoute("/_authenticated/leagues")({
   head: () => ({ meta: [{ title: "Ligas · RALLY" }] }),
   component: LeaguesPage,
 });

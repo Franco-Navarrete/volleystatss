@@ -6,7 +6,7 @@ import { useVolley, setsWon } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Plus, Radio } from "lucide-react";
 
-export const Route = createFileRoute("/matches/")({
+export const Route = createFileRoute("/_authenticated/matches/")({
   head: () => ({ meta: [{ title: "Partidos · RALLY" }] }),
   component: MatchesIndex,
 });
