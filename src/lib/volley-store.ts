@@ -189,6 +189,7 @@ interface VolleyState {
     > & { initialServingSide?: "A" | "B" }
   ) => string;
   startMatch: (id: string) => void;
+  setInitialServingSide: (id: string, side: "A" | "B") => void;
   recordPoint: (
     matchId: string,
     playerSide: "A" | "B",
@@ -363,6 +364,15 @@ export const useVolley = create<VolleyState>()(
       startMatch: (id) =>
         set((s) => ({
           matches: s.matches.map((m) => (m.id === id ? { ...m, status: "live" } : m)),
+        })),
+
+      setInitialServingSide: (id, side) =>
+        set((s) => ({
+          matches: s.matches.map((m) =>
+            m.id === id && m.status === "scheduled"
+              ? { ...m, initialServingSide: side, servingSide: side }
+              : m
+          ),
         })),
 
       recordPoint: (matchId, playerSide, type, playerId) => {
