@@ -60,6 +60,7 @@ function LiveMatch() {
   const match = useVolley((s) => s.matches.find((m) => m.id === id));
   const teams = useVolley((s) => s.teams);
   const startMatch = useVolley((s) => s.startMatch);
+  const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
   const recordTimeout = useVolley((s) => s.recordTimeout);
