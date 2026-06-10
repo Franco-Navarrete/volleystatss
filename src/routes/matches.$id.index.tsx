@@ -399,6 +399,86 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Libero entry dialog */}
+      <Dialog open={!!liberoState} onOpenChange={(o) => !o && setLiberoState(null)}>
+        <DialogContent>
+          {liberoState && (() => {
+            const t = liberoState.side === "A" ? teamA : teamB;
+            const onCourt = liberoState.side === "A" ? match.onCourtA : match.onCourtB;
+            const onCourtSet = new Set(onCourt);
+            const designated = (liberoState.side === "A"
+              ? [match.liberoA1Id, match.liberoA2Id]
+              : [match.liberoB1Id, match.liberoB2Id]
+            ).filter(Boolean) as string[];
+            const liberos = t.players.filter(
+              (p) =>
+                !onCourtSet.has(p.id) &&
+                (designated.length > 0 ? designated.includes(p.id) : p.position === "libero")
+            );
+            return (
+              <>
+                <DialogHeader><DialogTitle>Líbero · {t.name}</DialogTitle></DialogHeader>
+                {!liberoState.liberoId ? (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-2">Líbero que ENTRA</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {liberos.map((p) => (
+                        <button key={p.id} onClick={() => setLiberoState({ ...liberoState, liberoId: p.id })}
+                          className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-success/20">
+                          <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
+                          <span className="text-sm truncate">{p.name}</span>
+                        </button>
+                      ))}
+                      {liberos.length === 0 && (
+                        <p className="col-span-2 text-center text-sm text-muted-foreground py-4">
+                          No hay líberos disponibles. Asigná la posición "Líbero" a un jugador del plantel.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground mb-2">Jugador que SALE (reemplazado por el líbero)</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {onCourt.map((pid) => {
+                        const p = t.players.find((x) => x.id === pid);
+                        if (!p) return null;
+                        return (
+                          <button key={p.id}
+                            onClick={() => { recordSub(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
+                            className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-destructive/20">
+                            <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
+                            <span className="text-sm truncate">{p.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Set lineup editor */}
+      <Dialog open={showLineupEditor} onOpenChange={setShowLineupEditor}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {showLineupEditor && (
+            <LineupEditor
+              match={match}
+              teamA={teamA}
+              teamB={teamB}
+              onSave={(lineupA, lineupB) => {
+                setSetLineup(match.id, "A", lineupA);
+                setSetLineup(match.id, "B", lineupB);
+                setShowLineupEditor(false);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Live stats */}
       <Dialog open={showLiveStats} onOpenChange={setShowLiveStats}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
