@@ -159,7 +159,8 @@ html.force-landscape [data-slot="alert-dialog-overlay"] {
   height: auto !important;
   z-index: 9998 !important;
 }
-html.force-landscape [data-slot="dialog-positioner"] {
+html.force-landscape [data-slot="dialog-positioner"],
+html.force-landscape [data-slot="alert-dialog-positioner"] {
   position: fixed !important;
   inset: 0 !important;
   z-index: 9999 !important;
