@@ -154,37 +154,27 @@ html.force-landscape [data-radix-dialog-overlay] {
   height: 100dvw !important;
   left: 0 !important;
   top: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  overflow-y: auto !important;
-  padding: 12px !important;
 }
 html.force-landscape .live-action-dialog,
 html.force-landscape [data-slot="dialog-content"],
 html.force-landscape [role="dialog"][data-state] {
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
   right: auto !important;
   bottom: auto !important;
   width: min(440px, calc(100dvh - 24px)) !important;
   max-width: calc(100dvh - 24px) !important;
   max-height: calc(100dvw - 24px) !important;
-  overflow-y: auto;
-  transform: none !important;
-  margin: auto !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  transform: translate(-50%, -50%) !important;
+  transform-origin: center center;
+  margin: 0 !important;
   padding: 12px !important;
   gap: 8px !important;
 }
 
-html.force-landscape [data-slot="dialog-content"] [data-slot="dialog-title"] {
-  font-size: 0.95rem !important;
-  line-height: 1.2 !important;
-}
-html.force-landscape [data-slot="dialog-content"] [data-slot="dialog-header"] {
-  gap: 2px !important;
-}
 /* Compact button paddings inside live-match dialogs on mobile rotated view */
 html.force-landscape [data-slot="dialog-content"] button {
   min-height: 0;
