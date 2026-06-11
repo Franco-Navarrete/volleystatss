@@ -443,11 +443,15 @@ function LiveMatch() {
               ? [match.liberoA1Id, match.liberoA2Id]
               : [match.liberoB1Id, match.liberoB2Id]
             ).filter(Boolean) as string[];
+            const liberoCandidateIds = new Set<string>([
+              ...designated,
+              ...t.players.filter((p) => p.position === "libero").map((p) => p.id),
+            ]);
             const liberos = t.players.filter(
-              (p) =>
-                !onCourtSet.has(p.id) &&
-                (designated.length > 0 ? designated.includes(p.id) : p.position === "libero")
+              (p) => liberoCandidateIds.has(p.id) && !onCourtSet.has(p.id),
             );
+            const totalLiberos = t.players.filter((p) => liberoCandidateIds.has(p.id)).length;
+            const allOnCourt = totalLiberos > 0 && liberos.length === 0;
             return (
               <>
                 <DialogHeader><DialogTitle className="text-sm md:text-lg">Líbero · {t.name}</DialogTitle></DialogHeader>
@@ -464,7 +468,9 @@ function LiveMatch() {
                       ))}
                       {liberos.length === 0 && (
                         <p className="col-span-3 md:col-span-2 text-center text-xs text-muted-foreground py-3">
-                          No hay líberos disponibles. Asigná la posición "Líbero" a un jugador del plantel.
+                          {allOnCourt
+                            ? "Todos los líberos ya están en cancha. Sacalos primero con un cambio normal."
+                            : "No hay líberos disponibles. Asigná la posición \"Líbero\" a un jugador del plantel o designá líberos al crear el partido."}
                         </p>
                       )}
                     </div>
