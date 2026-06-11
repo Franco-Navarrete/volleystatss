@@ -308,13 +308,7 @@ function TeamsPage() {
                         variant="outline"
                         size="sm"
                         className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => {
-                          if (confirm(`¿Eliminar ${activeTeam.name}? Se borrarán sus jugadores.`)) {
-                            removeTeam(activeTeam.id);
-                            setSelected(null);
-                            setEditingTeam(false);
-                          }
-                        }}
+                        onClick={() => setDeleteTarget(activeTeam.id)}
                       >
                         <Trash2 className="size-3.5" /> Eliminar
                       </Button>
