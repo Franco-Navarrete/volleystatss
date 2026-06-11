@@ -145,7 +145,7 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <div className="flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px] select-none">
+      <div className="relative flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px] select-none">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1 md:py-4 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} />
@@ -343,55 +343,63 @@ function LiveMatch() {
       </Dialog>
 
 
-      {/* Substitution dialog */}
-      <Dialog open={!!subState} onOpenChange={(o) => !o && setSubState(null)}>
-        <DialogContent>
-          {subState && (() => {
-            const t = subState.side === "A" ? teamA : teamB;
-            const onCourt = subState.side === "A" ? match.onCourtA : match.onCourtB;
-            const onCourtSet = new Set(onCourt);
-            return (
-              <>
-                <DialogHeader><DialogTitle className="text-sm md:text-lg">Cambio · {t.name}</DialogTitle></DialogHeader>
-                {!subState.playerOutId ? (
-                  <>
-                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE</p>
-                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
-                      {onCourt.map((pid) => {
-                        const p = t.players.find((x) => x.id === pid);
-                        if (!p) return null;
-                        return (
-                          <button key={p.id} onClick={() => setSubState({ ...subState, playerOutId: p.id })}
-                            className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-destructive/20 active:scale-95 transition">
-                            <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
-                            <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que ENTRA</p>
-                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
-                      {t.players.filter((p) => !onCourtSet.has(p.id)).map((p) => (
-                        <button key={p.id} onClick={() => { recordSub(match.id, subState.side, p.id, subState.playerOutId); setSubState(null); }}
-                          className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-success/20 active:scale-95 transition">
-                          <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
-                          <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
-                        </button>
-                      ))}
-                      {t.players.filter((p) => !onCourtSet.has(p.id)).length === 0 && (
-                        <p className="col-span-3 md:col-span-2 text-center text-xs text-muted-foreground py-3">No hay suplentes disponibles.</p>
-                      )}
-                    </div>
-                  </>
+      {/* Substitution panel: local to the rotated match screen so it never gets clipped off-screen. */}
+      {subState && (() => {
+        const t = subState.side === "A" ? teamA : teamB;
+        const onCourt = subState.side === "A" ? match.onCourtA : match.onCourtB;
+        const onCourtSet = new Set(onCourt);
+        const availableSubs = t.players.filter((p) => !onCourtSet.has(p.id));
+        const playersToShow = subState.playerOutId
+          ? availableSubs
+          : onCourt.map((pid) => t.players.find((x) => x.id === pid)).filter(Boolean);
+
+        return (
+          <div className="absolute inset-0 z-[80] grid place-items-center bg-background/85 p-3 backdrop-blur-sm">
+            <div className="relative w-full max-w-[420px] max-h-[calc(100%-24px)] overflow-y-auto rounded-xl border border-border bg-background p-3 shadow-elevated">
+              <button
+                type="button"
+                onClick={() => setSubState(null)}
+                className="absolute right-3 top-3 grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+                aria-label="Cerrar cambio"
+              >
+                <X className="size-4" />
+              </button>
+              <div className="pr-10">
+                <h2 className="truncate text-sm font-bold md:text-lg">Cambio · {t.name}</h2>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground md:text-xs">
+                  {subState.playerOutId ? "Jugador que ENTRA" : "Jugador que SALE"}
+                </p>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-1.5 md:grid-cols-2">
+                {playersToShow.map((p) => p && (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      if (!subState.playerOutId) {
+                        setSubState({ ...subState, playerOutId: p.id });
+                        return;
+                      }
+                      recordSub(match.id, subState.side, p.id, subState.playerOutId);
+                      setSubState(null);
+                    }}
+                    className="flex min-w-0 items-center gap-1.5 rounded-lg bg-secondary p-1.5 text-left transition hover:bg-secondary/70 active:scale-95 md:p-3"
+                  >
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded bg-background text-[10px] font-bold scoreboard-digit md:size-8 md:text-xs">
+                      {p.number}
+                    </span>
+                    <span className="min-w-0 truncate text-[11px] md:text-sm">{p.name}</span>
+                  </button>
+                ))}
+                {subState.playerOutId && availableSubs.length === 0 && (
+                  <p className="col-span-3 py-3 text-center text-xs text-muted-foreground md:col-span-2">No hay suplentes disponibles.</p>
                 )}
-              </>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Timeout countdown */}
       <Dialog open={!!timeoutSide} onOpenChange={(o) => !o && setTimeoutSide(null)}>
