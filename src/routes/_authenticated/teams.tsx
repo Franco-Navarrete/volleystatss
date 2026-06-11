@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, PLAYER_POSITIONS, PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertTriangle, Camera, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({ meta: [{ title: "Equipos · RALLY" }] }),
@@ -48,6 +49,7 @@ async function fileToCompressedDataUrl(file: File): Promise<string> {
 function TeamsPage() {
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
+  const matches = useVolley((s) => s.matches);
   const addTeam = useVolley((s) => s.addTeam);
   const updateTeam = useVolley((s) => s.updateTeam);
   const removeTeam = useVolley((s) => s.removeTeam);
@@ -73,8 +75,18 @@ function TeamsPage() {
   const [editingTeam, setEditingTeam] = useState(false);
   const [editTeamName, setEditTeamName] = useState("");
   const [editTeamShort, setEditTeamShort] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const activeTeam = teams.find((t) => t.id === selected) ?? teams[0];
+
+  const deletingTeam = teams.find((t) => t.id === deleteTarget) ?? null;
+  const affectedMatches = useMemo(
+    () => (deletingTeam ? matches.filter((m) => m.teamAId === deletingTeam.id || m.teamBId === deletingTeam.id) : []),
+    [matches, deletingTeam],
+  );
+  const affectedLeague = deletingTeam ? leagues.find((l) => l.id === deletingTeam.leagueId) ?? null : null;
+  const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
+  const statusLabel: Record<string, string> = { scheduled: "Programado", live: "En vivo", finished: "Finalizado" };
 
   return (
     <AppShell>
@@ -296,13 +308,7 @@ function TeamsPage() {
                         variant="outline"
                         size="sm"
                         className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => {
-                          if (confirm(`¿Eliminar ${activeTeam.name}? Se borrarán sus jugadores.`)) {
-                            removeTeam(activeTeam.id);
-                            setSelected(null);
-                            setEditingTeam(false);
-                          }
-                        }}
+                        onClick={() => setDeleteTarget(activeTeam.id)}
                       >
                         <Trash2 className="size-3.5" /> Eliminar
                       </Button>
@@ -478,6 +484,97 @@ function TeamsPage() {
           )}
         </section>
       </div>
+
+      <Dialog open={!!deletingTeam} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="size-5 text-destructive" />
+              Eliminar equipo
+            </DialogTitle>
+          </DialogHeader>
+          {deletingTeam && (
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/40">
+                <TeamBadge team={deletingTeam} size="sm" />
+                <div className="min-w-0">
+                  <div className="font-bold truncate">{deletingTeam.name}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-widest">
+                    {deletingTeam.shortName} · {deletingTeam.players.length} jugadores
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-muted-foreground">
+                Esta acción es <span className="text-destructive font-semibold">permanente</span> y eliminará también:
+              </p>
+
+              <div className="rounded-lg border border-border/60 divide-y divide-border/60">
+                <div className="p-3">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Liga afectada</div>
+                  {affectedLeague ? (
+                    <div className="text-sm">
+                      <span className="font-semibold">{affectedLeague.name}</span>
+                      <span className="text-muted-foreground"> — sus tablas dejarán de contar a este equipo.</span>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">Sin liga asignada.</div>
+                  )}
+                </div>
+
+                <div className="p-3">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
+                    Partidos a borrar ({affectedMatches.length})
+                  </div>
+                  {affectedMatches.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No hay partidos asociados.</div>
+                  ) : (
+                    <ul className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {affectedMatches.map((m) => {
+                        const a = teams.find((t) => t.id === m.teamAId);
+                        const b = teams.find((t) => t.id === m.teamBId);
+                        return (
+                          <li key={m.id} className="flex items-center justify-between gap-2 text-xs bg-background/60 rounded px-2 py-1.5">
+                            <span className="truncate">
+                              <span className="font-semibold">{a?.shortName ?? "—"}</span>
+                              <span className="text-muted-foreground"> vs </span>
+                              <span className="font-semibold">{b?.shortName ?? "—"}</span>
+                              <span className="text-muted-foreground"> · {fmtDate(m.scheduledAt)}</span>
+                            </span>
+                            <span className={`text-[9px] uppercase tracking-widest font-bold shrink-0 ${
+                              m.status === "live" ? "text-destructive" : m.status === "finished" ? "text-success" : "text-muted-foreground"
+                            }`}>
+                              {statusLabel[m.status]}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-row gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => {
+                if (!deletingTeam) return;
+                removeTeam(deletingTeam.id);
+                if (selected === deletingTeam.id) setSelected(null);
+                setEditingTeam(false);
+                setDeleteTarget(null);
+              }}
+            >
+              <Trash2 className="size-4" /> Eliminar definitivamente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
