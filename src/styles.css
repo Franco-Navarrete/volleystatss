@@ -162,11 +162,16 @@ html.force-landscape [data-slot="alert-dialog-overlay"] {
 html.force-landscape [data-slot="dialog-positioner"],
 html.force-landscape [data-slot="alert-dialog-positioner"] {
   position: fixed !important;
-  inset: 0 !important;
+  top: 0 !important;
+  left: 100dvw !important;
+  width: 100dvh !important;
+  height: 100dvw !important;
   z-index: 9999 !important;
   display: grid !important;
   place-items: center !important;
   padding: 14px !important;
+  transform: rotate(90deg);
+  transform-origin: top left;
   pointer-events: none;
 }
 html.force-landscape .live-action-dialog,
@@ -179,9 +184,9 @@ html.force-landscape [role="dialog"][data-state] {
   top: auto !important;
   right: auto !important;
   bottom: auto !important;
-  width: min(420px, calc(100dvw - 28px)) !important;
-  max-width: calc(100dvw - 28px) !important;
-  max-height: calc(100dvh - 28px) !important;
+  width: min(420px, calc(100dvh - 28px)) !important;
+  max-width: calc(100dvh - 28px) !important;
+  max-height: calc(100dvw - 28px) !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
   transform: none !important;
