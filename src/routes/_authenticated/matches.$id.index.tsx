@@ -147,7 +147,7 @@ function LiveMatch() {
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
     : undefined;
   const elapsedMs = setStartedAt ? (setEndedAt ?? now) - setStartedAt : 0;
-  const setTimerLabel = setStartedAt ? formatDuration(elapsedMs) : null;
+  const setTimerLabel = setStartedAt ? formatDurationMs(elapsedMs) : null;
 
 
 
