@@ -68,7 +68,9 @@ function LiveMatch() {
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const setSetLineup = useVolley((s) => s.setSetLineup);
   const confirmSetLineup = useVolley((s) => s.confirmSetLineup);
+  const startSet = useVolley((s) => s.startSet);
   const toggleSidesFlipped = useVolley((s) => s.toggleSidesFlipped);
+
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
   const recordTimeout = useVolley((s) => s.recordTimeout);
