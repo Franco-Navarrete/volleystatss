@@ -162,6 +162,7 @@ function LiveMatch() {
       setShowLineupEditor(true);
       return;
     }
+    if (needsSetStart) return;
     setPendingPlayer({ side, playerId });
   };
 
