@@ -130,8 +130,8 @@ button, a, [role="button"] {
 }
 
 /* Force the live scoring screen to landscape without rotating <body>.
-   Dialog portals stay attached to the unrotated body, so modals can be
-   centered against the real mobile viewport instead of a transformed one. */
+   Dialog portals stay attached to the unrotated body, so modals stay centered
+   and readable against the real mobile viewport. */
 html.force-landscape,
 html.force-landscape body {
   width: 100%;
@@ -166,13 +166,12 @@ html.force-landscape [role="dialog"][data-state] {
   top: 50dvh !important;
   right: auto !important;
   bottom: auto !important;
-  width: min(520px, calc(100dvh - 32px)) !important;
-  max-width: calc(100dvh - 32px) !important;
-  max-height: calc(100dvw - 32px) !important;
+  width: min(420px, calc(100dvw - 28px)) !important;
+  max-width: calc(100dvw - 28px) !important;
+  max-height: calc(100dvh - 28px) !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
-  transform: translate(-50%, -50%) rotate(90deg) !important;
-  transform-origin: center center !important;
+  transform: translate(-50%, -50%) !important;
   margin: 0 !important;
   padding: 12px !important;
   gap: 8px !important;

@@ -529,7 +529,6 @@ function CompactShell({ children }: { children: React.ReactNode }) {
         </Link>
       </header>
       <main className="flex-1 min-h-0 overflow-hidden md:overflow-auto">{children}</main>
-      <div data-live-dialog-root="" />
     </div>
   );
 }
