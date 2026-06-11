@@ -161,11 +161,24 @@ html.force-landscape [role="dialog"][data-state] {
   top: 50% !important;
   right: auto !important;
   bottom: auto !important;
-  width: min(560px, calc(100dvh - 16px)) !important;
-  max-width: calc(100dvh - 16px) !important;
-  max-height: calc(100dvw - 16px) !important;
+  width: min(440px, calc(100dvh - 24px)) !important;
+  max-width: calc(100dvh - 24px) !important;
+  max-height: calc(100dvw - 24px) !important;
   overflow-y: auto;
   transform: translate(-50%, -50%) !important;
   transform-origin: center;
   margin: 0 !important;
+  padding: 12px !important;
+  gap: 8px !important;
+}
+html.force-landscape [data-slot="dialog-content"] [data-slot="dialog-title"] {
+  font-size: 0.95rem !important;
+  line-height: 1.2 !important;
+}
+html.force-landscape [data-slot="dialog-content"] [data-slot="dialog-header"] {
+  gap: 2px !important;
+}
+/* Compact button paddings inside live-match dialogs on mobile rotated view */
+html.force-landscape [data-slot="dialog-content"] button {
+  min-height: 0;
 }

@@ -352,19 +352,19 @@ function LiveMatch() {
             const onCourtSet = new Set(onCourt);
             return (
               <>
-                <DialogHeader><DialogTitle>Cambio · {t.name}</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="text-sm md:text-lg">Cambio · {t.name}</DialogTitle></DialogHeader>
                 {!subState.playerOutId ? (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Jugador que SALE</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {onCourt.map((pid) => {
                         const p = t.players.find((x) => x.id === pid);
                         if (!p) return null;
                         return (
                           <button key={p.id} onClick={() => setSubState({ ...subState, playerOutId: p.id })}
-                            className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-destructive/20">
-                            <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                            <span className="text-sm truncate">{p.name}</span>
+                            className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-destructive/20 active:scale-95 transition">
+                            <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                            <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                           </button>
                         );
                       })}
@@ -372,17 +372,17 @@ function LiveMatch() {
                   </>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Jugador que ENTRA</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que ENTRA</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {t.players.filter((p) => !onCourtSet.has(p.id)).map((p) => (
                         <button key={p.id} onClick={() => { recordSub(match.id, subState.side, p.id, subState.playerOutId); setSubState(null); }}
-                          className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-success/20">
-                          <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                          <span className="text-sm truncate">{p.name}</span>
+                          className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-success/20 active:scale-95 transition">
+                          <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                          <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                         </button>
                       ))}
                       {t.players.filter((p) => !onCourtSet.has(p.id)).length === 0 && (
-                        <p className="col-span-2 text-center text-sm text-muted-foreground py-4">No hay suplentes disponibles.</p>
+                        <p className="col-span-3 md:col-span-2 text-center text-xs text-muted-foreground py-3">No hay suplentes disponibles.</p>
                       )}
                     </div>
                   </>
@@ -440,20 +440,20 @@ function LiveMatch() {
             );
             return (
               <>
-                <DialogHeader><DialogTitle>Líbero · {t.name}</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="text-sm md:text-lg">Líbero · {t.name}</DialogTitle></DialogHeader>
                 {!liberoState.liberoId ? (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Líbero que ENTRA</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Líbero que ENTRA</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {liberos.map((p) => (
                         <button key={p.id} onClick={() => setLiberoState({ ...liberoState, liberoId: p.id })}
-                          className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-success/20">
-                          <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                          <span className="text-sm truncate">{p.name}</span>
+                          className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-success/20 active:scale-95 transition">
+                          <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                          <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                         </button>
                       ))}
                       {liberos.length === 0 && (
-                        <p className="col-span-2 text-center text-sm text-muted-foreground py-4">
+                        <p className="col-span-3 md:col-span-2 text-center text-xs text-muted-foreground py-3">
                           No hay líberos disponibles. Asigná la posición "Líbero" a un jugador del plantel.
                         </p>
                       )}
@@ -461,17 +461,17 @@ function LiveMatch() {
                   </>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Jugador que SALE (reemplazado por el líbero)</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE (reemplazado por el líbero)</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {onCourt.map((pid) => {
                         const p = t.players.find((x) => x.id === pid);
                         if (!p) return null;
                         return (
                           <button key={p.id}
                             onClick={() => { recordSub(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
-                            className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-destructive/20">
-                            <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                            <span className="text-sm truncate">{p.name}</span>
+                            className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-destructive/20 active:scale-95 transition">
+                            <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                            <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                           </button>
                         );
                       })}
@@ -826,35 +826,35 @@ function SanctionDialog({ team, onCourt, onSubmit }: {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const sideAColumns: number[][] = [[4, 5, 0], [3, 2, 1]];
   const cards: { type: SanctionType; label: string; render: React.ReactNode }[] = [
-    { type: "yellow", label: "Amarilla", render: <div className="w-10 h-14 rounded-sm bg-yellow-400 shadow" /> },
-    { type: "red", label: "Roja", render: <div className="w-10 h-14 rounded-sm bg-red-600 shadow" /> },
+    { type: "yellow", label: "Amarilla", render: <div className="w-6 h-9 md:w-10 md:h-14 rounded-sm bg-yellow-400 shadow" /> },
+    { type: "red", label: "Roja", render: <div className="w-6 h-9 md:w-10 md:h-14 rounded-sm bg-red-600 shadow" /> },
     { type: "yellow_red", label: "Amar+Roja (expulsión)", render: (
-      <div className="relative w-10 h-14">
-        <div className="absolute inset-0 rounded-sm bg-yellow-400 shadow translate-x-[-3px] translate-y-[-3px]" />
-        <div className="absolute inset-0 rounded-sm bg-red-600 shadow translate-x-[3px] translate-y-[3px]" />
+      <div className="relative w-6 h-9 md:w-10 md:h-14">
+        <div className="absolute inset-0 rounded-sm bg-yellow-400 shadow translate-x-[-2px] translate-y-[-2px] md:translate-x-[-3px] md:translate-y-[-3px]" />
+        <div className="absolute inset-0 rounded-sm bg-red-600 shadow translate-x-[2px] translate-y-[2px] md:translate-x-[3px] md:translate-y-[3px]" />
       </div>
     )},
     { type: "red_expulsion", label: "Roja (descalif.)", render: (
       <div className="flex">
-        <div className="w-5 h-14 rounded-l-sm bg-yellow-400" />
-        <div className="w-5 h-14 rounded-r-sm bg-red-600" />
+        <div className="w-3 h-9 md:w-5 md:h-14 rounded-l-sm bg-yellow-400" />
+        <div className="w-3 h-9 md:w-5 md:h-14 rounded-r-sm bg-red-600" />
       </div>
     )},
   ];
   return (
     <>
-      <DialogHeader><DialogTitle>Sanción solicitada · {team.name}</DialogTitle></DialogHeader>
-      <p className="text-xs text-muted-foreground">1. Elegí al jugador sancionado</p>
-      <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-secondary/30">
+      <DialogHeader><DialogTitle className="text-sm md:text-lg">Sanción solicitada · {team.name}</DialogTitle></DialogHeader>
+      <p className="text-[10px] md:text-xs text-muted-foreground">1. Elegí al jugador sancionado</p>
+      <div className="grid grid-cols-2 gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary/30">
         {sideAColumns.map((col, ci) => (
-          <div key={ci} className="grid grid-rows-3 gap-2">
+          <div key={ci} className="grid grid-rows-3 gap-1.5">
             {col.map((idx) => {
               const pid = onCourt[idx];
               const p = team.players.find((x) => x.id === pid);
               const active = pid === playerId;
               return (
                 <button key={`${ci}-${idx}`} onClick={() => p && setPlayerId(p.id)} disabled={!p}
-                  className={`aspect-square rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-lg mx-auto h-14 transition-all ${active ? "ring-4 ring-primary" : ""}`}
+                  className={`aspect-square rounded-full flex items-center justify-center text-white font-black scoreboard-digit text-sm md:text-lg mx-auto h-9 md:h-14 transition-all ${active ? "ring-4 ring-primary" : ""}`}
                   style={{ background: team.color }}>
                   {p?.number ?? "?"}
                 </button>
@@ -863,17 +863,17 @@ function SanctionDialog({ team, onCourt, onSubmit }: {
           </div>
         ))}
       </div>
-      <p className="text-xs text-muted-foreground mt-2">2. Elegí el tipo de tarjeta</p>
-      <div className="grid grid-cols-4 gap-2">
+      <p className="text-[10px] md:text-xs text-muted-foreground mt-1">2. Elegí el tipo de tarjeta</p>
+      <div className="grid grid-cols-4 gap-1.5">
         {cards.map((c) => (
           <button key={c.type} onClick={() => onSubmit(playerId, c.type)}
-            className="flex flex-col items-center gap-1 p-3 rounded-lg bg-secondary hover:bg-secondary/70 active:scale-95 transition">
+            className="flex flex-col items-center gap-0.5 md:gap-1 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-secondary/70 active:scale-95 transition">
             {c.render}
-            <span className="text-[10px] font-semibold text-center leading-tight">{c.label}</span>
+            <span className="text-[9px] md:text-[10px] font-semibold text-center leading-tight">{c.label}</span>
           </button>
         ))}
       </div>
-      <p className="text-[10px] text-muted-foreground mt-2 text-center">
+      <p className="text-[9px] md:text-[10px] text-muted-foreground mt-1 text-center">
         Roja y Amarilla+Roja otorgan un punto al rival.
       </p>
     </>
