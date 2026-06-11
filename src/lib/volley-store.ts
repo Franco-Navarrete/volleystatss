@@ -201,7 +201,9 @@ interface VolleyState {
   setInitialServingSide: (id: string, side: "A" | "B") => void;
   setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   confirmSetLineup: (matchId: string) => void;
+  startSet: (matchId: string) => void;
   toggleSidesFlipped: (matchId: string) => void;
+
   recordPoint: (
     matchId: string,
     playerSide: "A" | "B",
