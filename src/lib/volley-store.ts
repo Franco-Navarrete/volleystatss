@@ -329,7 +329,10 @@ export const useVolley = create<VolleyState>()(
       updateTeam: (id, patch) =>
         set((s) => ({ teams: s.teams.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
       removeTeam: (id) =>
-        set((s) => ({ teams: s.teams.filter((t) => t.id !== id) })),
+        set((s) => ({
+          teams: s.teams.filter((t) => t.id !== id),
+          matches: s.matches.filter((m) => m.teamAId !== id && m.teamBId !== id),
+        })),
       addPlayer: (teamId, p) =>
         set((s) => ({
           teams: s.teams.map((t) =>
