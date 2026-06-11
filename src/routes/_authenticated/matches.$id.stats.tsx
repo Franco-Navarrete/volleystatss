@@ -199,12 +199,16 @@ function StatsPage() {
         <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Desglose por set</h2>
         <Tabs defaultValue={`set-${match.sets[0]?.number ?? 1}`}>
           <TabsList className="mb-4 flex-wrap h-auto">
-            {match.sets.map((s) => (
-              <TabsTrigger key={s.number} value={`set-${s.number}`}>
-                Set {s.number}
-                <span className="ml-1.5 text-[10px] tabular-nums text-muted-foreground">({s.scoreA}-{s.scoreB})</span>
-              </TabsTrigger>
-            ))}
+            {match.sets.map((s) => {
+              const dur = getSetDuration(match, s.number);
+              return (
+                <TabsTrigger key={s.number} value={`set-${s.number}`}>
+                  Set {s.number}
+                  <span className="ml-1.5 text-[10px] tabular-nums text-muted-foreground">({s.scoreA}-{s.scoreB}{dur !== null ? ` · ${formatDurationMs(dur)}` : ""})</span>
+                </TabsTrigger>
+              );
+            })}
+
           </TabsList>
           {match.sets.map((s) => {
             const setStats = computeSetStats(match, s.number);
