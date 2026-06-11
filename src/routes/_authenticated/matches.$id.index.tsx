@@ -195,6 +195,12 @@ function LiveMatch() {
               ) : (
                 <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
               )}
+              {setTimerLabel && (
+                <span className="md:mt-0.5 scoreboard-digit tabular-nums text-[10px] md:text-sm font-bold text-foreground">
+                  {setTimerLabel}
+                </span>
+              )}
+
             </div>
             <div>
               <button
