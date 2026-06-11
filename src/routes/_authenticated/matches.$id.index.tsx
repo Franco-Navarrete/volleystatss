@@ -129,6 +129,20 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
 
+  // Set timer (ticks every second while current set is live).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!setStartedAt || match.status === "finished" || currentSet.finished) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [setStartedAt, match.status, currentSet.finished]);
+  const setEndedAt = currentSet.finished
+    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
+    : undefined;
+  const elapsedMs = setStartedAt ? (setEndedAt ?? now) - setStartedAt : 0;
+  const setTimerLabel = setStartedAt ? formatDuration(elapsedMs) : null;
+
+
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
