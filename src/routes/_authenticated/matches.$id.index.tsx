@@ -741,92 +741,213 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
 }) {
   const [lineupA, setLineupA] = useState<string[]>([...match.onCourtA]);
   const [lineupB, setLineupB] = useState<string[]>([...match.onCourtB]);
-  const posLabels = ["Pos 1 (Saque)", "Pos 2", "Pos 3", "Pos 4", "Pos 5", "Pos 6"];
-  const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l).size === 6;
-  const valid = validSide(lineupA) && validSide(lineupB);
+  const [step, setStep] = useState<1 | 2>(1);
+  const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l.filter(Boolean)).size === 6;
+  const validA = validSide(lineupA);
+  const validB = validSide(lineupB);
 
-  const renderSide = (team: Team, lineup: string[], setLineup: (l: string[]) => void) => (
-    <div className="rounded-xl border border-border/60 overflow-hidden">
-      <div className="px-3 py-2 flex items-center gap-2 border-b border-border/60" style={{ background: `${team.color}22` }}>
-        <span className="size-6 rounded text-white text-[10px] font-black flex items-center justify-center" style={{ background: team.color }}>{team.shortName}</span>
-        <h3 className="font-bold text-sm truncate">{team.name}</h3>
-      </div>
-      <div className="p-3 flex flex-col gap-2">
-        {posLabels.map((label, i) => {
-          const selected = team.players.find((p) => p.id === lineup[i]);
-          return (
-            <div key={i} className="flex items-center gap-2 text-xs">
-              <span className="w-20 shrink-0 uppercase tracking-wider text-muted-foreground font-bold text-[10px]">{label}</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex-1 min-w-0 rounded-md border border-border/60 bg-background px-2 py-1.5 text-xs text-left flex items-center gap-2 hover:border-primary transition-colors"
-                  >
-                    {selected ? (
-                      <>
-                        <span className="scoreboard-digit font-bold">#{selected.number}</span>
-                        <span className="truncate">{selected.name}</span>
-                      </>
-                    ) : (
-                      <span className="text-muted-foreground">— Elegir —</span>
-                    )}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="start" sideOffset={4} className="p-1 w-[min(420px,calc(100dvh-32px))]">
-                  <div className="grid grid-cols-2 gap-1 max-h-64 overflow-y-auto">
-                    {team.players.map((p) => {
-                      const taken = lineup.includes(p.id) && lineup[i] !== p.id;
-                      const isSelected = lineup[i] === p.id;
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          disabled={taken}
-                          onClick={() => {
-                            const next = [...lineup];
-                            next[i] = p.id;
-                            setLineup(next);
-                            (document.activeElement as HTMLElement | null)?.blur();
-                          }}
-                          className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors ${
-                            isSelected ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-secondary/70"
-                          } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        >
-                          <span className="scoreboard-digit font-bold">#{p.number}</span>
-                          <span className="truncate">{p.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+  const team = step === 1 ? teamA : teamB;
+  const lineup = step === 1 ? lineupA : lineupB;
+  const setLineup = step === 1 ? setLineupA : setLineupB;
+  const stepValid = step === 1 ? validA : validB;
+  const filled = lineup.filter(Boolean).length;
+
+  const grid: { idx: number; label: string; sub?: string }[][] = [
+    [{ idx: 3, label: "4" }, { idx: 2, label: "3" }, { idx: 1, label: "2" }],
+    [{ idx: 4, label: "5" }, { idx: 5, label: "6" }, { idx: 0, label: "1", sub: "saca" }],
+  ];
+
+  const setSlot = (slotIdx: number, playerId: string | null) => {
+    const next = [...lineup];
+    if (playerId) {
+      const prev = next.indexOf(playerId);
+      if (prev >= 0) next[prev] = "";
+    }
+    next[slotIdx] = playerId ?? "";
+    setLineup(next);
+  };
 
   return (
-    <>
+    <div className="flex flex-col gap-3">
       <DialogHeader>
-        <DialogTitle>Formación · Set {match.currentSet}</DialogTitle>
+        <DialogTitle className="flex items-center justify-between gap-2">
+          <span>Formación · Set {match.currentSet}</span>
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Paso {step} / 2</span>
+        </DialogTitle>
       </DialogHeader>
-      <p className="text-xs text-muted-foreground">Definí la formación inicial de cada equipo para este set (6 jugadores distintos por equipo).</p>
-      <div className="grid sm:grid-cols-2 gap-3">
-        {renderSide(teamA, lineupA, setLineupA)}
-        {renderSide(teamB, lineupB, setLineupB)}
+
+      <div className="flex items-center gap-2">
+        <StepChip n={1} label={teamA.shortName} active={step === 1} done={validA} onClick={() => setStep(1)} color={teamA.color} />
+        <div className="flex-1 h-0.5 bg-border/60 rounded-full overflow-hidden">
+          <div className="h-full bg-success transition-all" style={{ width: validA ? "100%" : "0%" }} />
+        </div>
+        <StepChip n={2} label={teamB.shortName} active={step === 2} done={validB} onClick={() => validA && setStep(2)} color={teamB.color} disabled={!validA} />
       </div>
-      <Button disabled={!valid} onClick={() => onSave(lineupA, lineupB)} className="w-full">
-        Confirmar formación
-      </Button>
-      {!valid && (
-        <p className="text-[10px] text-center text-muted-foreground">Cada equipo necesita 6 jugadores distintos.</p>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          {team.logoUrl ? (
+            <img src={team.logoUrl} alt="" className="size-7 rounded object-cover shrink-0" />
+          ) : (
+            <span className="size-7 rounded text-white text-[10px] font-black flex items-center justify-center shrink-0" style={{ background: team.color }}>{team.shortName}</span>
+          )}
+          <div className="min-w-0">
+            <div className="font-bold text-sm truncate">{team.name}</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              {step === 1 ? "Equipo local" : "Equipo visitante"}
+            </div>
+          </div>
+        </div>
+        <span className="text-xs scoreboard-digit font-bold shrink-0">
+          <span className={stepValid ? "text-success" : "text-primary"}>{filled}</span>
+          <span className="text-muted-foreground"> / 6</span>
+        </span>
+      </div>
+
+      <div className="rounded-xl bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
+        <div className="text-center text-[9px] uppercase tracking-widest text-muted-foreground mb-1">— red —</div>
+        {grid.map((row, ri) => (
+          <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
+            {row.map(({ idx, label, sub }) => {
+              const pid = lineup[idx];
+              const p = team.players.find((x) => x.id === pid);
+              const takenIds = lineup.filter((x, i) => !!x && i !== idx);
+              return (
+                <LineupSlotCell
+                  key={idx}
+                  label={label}
+                  sub={sub}
+                  teamColor={team.color}
+                  player={p}
+                  players={team.players}
+                  takenIds={takenIds}
+                  onPick={(playerId) => setSlot(idx, playerId)}
+                  onClear={() => setSlot(idx, null)}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {step === 2 && (
+          <Button variant="outline" onClick={() => setStep(1)} className="flex-1">← Atrás</Button>
+        )}
+        {step === 1 ? (
+          <Button disabled={!validA} onClick={() => setStep(2)} className="flex-1">Siguiente →</Button>
+        ) : (
+          <Button
+            disabled={!validA || !validB}
+            onClick={() => onSave(lineupA, lineupB)}
+            className="flex-1 bg-gradient-primary text-primary-foreground"
+          >
+            Confirmar formación
+          </Button>
+        )}
+      </div>
+      {!stepValid && (
+        <p className="text-[10px] text-center text-muted-foreground">Asigná los 6 jugadores en la cancha.</p>
       )}
-    </>
+    </div>
   );
 }
+
+function StepChip({ n, label, active, done, onClick, color, disabled }: {
+  n: number; label: string; active: boolean; done: boolean; onClick: () => void; color: string; disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-bold transition-all ${
+        active ? "bg-primary text-primary-foreground" : done ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
+      } disabled:opacity-40 disabled:cursor-not-allowed`}
+    >
+      <span className="size-4 rounded-full flex items-center justify-center text-[9px]" style={{ background: active || done ? "rgba(255,255,255,0.25)" : color }}>
+        {done ? <Check className="size-3" /> : n}
+      </span>
+      <span className="truncate max-w-[80px]">{label}</span>
+    </button>
+  );
+}
+
+function LineupSlotCell({ label, sub, teamColor, player, players, takenIds, onPick, onClear }: {
+  label: string;
+  sub?: string;
+  teamColor: string;
+  player: Team["players"][number] | undefined;
+  players: Team["players"];
+  takenIds: string[];
+  onPick: (playerId: string) => void;
+  onClear: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-md bg-background/40 border border-border/40 p-2 text-center relative min-h-[88px] flex flex-col">
+      <div className="absolute top-1 left-1 text-[9px] scoreboard-digit font-bold text-primary px-1 rounded bg-background/80 z-10">P{label}</div>
+      {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold z-10">{sub}</div>}
+      {player && (
+        <button
+          type="button"
+          onClick={onClear}
+          title="Quitar"
+          className="absolute bottom-1 right-1 text-muted-foreground hover:text-destructive z-10"
+        >
+          <X className="size-3.5" />
+        </button>
+      )}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button type="button" className="flex-1 flex flex-col items-center justify-center gap-1 w-full rounded hover:bg-background/30 transition-colors pt-3">
+            {player ? (
+              <>
+                {player.photoUrl ? (
+                  <img src={player.photoUrl} alt="" className="size-9 rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: teamColor }} />
+                ) : (
+                  <div className="size-9 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-xs" style={{ background: teamColor }}>
+                    {player.number}
+                  </div>
+                )}
+                <div className="text-[9px] truncate max-w-full font-semibold px-1 leading-tight">#{player.number} {player.name}</div>
+              </>
+            ) : (
+              <>
+                <div className="size-9 rounded-full border-2 border-dashed border-border/60 flex items-center justify-center text-muted-foreground">
+                  <Plus className="size-4" />
+                </div>
+                <div className="text-[9px] text-muted-foreground">Asignar</div>
+              </>
+            )}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-60 p-1 max-h-64 overflow-y-auto" align="center" sideOffset={4}>
+          <div className="px-2 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Elegir · P{label}</div>
+          {players.map((pl) => {
+            const taken = takenIds.includes(pl.id);
+            const isCurrent = player?.id === pl.id;
+            return (
+              <button
+                key={pl.id}
+                type="button"
+                disabled={taken}
+                onClick={() => { onPick(pl.id); setOpen(false); }}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left transition-colors ${isCurrent ? "bg-primary/10" : "hover:bg-secondary"} disabled:opacity-40 disabled:cursor-not-allowed`}
+              >
+                <span className="size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0 bg-secondary">{pl.number}</span>
+                <span className="truncate flex-1 text-left">{pl.name}</span>
+                {taken && <span className="text-[9px] uppercase text-muted-foreground">en cancha</span>}
+                {isCurrent && <Check className="size-3.5 text-primary" />}
+              </button>
+            );
+          })}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 
 
 function SanctionDialog({ team, onCourt, onSubmit }: {
