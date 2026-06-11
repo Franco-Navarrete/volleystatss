@@ -440,20 +440,20 @@ function LiveMatch() {
             );
             return (
               <>
-                <DialogHeader><DialogTitle>Líbero · {t.name}</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="text-sm md:text-lg">Líbero · {t.name}</DialogTitle></DialogHeader>
                 {!liberoState.liberoId ? (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Líbero que ENTRA</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Líbero que ENTRA</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {liberos.map((p) => (
                         <button key={p.id} onClick={() => setLiberoState({ ...liberoState, liberoId: p.id })}
-                          className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-success/20">
-                          <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                          <span className="text-sm truncate">{p.name}</span>
+                          className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-success/20 active:scale-95 transition">
+                          <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                          <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                         </button>
                       ))}
                       {liberos.length === 0 && (
-                        <p className="col-span-2 text-center text-sm text-muted-foreground py-4">
+                        <p className="col-span-3 md:col-span-2 text-center text-xs text-muted-foreground py-3">
                           No hay líberos disponibles. Asigná la posición "Líbero" a un jugador del plantel.
                         </p>
                       )}
@@ -461,17 +461,17 @@ function LiveMatch() {
                   </>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Jugador que SALE (reemplazado por el líbero)</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE (reemplazado por el líbero)</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {onCourt.map((pid) => {
                         const p = t.players.find((x) => x.id === pid);
                         if (!p) return null;
                         return (
                           <button key={p.id}
                             onClick={() => { recordSub(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
-                            className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-destructive/20">
-                            <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                            <span className="text-sm truncate">{p.name}</span>
+                            className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-destructive/20 active:scale-95 transition">
+                            <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                            <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                           </button>
                         );
                       })}
