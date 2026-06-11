@@ -162,8 +162,8 @@ html.force-landscape [data-slot="dialog-content"],
 html.force-landscape [data-slot="alert-dialog-content"],
 html.force-landscape [role="dialog"][data-state] {
   position: fixed !important;
-  left: 50% !important;
-  top: 50% !important;
+  left: 50dvw !important;
+  top: 50dvh !important;
   right: auto !important;
   bottom: auto !important;
   width: min(520px, calc(100dvh - 32px)) !important;
@@ -171,7 +171,8 @@ html.force-landscape [role="dialog"][data-state] {
   max-height: calc(100dvw - 32px) !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
-  transform: translate(-50%, -50%) !important;
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+  transform-origin: center center !important;
   margin: 0 !important;
   padding: 12px !important;
   gap: 8px !important;

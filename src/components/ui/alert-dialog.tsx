@@ -10,16 +10,6 @@ const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
-function useDialogPortalContainer() {
-  const [container, setContainer] = React.useState<HTMLElement | undefined>();
-
-  React.useLayoutEffect(() => {
-    setContainer(document.querySelector<HTMLElement>("[data-live-dialog-root]") ?? undefined);
-  }, []);
-
-  return container;
-}
-
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
@@ -40,10 +30,8 @@ const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
-  const container = useDialogPortalContainer();
-
   return (
-    <AlertDialogPortal container={container}>
+    <AlertDialogPortal>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
         ref={ref}

@@ -14,16 +14,6 @@ const DialogPortal = DialogPrimitive.Portal;
 
 const DialogClose = DialogPrimitive.Close;
 
-function useDialogPortalContainer() {
-  const [container, setContainer] = React.useState<HTMLElement | undefined>();
-
-  React.useLayoutEffect(() => {
-    setContainer(document.querySelector<HTMLElement>("[data-live-dialog-root]") ?? undefined);
-  }, []);
-
-  return container;
-}
-
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -44,10 +34,8 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  const container = useDialogPortalContainer();
-
   return (
-    <DialogPortal container={container}>
+    <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
