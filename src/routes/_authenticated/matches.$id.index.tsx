@@ -352,19 +352,19 @@ function LiveMatch() {
             const onCourtSet = new Set(onCourt);
             return (
               <>
-                <DialogHeader><DialogTitle>Cambio · {t.name}</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="text-sm md:text-lg">Cambio · {t.name}</DialogTitle></DialogHeader>
                 {!subState.playerOutId ? (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Jugador que SALE</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {onCourt.map((pid) => {
                         const p = t.players.find((x) => x.id === pid);
                         if (!p) return null;
                         return (
                           <button key={p.id} onClick={() => setSubState({ ...subState, playerOutId: p.id })}
-                            className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-destructive/20">
-                            <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                            <span className="text-sm truncate">{p.name}</span>
+                            className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-destructive/20 active:scale-95 transition">
+                            <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                            <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                           </button>
                         );
                       })}
@@ -372,17 +372,17 @@ function LiveMatch() {
                   </>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground mb-2">Jugador que ENTRA</p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que ENTRA</p>
+                    <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {t.players.filter((p) => !onCourtSet.has(p.id)).map((p) => (
                         <button key={p.id} onClick={() => { recordSub(match.id, subState.side, p.id, subState.playerOutId); setSubState(null); }}
-                          className="flex items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-success/20">
-                          <span className="size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-xs">{p.number}</span>
-                          <span className="text-sm truncate">{p.name}</span>
+                          className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-success/20 active:scale-95 transition">
+                          <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                          <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                         </button>
                       ))}
                       {t.players.filter((p) => !onCourtSet.has(p.id)).length === 0 && (
-                        <p className="col-span-2 text-center text-sm text-muted-foreground py-4">No hay suplentes disponibles.</p>
+                        <p className="col-span-3 md:col-span-2 text-center text-xs text-muted-foreground py-3">No hay suplentes disponibles.</p>
                       )}
                     </div>
                   </>
