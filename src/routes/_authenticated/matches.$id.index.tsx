@@ -742,27 +742,58 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         <h3 className="font-bold text-sm truncate">{team.name}</h3>
       </div>
       <div className="p-3 flex flex-col gap-2">
-        {posLabels.map((label, i) => (
-          <label key={i} className="flex items-center gap-2 text-xs">
-            <span className="w-24 shrink-0 uppercase tracking-wider text-muted-foreground font-bold text-[10px]">{label}</span>
-            <select
-              value={lineup[i] ?? ""}
-              onChange={(e) => {
-                const next = [...lineup];
-                next[i] = e.target.value;
-                setLineup(next);
-              }}
-              className="flex-1 min-w-0 rounded-md border border-border/60 bg-background px-2 py-1.5 text-xs"
-            >
-              <option value="">— Elegir —</option>
-              {team.players.map((p) => (
-                <option key={p.id} value={p.id} disabled={lineup.includes(p.id) && lineup[i] !== p.id}>
-                  #{p.number} {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
+        {posLabels.map((label, i) => {
+          const selected = team.players.find((p) => p.id === lineup[i]);
+          return (
+            <div key={i} className="flex items-center gap-2 text-xs">
+              <span className="w-20 shrink-0 uppercase tracking-wider text-muted-foreground font-bold text-[10px]">{label}</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex-1 min-w-0 rounded-md border border-border/60 bg-background px-2 py-1.5 text-xs text-left flex items-center gap-2 hover:border-primary transition-colors"
+                  >
+                    {selected ? (
+                      <>
+                        <span className="scoreboard-digit font-bold">#{selected.number}</span>
+                        <span className="truncate">{selected.name}</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">— Elegir —</span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" sideOffset={4} className="p-1 w-[min(420px,calc(100dvh-32px))]">
+                  <div className="grid grid-cols-2 gap-1 max-h-64 overflow-y-auto">
+                    {team.players.map((p) => {
+                      const taken = lineup.includes(p.id) && lineup[i] !== p.id;
+                      const isSelected = lineup[i] === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={taken}
+                          onClick={() => {
+                            const next = [...lineup];
+                            next[i] = p.id;
+                            setLineup(next);
+                            (document.activeElement as HTMLElement | null)?.blur();
+                          }}
+                          className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors ${
+                            isSelected ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-secondary/70"
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                          <span className="scoreboard-digit font-bold">#{p.number}</span>
+                          <span className="truncate">{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
