@@ -164,7 +164,10 @@ export interface Match {
   liberoA2Id?: string | null;
   liberoB1Id?: string | null;
   liberoB2Id?: string | null;
+  /** Timestamp (ms) when each set was started by the scorer. */
+  setStartTimes?: Record<number, number>;
 }
+
 
 interface VolleyState {
   teams: Team[];
