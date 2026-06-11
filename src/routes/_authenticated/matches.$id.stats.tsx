@@ -121,12 +121,30 @@ function StatsPage() {
           </div>
         </div>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
-          {match.sets.map((s) => (
-            <span key={s.number} className="px-3 py-1.5 rounded-md bg-background/40 border border-border/60 text-xs scoreboard-digit font-bold tabular-nums">
-              Set {s.number}: {s.scoreA}–{s.scoreB}
-            </span>
-          ))}
+          {match.sets.map((s) => {
+            const dur = getSetDuration(match, s.number);
+            return (
+              <span key={s.number} className="px-3 py-1.5 rounded-md bg-background/40 border border-border/60 text-xs scoreboard-digit font-bold tabular-nums">
+                Set {s.number}: {s.scoreA}–{s.scoreB}
+                {dur !== null && <span className="ml-1.5 text-muted-foreground">· {formatDurationMs(dur)}</span>}
+              </span>
+            );
+          })}
         </div>
+        {(() => {
+          const start = match.setStartTimes?.[1];
+          if (!start) return null;
+          const totalMs = match.sets.reduce((acc, s) => acc + (getSetDuration(match, s.number) ?? 0), 0);
+          return (
+            <div className="mt-3 flex flex-wrap justify-center gap-4 text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+              <span>Inicio: <span className="text-foreground scoreboard-digit tabular-nums">{formatLocalTime(start)}</span></span>
+              {totalMs > 0 && (
+                <span>Duración total: <span className="text-foreground scoreboard-digit tabular-nums">{formatDurationMs(totalMs)}</span></span>
+              )}
+            </div>
+          );
+        })()}
+
       </section>
 
       {/* MVP */}
