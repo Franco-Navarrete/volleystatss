@@ -7,11 +7,15 @@ import {
   currentServer,
   timeoutsUsedInSet,
   computeMatchStats,
+  getSetDuration,
+  formatDurationMs,
+  formatLocalTime,
   type PointType,
   type SanctionType,
   type Team,
   type Match,
 } from "@/lib/volley-store";
+
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -40,16 +44,7 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
   component: LiveMatch,
 });
 
-function formatDuration(ms: number): string {
-  if (ms < 0) ms = 0;
-  const totalSec = Math.floor(ms / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  const mm = m.toString().padStart(2, "0");
-  const ss = s.toString().padStart(2, "0");
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-}
+
 
 
 function useForceLandscape(active: boolean) {
@@ -152,7 +147,7 @@ function LiveMatch() {
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
     : undefined;
   const elapsedMs = setStartedAt ? (setEndedAt ?? now) - setStartedAt : 0;
-  const setTimerLabel = setStartedAt ? formatDuration(elapsedMs) : null;
+  const setTimerLabel = setStartedAt ? formatDurationMs(elapsedMs) : null;
 
 
 
@@ -326,20 +321,32 @@ function LiveMatch() {
           </Button>
         </div>
 
-        {match.sets.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1 md:gap-2 shrink-0">
-            {match.sets.map((s) => (
-              <div key={s.number} className={`px-2 md:px-3 py-0.5 md:py-1 rounded text-[10px] md:text-xs scoreboard-digit font-bold tabular-nums border ${
-                s.number === match.currentSet ? "border-primary text-primary bg-primary/5" : "border-border/60 text-muted-foreground"
-              }`}>
-                Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
-                {s.finished && (
-                  <span className="ml-1 text-success">{s.scoreA > s.scoreB ? `▲${teamA.shortName}` : `▲${teamB.shortName}`}</span>
-                )}
+        {(match.sets.length > 0 || match.setStartTimes?.[1]) && (
+          <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 shrink-0">
+            {match.setStartTimes?.[1] && (
+              <div className="px-2 md:px-3 py-0.5 md:py-1 rounded text-[10px] md:text-xs scoreboard-digit font-bold tabular-nums border border-border/60 text-muted-foreground">
+                Inicio: <span className="text-foreground">{formatLocalTime(match.setStartTimes[1])}</span>
               </div>
-            ))}
+            )}
+            {match.sets.map((s) => {
+              const dur = getSetDuration(match, s.number, now);
+              return (
+                <div key={s.number} className={`px-2 md:px-3 py-0.5 md:py-1 rounded text-[10px] md:text-xs scoreboard-digit font-bold tabular-nums border ${
+                  s.number === match.currentSet ? "border-primary text-primary bg-primary/5" : "border-border/60 text-muted-foreground"
+                }`}>
+                  Set {s.number}: <span className="text-foreground">{s.scoreA}–{s.scoreB}</span>
+                  {s.finished && (
+                    <span className="ml-1 text-success">{s.scoreA > s.scoreB ? `▲${teamA.shortName}` : `▲${teamB.shortName}`}</span>
+                  )}
+                  {dur !== null && (
+                    <span className="ml-1 text-muted-foreground">· {formatDurationMs(dur)}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
+
       </div>
 
 

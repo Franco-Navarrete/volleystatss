@@ -3,8 +3,10 @@ import { useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import {
-  computeMatchStats, computeSetStats, setsWon, useVolley, type PlayerStat, type Team,
+  computeMatchStats, computeSetStats, setsWon, useVolley, getSetDuration, formatDurationMs, formatLocalTime,
+  type PlayerStat, type Team,
 } from "@/lib/volley-store";
+
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Crown, Download, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
@@ -119,12 +121,30 @@ function StatsPage() {
           </div>
         </div>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
-          {match.sets.map((s) => (
-            <span key={s.number} className="px-3 py-1.5 rounded-md bg-background/40 border border-border/60 text-xs scoreboard-digit font-bold tabular-nums">
-              Set {s.number}: {s.scoreA}–{s.scoreB}
-            </span>
-          ))}
+          {match.sets.map((s) => {
+            const dur = getSetDuration(match, s.number);
+            return (
+              <span key={s.number} className="px-3 py-1.5 rounded-md bg-background/40 border border-border/60 text-xs scoreboard-digit font-bold tabular-nums">
+                Set {s.number}: {s.scoreA}–{s.scoreB}
+                {dur !== null && <span className="ml-1.5 text-muted-foreground">· {formatDurationMs(dur)}</span>}
+              </span>
+            );
+          })}
         </div>
+        {(() => {
+          const start = match.setStartTimes?.[1];
+          if (!start) return null;
+          const totalMs = match.sets.reduce((acc, s) => acc + (getSetDuration(match, s.number) ?? 0), 0);
+          return (
+            <div className="mt-3 flex flex-wrap justify-center gap-4 text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+              <span>Inicio: <span className="text-foreground scoreboard-digit tabular-nums">{formatLocalTime(start)}</span></span>
+              {totalMs > 0 && (
+                <span>Duración total: <span className="text-foreground scoreboard-digit tabular-nums">{formatDurationMs(totalMs)}</span></span>
+              )}
+            </div>
+          );
+        })()}
+
       </section>
 
       {/* MVP */}
@@ -179,12 +199,16 @@ function StatsPage() {
         <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Desglose por set</h2>
         <Tabs defaultValue={`set-${match.sets[0]?.number ?? 1}`}>
           <TabsList className="mb-4 flex-wrap h-auto">
-            {match.sets.map((s) => (
-              <TabsTrigger key={s.number} value={`set-${s.number}`}>
-                Set {s.number}
-                <span className="ml-1.5 text-[10px] tabular-nums text-muted-foreground">({s.scoreA}-{s.scoreB})</span>
-              </TabsTrigger>
-            ))}
+            {match.sets.map((s) => {
+              const dur = getSetDuration(match, s.number);
+              return (
+                <TabsTrigger key={s.number} value={`set-${s.number}`}>
+                  Set {s.number}
+                  <span className="ml-1.5 text-[10px] tabular-nums text-muted-foreground">({s.scoreA}-{s.scoreB}{dur !== null ? ` · ${formatDurationMs(dur)}` : ""})</span>
+                </TabsTrigger>
+              );
+            })}
+
           </TabsList>
           {match.sets.map((s) => {
             const setStats = computeSetStats(match, s.number);
