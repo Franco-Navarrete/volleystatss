@@ -159,21 +159,19 @@ html.force-landscape .live-action-dialog,
 html.force-landscape [data-slot="dialog-content"],
 html.force-landscape [role="dialog"][data-state] {
   position: fixed !important;
-  left: 50% !important;
-  top: 50% !important;
-  right: auto !important;
-  bottom: auto !important;
-  width: min(440px, calc(100dvh - 24px)) !important;
-  max-width: calc(100dvh - 24px) !important;
-  max-height: calc(100dvw - 24px) !important;
+  inset: 0 !important;
+  width: min(380px, calc(100dvh - 32px)) !important;
+  max-width: calc(100dvh - 32px) !important;
+  height: fit-content !important;
+  max-height: calc(100dvw - 32px) !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
-  transform: translate(-50%, -50%) !important;
-  transform-origin: center center;
-  margin: 0 !important;
+  transform: none !important;
+  margin: auto !important;
   padding: 12px !important;
   gap: 8px !important;
 }
+
 html.force-landscape [data-slot="dialog-content"] [data-slot="dialog-title"] {
   font-size: 0.95rem !important;
   line-height: 1.2 !important;
