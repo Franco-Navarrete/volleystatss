@@ -615,6 +615,40 @@ export function currentServer(match: Match): { side: "A" | "B"; playerId: string
   return { side: match.servingSide, playerId: lineup[0] ?? null };
 }
 
+
+/** Duration of a set in ms. Returns null if the set hasn't started yet. */
+export function getSetDuration(match: Match, setNumber: number, nowMs?: number): number | null {
+  const start = match.setStartTimes?.[setNumber];
+  if (!start) return null;
+  const setObj = match.sets.find((s) => s.number === setNumber);
+  if (setObj?.finished) {
+    // last event timestamp within this set is the end
+    for (let i = match.events.length - 1; i >= 0; i--) {
+      const ev = match.events[i];
+      if ("setNumber" in ev && ev.setNumber === setNumber) {
+        return Math.max(0, ev.timestamp - start);
+      }
+    }
+    return 0;
+  }
+  return Math.max(0, (nowMs ?? Date.now()) - start);
+}
+
+export function formatDurationMs(ms: number): string {
+  if (ms < 0) ms = 0;
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const mm = m.toString().padStart(2, "0");
+  const ss = s.toString().padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+export function formatLocalTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 export interface PlayerStat {
   playerId: string;
   name: string;
