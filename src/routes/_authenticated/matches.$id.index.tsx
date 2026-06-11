@@ -23,9 +23,11 @@ import {
 import {
   ArrowLeftRight,
   ChartBarBig,
+  Check,
   Flag,
   Hourglass,
   Play,
+  Plus,
   Shirt,
   StopCircle,
   Undo2,
