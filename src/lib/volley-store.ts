@@ -164,7 +164,10 @@ export interface Match {
   liberoA2Id?: string | null;
   liberoB1Id?: string | null;
   liberoB2Id?: string | null;
+  /** Timestamp (ms) when each set was started by the scorer. */
+  setStartTimes?: Record<number, number>;
 }
+
 
 interface VolleyState {
   teams: Team[];
@@ -198,7 +201,9 @@ interface VolleyState {
   setInitialServingSide: (id: string, side: "A" | "B") => void;
   setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   confirmSetLineup: (matchId: string) => void;
+  startSet: (matchId: string) => void;
   toggleSidesFlipped: (matchId: string) => void;
+
   recordPoint: (
     matchId: string,
     playerSide: "A" | "B",
@@ -378,11 +383,11 @@ export const useVolley = create<VolleyState>()(
       startMatch: (id) =>
         set((s) => ({
           matches: s.matches.map((m) =>
-            m.id === id
-              ? { ...m, status: "live", confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), 1])] }
-              : m
+            m.id === id ? { ...m, status: "live" } : m
           ),
         })),
+
+
 
       setInitialServingSide: (id, side) =>
         set((s) => ({
@@ -413,6 +418,19 @@ export const useVolley = create<VolleyState>()(
               : m
           ),
         })),
+
+      startSet: (matchId) =>
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            if (m.setStartTimes?.[m.currentSet]) return m;
+            return {
+              ...m,
+              setStartTimes: { ...(m.setStartTimes ?? {}), [m.currentSet]: Date.now() },
+            };
+          }),
+        })),
+
 
       toggleSidesFlipped: (matchId) =>
         set((s) => ({

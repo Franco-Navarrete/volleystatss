@@ -40,6 +40,18 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
   component: LiveMatch,
 });
 
+function formatDuration(ms: number): string {
+  if (ms < 0) ms = 0;
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const mm = m.toString().padStart(2, "0");
+  const ss = s.toString().padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+
 function useForceLandscape(active: boolean) {
   useEffect(() => {
     if (!active) return;
@@ -68,7 +80,9 @@ function LiveMatch() {
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const setSetLineup = useVolley((s) => s.setSetLineup);
   const confirmSetLineup = useVolley((s) => s.confirmSetLineup);
+  const startSet = useVolley((s) => s.startSet);
   const toggleSidesFlipped = useVolley((s) => s.toggleSidesFlipped);
+
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
   const recordTimeout = useVolley((s) => s.recordTimeout);
@@ -120,9 +134,27 @@ function LiveMatch() {
   const leftTeam = leftSide === "A" ? teamA : teamB;
   const rightTeam = rightSide === "A" ? teamA : teamB;
   const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  const lineupConfirmed = (match.confirmedLineupSets ?? []).includes(match.currentSet);
   // The set can't start until the formation for this set is confirmed.
-  const needsLineup = isLive && setNotStarted && !(match.confirmedLineupSets ?? []).includes(match.currentSet);
-  const actionsDisabled = !isLive || needsLineup;
+  const needsLineup = isLive && setNotStarted && !lineupConfirmed;
+  const setStartedAt = match.setStartTimes?.[match.currentSet];
+  const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
+  const actionsDisabled = !isLive || needsLineup || needsSetStart;
+
+  // Set timer (ticks every second while current set is live).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!setStartedAt || match.status === "finished" || currentSet.finished) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [setStartedAt, match.status, currentSet.finished]);
+  const setEndedAt = currentSet.finished
+    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
+    : undefined;
+  const elapsedMs = setStartedAt ? (setEndedAt ?? now) - setStartedAt : 0;
+  const setTimerLabel = setStartedAt ? formatDuration(elapsedMs) : null;
+
+
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
@@ -163,6 +195,12 @@ function LiveMatch() {
               ) : (
                 <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
               )}
+              {setTimerLabel && (
+                <span className="md:mt-0.5 scoreboard-digit tabular-nums text-[10px] md:text-sm font-bold text-foreground">
+                  {setTimerLabel}
+                </span>
+              )}
+
             </div>
             <div>
               <button
@@ -208,13 +246,26 @@ function LiveMatch() {
         {needsLineup && (
           <div className="rounded-lg md:rounded-xl border-2 border-primary/60 bg-primary/10 px-3 py-2 md:px-5 md:py-3 flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 shrink-0">
             <p className="text-xs md:text-sm font-semibold text-center">
-              Confirmá la formación inicial del <span className="text-primary font-bold">Set {match.currentSet}</span> para poder dar inicio.
+              Confirmá la formación inicial del <span className="text-primary font-bold">Set {match.currentSet}</span> para continuar.
             </p>
             <Button size="sm" className="h-8 md:h-10 bg-gradient-primary text-primary-foreground shadow-glow" onClick={() => setShowLineupEditor(true)}>
               <Users className="size-3.5 md:size-4" /> Confirmar formación
             </Button>
           </div>
         )}
+
+        {/* After lineup confirmed, scorer must explicitly start the set (starts the timer) */}
+        {needsSetStart && (
+          <div className="rounded-lg md:rounded-xl border-2 border-success/60 bg-success/10 px-3 py-2 md:px-5 md:py-3 flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 shrink-0">
+            <p className="text-xs md:text-sm font-semibold text-center">
+              Formación confirmada. Tocá <span className="text-success font-bold">Iniciar Set {match.currentSet}</span> cuando arranque el juego.
+            </p>
+            <Button size="sm" className="h-8 md:h-10 bg-success text-success-foreground hover:bg-success/90" onClick={() => startSet(match.id)}>
+              <Play className="size-3.5 md:size-4" /> Iniciar Set {match.currentSet}
+            </Button>
+          </div>
+        )}
+
 
         {/* Court + side controls */}
         <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 md:min-h-[420px]">
