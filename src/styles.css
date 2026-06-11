@@ -159,14 +159,23 @@ html.force-landscape [data-slot="alert-dialog-overlay"] {
   height: auto !important;
   z-index: 9998 !important;
 }
+html.force-landscape [data-slot="dialog-positioner"] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 14px !important;
+  pointer-events: none;
+}
 html.force-landscape .live-action-dialog,
 html.force-landscape [data-slot="dialog-content"],
 html.force-landscape [data-slot="alert-dialog-content"],
 html.force-landscape [role="dialog"][data-state] {
-  position: fixed !important;
-  z-index: 9999 !important;
-  left: 50dvw !important;
-  top: 50dvh !important;
+  position: relative !important;
+  z-index: 1 !important;
+  left: auto !important;
+  top: auto !important;
   right: auto !important;
   bottom: auto !important;
   width: min(420px, calc(100dvw - 28px)) !important;
@@ -174,7 +183,7 @@ html.force-landscape [role="dialog"][data-state] {
   max-height: calc(100dvh - 28px) !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
-  transform: translate(-50%, -50%) !important;
+  transform: none !important;
   margin: 0 !important;
   padding: 12px !important;
   gap: 8px !important;
