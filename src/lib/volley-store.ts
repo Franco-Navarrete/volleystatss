@@ -419,6 +419,19 @@ export const useVolley = create<VolleyState>()(
           ),
         })),
 
+      startSet: (matchId) =>
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            if (m.setStartTimes?.[m.currentSet]) return m;
+            return {
+              ...m,
+              setStartTimes: { ...(m.setStartTimes ?? {}), [m.currentSet]: Date.now() },
+            };
+          }),
+        })),
+
+
       toggleSidesFlipped: (matchId) =>
         set((s) => ({
           matches: s.matches.map((m) =>
