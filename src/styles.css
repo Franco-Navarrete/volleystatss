@@ -129,45 +129,51 @@ button, a, [role="button"] {
   touch-action: manipulation;
 }
 
-/* Force landscape orientation on portrait mobile devices (used during live match scoring). */
-html.force-landscape, html.force-landscape body {
+/* Force the live scoring screen to landscape without rotating <body>.
+   Dialog portals stay attached to the unrotated body, so modals can be
+   centered against the real mobile viewport instead of a transformed one. */
+html.force-landscape,
+html.force-landscape body {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
-html.force-landscape body {
-  position: fixed;
-  top: 0;
-  left: 100dvw;
-  width: 100dvh;
-  height: 100dvw;
-  transform: rotate(90deg);
-  transform-origin: top left;
-}
-
-/* Body is rotated 90deg so its fixed-positioned children (the Radix dialog
-   portal) live in a rotated coordinate system where width = 100dvh and
-   height = 100dvw. We size/position dialogs in those rotated units so they
-   appear centered and horizontal to the user holding the phone in portrait. */
-html.force-landscape [data-slot="dialog-overlay"],
-html.force-landscape [data-radix-dialog-overlay] {
+html.force-landscape .live-match-shell {
   position: fixed !important;
+  top: 0 !important;
+  left: 100dvw !important;
   width: 100dvh !important;
   height: 100dvw !important;
-  left: 0 !important;
-  top: 0 !important;
+  min-height: 0 !important;
+  transform: rotate(90deg);
+  transform-origin: top left;
+  overflow: hidden;
+}
+
+html.force-landscape [data-slot="dialog-overlay"],
+html.force-landscape [data-slot="alert-dialog-overlay"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
 }
 html.force-landscape .live-action-dialog,
 html.force-landscape [data-slot="dialog-content"],
+html.force-landscape [data-slot="alert-dialog-content"],
 html.force-landscape [role="dialog"][data-state] {
   position: fixed !important;
-  inset: 0 !important;
-  width: min(380px, calc(100dvh - 32px)) !important;
+  left: 50dvw !important;
+  top: 50dvh !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(520px, calc(100dvh - 32px)) !important;
   max-width: calc(100dvh - 32px) !important;
-  height: fit-content !important;
   max-height: calc(100dvw - 32px) !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
-  transform: none !important;
-  margin: auto !important;
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+  transform-origin: center center !important;
+  margin: 0 !important;
   padding: 12px !important;
   gap: 8px !important;
 }

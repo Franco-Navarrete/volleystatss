@@ -516,7 +516,7 @@ function LiveMatch() {
 
 function CompactShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
+    <div className="live-match-shell min-h-[100dvh] flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-8 md:h-14 flex items-center justify-between shrink-0">
         <Link to="/matches" className="flex items-center gap-2 md:gap-3 min-h-10">
           <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
@@ -529,6 +529,7 @@ function CompactShell({ children }: { children: React.ReactNode }) {
         </Link>
       </header>
       <main className="flex-1 min-h-0 overflow-hidden md:overflow-auto">{children}</main>
+      <div data-live-dialog-root="" />
     </div>
   );
 }
