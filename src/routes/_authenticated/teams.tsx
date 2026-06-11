@@ -70,6 +70,9 @@ function TeamsPage() {
   const logoFileRef = useRef<HTMLInputElement | null>(null);
   const teamLogoFileRef = useRef<HTMLInputElement | null>(null);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editingTeam, setEditingTeam] = useState(false);
+  const [editTeamName, setEditTeamName] = useState("");
+  const [editTeamShort, setEditTeamShort] = useState("");
 
   const activeTeam = teams.find((t) => t.id === selected) ?? teams[0];
 
