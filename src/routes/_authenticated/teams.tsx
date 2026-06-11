@@ -49,6 +49,7 @@ async function fileToCompressedDataUrl(file: File): Promise<string> {
 function TeamsPage() {
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
+  const matches = useVolley((s) => s.matches);
   const addTeam = useVolley((s) => s.addTeam);
   const updateTeam = useVolley((s) => s.updateTeam);
   const removeTeam = useVolley((s) => s.removeTeam);
@@ -74,8 +75,18 @@ function TeamsPage() {
   const [editingTeam, setEditingTeam] = useState(false);
   const [editTeamName, setEditTeamName] = useState("");
   const [editTeamShort, setEditTeamShort] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const activeTeam = teams.find((t) => t.id === selected) ?? teams[0];
+
+  const deletingTeam = teams.find((t) => t.id === deleteTarget) ?? null;
+  const affectedMatches = useMemo(
+    () => (deletingTeam ? matches.filter((m) => m.teamAId === deletingTeam.id || m.teamBId === deletingTeam.id) : []),
+    [matches, deletingTeam],
+  );
+  const affectedLeague = deletingTeam ? leagues.find((l) => l.id === deletingTeam.leagueId) ?? null : null;
+  const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" });
+  const statusLabel: Record<string, string> = { scheduled: "Programado", live: "En vivo", finished: "Finalizado" };
 
   return (
     <AppShell>
