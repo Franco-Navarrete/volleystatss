@@ -5,7 +5,7 @@ import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, PLAYER_POSITIONS, PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Camera, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({ meta: [{ title: "Equipos · RALLY" }] }),
