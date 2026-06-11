@@ -174,63 +174,145 @@ function TeamsPage() {
         <section className="lg:col-span-2 rounded-2xl bg-card border border-border/60 p-5">
           {activeTeam ? (
             <>
-              <div className="flex items-center gap-4 mb-5">
-                <button
-                  type="button"
-                  onClick={() => teamLogoFileRef.current?.click()}
-                  className="relative group rounded-lg overflow-hidden"
-                  title="Cambiar escudo"
-                >
-                  <TeamBadge team={activeTeam} size="lg" />
-                  <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <Camera className="size-4 text-white" />
-                  </span>
-                </button>
-                <input
-                  ref={teamLogoFileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = "";
-                    if (!f) return;
-                    try {
-                      const data = await fileToCompressedDataUrl(f);
-                      updateTeam(activeTeam.id, { logoUrl: data });
-                    } catch { alert("No se pudo procesar la imagen."); }
-                  }}
-                />
-                <div className="flex-1">
-                  <h2 className="font-bold text-xl">{activeTeam.name}</h2>
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest">{activeTeam.shortName} · {activeTeam.players.length} jugadores</p>
-                  {activeTeam.logoUrl && (
-                    <button
-                      onClick={() => updateTeam(activeTeam.id, { logoUrl: undefined })}
-                      className="text-[10px] text-muted-foreground hover:text-destructive mt-1"
-                    >
-                      Quitar escudo
-                    </button>
+              <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <button
+                    type="button"
+                    onClick={() => teamLogoFileRef.current?.click()}
+                    className="relative group rounded-lg overflow-hidden shrink-0"
+                    title="Cambiar escudo"
+                  >
+                    <TeamBadge team={activeTeam} size="lg" />
+                    <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Camera className="size-4 text-white" />
+                    </span>
+                  </button>
+                  <input
+                    ref={teamLogoFileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!f) return;
+                      try {
+                        const data = await fileToCompressedDataUrl(f);
+                        updateTeam(activeTeam.id, { logoUrl: data });
+                      } catch { alert("No se pudo procesar la imagen."); }
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    {editingTeam ? (
+                      <div className="flex flex-col gap-1.5">
+                        <Input
+                          className="h-8 text-base font-bold"
+                          value={editTeamName}
+                          onChange={(e) => setEditTeamName(e.target.value.slice(0, 60))}
+                          placeholder="Nombre del equipo"
+                        />
+                        <Input
+                          className="h-7 text-xs uppercase tracking-widest font-bold w-28"
+                          value={editTeamShort}
+                          maxLength={4}
+                          onChange={(e) => setEditTeamShort(e.target.value.toUpperCase())}
+                          placeholder="Abrev."
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <h2 className="font-bold text-xl truncate">{activeTeam.name}</h2>
+                        <p className="text-xs text-muted-foreground uppercase tracking-widest">
+                          {activeTeam.shortName} · {activeTeam.players.length} jugadores
+                        </p>
+                      </>
+                    )}
+                    {activeTeam.logoUrl && !editingTeam && (
+                      <button
+                        onClick={() => updateTeam(activeTeam.id, { logoUrl: undefined })}
+                        className="text-[10px] text-muted-foreground hover:text-destructive mt-1"
+                      >
+                        Quitar escudo
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {editingTeam && (
+                  <div className="flex flex-wrap gap-1.5 sm:basis-full">
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold w-full">Color</span>
+                    {COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => updateTeam(activeTeam.id, { color: c })}
+                        className={`size-7 rounded-md ring-offset-2 ring-offset-card transition-all ${activeTeam.color === c ? "ring-2 ring-foreground scale-110" : ""}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <select
+                    value={activeTeam.leagueId ?? ""}
+                    onChange={(e) => updateTeam(activeTeam.id, { leagueId: e.target.value || undefined })}
+                    className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
+                  >
+                    <option value="">Sin liga</option>
+                    {leagues.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                  {editingTeam ? (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const name = editTeamName.trim();
+                          const shortName = editTeamShort.trim();
+                          if (!name || !shortName) { alert("Nombre y abreviatura son obligatorios."); return; }
+                          updateTeam(activeTeam.id, { name, shortName });
+                          setEditingTeam(false);
+                        }}
+                      >
+                        Guardar
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setEditingTeam(false)} title="Cancelar">
+                        <X className="size-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditTeamName(activeTeam.name);
+                          setEditTeamShort(activeTeam.shortName);
+                          setEditingTeam(true);
+                        }}
+                      >
+                        <Pencil className="size-3.5" /> Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => {
+                          if (confirm(`¿Eliminar ${activeTeam.name}? Se borrarán sus jugadores.`)) {
+                            removeTeam(activeTeam.id);
+                            setSelected(null);
+                            setEditingTeam(false);
+                          }
+                        }}
+                      >
+                        <Trash2 className="size-3.5" /> Eliminar
+                      </Button>
+                    </>
                   )}
                 </div>
-                <select
-                  value={activeTeam.leagueId ?? ""}
-                  onChange={(e) => updateTeam(activeTeam.id, { leagueId: e.target.value || undefined })}
-                  className="bg-background border border-input rounded-md px-3 py-2 text-sm"
-                >
-                  <option value="">Sin liga</option>
-                  {leagues.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                </select>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => { if (confirm(`¿Eliminar ${activeTeam.name}?`)) { removeTeam(activeTeam.id); setSelected(null); } }}
-                >
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
               </div>
 
               <div className="grid sm:grid-cols-[auto_1fr_90px_130px_auto] gap-2 mb-4 items-center">
+
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
