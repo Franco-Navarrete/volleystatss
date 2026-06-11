@@ -122,9 +122,13 @@ function LiveMatch() {
   const leftTeam = leftSide === "A" ? teamA : teamB;
   const rightTeam = rightSide === "A" ? teamA : teamB;
   const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  const lineupConfirmed = (match.confirmedLineupSets ?? []).includes(match.currentSet);
   // The set can't start until the formation for this set is confirmed.
-  const needsLineup = isLive && setNotStarted && !(match.confirmedLineupSets ?? []).includes(match.currentSet);
-  const actionsDisabled = !isLive || needsLineup;
+  const needsLineup = isLive && setNotStarted && !lineupConfirmed;
+  const setStartedAt = match.setStartTimes?.[match.currentSet];
+  const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
+  const actionsDisabled = !isLive || needsLineup || needsSetStart;
+
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
