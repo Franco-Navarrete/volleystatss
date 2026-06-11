@@ -40,6 +40,18 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
   component: LiveMatch,
 });
 
+function formatDuration(ms: number): string {
+  if (ms < 0) ms = 0;
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const mm = m.toString().padStart(2, "0");
+  const ss = s.toString().padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+
 function useForceLandscape(active: boolean) {
   useEffect(() => {
     if (!active) return;
