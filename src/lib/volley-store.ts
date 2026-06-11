@@ -384,10 +384,16 @@ export const useVolley = create<VolleyState>()(
         set((s) => ({
           matches: s.matches.map((m) =>
             m.id === id
-              ? { ...m, status: "live", confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), 1])] }
+              ? {
+                  ...m,
+                  status: "live",
+                  confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), 1])],
+                  setStartTimes: { ...(m.setStartTimes ?? {}), 1: m.setStartTimes?.[1] ?? Date.now() },
+                }
               : m
           ),
         })),
+
 
       setInitialServingSide: (id, side) =>
         set((s) => ({
