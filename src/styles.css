@@ -140,6 +140,7 @@ html.force-landscape body {
 }
 html.force-landscape .live-match-shell {
   position: fixed !important;
+  z-index: 0;
   top: 0 !important;
   left: 100dvw !important;
   width: 100dvh !important;
@@ -156,12 +157,14 @@ html.force-landscape [data-slot="alert-dialog-overlay"] {
   inset: 0 !important;
   width: auto !important;
   height: auto !important;
+  z-index: 9998 !important;
 }
 html.force-landscape .live-action-dialog,
 html.force-landscape [data-slot="dialog-content"],
 html.force-landscape [data-slot="alert-dialog-content"],
 html.force-landscape [role="dialog"][data-state] {
   position: fixed !important;
+  z-index: 9999 !important;
   left: 50dvw !important;
   top: 50dvh !important;
   right: auto !important;
@@ -175,6 +178,7 @@ html.force-landscape [role="dialog"][data-state] {
   margin: 0 !important;
   padding: 12px !important;
   gap: 8px !important;
+  box-sizing: border-box;
 }
 
 html.force-landscape [data-slot="dialog-content"] [data-slot="dialog-title"] {
