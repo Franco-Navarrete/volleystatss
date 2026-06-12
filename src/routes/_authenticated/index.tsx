@@ -25,6 +25,7 @@ function LeaguePage() {
   const teams = useVolley((s) => s.teams);
   const matches = useVolley((s) => s.matches);
   const seed = useVolley((s) => s.seedDemo);
+  const { allowed: canCreate } = useCanCreateMatches();
 
   useEffect(() => {
     if (teams.length === 0) seed();
