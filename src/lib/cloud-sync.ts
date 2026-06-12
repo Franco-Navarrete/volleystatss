@@ -7,29 +7,41 @@ type CloudData = {
   leagues?: League[];
 };
 
+const LOCAL_TS_KEY = "vstats:lastLocalChange";
+
 let startedFor: string | null = null;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribe: (() => void) | null = null;
+/** Ignoramos el primer cambio del store que disparamos nosotros al hidratar desde la nube. */
+let suppressNextChange = false;
 
-function mergeById<T extends { id: string }>(local: T[], cloud: T[]): T[] {
-  const localIds = new Set(local.map((x) => x.id));
-  return [...local, ...cloud.filter((c) => !localIds.has(c.id))];
+function getLocalTs(): number {
+  if (typeof localStorage === "undefined") return 0;
+  const v = localStorage.getItem(LOCAL_TS_KEY);
+  return v ? Number(v) || 0 : 0;
+}
+function setLocalTs(ts: number) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(LOCAL_TS_KEY, String(ts));
 }
 
 async function saveToCloud(userId: string) {
   const s = useVolley.getState();
   const data = { teams: s.teams, matches: s.matches, leagues: s.leagues };
-  await supabase.from("app_state").upsert({
+  const updatedAt = new Date().toISOString();
+  const { error } = await supabase.from("app_state").upsert({
     user_id: userId,
     data: data as never,
-    updated_at: new Date().toISOString(),
+    updated_at: updatedAt,
   });
+  if (!error) setLocalTs(Date.parse(updatedAt));
 }
 
 /**
- * Loads the user's cloud data, merges it with anything stored locally
- * (local wins on conflicts), pushes the merged state back up and then
- * auto-saves on every store change (debounced).
+ * Carga la data del usuario y la sincroniza usando last-write-wins por timestamp.
+ * - Si la nube es más nueva que el último cambio local → reemplaza el estado local con la nube.
+ * - Si el local es más nuevo (o no hay nube) → empuja el local a la nube.
+ * Esto evita que items eliminados localmente reaparezcan al recargar.
  */
 export async function startCloudSync(userId: string, email: string | null) {
   if (startedFor === userId) return;
@@ -42,21 +54,42 @@ export async function startCloudSync(userId: string, email: string | null) {
 
   const { data: row } = await supabase
     .from("app_state")
-    .select("data")
+    .select("data, updated_at")
     .eq("user_id", userId)
     .maybeSingle();
 
-  const cloud = ((row?.data as CloudData | null) ?? {}) as CloudData;
-  const s = useVolley.getState();
-  useVolley.setState({
-    teams: mergeById(s.teams, cloud.teams ?? []),
-    matches: mergeById(s.matches, cloud.matches ?? []),
-    leagues: mergeById(s.leagues, cloud.leagues ?? []),
-  });
+  const cloud = ((row?.data as CloudData | null) ?? null);
+  const cloudTs = row?.updated_at ? Date.parse(row.updated_at) : 0;
+  const localTs = getLocalTs();
 
-  await saveToCloud(userId);
+  const hasLocal =
+    useVolley.getState().teams.length > 0 ||
+    useVolley.getState().matches.length > 0 ||
+    useVolley.getState().leagues.length > 0;
+
+  if (cloud && cloudTs > localTs) {
+    // La nube gana: reemplazamos el estado local íntegramente.
+    suppressNextChange = true;
+    useVolley.setState({
+      teams: cloud.teams ?? [],
+      matches: cloud.matches ?? [],
+      leagues: cloud.leagues ?? [],
+    });
+    setLocalTs(cloudTs);
+  } else if (!cloud && hasLocal) {
+    // Primera sync de este usuario: subimos lo que ya hay localmente.
+    await saveToCloud(userId);
+  } else if (cloud && cloudTs <= localTs) {
+    // Local gana (incluye eliminaciones pendientes): pisamos la nube.
+    await saveToCloud(userId);
+  }
 
   unsubscribe = useVolley.subscribe(() => {
+    if (suppressNextChange) {
+      suppressNextChange = false;
+      return;
+    }
+    setLocalTs(Date.now());
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       void saveToCloud(userId);
@@ -70,4 +103,5 @@ export function stopCloudSync() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
   startedFor = null;
+  suppressNextChange = false;
 }
