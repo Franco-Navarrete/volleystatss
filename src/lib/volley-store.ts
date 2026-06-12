@@ -179,6 +179,9 @@ export interface Match {
   liberoB2Id?: string | null;
   /** Timestamp (ms) when each set was started by the scorer. */
   setStartTimes?: Record<number, number>;
+  /** Líbero actualmente en cancha (computado por replayMatch). */
+  liberoActiveA?: { liberoId: string; replacedId: string } | null;
+  liberoActiveB?: { liberoId: string; replacedId: string } | null;
 }
 
 
