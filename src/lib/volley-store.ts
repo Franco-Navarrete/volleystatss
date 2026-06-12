@@ -232,6 +232,13 @@ interface VolleyState {
     playerInId: string,
     playerOutId: string
   ) => void;
+  recordLiberoIn: (
+    matchId: string,
+    side: "A" | "B",
+    liberoId: string,
+    replacedId: string
+  ) => void;
+  recordLiberoOut: (matchId: string, side: "A" | "B") => void;
   recordTimeout: (matchId: string, side: "A" | "B") => boolean;
   recordSanction: (
     matchId: string,
