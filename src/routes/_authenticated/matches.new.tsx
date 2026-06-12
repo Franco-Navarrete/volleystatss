@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
@@ -6,6 +6,7 @@ import { useVolley, PLAYER_POSITION_LABEL } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, Plus, X } from "lucide-react";
+import { useCanCreateMatches } from "@/hooks/use-permissions";
 
 export const Route = createFileRoute("/_authenticated/matches/new")({
   head: () => ({ meta: [{ title: "Nuevo partido · RALLY" }] }),
@@ -20,6 +21,30 @@ function NewMatch() {
   const navigate = useNavigate();
   const teams = useVolley((s) => s.teams);
   const createMatch = useVolley((s) => s.createMatch);
+  const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
+
+  if (permLoading) {
+    return (
+      <AppShell>
+        <p className="text-sm text-muted-foreground">Verificando permisos…</p>
+      </AppShell>
+    );
+  }
+  if (!canCreate) {
+    return (
+      <AppShell>
+        <div className="max-w-md mx-auto text-center py-16">
+          <h1 className="text-lg font-semibold">Sin permiso</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Tu cuenta no tiene habilitado crear partidos. Pedile al administrador que te active el permiso.
+          </p>
+          <Button asChild variant="secondary" className="mt-4">
+            <Link to="/matches">Volver a partidos</Link>
+          </Button>
+        </div>
+      </AppShell>
+    );
+  }
 
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
