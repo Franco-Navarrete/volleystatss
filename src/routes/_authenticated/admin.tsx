@@ -1,70 +1,50 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, ShieldCheck, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import {
+  Loader2,
+  Plus,
+  ShieldCheck,
+  Trash2,
+  Trophy,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { supabase } from "@/integrations/supabase/client";
-import { useIsAdmin } from "@/hooks/use-auth";
-import type { League, Match, Team } from "@/lib/volley-store";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useIsAdmin } from "@/hooks/use-auth";
+import {
+  adminCreateLeague,
+  adminCreateUser,
+  adminDeleteLeague,
+  adminDeleteUser,
+  adminListLeagues,
+  adminListUsers,
+  adminSetLeagueAccess,
+  adminSetPermissions,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Administración · vstats" }] }),
   component: AdminPage,
 });
 
-type CloudData = { teams?: Team[]; matches?: Match[]; leagues?: League[] };
-
-interface UserRow {
-  id: string;
-  email: string;
-  created_at: string;
-  data: CloudData;
-  isAdmin: boolean;
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: "Programado",
-  live: "En vivo",
-  finished: "Finalizado",
-};
-
 function AdminPage() {
   const { isAdmin, checking } = useIsAdmin();
-  const [rows, setRows] = useState<UserRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    let cancelled = false;
-    (async () => {
-      const [profilesRes, stateRes, rolesRes] = await Promise.all([
-        supabase.from("profiles").select("id, email, created_at"),
-        supabase.from("app_state").select("user_id, data"),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
-      if (cancelled) return;
-      const states = new Map(
-        (stateRes.data ?? []).map((s) => [s.user_id, (s.data ?? {}) as CloudData]),
-      );
-      const admins = new Set(
-        (rolesRes.data ?? []).filter((r) => r.role === "admin").map((r) => r.user_id),
-      );
-      setRows(
-        (profilesRes.data ?? []).map((p) => ({
-          id: p.id,
-          email: p.email,
-          created_at: p.created_at,
-          data: states.get(p.id) ?? {},
-          isAdmin: admins.has(p.id),
-        })),
-      );
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isAdmin]);
 
   if (checking) {
     return (
@@ -73,7 +53,6 @@ function AdminPage() {
       </AppShell>
     );
   }
-
   if (!isAdmin) {
     return (
       <AppShell>
@@ -94,89 +73,462 @@ function AdminPage() {
         <h1 className="text-xl font-bold tracking-tight">Administración</h1>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Cargando usuarios…</p>
-      ) : (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="size-4" />
-            {rows.length} usuario{rows.length === 1 ? "" : "s"} registrado
-            {rows.length === 1 ? "" : "s"}
+      <Tabs defaultValue="users">
+        <TabsList className="mb-4">
+          <TabsTrigger value="users">
+            <Users className="size-4 mr-1.5" /> Usuarios
+          </TabsTrigger>
+          <TabsTrigger value="leagues">
+            <Trophy className="size-4 mr-1.5" /> Ligas
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="users">
+          <UsersTab />
+        </TabsContent>
+        <TabsContent value="leagues">
+          <LeaguesTab />
+        </TabsContent>
+      </Tabs>
+    </AppShell>
+  );
+}
+
+// =========================================================================
+// USUARIOS
+// =========================================================================
+
+function UsersTab() {
+  const qc = useQueryClient();
+  const listUsers = useServerFn(adminListUsers);
+  const listLeagues = useServerFn(adminListLeagues);
+
+  const usersQ = useQuery({ queryKey: ["admin", "users"], queryFn: () => listUsers() });
+  const leaguesQ = useQuery({ queryKey: ["admin", "leagues"], queryFn: () => listLeagues() });
+
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin", "users"] });
+  };
+
+  if (usersQ.isLoading || leaguesQ.isLoading) {
+    return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  }
+  const leagues = leaguesQ.data ?? [];
+  const users = usersQ.data ?? [];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Users className="size-4" />
+          {users.length} usuario{users.length === 1 ? "" : "s"}
+        </div>
+        <Button onClick={() => setCreateOpen(true)} size="sm">
+          <UserPlus className="size-4" /> Nuevo usuario
+        </Button>
+      </div>
+
+      {users.map((u) => (
+        <UserRow key={u.id} user={u} leagues={leagues} onChanged={refresh} />
+      ))}
+
+      <CreateUserDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        leagues={leagues}
+        onCreated={refresh}
+      />
+    </div>
+  );
+}
+
+type UserRowData = Awaited<ReturnType<typeof adminListUsers>>[number];
+type LeagueRow = Awaited<ReturnType<typeof adminListLeagues>>[number];
+
+function UserRow({
+  user,
+  leagues,
+  onChanged,
+}: {
+  user: UserRowData;
+  leagues: LeagueRow[];
+  onChanged: () => void;
+}) {
+  const setPerms = useServerFn(adminSetPermissions);
+  const setAccess = useServerFn(adminSetLeagueAccess);
+  const deleteUser = useServerFn(adminDeleteUser);
+
+  const [selected, setSelected] = useState<Set<string>>(new Set(user.leagueIds));
+  const [canCreate, setCanCreate] = useState(user.canCreateMatches);
+  const [open, setOpen] = useState(false);
+
+  const dirty = useMemo(() => {
+    const orig = new Set(user.leagueIds);
+    if (selected.size !== orig.size) return true;
+    for (const id of selected) if (!orig.has(id)) return true;
+    return canCreate !== user.canCreateMatches;
+  }, [selected, canCreate, user]);
+
+  const saveMut = useMutation({
+    mutationFn: async () => {
+      await Promise.all([
+        setPerms({ data: { userId: user.id, canCreateMatches: canCreate } }),
+        setAccess({ data: { userId: user.id, leagueIds: Array.from(selected) } }),
+      ]);
+    },
+    onSuccess: () => {
+      toast.success("Usuario actualizado");
+      onChanged();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const delMut = useMutation({
+    mutationFn: () => deleteUser({ data: { userId: user.id } }),
+    onSuccess: () => {
+      toast.success("Usuario eliminado");
+      onChanged();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40">
+      <button
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="min-w-0">
+          <div className="font-medium text-sm truncate flex items-center gap-2">
+            {user.email}
+            {user.isAdmin && (
+              <Badge variant="secondary" className="text-[10px]">Admin</Badge>
+            )}
           </div>
-          {rows.map((row) => {
-            const matches = row.data.matches ?? [];
-            const teams = row.data.teams ?? [];
-            const teamName = (id: string) =>
-              teams.find((t) => t.id === id)?.name ?? "Equipo";
-            const expanded = open === row.id;
-            return (
-              <div key={row.id} className="rounded-xl border border-border/60 bg-card/40">
-                <button
-                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
-                  onClick={() => setOpen(expanded ? null : row.id)}
-                >
-                  <div className="min-w-0">
-                    <div className="font-medium text-sm truncate flex items-center gap-2">
-                      {row.email}
-                      {row.isAdmin && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          Admin
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {matches.length} partido{matches.length === 1 ? "" : "s"} ·{" "}
-                      {teams.length} equipo{teams.length === 1 ? "" : "s"}
-                    </div>
-                  </div>
-                  {expanded ? (
-                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                  )}
-                </button>
-                {expanded && (
-                  <div className="border-t border-border/60 px-4 py-3 space-y-2">
-                    {matches.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Sin partidos guardados.</p>
-                    ) : (
-                      matches.map((m) => {
-                        const setsA = m.sets.filter(
-                          (s) => s.finished && s.scoreA > s.scoreB,
-                        ).length;
-                        const setsB = m.sets.filter(
-                          (s) => s.finished && s.scoreB > s.scoreA,
-                        ).length;
-                        return (
-                          <div
-                            key={m.id}
-                            className="flex items-center justify-between gap-2 text-sm rounded-lg bg-secondary/40 px-3 py-2"
-                          >
-                            <span className="truncate">
-                              {teamName(m.teamAId)} vs {teamName(m.teamBId)}
-                            </span>
-                            <span className="flex items-center gap-2 shrink-0">
-                              <span className="font-semibold tabular-nums">
-                                {setsA}-{setsB}
-                              </span>
-                              <Badge
-                                variant={m.status === "live" ? "default" : "secondary"}
-                                className="text-[10px]"
-                              >
-                                {STATUS_LABEL[m.status] ?? m.status}
-                              </Badge>
-                            </span>
-                          </div>
-                        );
-                      })
-                    )}
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {user.leagueIds.length} liga{user.leagueIds.length === 1 ? "" : "s"} ·{" "}
+            {user.canCreateMatches ? "Puede crear partidos" : "Sin permiso de crear"}
+          </div>
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-border/60 px-4 py-4 space-y-4">
+          {user.isAdmin ? (
+            <p className="text-xs text-muted-foreground">
+              Los administradores tienen acceso total. No se editan permisos individuales.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label className="text-sm">Puede crear partidos</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Habilita el botón "Nuevo partido" para este usuario.
+                  </p>
+                </div>
+                <Switch checked={canCreate} onCheckedChange={setCanCreate} />
+              </div>
+
+              <div>
+                <Label className="text-sm mb-2 block">Acceso a ligas</Label>
+                {leagues.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Aún no hay ligas. Creá una en la pestaña "Ligas".
+                  </p>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-1.5">
+                    {leagues.map((l) => {
+                      const checked = selected.has(l.id);
+                      return (
+                        <label
+                          key={l.id}
+                          className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer hover:bg-secondary/60"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggle(l.id)}
+                            className="size-4 accent-primary"
+                          />
+                          <span className="text-sm flex-1 truncate">
+                            {l.name}
+                            {l.season ? (
+                              <span className="text-xs text-muted-foreground ml-1">· {l.season}</span>
+                            ) : null}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            );
-          })}
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => {
+                    if (confirm(`¿Eliminar la cuenta ${user.email}?`)) delMut.mutate();
+                  }}
+                  disabled={delMut.isPending}
+                >
+                  <Trash2 className="size-4" /> Eliminar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => saveMut.mutate()}
+                  disabled={!dirty || saveMut.isPending}
+                >
+                  {saveMut.isPending && <Loader2 className="size-4 animate-spin" />}
+                  Guardar cambios
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
-    </AppShell>
+    </div>
+  );
+}
+
+function CreateUserDialog({
+  open,
+  onOpenChange,
+  leagues,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  leagues: LeagueRow[];
+  onCreated: () => void;
+}) {
+  const create = useServerFn(adminCreateUser);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [canCreate, setCanCreate] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const reset = () => {
+    setEmail("");
+    setPassword("");
+    setCanCreate(false);
+    setSelected(new Set());
+  };
+
+  const mut = useMutation({
+    mutationFn: () =>
+      create({
+        data: {
+          email: email.trim(),
+          password,
+          canCreateMatches: canCreate,
+          leagueIds: Array.from(selected),
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Usuario creado");
+      reset();
+      onOpenChange(false);
+      onCreated();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const canSubmit = email.trim().length > 3 && password.length >= 8;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Nuevo usuario</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="new-email">Email</Label>
+            <Input
+              id="new-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="usuario@equipo.com"
+              autoComplete="off"
+            />
+          </div>
+          <div>
+            <Label htmlFor="new-pass">Contraseña inicial</Label>
+            <Input
+              id="new-pass"
+              type="text"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+              autoComplete="off"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              El usuario la podrá cambiar después.
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <Label>Puede crear partidos</Label>
+            <Switch checked={canCreate} onCheckedChange={setCanCreate} />
+          </div>
+          <div>
+            <Label className="mb-2 block">Acceso a ligas</Label>
+            {leagues.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No hay ligas creadas.</p>
+            ) : (
+              <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                {leagues.map((l) => (
+                  <label
+                    key={l.id}
+                    className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.has(l.id)}
+                      onChange={() => toggle(l.id)}
+                      className="size-4 accent-primary"
+                    />
+                    <span className="text-sm flex-1 truncate">{l.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={() => mut.mutate()} disabled={!canSubmit || mut.isPending}>
+            {mut.isPending && <Loader2 className="size-4 animate-spin" />}
+            Crear usuario
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =========================================================================
+// LIGAS
+// =========================================================================
+
+function LeaguesTab() {
+  const qc = useQueryClient();
+  const listLeagues = useServerFn(adminListLeagues);
+  const createLeague = useServerFn(adminCreateLeague);
+  const deleteLeague = useServerFn(adminDeleteLeague);
+
+  const leaguesQ = useQuery({ queryKey: ["admin", "leagues"], queryFn: () => listLeagues() });
+
+  const [name, setName] = useState("");
+  const [season, setSeason] = useState("");
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["admin", "leagues"] });
+    qc.invalidateQueries({ queryKey: ["admin", "users"] });
+  };
+
+  const createMut = useMutation({
+    mutationFn: () =>
+      createLeague({ data: { name: name.trim(), season: season.trim() || undefined } }),
+    onSuccess: () => {
+      toast.success("Liga creada");
+      setName("");
+      setSeason("");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (leagueId: string) => deleteLeague({ data: { leagueId } }),
+    onSuccess: () => {
+      toast.success("Liga eliminada");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const leagues = leaguesQ.data ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border/60 p-4 bg-card/40 space-y-2">
+        <Label className="text-sm">Nueva liga</Label>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            placeholder="Nombre (ej: Liga Apertura)"
+            value={name}
+            onChange={(e) => setName(e.target.value.slice(0, 80))}
+          />
+          <Input
+            placeholder="Temporada (opcional)"
+            value={season}
+            onChange={(e) => setSeason(e.target.value.slice(0, 40))}
+            className="sm:max-w-[180px]"
+          />
+          <Button onClick={() => createMut.mutate()} disabled={!name.trim() || createMut.isPending}>
+            {createMut.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+            Crear
+          </Button>
+        </div>
+      </div>
+
+      {leaguesQ.isLoading ? (
+        <p className="text-sm text-muted-foreground">Cargando ligas…</p>
+      ) : leagues.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-8">Aún no hay ligas compartidas.</p>
+      ) : (
+        <ul className="space-y-2">
+          {leagues.map((l) => (
+            <li
+              key={l.id}
+              className="rounded-xl border border-border/60 bg-card/40 px-4 py-3 flex items-center gap-3"
+            >
+              <div className="size-9 rounded-md bg-gradient-primary flex items-center justify-center">
+                <Trophy className="size-4 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{l.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {l.season ?? "Sin temporada"}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (confirm(`¿Eliminar la liga ${l.name}? También se quitarán los accesos de los usuarios.`)) {
+                    deleteMut.mutate(l.id);
+                  }
+                }}
+              >
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
