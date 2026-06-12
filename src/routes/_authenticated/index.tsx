@@ -9,6 +9,7 @@ import {
 } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Plus, Trophy } from "lucide-react";
+import { useCanCreateMatches } from "@/hooks/use-permissions";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -24,6 +25,7 @@ function LeaguePage() {
   const teams = useVolley((s) => s.teams);
   const matches = useVolley((s) => s.matches);
   const seed = useVolley((s) => s.seedDemo);
+  const { allowed: canCreate } = useCanCreateMatches();
 
   useEffect(() => {
     if (teams.length === 0) seed();
@@ -53,9 +55,11 @@ function LeaguePage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
-              <Link to="/matches/new"><Plus className="size-4" /> Nuevo partido</Link>
-            </Button>
+            {canCreate && (
+              <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
+                <Link to="/matches/new"><Plus className="size-4" /> Nuevo partido</Link>
+              </Button>
+            )}
             <Button asChild size="lg" variant="secondary">
               <Link to="/teams">Gestionar equipos</Link>
             </Button>

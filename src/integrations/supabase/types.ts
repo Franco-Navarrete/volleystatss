@@ -32,6 +32,36 @@ export type Database = {
         }
         Relationships: []
       }
+      leagues: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          season: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          season?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          season?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -47,6 +77,56 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+        }
+        Relationships: []
+      }
+      user_league_access: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          league_id: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          league_id: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          league_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_league_access_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_permissions: {
+        Row: {
+          can_create_matches: boolean
+          can_manage_teams: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_create_matches?: boolean
+          can_manage_teams?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_create_matches?: boolean
+          can_manage_teams?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -73,6 +153,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_matches: { Args: { _user_id: string }; Returns: boolean }
+      has_league_access: {
+        Args: { _league_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

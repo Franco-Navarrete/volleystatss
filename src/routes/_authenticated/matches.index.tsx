@@ -5,6 +5,7 @@ import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, setsWon } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Plus, Radio } from "lucide-react";
+import { useCanCreateMatches } from "@/hooks/use-permissions";
 
 export const Route = createFileRoute("/_authenticated/matches/")({
   head: () => ({ meta: [{ title: "Partidos · RALLY" }] }),
@@ -15,6 +16,7 @@ function MatchesIndex() {
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const { allowed: canCreate } = useCanCreateMatches();
 
   const groups = [
     { label: "En vivo", items: matches.filter((m) => m.status === "live") },
@@ -29,9 +31,11 @@ function MatchesIndex() {
           <h1 className="text-3xl font-extrabold">Partidos</h1>
           <p className="text-muted-foreground text-sm">Fixture, partidos en vivo y resultados.</p>
         </div>
-        <Button asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
-          <Link to="/matches/new"><Plus className="size-4" /> Nuevo partido</Link>
-        </Button>
+        {canCreate && (
+          <Button asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
+            <Link to="/matches/new"><Plus className="size-4" /> Nuevo partido</Link>
+          </Button>
+        )}
       </div>
 
       <div className="space-y-8">
