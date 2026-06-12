@@ -774,13 +774,10 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
                 let replacedName: string | null = null;
                 if (isLibero && pid) {
-                  for (let i = match.events.length - 1; i >= 0; i--) {
-                    const ev = match.events[i];
-                    if ("kind" in ev && ev.kind === "sub" && ev.side === col.side && ev.playerInId === pid) {
-                      const rp = col.team.players.find((x) => x.id === ev.playerOutId);
-                      replacedName = rp ? `#${rp.number} ${rp.name}` : null;
-                      break;
-                    }
+                  const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
+                  if (active && active.liberoId === pid) {
+                    const rp = col.team.players.find((x) => x.id === active.replacedId);
+                    replacedName = rp ? `#${rp.number} ${rp.name}` : null;
                   }
                 }
                 return (
