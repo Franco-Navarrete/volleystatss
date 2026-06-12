@@ -80,6 +80,8 @@ function LiveMatch() {
 
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
+  const recordLiberoIn = useVolley((s) => s.recordLiberoIn);
+  const recordLiberoOut = useVolley((s) => s.recordLiberoOut);
   const recordTimeout = useVolley((s) => s.recordTimeout);
   const recordSanction = useVolley((s) => s.recordSanction);
   const undo = useVolley((s) => s.undoLastEvent);
