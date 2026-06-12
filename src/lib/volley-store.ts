@@ -543,6 +543,51 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      recordLiberoIn: (matchId, side, liberoId, replacedId) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: LiberoEvent = {
+              id: uid(),
+              kind: "libero",
+              side,
+              action: "in",
+              liberoId,
+              replacedId,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            const next = { ...m, events: [...m.events, ev] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
+          }),
+        }));
+      },
+
+      recordLiberoOut: (matchId, side) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const active = side === "A" ? m.liberoActiveA : m.liberoActiveB;
+            if (!active) return m;
+            const ev: LiberoEvent = {
+              id: uid(),
+              kind: "libero",
+              side,
+              action: "out",
+              liberoId: active.liberoId,
+              replacedId: active.replacedId,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            const next = { ...m, events: [...m.events, ev] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
+          }),
+        }));
+      },
+
+
       recordTimeout: (matchId, side) => {
         const m = get().matches.find((x) => x.id === matchId);
         if (!m) return false;
