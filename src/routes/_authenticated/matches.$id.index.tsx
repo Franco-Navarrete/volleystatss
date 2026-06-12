@@ -80,6 +80,8 @@ function LiveMatch() {
 
   const recordPoint = useVolley((s) => s.recordPoint);
   const recordSub = useVolley((s) => s.recordSubstitution);
+  const recordLiberoIn = useVolley((s) => s.recordLiberoIn);
+  const recordLiberoOut = useVolley((s) => s.recordLiberoOut);
   const recordTimeout = useVolley((s) => s.recordTimeout);
   const recordSanction = useVolley((s) => s.recordSanction);
   const undo = useVolley((s) => s.undoLastEvent);
@@ -491,13 +493,14 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
-      {/* Libero entry dialog */}
+      {/* Libero entry/exit dialog */}
       <Dialog open={!!liberoState} onOpenChange={(o) => !o && setLiberoState(null)}>
         <DialogContent>
           {liberoState && (() => {
             const t = liberoState.side === "A" ? teamA : teamB;
             const onCourt = liberoState.side === "A" ? match.onCourtA : match.onCourtB;
             const onCourtSet = new Set(onCourt);
+            const active = liberoState.side === "A" ? match.liberoActiveA : match.liberoActiveB;
             const designated = (liberoState.side === "A"
               ? [match.liberoA1Id, match.liberoA2Id]
               : [match.liberoB1Id, match.liberoB2Id]
@@ -511,6 +514,43 @@ function LiveMatch() {
             );
             const totalLiberos = t.players.filter((p) => liberoCandidateIds.has(p.id)).length;
             const allOnCourt = totalLiberos > 0 && liberos.length === 0;
+
+            // Si ya hay un líbero activo en esta cancha: ofrecer cerrar el cambio.
+            if (active) {
+              const liberoPlayer = t.players.find((p) => p.id === active.liberoId);
+              const replacedPlayer = t.players.find((p) => p.id === active.replacedId);
+              return (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="text-sm md:text-lg">Líbero · {t.name}</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-2 space-y-3">
+                    <div className="rounded-lg border border-border bg-secondary/50 p-3 text-xs md:text-sm">
+                      <p className="font-semibold">
+                        En cancha: #{liberoPlayer?.number} {liberoPlayer?.name}
+                      </p>
+                      <p className="text-muted-foreground mt-0.5">
+                        Reemplaza a #{replacedPlayer?.number} {replacedPlayer?.name}
+                      </p>
+                    </div>
+                    <p className="text-[11px] md:text-xs text-muted-foreground">
+                      El líbero saldrá automáticamente cuando su jugador rote a posición 4. Podés cerrar el cambio manualmente acá.
+                    </p>
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => {
+                        recordLiberoOut(match.id, liberoState.side);
+                        setLiberoState(null);
+                      }}
+                    >
+                      Cerrar cambio — sale el líbero
+                    </Button>
+                  </div>
+                </>
+              );
+            }
+
             return (
               <>
                 <DialogHeader><DialogTitle className="text-sm md:text-lg">Líbero · {t.name}</DialogTitle></DialogHeader>
@@ -538,15 +578,18 @@ function LiveMatch() {
                   <>
                     <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE (reemplazado por el líbero)</p>
                     <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
-                      {onCourt.map((pid) => {
+                      {onCourt.map((pid, idx) => {
                         const p = t.players.find((x) => x.id === pid);
                         if (!p) return null;
+                        // Sugerencia visual: el líbero típicamente reemplaza a un zaguero (índices 0, 4, 5 = pos 1, 5, 6).
+                        const isBackRow = idx === 0 || idx === 4 || idx === 5;
                         return (
                           <button key={p.id}
-                            onClick={() => { recordSub(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
-                            className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-destructive/20 active:scale-95 transition">
+                            onClick={() => { recordLiberoIn(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
+                            className={`flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg active:scale-95 transition ${isBackRow ? "bg-secondary hover:bg-destructive/20" : "bg-secondary/40 hover:bg-secondary/60 opacity-60"}`}>
                             <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
                             <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
+                            <span className="ml-auto text-[9px] md:text-[10px] font-bold uppercase text-muted-foreground">P{idx + 1}</span>
                           </button>
                         );
                       })}
@@ -731,13 +774,10 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
                 let replacedName: string | null = null;
                 if (isLibero && pid) {
-                  for (let i = match.events.length - 1; i >= 0; i--) {
-                    const ev = match.events[i];
-                    if ("kind" in ev && ev.kind === "sub" && ev.side === col.side && ev.playerInId === pid) {
-                      const rp = col.team.players.find((x) => x.id === ev.playerOutId);
-                      replacedName = rp ? `#${rp.number} ${rp.name}` : null;
-                      break;
-                    }
+                  const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
+                  if (active && active.liberoId === pid) {
+                    const rp = col.team.players.find((x) => x.id === active.replacedId);
+                    replacedName = rp ? `#${rp.number} ${rp.name}` : null;
                   }
                 }
                 return (
