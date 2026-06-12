@@ -9,6 +9,7 @@ import {
 } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Plus, Trophy } from "lucide-react";
+import { useCanCreateMatches } from "@/hooks/use-permissions";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
