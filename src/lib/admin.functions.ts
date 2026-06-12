@@ -6,8 +6,13 @@ const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const passwordSchema = z.string().min(8).max(72);
 const uuidSchema = z.string().uuid();
 
-async function assertAdmin(ctx: { supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> }; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+type AuthCtx = { supabase: SupabaseClient<Database>; userId: string };
+
+async function assertAdmin(ctx: AuthCtx) {
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error) throw new Error("No se pudo verificar permisos.");
   if (!data) throw new Error("Solo administradores.");
 }
