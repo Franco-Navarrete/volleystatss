@@ -576,17 +576,18 @@ function LiveMatch() {
                   </>
                 ) : (
                   <>
-                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE (reemplazado por el líbero)</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Jugador que SALE (solo zaguero: P1, P5 o P6)</p>
                     <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
                       {onCourt.map((pid, idx) => {
                         const p = t.players.find((x) => x.id === pid);
                         if (!p) return null;
-                        // Sugerencia visual: el líbero típicamente reemplaza a un zaguero (índices 0, 4, 5 = pos 1, 5, 6).
+                        // Regla oficial: el líbero solo puede reemplazar a un zaguero (P1=idx0, P5=idx4, P6=idx5).
                         const isBackRow = idx === 0 || idx === 4 || idx === 5;
                         return (
                           <button key={p.id}
-                            onClick={() => { recordLiberoIn(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
-                            className={`flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg active:scale-95 transition ${isBackRow ? "bg-secondary hover:bg-destructive/20" : "bg-secondary/40 hover:bg-secondary/60 opacity-60"}`}>
+                            disabled={!isBackRow}
+                            onClick={() => { if (!isBackRow) return; recordLiberoIn(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
+                            className={`flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg transition ${isBackRow ? "bg-secondary hover:bg-destructive/20 active:scale-95" : "bg-secondary/30 opacity-40 cursor-not-allowed"}`}>
                             <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
                             <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
                             <span className="ml-auto text-[9px] md:text-[10px] font-bold uppercase text-muted-foreground">P{idx + 1}</span>
@@ -594,6 +595,7 @@ function LiveMatch() {
                         );
                       })}
                     </div>
+
                   </>
                 )}
               </>
