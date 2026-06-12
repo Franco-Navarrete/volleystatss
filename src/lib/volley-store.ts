@@ -93,6 +93,19 @@ export interface SubstitutionEvent {
   timestamp: number;
 }
 
+export interface LiberoEvent {
+  id: string;
+  kind: "libero";
+  side: "A" | "B";
+  /** "in" = líbero entra; "out" = líbero sale manualmente; "auto_out" = sale por rotación a frente. */
+  action: "in" | "out" | "auto_out";
+  liberoId: string;
+  /** Jugador al que reemplaza (vuelve a cancha al salir el líbero). */
+  replacedId: string;
+  setNumber: number;
+  timestamp: number;
+}
+
 export interface TimeoutEvent {
   id: string;
   kind: "timeout";
