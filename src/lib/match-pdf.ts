@@ -282,6 +282,33 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     }
   }
 
+  // Observaciones - abreviaturas
+  if (y > 240) { doc.addPage(); y = 16; }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...dark);
+  doc.text("Observaciones:", margin, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  const notes = [
+    "PTS: Puntos totales",
+    "ATA: Ataque",
+    "A.R: Ataque de rotación",
+    "C.A: Contraataque",
+    "BLO: Bloqueo",
+    "S: Saque (ace)",
+    "E.R: Error rival",
+    "E.S: Error de saque",
+    "E.A: Error de ataque",
+    "ENF: Error no forzado",
+  ];
+  for (const line of notes) {
+    doc.text(line, margin, y);
+    y += 4;
+  }
+
   // Footer
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
