@@ -998,7 +998,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                         <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
                       )}
                       {isSetter && !isLibero && (
-                        <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-amber-400 text-black text-[8px] sm:text-[10px] md:text-xs font-black flex items-center justify-center shadow-md">A</span>
+                        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest text-white bg-cyan-500 shadow-md">ARM</span>
                       )}
                       {isServer && (
                         <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
