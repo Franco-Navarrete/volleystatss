@@ -317,8 +317,8 @@ function LiveMatch() {
               <ChartBarBig className="size-3.5 md:size-4" /> Stats final
             </Link>
           </Button>
-          <Button size="sm" variant="outline" className="h-10 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => alert("El set se cierra automáticamente al alcanzar la meta de puntos.")}>
-            <StopCircle className="size-3.5 md:size-4" /> Fin Set
+          <Button size="sm" variant="outline" className="h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"} onClick={() => setShowFormatDialog(true)}>
+            <Hourglass className="size-3.5 md:size-4" /> Formato
           </Button>
           <Button size="sm" variant="destructive" className="h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"}
             onClick={() => { if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id); }}>
