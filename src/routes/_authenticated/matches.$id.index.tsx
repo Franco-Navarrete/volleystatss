@@ -827,13 +827,21 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
 function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; onClose: () => void }) {
   const [seconds, setSeconds] = useState(30);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     timer.current = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => { if (timer.current) clearInterval(timer.current); };
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
   }, []);
   useEffect(() => {
-    if (seconds === 0 && timer.current) clearInterval(timer.current);
-  }, [seconds]);
+    if (seconds === 0) {
+      if (timer.current) clearInterval(timer.current);
+      // Cierre automático al terminar el tiempo (1s para mostrar "finalizado")
+      closeTimer.current = setTimeout(() => onClose(), 1000);
+    }
+  }, [seconds, onClose]);
   return (
     <div className="text-center py-2">
       <DialogHeader><DialogTitle className="text-center">Tiempo · {team.name}</DialogTitle></DialogHeader>
