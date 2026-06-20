@@ -9,7 +9,22 @@ import {
   type SubstitutionEvent,
   type LiberoEvent,
   type PointEvent,
+  type PointType,
 } from "@/lib/volley-store";
+
+const PDF_ABBR: Record<PointType, string> = {
+  attack: "ATA",
+  block: "BLO",
+  ace: "S",
+  counter_attack: "C.A",
+  rotation_attack: "A.R",
+  opponent_error: "E.R",
+  opponent_rotation_error: "E.Rot",
+  serve_error: "E.S",
+  unforced_error: "ENF",
+  rotation_error: "E.Rot",
+  attack_error: "E.A",
+};
 
 const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
 const mvpScore = (p: PlayerStat) =>
@@ -213,7 +228,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
           `${runA}-${runB}`,
           `Punto de ${team.shortName || team.name}`,
           who,
-          POINT_TYPE_LABEL[ev.type] ?? ev.type,
+          PDF_ABBR[ev.type] ?? ev.type,
         ];
       });
       autoTable(doc, {
