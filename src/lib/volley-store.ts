@@ -256,6 +256,7 @@ interface VolleyState {
     playerId: string | null,
     sanction: SanctionType
   ) => void;
+  overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   undoLastEvent: (matchId: string) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
