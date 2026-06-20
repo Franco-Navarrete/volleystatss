@@ -156,7 +156,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
 
     // Cambios y líberos del set
     const changes = match.events.filter(
-      (e) =>
+      (e): e is SubstitutionEvent | LiberoEvent =>
         "kind" in e &&
         (e.kind === "sub" || e.kind === "libero") &&
         e.setNumber === s.number,
