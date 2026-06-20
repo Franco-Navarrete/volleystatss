@@ -981,6 +981,7 @@ export interface PlayerStat {
   ace: number;
   serveError: number;
   unforcedError: number;
+  attackError: number;
   total: number;
 }
 
@@ -995,6 +996,7 @@ export interface TeamStat {
   total: number;
   unforcedErrors: number;
   serveErrors: number;
+  attackErrors: number;
 }
 
 function aggregateEvents(events: MatchEvent[], match: Match) {
