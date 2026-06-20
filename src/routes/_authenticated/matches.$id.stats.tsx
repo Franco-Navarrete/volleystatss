@@ -9,8 +9,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Crown, Download, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
-import { downloadMatchPdf } from "@/lib/match-pdf";
+import { ArrowLeft, Crown, Download, ExternalLink, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
+import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
@@ -77,8 +77,8 @@ function StatsPage() {
   type PdfStatus =
     | { kind: "idle" }
     | { kind: "generating" }
-    | { kind: "awaiting"; method: "share" | "download"; fileName: string; sizeKb: number; url?: string }
-    | { kind: "confirmed"; method: "share" | "download"; fileName: string }
+    | { kind: "awaiting"; method: "share" | "download" | "opened"; fileName: string; sizeKb: number; url?: string }
+    | { kind: "confirmed"; method: "share" | "download" | "opened"; fileName: string }
     | { kind: "failed"; reason: string };
   const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
   const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
@@ -87,8 +87,9 @@ function StatsPage() {
   const handleDownloadPdf = async () => {
     setPdfStatus({ kind: "generating" });
     const loadingId = toast.loading("Generando PDF…");
+    const targetWindow = window.open("", "_blank");
     try {
-      const result = await downloadMatchPdf(match, teamA, teamB);
+      const result = await downloadMatchPdf(match, teamA, teamB, { targetWindow });
       toast.dismiss(loadingId);
       if (result.method === "cancelled") {
         setPdfStatus({ kind: "idle" });
@@ -99,6 +100,8 @@ function StatsPage() {
       toast.success(
         result.method === "share"
           ? "PDF compartido. Confirmá si lo guardaste."
+          : result.method === "opened"
+          ? "PDF abierto en una pestaña nueva."
           : "PDF enviado a tu carpeta de descargas.",
         { description: `${result.fileName} · ${result.sizeKb} KB` },
       );
@@ -120,7 +123,7 @@ function StatsPage() {
     if (pdfStatus.kind !== "awaiting") return;
     const isAndroid = /Android/.test(userAgent);
     const tip = isIOS
-      ? "En iOS: tocá 'Abrir PDF', esperá que se vea el archivo y luego usá el menú de Safari para guardarlo en Archivos."
+      ? "En iOS: tocá 'Abrir en pestaña', esperá que se vea el archivo y luego usá Safari para guardarlo en Archivos."
       : isAndroid
       ? "En Android: revisá la carpeta Descargas o probá con Chrome."
       : "Probá con otro navegador (Chrome/Safari) o revisá los permisos de descarga.";
@@ -143,20 +146,20 @@ function StatsPage() {
         <div className="mb-4 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
           <p className="font-semibold mb-1">¿Se descargó/guardó el PDF correctamente?</p>
           <p className="text-muted-foreground text-xs mb-3">
-            {pdfStatus.method === "share"
+            {pdfStatus.method === "opened"
+              ? "Se abrió una pestaña nueva con el PDF. Desde ahí podés tocar Abrir o Descargar."
+              : pdfStatus.method === "share"
               ? "Usamos el diálogo nativo para compartir. Confirmá si pudiste guardarlo."
               : isIOS
-              ? "Si no se descargó automático, abrí el PDF con el botón de abajo y guardalo desde el menú de Safari."
+              ? "Si no se descargó automático, abrí el PDF en una pestaña nueva y guardalo desde Safari."
               : "El archivo se envió a tu carpeta de descargas. Verificá que esté ahí."}
             {" · "}
             <span className="tabular-nums">{pdfStatus.fileName} ({pdfStatus.sizeKb} KB)</span>
           </p>
           <div className="flex flex-wrap gap-2">
             {pdfStatus.url && (
-              <Button size="sm" variant="secondary" asChild>
-                <a href={pdfStatus.url} download={pdfStatus.fileName} target="_blank" rel="noopener noreferrer">
-                  Abrir PDF
-                </a>
+              <Button size="sm" variant="secondary" onClick={() => openPdfDataUrlInNewTab(pdfStatus.url!, pdfStatus.fileName, pdfStatus.sizeKb)}>
+                <ExternalLink className="size-4" /> Abrir en pestaña
               </Button>
             )}
             <Button size="sm" onClick={confirmPdfOk}>Sí, lo tengo</Button>
@@ -166,7 +169,7 @@ function StatsPage() {
       )}
       {pdfStatus.kind === "confirmed" && (
         <div className="mb-4 rounded-2xl border border-success/40 bg-success/10 p-3 text-sm text-success-foreground">
-          ✅ PDF validado: <span className="font-semibold">{pdfStatus.fileName}</span> ({pdfStatus.method === "share" ? "compartido" : "descargado"}).
+          ✅ PDF validado: <span className="font-semibold">{pdfStatus.fileName}</span> ({pdfStatus.method === "share" ? "compartido" : pdfStatus.method === "opened" ? "abierto" : "descargado"}).
         </div>
       )}
       {pdfStatus.kind === "failed" && (
