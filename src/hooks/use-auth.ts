@@ -28,24 +28,32 @@ export function useIsAdmin() {
 
   useEffect(() => {
     let cancelled = false;
+    if (loading) return;
     if (!user) {
       setIsAdmin(false);
-      setChecking(loading);
+      setChecking(false);
       return;
     }
     setChecking(true);
+    // Failsafe: never stay "checking" forever on flaky mobile networks.
+    const timeout = setTimeout(() => {
+      if (!cancelled) setChecking(false);
+    }, 4000);
     supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .eq("role", "admin")
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
+        if (error) console.warn("[useIsAdmin] error:", error.message);
         setIsAdmin(!!data && data.length > 0);
         setChecking(false);
+        clearTimeout(timeout);
       });
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, [user?.id, loading]);
 
