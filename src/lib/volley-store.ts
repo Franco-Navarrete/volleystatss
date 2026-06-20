@@ -308,7 +308,11 @@ function replayMatch(m: Match): {
   let servingSide: "A" | "B" = m.initialServingSide;
   let liberoA: { liberoId: string; replacedId: string } | null = null;
   let liberoB: { liberoId: string; replacedId: string } | null = null;
-  const target = m.pointsPerSet;
+  const targetFor = (setNum: number) => {
+    // Set decisivo (tie-break) siempre a 15 con diferencia de 2
+    const decidingSet = m.setsToWin * 2 - 1;
+    return setNum === decidingSet ? 15 : m.pointsPerSet;
+  };
 
   // Tras rotar: si el líbero quedó en posición de frente (índices 1,2,3 = pos 2,3,4),
   // sale automáticamente y vuelve el jugador original al mismo slot.
@@ -364,6 +368,7 @@ function replayMatch(m: Match): {
       servingSide = ev.scoringSide;
       autoOutIfFront(ev.scoringSide);
     }
+    const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
       const setsWonA = sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
