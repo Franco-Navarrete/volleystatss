@@ -302,8 +302,8 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
     }
   }
 
-  // Fallback: descarga con <a download> usando blob URL (soportado en todos
-  // los navegadores móviles modernos, incluido iOS Safari y Android Chrome).
+  // Fallback: descarga con <a download> usando blob URL. Además devolvemos la
+  // URL para mostrar un enlace manual si iOS bloquea el click automático.
   const a = document.createElement("a");
   a.href = blobUrl;
   a.download = fileName;
@@ -312,14 +312,16 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
   a.click();
   document.body.removeChild(a);
 
-  // Liberar el blob URL después de un tiempo prudencial.
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-  return { method: "download" as const, fileName, sizeKb };
+  // Liberar el blob URL después de un tiempo prudencial. Mientras tanto queda
+  // disponible para el botón manual que muestra la UI en iOS/Android.
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
+  return { method: "download" as const, fileName, sizeKb, url: blobUrl };
 }
 
 export type PdfDownloadResult = {
   method: "share" | "download" | "cancelled";
   fileName: string;
   sizeKb: number;
+  url?: string;
 };
 
