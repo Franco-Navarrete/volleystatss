@@ -24,7 +24,7 @@ export type CloudPlayer = {
 
 export type CloudTeam = {
   id: string;
-  leagueId: string;
+  leagueId: string | null;
   name: string;
   shortName: string;
   color: string;
