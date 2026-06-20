@@ -31,9 +31,9 @@ function MatchesIndex() {
   const { allowed: canCreate } = useCanCreateMatches();
 
   const groups = [
-    { label: "En vivo", items: matches.filter((m) => m.status === "live") },
-    { label: "Programados", items: matches.filter((m) => m.status === "scheduled") },
-    { label: "Finalizados", items: matches.filter((m) => m.status === "finished").sort((a, b) => b.createdAt - a.createdAt) },
+    { label: "En vivo", items: matches.filter((m) => m.status === "live"), addTo: "live" as const },
+    { label: "Programados", items: matches.filter((m) => m.status === "scheduled"), addTo: "scheduled" as const },
+    { label: "Finalizados", items: matches.filter((m) => m.status === "finished").sort((a, b) => b.createdAt - a.createdAt), addTo: null },
   ];
 
   return (
