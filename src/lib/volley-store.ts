@@ -262,6 +262,7 @@ interface VolleyState {
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
   seedDemo: () => void;
+  seedDemoMatch: () => string | null;
 }
 
 
