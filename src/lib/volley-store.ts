@@ -727,6 +727,51 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      overrideScore: (matchId, scoreA, scoreB) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId || m.status === "finished") return m;
+            const setNum = m.currentSet;
+            const preservedEvents = m.events.filter((e) => {
+              if (!("scoringSide" in e)) return true;
+              return e.setNumber !== setNum;
+            });
+            const newPoints: PointEvent[] = [];
+            const now = Date.now();
+            let a = 0, b = 0, i = 0;
+            while (a < scoreA || b < scoreB) {
+              if (a < scoreA) {
+                newPoints.push({
+                  id: uid(),
+                  scoringSide: "A",
+                  playerSide: "A",
+                  playerId: null,
+                  type: "opponent_error",
+                  setNumber: setNum,
+                  timestamp: now + i,
+                });
+                a++; i++;
+              }
+              if (b < scoreB) {
+                newPoints.push({
+                  id: uid(),
+                  scoringSide: "B",
+                  playerSide: "B",
+                  playerId: null,
+                  type: "opponent_error",
+                  setNumber: setNum,
+                  timestamp: now + i,
+                });
+                b++; i++;
+              }
+            }
+            const next = { ...m, events: [...preservedEvents, ...newPoints] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
+          }),
+        }));
+      },
+
       undoLastEvent: (matchId) => {
         set((s) => ({
           matches: s.matches.map((m) => {
