@@ -433,6 +433,18 @@ function LiveMatch() {
                     </button>
                   ))}
                 </div>
+                {isActiveLibero && replacedPlayer && (
+                  <button
+                    onClick={() => {
+                      recordLiberoOut(match.id, pendingPlayer.side);
+                      setPendingPlayer(null);
+                    }}
+                    className="mt-2 w-full min-h-11 px-3 py-2 rounded-lg font-bold text-[13px] leading-tight bg-destructive text-destructive-foreground hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Shirt className="size-4" />
+                    Sacar líbero · vuelve #{replacedPlayer.number} {replacedPlayer.name}
+                  </button>
+                )}
               </>
             );
           })()}
