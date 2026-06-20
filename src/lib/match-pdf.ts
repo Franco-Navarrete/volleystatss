@@ -215,35 +215,40 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
       doc.setFontSize(9);
       doc.setTextColor(...dark);
       doc.text(`Punto a punto · Set ${s.number}`, margin, y);
-      y += 3;
+      y += 4;
+
+      // Chips visuales tipo Volleyball Referee: cuadrados redondeados
+      // azules (A) y rojos (B) con el marcador acumulado del equipo que anotó.
+      const colorA: [number, number, number] = [37, 99, 235]; // azul
+      const colorB: [number, number, number] = [185, 28, 28]; // rojo
+      const chipW = 6.5;
+      const chipH = 5;
+      const gapX = 1.2;
+      const gapY = 1.8;
+      const maxX = pageW - margin;
+      let cx = margin;
+      let cy = y;
       let runA = 0;
       let runB = 0;
-      const rows = points.map((ev, idx) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      for (const ev of points) {
         if (ev.scoringSide === "A") runA++; else runB++;
-        const team = ev.scoringSide === "A" ? teamA : teamB;
-        const playerTeam = ev.playerSide === "A" ? teamA : ev.playerSide === "B" ? teamB : null;
-        const who = playerTeam && ev.playerId ? playerName(playerTeam, ev.playerId) : "—";
-        return [
-          String(idx + 1),
-          `${runA}-${runB}`,
-          `Punto de ${team.shortName || team.name}`,
-          who,
-          PDF_ABBR[ev.type] ?? ev.type,
-        ];
-      });
-      autoTable(doc, {
-        startY: y,
-        head: [["#", "Marcador", "Punto", "Jugador", "Acción"]],
-        body: rows,
-        headStyles: { fillColor: dark, fontSize: 7 },
-        bodyStyles: { fontSize: 7 },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 18, fontStyle: "bold" },
-        },
-        margin: { left: margin, right: margin },
-      });
-      y = (doc as any).lastAutoTable.finalY + 8;
+        if (cx + chipW > maxX) {
+          cx = margin;
+          cy += chipH + gapY;
+          if (cy + chipH > 285) { doc.addPage(); cy = 16; }
+        }
+        const fill = ev.scoringSide === "A" ? colorA : colorB;
+        doc.setFillColor(...fill);
+        doc.roundedRect(cx, cy, chipW, chipH, 1, 1, "F");
+        doc.setTextColor(255, 255, 255);
+        const label = String(ev.scoringSide === "A" ? runA : runB);
+        doc.text(label, cx + chipW / 2, cy + chipH / 2 + 1.2, { align: "center" });
+        cx += chipW + gapX;
+      }
+      y = cy + chipH + 6;
+      doc.setTextColor(0, 0, 0);
     }
 
     // Cambios y líberos del set
