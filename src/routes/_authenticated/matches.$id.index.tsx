@@ -102,6 +102,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [showScoreDialog, setShowScoreDialog] = useState(false);
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
