@@ -1296,6 +1296,47 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
   return <div className="grid md:grid-cols-2 gap-3 mt-2">{renderTeam(teamA)}{renderTeam(teamB)}</div>;
 }
 
+function ScoreCorrectionDialog({ setNumber, teamA, teamB, scoreA, scoreB, onSave, onCancel }: {
+  setNumber: number;
+  teamA: Team; teamB: Team;
+  scoreA: number; scoreB: number;
+  onSave: (sa: number, sb: number) => void;
+  onCancel: () => void;
+}) {
+  const [sa, setSa] = useState(scoreA);
+  const [sb, setSb] = useState(scoreB);
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="text-center text-sm md:text-base">Corregir marcador · Set {setNumber}</DialogTitle>
+      </DialogHeader>
+      <div className="flex items-center justify-center gap-4 md:gap-6 py-3">
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-[10px] md:text-xs uppercase tracking-widest font-bold" style={{ color: teamA.color }}>{teamA.shortName}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setSa((v) => Math.max(0, v - 1))} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Minus className="size-4" /></button>
+            <span className="scoreboard-digit text-3xl md:text-4xl font-black w-12 text-center">{sa}</span>
+            <button type="button" onClick={() => setSa((v) => v + 1)} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Plus className="size-4" /></button>
+          </div>
+        </div>
+        <span className="text-muted-foreground font-bold text-lg">–</span>
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-[10px] md:text-xs uppercase tracking-widest font-bold" style={{ color: teamB.color }}>{teamB.shortName}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setSb((v) => Math.max(0, v - 1))} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Minus className="size-4" /></button>
+            <span className="scoreboard-digit text-3xl md:text-4xl font-black w-12 text-center">{sb}</span>
+            <button type="button" onClick={() => setSb((v) => v + 1)} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Plus className="size-4" /></button>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Button variant="secondary" className="flex-1" onClick={onCancel}>Cancelar</Button>
+        <Button className="flex-1" onClick={() => onSave(sa, sb)}>Guardar</Button>
+      </div>
+    </>
+  );
+}
+
 function FormatDialog({ match, onSave, onCancel }: {
   match: Match;
   onSave: (setsToWin: number, pointsPerSet: number) => void;
