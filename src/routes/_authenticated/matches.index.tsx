@@ -66,7 +66,7 @@ function MatchesIndex() {
                   const w = setsWon(m);
                   const isLive = m.status === "live";
                   return (
-                    <li key={m.id}>
+                    <li key={m.id} className="relative">
                       <Link
                         to="/matches/$id"
                         params={{ id: m.id }}
@@ -102,6 +102,36 @@ function MatchesIndex() {
                           </div>
                         )}
                       </Link>
+                      {canCreate && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Eliminar partido"
+                              className="absolute top-2 right-2 size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar este partido?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Se borrarán todos los puntos, rotaciones y estadísticas asociadas. Esta acción no se puede deshacer.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => deleteMatch(m.id)}
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </li>
                   );
                 })}
