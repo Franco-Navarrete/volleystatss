@@ -277,18 +277,34 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
 
   const fileName = `${teamA.name} vs ${teamB.name} - estadisticas.pdf`.replace(/[/\\:*?"<>|]/g, "-");
 
-  // Descarga directa vía data URI: funciona en escritorio y en navegadores
-  // móviles (incluido Brave/Chrome iOS y Android) sin depender de ventanas
-  // emergentes ni del comportamiento de doc.save / FileSaver. El navegador
-  // recibe el PDF como base64 con el atributo download y dispara la descarga
-  // o el diálogo de "Guardar en Archivos".
-  const dataUri = doc.output("datauristring", { filename: fileName });
+  // Genera el PDF como Blob (mucho más compatible en móviles que data URI).
+  const blob = doc.output("blob");
+  const blobUrl = URL.createObjectURL(blob);
+
+  // En móviles modernos, usar la Web Share API para compartir/guardar el PDF
+  // nativamente. Esto funciona perfecto en iOS Safari y Android Chrome.
+  const file = new File([blob], fileName, { type: "application/pdf" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: fileName });
+      URL.revokeObjectURL(blobUrl);
+      return;
+    } catch (e) {
+      // El usuario canceló el share o falló; seguimos con el fallback de descarga.
+    }
+  }
+
+  // Fallback: descarga con <a download> usando blob URL (soportado en todos
+  // los navegadores móviles modernos, incluido iOS Safari y Android Chrome).
   const a = document.createElement("a");
-  a.href = dataUri;
+  a.href = blobUrl;
   a.download = fileName;
   a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+
+  // Liberar el blob URL después de un tiempo prudencial.
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
 }
 
