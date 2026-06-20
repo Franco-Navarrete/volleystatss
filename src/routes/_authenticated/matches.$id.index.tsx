@@ -148,6 +148,25 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
 
+  // Reception flow: the receiving side must register reception (+/0/-) before any other action.
+  const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
+  const receivingTeam = receivingSide === "A" ? teamA : teamB;
+  const receivingOnCourt = receivingSide === "A" ? match.onCourtA : match.onCourtB;
+  const designatedLiberos = (receivingSide === "A"
+    ? [match.liberoA1Id, match.liberoA2Id]
+    : [match.liberoB1Id, match.liberoB2Id]
+  ).filter(Boolean) as string[];
+  const receiverIds = new Set<string>(
+    receivingOnCourt.filter((pid) => {
+      const p = receivingTeam.players.find((x) => x.id === pid);
+      if (!p) return false;
+      if (p.position === "punta") return true;
+      if (p.position === "libero" || designatedLiberos.includes(p.id)) return true;
+      return false;
+    })
+  );
+  const needsReception = !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
+
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
   const prevSetEndedAt = match.currentSet > 1
