@@ -62,6 +62,288 @@ export type Database = {
         }
         Relationships: []
       }
+      match_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          match_id: string
+          payload: Json
+          set_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          match_id: string
+          payload?: Json
+          set_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          match_id?: string
+          payload?: Json
+          set_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_events_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_lineups: {
+        Row: {
+          confirmed: boolean
+          lineup: string[]
+          match_id: string
+          set_number: number
+          side: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed?: boolean
+          lineup?: string[]
+          match_id: string
+          set_number: number
+          side: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed?: boolean
+          lineup?: string[]
+          match_id?: string
+          set_number?: number
+          side?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_lineups_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_sets: {
+        Row: {
+          finished: boolean
+          match_id: string
+          number: number
+          score_a: number
+          score_b: number
+          started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          finished?: boolean
+          match_id: string
+          number: number
+          score_a?: number
+          score_b?: number
+          started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          finished?: boolean
+          match_id?: string
+          number?: number
+          score_a?: number
+          score_b?: number
+          started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_sets_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          captain_a_id: string | null
+          captain_b_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          initial_serving_side: string
+          league_id: string
+          libero_a1_id: string | null
+          libero_a2_id: string | null
+          libero_b1_id: string | null
+          libero_b2_id: string | null
+          points_per_set: number
+          scheduled_at: string
+          sets_to_win: number
+          sides_flipped: boolean
+          status: string
+          team_a_id: string
+          team_b_id: string
+          updated_at: string
+        }
+        Insert: {
+          captain_a_id?: string | null
+          captain_b_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          initial_serving_side?: string
+          league_id: string
+          libero_a1_id?: string | null
+          libero_a2_id?: string | null
+          libero_b1_id?: string | null
+          libero_b2_id?: string | null
+          points_per_set?: number
+          scheduled_at?: string
+          sets_to_win?: number
+          sides_flipped?: boolean
+          status?: string
+          team_a_id: string
+          team_b_id: string
+          updated_at?: string
+        }
+        Update: {
+          captain_a_id?: string | null
+          captain_b_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          initial_serving_side?: string
+          league_id?: string
+          libero_a1_id?: string | null
+          libero_a2_id?: string | null
+          libero_b1_id?: string | null
+          libero_b2_id?: string | null
+          points_per_set?: number
+          scheduled_at?: string
+          sets_to_win?: number
+          sides_flipped?: boolean
+          status?: string
+          team_a_id?: string
+          team_b_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_captain_a_id_fkey"
+            columns: ["captain_a_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_captain_b_id_fkey"
+            columns: ["captain_b_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_libero_a1_id_fkey"
+            columns: ["libero_a1_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_libero_a2_id_fkey"
+            columns: ["libero_a2_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_libero_b1_id_fkey"
+            columns: ["libero_b1_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_libero_b2_id_fkey"
+            columns: ["libero_b2_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_team_a_id_fkey"
+            columns: ["team_a_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_team_b_id_fkey"
+            columns: ["team_b_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          number: number
+          photo_url: string | null
+          position: string | null
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          number: number
+          photo_url?: string | null
+          position?: string | null
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          number?: number
+          photo_url?: string | null
+          position?: string | null
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -79,6 +361,50 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      teams: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string | null
+          id: string
+          league_id: string
+          logo_url: string | null
+          name: string
+          short_name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          league_id: string
+          logo_url?: string | null
+          name: string
+          short_name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          league_id?: string
+          logo_url?: string | null
+          name?: string
+          short_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_league_access: {
         Row: {
@@ -154,6 +480,7 @@ export type Database = {
     }
     Functions: {
       can_create_matches: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
       has_league_access: {
         Args: { _league_id: string; _user_id: string }
         Returns: boolean
