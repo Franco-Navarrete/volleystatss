@@ -476,11 +476,14 @@ export const useVolley = create<VolleyState>()(
 
       setInitialServingSide: (id, side) =>
         set((s) => ({
-          matches: s.matches.map((m) =>
-            m.id === id && m.status === "scheduled"
-              ? { ...m, initialServingSide: side, servingSide: side }
-              : m
-          ),
+          matches: s.matches.map((m) => {
+            if (m.id !== id) return m;
+            const hasEvents = m.events.some(
+              (e) => "setNumber" in e && e.setNumber === m.currentSet
+            );
+            if (hasEvents) return m;
+            return { ...m, initialServingSide: side, servingSide: side };
+          }),
         })),
 
       setSetLineup: (matchId, side, lineup) =>

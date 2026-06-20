@@ -285,10 +285,27 @@ function LiveMatch() {
 
         {/* After lineup confirmed, scorer must explicitly start the set (starts the timer) */}
         {needsSetStart && (
-          <div className="rounded-lg md:rounded-xl border-2 border-success/60 bg-success/10 px-3 py-2 md:px-5 md:py-3 flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 shrink-0">
+          <div className="rounded-lg md:rounded-xl border-2 border-success/60 bg-success/10 px-3 py-2 md:px-5 md:py-3 flex flex-col items-center justify-center gap-2 md:gap-3 shrink-0">
             <p className="text-xs md:text-sm font-semibold text-center">
               Formación confirmada. Tocá <span className="text-success font-bold">Iniciar Set {match.currentSet}</span> cuando arranque el juego.
             </p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Saque:</span>
+              {(["A", "B"] as const).map((side) => {
+                const t = side === "A" ? teamA : teamB;
+                const active = match.initialServingSide === side;
+                return (
+                  <button
+                    key={side}
+                    type="button"
+                    onClick={() => setInitialServingSide(match.id, side)}
+                    className={`px-3 py-1.5 rounded-md border-2 text-xs md:text-sm font-semibold transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
+                  >
+                    {t.shortName}
+                  </button>
+                );
+              })}
+            </div>
             <Button size="sm" className="h-8 md:h-10 bg-success text-success-foreground hover:bg-success/90" onClick={() => startSet(match.id)}>
               <Play className="size-3.5 md:size-4" /> Iniciar Set {match.currentSet}
             </Button>
