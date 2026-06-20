@@ -4,10 +4,12 @@ import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { stopCloudSync } from "@/lib/cloud-sync";
 import { useIsAdmin } from "@/hooks/use-auth";
+import { useSyncCloudToStore } from "@/hooks/use-sync-cloud-to-store";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { user, isAdmin } = useIsAdmin();
+  useSyncCloudToStore();
 
   const signOut = async () => {
     stopCloudSync();
