@@ -368,12 +368,12 @@ function LiveMatch() {
               { type: "block", label: "Bloqueo", tone: "primary" },
               { type: "counter_attack", label: "Contraataque", tone: "primary" },
               { type: "rotation_attack", label: "Ataque de rotación", tone: "primary" },
-              ...(isServer ? ([{ type: "ace", label: "Saque (Ace)", tone: "primary" }] as const) : []),
+              { type: "ace", label: "Saque (Ace)", tone: "primary" },
               { type: "opponent_error", label: `Error rival (${other.shortName})`, tone: "neutral" },
               { type: "opponent_rotation_error", label: "Error de rotación", tone: "neutral" },
               { type: "attack_error", label: "Error de ataque", tone: "danger" },
               { type: "unforced_error", label: "Error no forzado", tone: "danger" },
-              ...(isServer ? ([{ type: "serve_error", label: "Error de saque", tone: "danger" }] as const) : []),
+              { type: "serve_error", label: "Error de saque", tone: "danger" },
             ];
             return (
               <>
