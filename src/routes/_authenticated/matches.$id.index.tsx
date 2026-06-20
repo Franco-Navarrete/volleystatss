@@ -200,6 +200,12 @@ function LiveMatch() {
       return;
     }
     if (needsSetStart) return;
+    if (needsReception && side === receivingSide) {
+      if (receiverIds.has(playerId)) {
+        setPendingReception({ side, playerId });
+      }
+      return;
+    }
     setPendingPlayer({ side, playerId });
   };
 
@@ -207,6 +213,12 @@ function LiveMatch() {
     if (!pendingPlayer) return;
     recordPoint(match.id, pendingPlayer.side, type, pendingPlayer.playerId);
     setPendingPlayer(null);
+  };
+
+  const submitReception = (rating: ReceptionRating) => {
+    if (!pendingReception) return;
+    recordReception(match.id, pendingReception.side, pendingReception.playerId, rating);
+    setPendingReception(null);
   };
 
   const handleTimeout = (side: "A" | "B") => {
