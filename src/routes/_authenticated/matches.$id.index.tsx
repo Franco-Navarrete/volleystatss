@@ -1251,12 +1251,12 @@ function FormatDialog({ match, onSave, onCancel }: {
   onSave: (setsToWin: number, pointsPerSet: number) => void;
   onCancel: () => void;
 }) {
-  const setsPlayedA = match.sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
-  const setsPlayedB = match.sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
-  const maxWon = Math.max(setsPlayedA, setsPlayedB);
+  const setsWonA = match.sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
+  const setsWonB = match.sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
+  const maxWon = Math.max(setsWonA, setsWonB);
   const [setsToWin, setSetsToWin] = useState(match.setsToWin);
   const [pointsPerSet, setPointsPerSet] = useState(match.pointsPerSet);
-  const tooFew = setsToWin <= maxWon && maxWon > 0;
+  const willFinish = maxWon >= setsToWin && maxWon > 0;
   return (
     <>
       <DialogHeader>
@@ -1278,14 +1278,14 @@ function FormatDialog({ match, onSave, onCancel }: {
             <option value={25}>25 puntos</option>
           </select>
         </div>
-        {tooFew && (
-          <p className="text-xs text-destructive">
-            Un equipo ya ganó {maxWon} set(s). Elegí un formato que requiera al menos {maxWon + 1}.
+        {willFinish && (
+          <p className="text-xs text-warning">
+            Con este formato el partido queda <strong>finalizado</strong> ({setsWonA}-{setsWonB} en sets).
           </p>
         )}
         <div className="flex gap-2 pt-2">
           <Button variant="secondary" className="flex-1" onClick={onCancel}>Cancelar</Button>
-          <Button className="flex-1" disabled={tooFew} onClick={() => onSave(setsToWin, pointsPerSet)}>Guardar</Button>
+          <Button className="flex-1" onClick={() => onSave(setsToWin, pointsPerSet)}>Guardar</Button>
         </div>
       </div>
     </>
