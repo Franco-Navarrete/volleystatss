@@ -133,7 +133,17 @@ export interface SanctionEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent;
+export interface LineupOverrideEvent {
+  id: string;
+  kind: "lineupOverride";
+  side: "A" | "B";
+  /** New on-court order (index 0 = pos 1 / saque). */
+  lineup: string[];
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent;
 
 export interface MatchSet {
   number: number;
