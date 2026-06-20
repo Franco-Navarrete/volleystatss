@@ -123,7 +123,7 @@ function StatsPage() {
     if (pdfStatus.kind !== "awaiting") return;
     const isAndroid = /Android/.test(userAgent);
     const tip = isIOS
-      ? "En iOS: tocá 'Abrir PDF', esperá que se vea el archivo y luego usá el menú de Safari para guardarlo en Archivos."
+      ? "En iOS: tocá 'Abrir en pestaña', esperá que se vea el archivo y luego usá Safari para guardarlo en Archivos."
       : isAndroid
       ? "En Android: revisá la carpeta Descargas o probá con Chrome."
       : "Probá con otro navegador (Chrome/Safari) o revisá los permisos de descarga.";
@@ -169,7 +169,7 @@ function StatsPage() {
       )}
       {pdfStatus.kind === "confirmed" && (
         <div className="mb-4 rounded-2xl border border-success/40 bg-success/10 p-3 text-sm text-success-foreground">
-          ✅ PDF validado: <span className="font-semibold">{pdfStatus.fileName}</span> ({pdfStatus.method === "share" ? "compartido" : "descargado"}).
+          ✅ PDF validado: <span className="font-semibold">{pdfStatus.fileName}</span> ({pdfStatus.method === "share" ? "compartido" : pdfStatus.method === "opened" ? "abierto" : "descargado"}).
         </div>
       )}
       {pdfStatus.kind === "failed" && (
