@@ -368,6 +368,7 @@ function replayMatch(m: Match): {
       servingSide = ev.scoringSide;
       autoOutIfFront(ev.scoringSide);
     }
+    const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
       const setsWonA = sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
