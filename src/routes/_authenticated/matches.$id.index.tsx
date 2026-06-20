@@ -1421,10 +1421,32 @@ function FormatDialog({ match, onSave, onCancel }: {
       <div className="space-y-4 py-2">
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Sets para ganar</label>
-          <select value={setsToWin} onChange={(e) => setSetsToWin(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm">
-            <option value={2}>Mejor de 3 (gana al 2do set)</option>
-            <option value={3}>Mejor de 5 (gana al 3er set)</option>
-          </select>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setSetsToWin(2)}
+              className={`flex-1 rounded-lg border px-2 py-3 text-center transition-colors ${
+                setsToWin === 2
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-input bg-background text-foreground'
+              }`}
+            >
+              <div className="text-sm font-semibold">Mejor de 3</div>
+              <div className="text-xs opacity-70">gana al 2do set</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSetsToWin(3)}
+              className={`flex-1 rounded-lg border px-2 py-3 text-center transition-colors ${
+                setsToWin === 3
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-input bg-background text-foreground'
+              }`}
+            >
+              <div className="text-sm font-semibold">Mejor de 5</div>
+              <div className="text-xs opacity-70">gana al 3er set</div>
+            </button>
+          </div>
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Puntos por set</label>
