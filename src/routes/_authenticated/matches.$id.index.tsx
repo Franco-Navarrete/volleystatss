@@ -144,18 +144,29 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
 
-  // Set timer (ticks every second while current set is live).
+  // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
+  const prevSetEndedAt = match.currentSet > 1
+    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && match.currentSet > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
   useEffect(() => {
-    if (!setStartedAt || match.status === "finished" || currentSet.finished) return;
+    if (match.status === "finished") return;
+    if (!setStartedAt && !inBreak) return;
+    if (setStartedAt && currentSet.finished) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [setStartedAt, match.status, currentSet.finished]);
+  }, [setStartedAt, match.status, currentSet.finished, inBreak]);
   const setEndedAt = currentSet.finished
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
     : undefined;
   const elapsedMs = setStartedAt ? (setEndedAt ?? now) - setStartedAt : 0;
   const setTimerLabel = setStartedAt ? formatDurationMs(elapsedMs) : null;
+  const BREAK_MS = 3 * 60 * 1000;
+  const breakRemainingMs = inBreak && prevSetEndedAt ? Math.max(0, BREAK_MS - (now - prevSetEndedAt)) : 0;
+  const breakMinutes = Math.floor(breakRemainingMs / 60000);
+  const breakSeconds = Math.floor((breakRemainingMs % 60000) / 1000);
+  const breakLabel = `${breakMinutes}:${String(breakSeconds).padStart(2, "0")}`;
 
 
 
@@ -255,6 +266,20 @@ function LiveMatch() {
             <Button size="sm" className="h-8 md:h-10 bg-gradient-primary text-primary-foreground shadow-glow" onClick={() => setShowLineupEditor(true)}>
               <Users className="size-3.5 md:size-4" /> Confirmar formación
             </Button>
+          </div>
+        )}
+
+        {/* Descanso entre sets: 3 minutos */}
+        {inBreak && (
+          <div className={`rounded-lg md:rounded-xl border-2 px-3 py-2 md:px-5 md:py-3 flex items-center justify-center gap-2 md:gap-4 shrink-0 ${breakRemainingMs > 0 ? "border-amber-500/60 bg-amber-500/10" : "border-success/60 bg-success/10"}`}>
+            <Hourglass className={`size-4 md:size-5 ${breakRemainingMs > 0 ? "text-amber-500" : "text-success"}`} />
+            <p className="text-xs md:text-sm font-semibold text-center">
+              {breakRemainingMs > 0 ? (
+                <>Descanso entre sets · <span className="scoreboard-digit tabular-nums font-bold text-amber-600 dark:text-amber-400">{breakLabel}</span></>
+              ) : (
+                <span className="text-success font-bold">Fin del descanso · listos para el Set {match.currentSet}</span>
+              )}
+            </p>
           </div>
         )}
 
