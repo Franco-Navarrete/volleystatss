@@ -302,8 +302,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
     }
   }
 
-  // Fallback: descarga con <a download> usando blob URL. Además devolvemos la
-  // URL para mostrar un enlace manual si iOS bloquea el click automático.
+  // Fallback: descarga con <a download> usando blob URL.
   const a = document.createElement("a");
   a.href = blobUrl;
   a.download = fileName;
@@ -312,10 +311,18 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
   a.click();
   document.body.removeChild(a);
 
-  // Liberar el blob URL después de un tiempo prudencial. Mientras tanto queda
-  // disponible para el botón manual que muestra la UI en iOS/Android.
+  // Para el botón manual "Abrir PDF" devolvemos una data URL en lugar de la
+  // blob URL: iOS Safari bloquea la apertura de blob: en una pestaña nueva
+  // (queda en blanco), mientras que data:application/pdf se abre sin problemas.
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("No se pudo leer el PDF"));
+    reader.readAsDataURL(blob);
+  });
+
   setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
-  return { method: "download" as const, fileName, sizeKb, url: blobUrl };
+  return { method: "download" as const, fileName, sizeKb, url: dataUrl };
 }
 
 export type PdfDownloadResult = {
