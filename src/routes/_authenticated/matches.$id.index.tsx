@@ -903,6 +903,15 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     setLineup(next);
   };
 
+  // Rota la formación en sentido del saque: P1→P6→P5→P4→P3→P2→P1
+  const rotateLineup = () => {
+    if (lineup.filter(Boolean).length !== 6) return;
+    // idx: 0=P1, 1=P2, 2=P3, 3=P4, 4=P5, 5=P6
+    // Tras rotar, el de P2 pasa a P1, P3→P2, P4→P3, P5→P4, P6→P5, P1→P6
+    const next = [lineup[1], lineup[2], lineup[3], lineup[4], lineup[5], lineup[0]];
+    setLineup(next);
+  };
+
   // Reset picker when switching team step
   const goToStep = (s: 1 | 2) => { setPickingSlot(null); setStep(s); };
 
