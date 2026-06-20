@@ -21,6 +21,7 @@ function NewMatch() {
   const navigate = useNavigate();
   const teams = useVolley((s) => s.teams);
   const createMatch = useVolley((s) => s.createMatch);
+  const startMatch = useVolley((s) => s.startMatch);
   const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
 
   if (permLoading) {
@@ -165,32 +166,37 @@ function NewMatch() {
         </div>
       </section>
 
-      <div className="mt-6 flex justify-end">
-        <Button
-          size="lg"
-          disabled={!canStart}
-          className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow"
-          onClick={() => {
-            const ts = new Date(scheduledAt).getTime();
-            const id = createMatch({
-              teamAId, teamBId,
-              startingLineupA: lineupA.filter((x): x is string => !!x),
-              startingLineupB: lineupB.filter((x): x is string => !!x),
-              setsToWin, pointsPerSet,
-              initialServingSide: servingSide,
-              scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
-              captainAId: captainA || null,
-              captainBId: captainB || null,
-              liberoA1Id: liberoA1 || null,
-              liberoA2Id: liberoA2 || null,
-              liberoB1Id: liberoB1 || null,
-              liberoB2Id: liberoB2 || null,
-            });
-            navigate({ to: "/matches/$id", params: { id } });
-          }}
-        >
-          Crear partido
-        </Button>
+      <div className="mt-6 flex flex-col sm:flex-row justify-end gap-2">
+        {(["scheduled", "live"] as const).map((mode) => (
+          <Button
+            key={mode}
+            size="lg"
+            variant={mode === "scheduled" ? "secondary" : "default"}
+            disabled={!canStart}
+            className={mode === "live" ? "bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow" : ""}
+            onClick={() => {
+              const ts = new Date(scheduledAt).getTime();
+              const id = createMatch({
+                teamAId, teamBId,
+                startingLineupA: lineupA.filter((x): x is string => !!x),
+                startingLineupB: lineupB.filter((x): x is string => !!x),
+                setsToWin, pointsPerSet,
+                initialServingSide: servingSide,
+                scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
+                captainAId: captainA || null,
+                captainBId: captainB || null,
+                liberoA1Id: liberoA1 || null,
+                liberoA2Id: liberoA2 || null,
+                liberoB1Id: liberoB1 || null,
+                liberoB2Id: liberoB2 || null,
+              });
+              if (mode === "live") startMatch(id);
+              navigate({ to: "/matches/$id", params: { id } });
+            }}
+          >
+            {mode === "scheduled" ? "Crear programado" : "Empezar en vivo"}
+          </Button>
+        ))}
       </div>
     </AppShell>
   );
