@@ -118,7 +118,7 @@ export const updateTeam = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: TeamUpdate = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.shortName !== undefined) patch.short_name = data.shortName;
     if (data.color !== undefined) patch.color = data.color;
@@ -195,7 +195,7 @@ export const updatePlayer = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: PlayerUpdate = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.number !== undefined) patch.number = data.number;
     if (data.position !== undefined) patch.position = data.position;
