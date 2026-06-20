@@ -1,6 +1,7 @@
 import {
   computeMatchStats,
   computeSetStats,
+  computeReceptionStats,
   setsWon,
   POINT_TYPE_LABEL,
   type Match,
@@ -10,6 +11,7 @@ import {
   type LiberoEvent,
   type PointEvent,
   type PointType,
+  type ReceptionStat,
 } from "@/lib/volley-store";
 
 const PDF_ABBR: Record<PointType, string> = {
@@ -154,7 +156,40 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   playerTable(`${teamA.name} · Jugadores`, playersA);
   playerTable(`${teamB.name} · Jugadores`, playersB);
 
-  // Set breakdown
+  // Reception per team — total del partido
+  const receptionTable = (title: string, team: Team, recMap: Map<string, ReceptionStat>) => {
+    const rows = [...recMap.values()]
+      .filter((r) => team.players.some((p) => p.id === r.playerId))
+      .map((r) => {
+        const tp = team.players.find((p) => p.id === r.playerId)!;
+        return { ...r, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+    if (y > 255) { doc.addPage(); y = 16; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...dark);
+    doc.text(title, margin, y);
+    y += 3;
+    autoTable(doc, {
+      startY: y,
+      head: [["#", "Receptor", "+", "0", "−", "Total", "Eficiencia"]],
+      body: rows.length
+        ? rows.map((r) => [r.number, r.name, r.positive, r.neutral, r.negative, r.total, `${r.efficiency.toFixed(1)}%`])
+        : [["-", "Sin recepciones registradas", "-", "-", "-", "-", "-"]],
+      headStyles: { fillColor: dark, fontSize: 7 },
+      bodyStyles: { fontSize: 7 },
+      columnStyles: { 0: { cellWidth: 10 }, 6: { fontStyle: "bold" } },
+      margin: { left: margin, right: margin },
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+  };
+
+  const recMatchA = computeReceptionStats(match.events, "A");
+  const recMatchB = computeReceptionStats(match.events, "B");
+  receptionTable(`${teamA.name} · Recepción`, teamA, recMatchA);
+  receptionTable(`${teamB.name} · Recepción`, teamB, recMatchB);
+
   const playerName = (team: Team, id: string | null | undefined) => {
     if (!id) return "—";
     const p = team.players.find((x) => x.id === id);
@@ -203,6 +238,15 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
 
     playerTable(`${teamA.name} · Estadísticas Set ${s.number}`, spA);
     playerTable(`${teamB.name} · Estadísticas Set ${s.number}`, spB);
+
+    // Recepción del set
+    const setEvents = match.events.filter((e) => "setNumber" in e && e.setNumber === s.number);
+    const recSetA = computeReceptionStats(setEvents, "A");
+    const recSetB = computeReceptionStats(setEvents, "B");
+    if (recSetA.size > 0) receptionTable(`${teamA.name} · Recepción Set ${s.number}`, teamA, recSetA);
+    if (recSetB.size > 0) receptionTable(`${teamB.name} · Recepción Set ${s.number}`, teamB, recSetB);
+
+
 
     // Punto a punto del set
     const points = match.events.filter(

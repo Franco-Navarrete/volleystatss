@@ -143,7 +143,19 @@ export interface LineupOverrideEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent;
+export type ReceptionRating = "positive" | "neutral" | "negative";
+
+export interface ReceptionEvent {
+  id: string;
+  kind: "reception";
+  side: "A" | "B";
+  playerId: string;
+  rating: ReceptionRating;
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent;
 
 export interface MatchSet {
   number: number;
@@ -257,6 +269,7 @@ interface VolleyState {
     sanction: SanctionType
   ) => void;
   overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
@@ -724,6 +737,24 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      recordReception: (matchId, side, playerId, rating) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: ReceptionEvent = {
+              id: uid(),
+              kind: "reception",
+              side,
+              playerId,
+              rating,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            return { ...m, events: [...m.events, ev] };
+          }),
+        }));
+      },
+
       updateMatchFormat: (matchId, setsToWin, pointsPerSet) => {
         set((s) => ({
           matches: s.matches.map((m) => {
@@ -1080,6 +1111,51 @@ export function computeSetStats(match: Match, setNumber: number) {
   const setEvents = match.events.filter((e) => ("setNumber" in e) && e.setNumber === setNumber);
   return aggregateEvents(setEvents, match);
 }
+
+export interface ReceptionStat {
+  playerId: string;
+  positive: number;
+  neutral: number;
+  negative: number;
+  total: number;
+  /** (pos - neg) / total * 100 */
+  efficiency: number;
+}
+
+export function computeReceptionStats(events: MatchEvent[], side?: "A" | "B"): Map<string, ReceptionStat> {
+  const m = new Map<string, ReceptionStat>();
+  for (const ev of events) {
+    if (!("kind" in ev) || ev.kind !== "reception") continue;
+    if (side && ev.side !== side) continue;
+    let s = m.get(ev.playerId);
+    if (!s) {
+      s = { playerId: ev.playerId, positive: 0, neutral: 0, negative: 0, total: 0, efficiency: 0 };
+      m.set(ev.playerId, s);
+    }
+    if (ev.rating === "positive") s.positive++;
+    else if (ev.rating === "neutral") s.neutral++;
+    else s.negative++;
+    s.total++;
+    s.efficiency = s.total > 0 ? ((s.positive - s.negative) / s.total) * 100 : 0;
+  }
+  return m;
+}
+
+/** True if the receiving side still needs to record a reception for the current rally in `setNumber`. */
+export function needsReceptionForRally(match: Match, setNumber: number, receivingSide: "A" | "B"): boolean {
+  const setEvents = match.events.filter((e) => "setNumber" in e && e.setNumber === setNumber);
+  for (let i = setEvents.length - 1; i >= 0; i--) {
+    const ev = setEvents[i];
+    if ("kind" in ev) {
+      if (ev.kind === "reception" && ev.side === receivingSide) return false;
+      continue;
+    }
+    // PointEvent → start of new rally; reception needed.
+    return true;
+  }
+  return true;
+}
+
 
 export interface StandingRow {
   teamId: string;

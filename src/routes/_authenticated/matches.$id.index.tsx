@@ -10,8 +10,10 @@ import {
   getSetDuration,
   formatDurationMs,
   formatLocalTime,
+  needsReceptionForRally,
   type PointType,
   type SanctionType,
+  type ReceptionRating,
   type Team,
   type Match,
 } from "@/lib/volley-store";
@@ -86,6 +88,7 @@ function LiveMatch() {
   const recordTimeout = useVolley((s) => s.recordTimeout);
   const recordSanction = useVolley((s) => s.recordSanction);
   const overrideLineup = useVolley((s) => s.overrideLineup);
+  const recordReception = useVolley((s) => s.recordReception);
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
   const overrideScore = useVolley((s) => s.overrideScore);
   const undo = useVolley((s) => s.undoLastEvent);
@@ -95,6 +98,7 @@ function LiveMatch() {
   const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
+  const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
   const [showLineupEditor, setShowLineupEditor] = useState(false);
@@ -144,6 +148,25 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
 
+  // Reception flow: the receiving side must register reception (+/0/-) before any other action.
+  const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
+  const receivingTeam = receivingSide === "A" ? teamA : teamB;
+  const receivingOnCourt = receivingSide === "A" ? match.onCourtA : match.onCourtB;
+  const designatedLiberos = (receivingSide === "A"
+    ? [match.liberoA1Id, match.liberoA2Id]
+    : [match.liberoB1Id, match.liberoB2Id]
+  ).filter(Boolean) as string[];
+  const receiverIds = new Set<string>(
+    receivingOnCourt.filter((pid) => {
+      const p = receivingTeam.players.find((x) => x.id === pid);
+      if (!p) return false;
+      if (p.position === "punta") return true;
+      if (p.position === "libero" || designatedLiberos.includes(p.id)) return true;
+      return false;
+    })
+  );
+  const needsReception = !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
+
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
   const prevSetEndedAt = match.currentSet > 1
@@ -177,6 +200,12 @@ function LiveMatch() {
       return;
     }
     if (needsSetStart) return;
+    if (needsReception && side === receivingSide) {
+      if (receiverIds.has(playerId)) {
+        setPendingReception({ side, playerId });
+      }
+      return;
+    }
     setPendingPlayer({ side, playerId });
   };
 
@@ -184,6 +213,12 @@ function LiveMatch() {
     if (!pendingPlayer) return;
     recordPoint(match.id, pendingPlayer.side, type, pendingPlayer.playerId);
     setPendingPlayer(null);
+  };
+
+  const submitReception = (rating: ReceptionRating) => {
+    if (!pendingReception) return;
+    recordReception(match.id, pendingReception.side, pendingReception.playerId, rating);
+    setPendingReception(null);
   };
 
   const handleTimeout = (side: "A" | "B") => {
@@ -333,6 +368,9 @@ function LiveMatch() {
             serverPlayerId={server.playerId}
             serverSide={server.side}
             onPlayerClick={onPlayerClick}
+            receivingSide={receivingSide}
+            needsReception={needsReception}
+            receiverIds={receiverIds}
           />
 
           <SideActions
@@ -464,6 +502,57 @@ function LiveMatch() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Reception rating dialog */}
+      <Dialog open={!!pendingReception} onOpenChange={(o) => !o && setPendingReception(null)}>
+        <DialogContent className="w-[calc(100dvw-24px)] max-w-[360px] rounded-xl border-border/60 p-3 gap-2">
+          {pendingReception && (() => {
+            const t = pendingReception.side === "A" ? teamA : teamB;
+            const player = t.players.find((p) => p.id === pendingReception.playerId);
+            return (
+              <>
+                <DialogHeader className="pr-8 space-y-0 text-left">
+                  <DialogTitle className="flex items-center gap-3 min-w-0">
+                    <span className="size-9 shrink-0 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
+                      {player?.number}
+                    </span>
+                    <span className="min-w-0 truncate">
+                      <span className="block text-sm font-bold">{player?.name}</span>
+                      <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                        Recepción · {t.name}
+                      </span>
+                    </span>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <button
+                    onClick={() => submitReception("positive")}
+                    className="min-h-14 rounded-lg bg-success text-success-foreground font-black text-2xl active:scale-95 transition"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => submitReception("neutral")}
+                    className="min-h-14 rounded-lg bg-muted text-foreground font-black text-2xl active:scale-95 transition"
+                  >
+                    0
+                  </button>
+                  <button
+                    onClick={() => submitReception("negative")}
+                    className="min-h-14 rounded-lg bg-destructive text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                  >
+                    −
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground text-center mt-2">
+                  + Positiva · 0 Neutra · − Negativa
+                </p>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
 
 
       {/* Substitution panel: local to the rotated match screen so it never gets clipped off-screen. */}
@@ -824,10 +913,11 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick }: {
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
+  receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
@@ -885,12 +975,14 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       replacedName = rp ? `#${rp.number} ${rp.name}` : null;
                     }
                   }
+                  const isReceiverHighlight = needsReception && col.side === receivingSide && !!pid && receiverIds.has(pid);
+                  const isReceivingDimmed = needsReception && col.side === receivingSide && !!pid && !receiverIds.has(pid);
                   return (
                     <button
                       key={`${ci}-${idx}`}
                       onClick={() => p && onPlayerClick(col.side, p.id)}
                       disabled={!p}
-                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
+                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""} ${isReceiverHighlight ? "ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceivingDimmed ? "opacity-40" : ""}`}
                       style={isLibero
                         ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                         : { background: col.team.color }}
