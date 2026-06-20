@@ -750,7 +750,26 @@ export const useVolley = create<VolleyState>()(
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
-            return { ...m, events: [...m.events, ev] };
+            let next = { ...m, events: [...m.events, ev] };
+            // Recepción negativa: punto y ace para el sacador (equipo contrario).
+            if (rating === "negative") {
+              const servingSide: "A" | "B" = side === "A" ? "B" : "A";
+              const serverLineup = servingSide === "A" ? next.onCourtA : next.onCourtB;
+              const serverId = serverLineup[0] ?? null;
+              const pev: PointEvent = {
+                id: uid(),
+                scoringSide: servingSide,
+                playerSide: servingSide,
+                playerId: serverId,
+                type: "ace",
+                setNumber: next.currentSet,
+                timestamp: Date.now() + 1,
+              };
+              next = { ...next, events: [...next.events, pev] };
+              const r = replayMatch(next);
+              return { ...next, ...r };
+            }
+            return next;
           }),
         }));
       },
