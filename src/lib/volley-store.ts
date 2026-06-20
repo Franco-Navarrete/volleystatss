@@ -133,7 +133,17 @@ export interface SanctionEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent;
+export interface LineupOverrideEvent {
+  id: string;
+  kind: "lineupOverride";
+  side: "A" | "B";
+  /** New on-court order (index 0 = pos 1 / saque). */
+  lineup: string[];
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent;
 
 export interface MatchSet {
   number: number;
@@ -246,6 +256,7 @@ interface VolleyState {
     playerId: string | null,
     sanction: SanctionType
   ) => void;
+  overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   undoLastEvent: (matchId: string) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
@@ -334,6 +345,9 @@ function replayMatch(m: Match): {
             liberoB = null;
           }
         }
+      } else if (ev.kind === "lineupOverride") {
+        if (ev.side === "A") { onCourtA = [...ev.lineup]; liberoA = null; }
+        else { onCourtB = [...ev.lineup]; liberoB = null; }
       }
       continue;
     }
@@ -640,6 +654,25 @@ export const useVolley = create<VolleyState>()(
               next = { ...next, ...r };
             }
             return next;
+          }),
+        }));
+      },
+
+      overrideLineup: (matchId, side, lineup) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: LineupOverrideEvent = {
+              id: uid(),
+              kind: "lineupOverride",
+              side,
+              lineup: [...lineup],
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            const next = { ...m, events: [...m.events, ev] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
           }),
         }));
       },
