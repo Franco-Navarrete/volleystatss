@@ -217,7 +217,7 @@ function LiveMatch() {
               </button>
             </div>
           </div>
-          <ScoreColumn team={rightTeam} score={rightSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={rightSide === "A" ? w.a : w.b} align="left" serving={server.side === rightSide} />
+          <ScoreColumn team={rightTeam} score={rightSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={rightSide === "A" ? w.a : w.b} align="left" serving={server.side === rightSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
         </header>
 
         {match.status === "scheduled" && (
