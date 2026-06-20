@@ -124,13 +124,13 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     y += 3;
     autoTable(doc, {
       startY: y,
-      head: [["#", "Jugador", "ATK", "Rot.", "Contra", "BLK", "ACE", "Err.", "TOT"]],
+      head: [["#", "Jugador", "ATK", "Rot.", "Contra", "BLK", "ACE", "E.Saq", "E.Atk", "E.NF", "TOT"]],
       body: rows.length
-        ? rows.map((p) => [p.number, p.name, p.attack, p.rotationAttack, p.counterAttack, p.block, p.ace, p.unforcedError, p.total])
-        : [["-", "Sin puntos registrados", "-", "-", "-", "-", "-", "-", "-"]],
-      headStyles: { fillColor: dark, fontSize: 8 },
-      bodyStyles: { fontSize: 8 },
-      columnStyles: { 0: { cellWidth: 10 }, 8: { fontStyle: "bold" } },
+        ? rows.map((p) => [p.number, p.name, p.attack, p.rotationAttack, p.counterAttack, p.block, p.ace, p.serveError, p.attackError, p.unforcedError, p.total])
+        : [["-", "Sin puntos registrados", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
+      headStyles: { fillColor: dark, fontSize: 7 },
+      bodyStyles: { fontSize: 7 },
+      columnStyles: { 0: { cellWidth: 10 }, 10: { fontStyle: "bold" } },
       margin: { left: margin, right: margin },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
