@@ -77,10 +77,12 @@ function StatsPage() {
   type PdfStatus =
     | { kind: "idle" }
     | { kind: "generating" }
-    | { kind: "awaiting"; method: "share" | "download"; fileName: string; sizeKb: number }
+    | { kind: "awaiting"; method: "share" | "download"; fileName: string; sizeKb: number; url?: string }
     | { kind: "confirmed"; method: "share" | "download"; fileName: string }
     | { kind: "failed"; reason: string };
   const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
+  const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent) || (/Mac/.test(userAgent) && "ontouchend" in (globalThis as object));
 
   const handleDownloadPdf = async () => {
     setPdfStatus({ kind: "generating" });
@@ -93,7 +95,7 @@ function StatsPage() {
         toast("Se canceló la descarga del PDF");
         return;
       }
-      setPdfStatus({ kind: "awaiting", method: result.method, fileName: result.fileName, sizeKb: result.sizeKb });
+      setPdfStatus({ kind: "awaiting", method: result.method, fileName: result.fileName, sizeKb: result.sizeKb, url: result.url });
       toast.success(
         result.method === "share"
           ? "PDF compartido. Confirmá si lo guardaste."
@@ -116,11 +118,9 @@ function StatsPage() {
   };
   const confirmPdfFail = () => {
     if (pdfStatus.kind !== "awaiting") return;
-    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-    const isIOS = /iPad|iPhone|iPod/.test(ua) || (/Mac/.test(ua) && "ontouchend" in (globalThis as object));
-    const isAndroid = /Android/.test(ua);
+    const isAndroid = /Android/.test(userAgent);
     const tip = isIOS
-      ? "En iOS: tocá el botón compartir y elegí 'Guardar en Archivos'."
+      ? "En iOS: tocá 'Abrir PDF', esperá que se vea el archivo y luego usá el menú de Safari para guardarlo en Archivos."
       : isAndroid
       ? "En Android: revisá la carpeta Descargas o probá con Chrome."
       : "Probá con otro navegador (Chrome/Safari) o revisá los permisos de descarga.";
@@ -145,11 +145,20 @@ function StatsPage() {
           <p className="text-muted-foreground text-xs mb-3">
             {pdfStatus.method === "share"
               ? "Usamos el diálogo nativo para compartir. Confirmá si pudiste guardarlo."
+              : isIOS
+              ? "Si no se descargó automático, abrí el PDF con el botón de abajo y guardalo desde el menú de Safari."
               : "El archivo se envió a tu carpeta de descargas. Verificá que esté ahí."}
             {" · "}
             <span className="tabular-nums">{pdfStatus.fileName} ({pdfStatus.sizeKb} KB)</span>
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {pdfStatus.url && (
+              <Button size="sm" variant="secondary" asChild>
+                <a href={pdfStatus.url} download={pdfStatus.fileName} target="_blank" rel="noopener noreferrer">
+                  Abrir PDF
+                </a>
+              </Button>
+            )}
             <Button size="sm" onClick={confirmPdfOk}>Sí, lo tengo</Button>
             <Button size="sm" variant="outline" onClick={confirmPdfFail}>No se descargó</Button>
           </div>
