@@ -18,6 +18,10 @@ const mvpScore = (p: PlayerStat) =>
   p.ace * MVP_WEIGHTS.ace +
   p.unforcedError * MVP_WEIGHTS.unforcedError;
 
+type PdfDownloadOptions = {
+  targetWindow?: Window | null;
+};
+
 function enrich(team: Team, playerMap: Map<string, PlayerStat>): PlayerStat[] {
   return [...playerMap.values()]
     .filter((p) => team.players.some((tp) => tp.id === p.playerId))
@@ -28,7 +32,9 @@ function enrich(team: Team, playerMap: Map<string, PlayerStat>): PlayerStat[] {
     .sort((a, b) => b.total - a.total);
 }
 
-export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
+export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, options: PdfDownloadOptions = {}) {
+  if (options.targetWindow) writePdfLoadingWindow(options.targetWindow);
+
   const { jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
 
@@ -282,6 +288,18 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
   const blobUrl = URL.createObjectURL(blob);
   const sizeKb = Math.round(blob.size / 1024);
 
+  if (options.targetWindow) {
+    try {
+      const dataUrl = await blobToDataUrl(blob);
+      openPdfDataUrlInWindow(options.targetWindow, dataUrl, fileName, sizeKb);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
+      return { method: "opened" as const, fileName, sizeKb, url: dataUrl };
+    } catch {
+      // Si la pestaña se cerró o el navegador bloqueó la escritura, seguimos con
+      // el fallback de descarga normal.
+    }
+  }
+
   // En móviles modernos, usar la Web Share API para compartir/guardar el PDF
   // nativamente. Esto funciona perfecto en iOS Safari y Android Chrome.
   const file = new File([blob], fileName, { type: "application/pdf" });
@@ -314,19 +332,96 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
   // Para el botón manual "Abrir PDF" devolvemos una data URL en lugar de la
   // blob URL: iOS Safari bloquea la apertura de blob: en una pestaña nueva
   // (queda en blanco), mientras que data:application/pdf se abre sin problemas.
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error ?? new Error("No se pudo leer el PDF"));
-    reader.readAsDataURL(blob);
-  });
+  const dataUrl = await blobToDataUrl(blob);
 
   setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
   return { method: "download" as const, fileName, sizeKb, url: dataUrl };
 }
 
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("No se pudo leer el PDF"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function htmlEscape(value: string) {
+  return value.replace(/[&<>"]/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+  })[char] ?? char);
+}
+
+function scriptJson(value: string) {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
+function writePdfLoadingWindow(targetWindow: Window) {
+  targetWindow.document.open();
+  targetWindow.document.write(`<!doctype html><html><head><title>Generando PDF</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f172a;color:#e2e8f0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:center;padding:24px}p{margin:8px 0;color:#94a3b8}</style></head><body><main><h1>Generando PDF…</h1><p>Dejá esta pestaña abierta.</p></main></body></html>`);
+  targetWindow.document.close();
+}
+
+function openPdfDataUrlInWindow(targetWindow: Window, dataUrl: string, fileName: string, sizeKb: number) {
+  const safeFileName = htmlEscape(fileName);
+  targetWindow.document.open();
+  targetWindow.document.write(`<!doctype html>
+<html>
+<head>
+  <title>${safeFileName}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.bar{position:sticky;top:0;z-index:2;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px;background:#111827;border-bottom:1px solid rgba(148,163,184,.25)}.title{min-width:0;font-size:13px;font-weight:700}.title span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.title small{display:block;color:#94a3b8;font-size:11px;font-weight:500}.actions{display:flex;gap:8px;flex-shrink:0}.btn{border:1px solid rgba(148,163,184,.35);background:#2563eb;color:white;border-radius:8px;padding:9px 11px;font-size:13px;font-weight:700;text-decoration:none}.btn.secondary{background:#1f2937}.viewer{width:100%;height:calc(100vh - 58px);border:0;background:#111827}.fallback{display:none;padding:20px;color:#cbd5e1}.fallback p{margin:0 0 12px;color:#94a3b8}@media (max-width:520px){.bar{align-items:stretch;flex-direction:column}.actions{width:100%}.btn{flex:1;text-align:center}.viewer{height:calc(100vh - 110px)}}
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <div class="title"><span>${safeFileName}</span><small>${sizeKb} KB · RALLY</small></div>
+    <div class="actions">
+      <a id="openPdf" class="btn secondary" href="#">Abrir</a>
+      <a id="downloadPdf" class="btn" href="#" download="${safeFileName}">Descargar</a>
+    </div>
+  </header>
+  <iframe id="viewer" class="viewer" title="PDF ${safeFileName}"></iframe>
+  <main id="fallback" class="fallback"><p>Si el visor queda en blanco, usá Abrir o Descargar.</p></main>
+  <script>
+    const pdfDataUrl = ${scriptJson(dataUrl)};
+    const fileName = ${scriptJson(fileName)};
+    const base64 = pdfDataUrl.split(',')[1] || '';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    const pdfUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    const viewer = document.getElementById('viewer');
+    const openPdf = document.getElementById('openPdf');
+    const downloadPdf = document.getElementById('downloadPdf');
+    viewer.src = pdfUrl;
+    openPdf.href = pdfUrl;
+    downloadPdf.href = pdfUrl;
+    downloadPdf.download = fileName;
+    openPdf.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.location.href = pdfUrl;
+    });
+  </script>
+</body>
+</html>`);
+  targetWindow.document.close();
+}
+
+export function openPdfDataUrlInNewTab(dataUrl: string, fileName: string, sizeKb: number) {
+  const targetWindow = window.open("", "_blank");
+  if (!targetWindow) return false;
+  openPdfDataUrlInWindow(targetWindow, dataUrl, fileName, sizeKb);
+  return true;
+}
+
 export type PdfDownloadResult = {
-  method: "share" | "download" | "cancelled";
+  method: "share" | "download" | "cancelled" | "opened";
   fileName: string;
   sizeKb: number;
   url?: string;
