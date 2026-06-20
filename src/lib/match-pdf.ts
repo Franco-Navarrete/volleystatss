@@ -101,7 +101,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   const tB = stats.teams.get(teamB.id);
   autoTable(doc, {
     startY: y,
-    head: [["Equipo", "Puntos", "Ataque", "Ataque rot.", "Contraataque", "Bloqueo", "Ace", "Err. rival", "Err. saque", "Err. ataque", "Err. no forz."]],
+    head: [["Equipo", "PTS", "ATA", "A.R", "C.A", "BLO", "S", "E.R", "E.S", "E.A", "ENF"]],
     body: [
       [teamA.name, tA?.total ?? 0, tA?.attack ?? 0, tA?.rotationAttack ?? 0, tA?.counterAttack ?? 0, tA?.block ?? 0, tA?.ace ?? 0, tA?.opponentErrors ?? 0, tA?.serveErrors ?? 0, tA?.attackErrors ?? 0, tA?.unforcedErrors ?? 0],
       [teamB.name, tB?.total ?? 0, tB?.attack ?? 0, tB?.rotationAttack ?? 0, tB?.counterAttack ?? 0, tB?.block ?? 0, tB?.ace ?? 0, tB?.opponentErrors ?? 0, tB?.serveErrors ?? 0, tB?.attackErrors ?? 0, tB?.unforcedErrors ?? 0],
@@ -124,7 +124,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     y += 3;
     autoTable(doc, {
       startY: y,
-      head: [["#", "Jugador", "ATK", "Rot.", "Contra", "BLK", "ACE", "E.Saq", "E.Atk", "E.NF", "TOT"]],
+      head: [["#", "Jugador", "ATA", "A.R", "C.A", "BLO", "S", "E.S", "E.A", "ENF", "TOT"]],
       body: rows.length
         ? rows.map((p) => [p.number, p.name, p.attack, p.rotationAttack, p.counterAttack, p.block, p.ace, p.serveError, p.attackError, p.unforcedError, p.total])
         : [["-", "Sin puntos registrados", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
