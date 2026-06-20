@@ -280,6 +280,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
   // Genera el PDF como Blob (mucho más compatible en móviles que data URI).
   const blob = doc.output("blob");
   const blobUrl = URL.createObjectURL(blob);
+  const sizeKb = Math.round(blob.size / 1024);
 
   // En móviles modernos, usar la Web Share API para compartir/guardar el PDF
   // nativamente. Esto funciona perfecto en iOS Safari y Android Chrome.
@@ -288,9 +289,16 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
     try {
       await navigator.share({ files: [file], title: fileName });
       URL.revokeObjectURL(blobUrl);
-      return;
+      return { method: "share" as const, fileName, sizeKb };
     } catch (e) {
-      // El usuario canceló el share o falló; seguimos con el fallback de descarga.
+      // Si el usuario canceló, lo informamos para que el flujo de UI no
+      // muestre confirmación de descarga.
+      const name = (e as { name?: string } | null)?.name;
+      if (name === "AbortError") {
+        URL.revokeObjectURL(blobUrl);
+        return { method: "cancelled" as const, fileName, sizeKb };
+      }
+      // Otro error: seguimos con el fallback de descarga.
     }
   }
 
@@ -306,5 +314,12 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
 
   // Liberar el blob URL después de un tiempo prudencial.
   setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+  return { method: "download" as const, fileName, sizeKb };
 }
+
+export type PdfDownloadResult = {
+  method: "share" | "download" | "cancelled";
+  fileName: string;
+  sizeKb: number;
+};
 

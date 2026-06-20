@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import {
@@ -74,13 +74,58 @@ function StatsPage() {
   const topBlockers = [...allPlayers].filter((p) => p.block > 0).sort((a, b) => b.block - a.block).slice(0, 5);
   const topServers = [...allPlayers].filter((p) => p.ace > 0).sort((a, b) => b.ace - a.ace).slice(0, 5);
 
+  type PdfStatus =
+    | { kind: "idle" }
+    | { kind: "generating" }
+    | { kind: "awaiting"; method: "share" | "download"; fileName: string; sizeKb: number }
+    | { kind: "confirmed"; method: "share" | "download"; fileName: string }
+    | { kind: "failed"; reason: string };
+  const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
+
   const handleDownloadPdf = async () => {
+    setPdfStatus({ kind: "generating" });
+    const loadingId = toast.loading("Generando PDF…");
     try {
-      await downloadMatchPdf(match, teamA, teamB);
+      const result = await downloadMatchPdf(match, teamA, teamB);
+      toast.dismiss(loadingId);
+      if (result.method === "cancelled") {
+        setPdfStatus({ kind: "idle" });
+        toast("Se canceló la descarga del PDF");
+        return;
+      }
+      setPdfStatus({ kind: "awaiting", method: result.method, fileName: result.fileName, sizeKb: result.sizeKb });
+      toast.success(
+        result.method === "share"
+          ? "PDF compartido. Confirmá si lo guardaste."
+          : "PDF enviado a tu carpeta de descargas.",
+        { description: `${result.fileName} · ${result.sizeKb} KB` },
+      );
     } catch (e) {
+      toast.dismiss(loadingId);
       console.error(e);
-      toast.error("No se pudo generar el PDF");
+      const reason = e instanceof Error ? e.message : "Error desconocido";
+      setPdfStatus({ kind: "failed", reason });
+      toast.error("No se pudo generar el PDF", { description: reason });
     }
+  };
+
+  const confirmPdfOk = () => {
+    if (pdfStatus.kind !== "awaiting") return;
+    setPdfStatus({ kind: "confirmed", method: pdfStatus.method, fileName: pdfStatus.fileName });
+    toast.success("¡Listo! Validaste que el PDF se descargó correctamente.");
+  };
+  const confirmPdfFail = () => {
+    if (pdfStatus.kind !== "awaiting") return;
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (/Mac/.test(ua) && "ontouchend" in (globalThis as object));
+    const isAndroid = /Android/.test(ua);
+    const tip = isIOS
+      ? "En iOS: tocá el botón compartir y elegí 'Guardar en Archivos'."
+      : isAndroid
+      ? "En Android: revisá la carpeta Descargas o probá con Chrome."
+      : "Probá con otro navegador (Chrome/Safari) o revisá los permisos de descarga.";
+    setPdfStatus({ kind: "failed", reason: tip });
+    toast.error("Reportaste que el PDF no se descargó", { description: tip, duration: 8000 });
   };
 
   return (
@@ -89,10 +134,38 @@ function StatsPage() {
         <Button asChild variant="ghost" size="sm">
           <Link to="/matches/$id" params={{ id: match.id }}><ArrowLeft className="size-4" /> Volver al partido</Link>
         </Button>
-        <Button size="sm" onClick={handleDownloadPdf}>
-          <Download className="size-4" /> Descargar PDF
+        <Button size="sm" onClick={handleDownloadPdf} disabled={pdfStatus.kind === "generating"}>
+          <Download className="size-4" /> {pdfStatus.kind === "generating" ? "Generando…" : "Descargar PDF"}
         </Button>
       </div>
+
+      {pdfStatus.kind === "awaiting" && (
+        <div className="mb-4 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
+          <p className="font-semibold mb-1">¿Se descargó/guardó el PDF correctamente?</p>
+          <p className="text-muted-foreground text-xs mb-3">
+            {pdfStatus.method === "share"
+              ? "Usamos el diálogo nativo para compartir. Confirmá si pudiste guardarlo."
+              : "El archivo se envió a tu carpeta de descargas. Verificá que esté ahí."}
+            {" · "}
+            <span className="tabular-nums">{pdfStatus.fileName} ({pdfStatus.sizeKb} KB)</span>
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={confirmPdfOk}>Sí, lo tengo</Button>
+            <Button size="sm" variant="outline" onClick={confirmPdfFail}>No se descargó</Button>
+          </div>
+        </div>
+      )}
+      {pdfStatus.kind === "confirmed" && (
+        <div className="mb-4 rounded-2xl border border-success/40 bg-success/10 p-3 text-sm text-success-foreground">
+          ✅ PDF validado: <span className="font-semibold">{pdfStatus.fileName}</span> ({pdfStatus.method === "share" ? "compartido" : "descargado"}).
+        </div>
+      )}
+      {pdfStatus.kind === "failed" && (
+        <div className="mb-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-3 text-sm">
+          ⚠️ <span className="font-semibold">Problema con el PDF.</span> {pdfStatus.reason}
+        </div>
+      )}
+
 
       {/* Final */}
       <section className="rounded-3xl bg-gradient-surface border border-border/60 p-6 sm:p-8 shadow-elevated mb-6">
