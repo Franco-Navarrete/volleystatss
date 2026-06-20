@@ -21,6 +21,7 @@ function NewMatch() {
   const navigate = useNavigate();
   const teams = useVolley((s) => s.teams);
   const createMatch = useVolley((s) => s.createMatch);
+  const startMatch = useVolley((s) => s.startMatch);
   const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
 
   if (permLoading) {
