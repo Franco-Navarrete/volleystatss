@@ -57,7 +57,7 @@ function MatchesIndex() {
               <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{g.label} · {g.items.length}</h2>
               {canCreate && g.addTo && (
                 <Button asChild size="sm" variant="outline" className="h-8 gap-1.5">
-                  <Link to="/matches/new" search={{ mode: g.addTo }}>
+                  <Link to="/matches/new">
                     <Plus className="size-3.5" /> Nuevo
                   </Link>
                 </Button>
