@@ -11,8 +11,8 @@ export function useAuthUser() {
       setUser(session?.user ?? null);
       setLoading(false);
     });
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null);
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();

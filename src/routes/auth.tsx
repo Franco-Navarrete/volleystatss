@@ -27,8 +27,8 @@ function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/", replace: true });
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) navigate({ to: "/", replace: true });
     });
   }, [navigate]);
 
