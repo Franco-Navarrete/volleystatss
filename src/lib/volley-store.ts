@@ -262,6 +262,7 @@ interface VolleyState {
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
   seedDemo: () => void;
+  seedDemoMatch: () => string | null;
 }
 
 
@@ -778,6 +779,91 @@ export const useVolley = create<VolleyState>()(
           ]),
         ];
         set({ teams, leagues: [league] });
+      },
+
+      seedDemoMatch: () => {
+        if (get().teams.length < 2) get().seedDemo();
+        const teams = get().teams;
+        if (teams.length < 2) return null;
+        const teamA = teams[0];
+        const teamB = teams[1];
+        const startingLineupA = teamA.players.slice(0, 6).map((p) => p.id);
+        const startingLineupB = teamB.players.slice(0, 6).map((p) => p.id);
+        if (startingLineupA.length < 6 || startingLineupB.length < 6) return null;
+
+        const matchId = uid();
+        const initialServingSide: "A" | "B" = "A";
+        const now = Date.now() - 1000 * 60 * 120;
+        const setScores: Array<[number, number]> = [[25, 20], [22, 25], [25, 18], [25, 22]];
+        const scoringTypes: PointType[] = [
+          "attack", "attack", "attack", "block", "ace",
+          "counter_attack", "rotation_attack", "opponent_error",
+          "unforced_error", "serve_error", "attack_error",
+        ];
+        let seed = 42;
+        const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+
+        const events: MatchEvent[] = [];
+        let ts = now;
+        const setStartTimes: Record<number, number> = {};
+
+        for (let i = 0; i < setScores.length; i++) {
+          const setNum = i + 1;
+          const [sa, sb] = setScores[i];
+          setStartTimes[setNum] = ts;
+          const seq: ("A" | "B")[] = [];
+          let na = 0, nb = 0;
+          while (na < sa || nb < sb) {
+            if (na < sa && (nb >= sb || rand() < sa / (sa + sb))) { seq.push("A"); na++; }
+            else { seq.push("B"); nb++; }
+          }
+          for (const sc of seq) {
+            const t = scoringTypes[Math.floor(rand() * scoringTypes.length)];
+            const isError = t === "serve_error" || t === "unforced_error" || t === "attack_error";
+            const playerSide: "A" | "B" = isError || t === "opponent_error"
+              ? (sc === "A" ? "B" : "A")
+              : sc;
+            const lineup = playerSide === "A" ? startingLineupA : startingLineupB;
+            const playerId = t === "opponent_error" ? null : lineup[Math.floor(rand() * lineup.length)];
+            ts += 30000;
+            events.push({
+              id: uid(),
+              scoringSide: sc,
+              playerSide,
+              playerId,
+              type: t,
+              setNumber: setNum,
+              timestamp: ts,
+            });
+          }
+          ts += 1000 * 60 * 3;
+        }
+
+        const base: Match = {
+          id: matchId,
+          teamAId: teamA.id,
+          teamBId: teamB.id,
+          startingLineupA,
+          startingLineupB,
+          onCourtA: [...startingLineupA],
+          onCourtB: [...startingLineupB],
+          status: "live",
+          currentSet: 1,
+          setsToWin: 3,
+          pointsPerSet: 25,
+          sets: [{ number: 1, scoreA: 0, scoreB: 0, finished: false }],
+          events,
+          servingSide: initialServingSide,
+          initialServingSide,
+          scheduledAt: now,
+          createdAt: now,
+          setStartTimes,
+          confirmedLineupSets: [1, 2, 3, 4],
+        };
+        const r = replayMatch(base);
+        const finalMatch: Match = { ...base, ...r, status: "finished" };
+        set((s) => ({ matches: [...s.matches, finalMatch] }));
+        return matchId;
       },
 
     }),
