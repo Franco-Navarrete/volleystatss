@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/matches/")({
 function MatchesIndex() {
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
+  const deleteMatch = useVolley((s) => s.deleteMatch);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const { allowed: canCreate } = useCanCreateMatches();
 
