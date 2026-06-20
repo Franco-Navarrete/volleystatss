@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
+
+type TeamUpdate = Database["public"]["Tables"]["teams"]["Update"];
+type PlayerUpdate = Database["public"]["Tables"]["players"]["Update"];
 
 const uuidSchema = z.string().uuid();
 const nameSchema = z.string().trim().min(1).max(80);
