@@ -26,18 +26,24 @@ export function useCanCreateMatches() {
       return;
     }
     setLoading(true);
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 4000);
     supabase
       .from("user_permissions")
       .select("can_create_matches")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
+        if (error) console.warn("[useCanCreateMatches] error:", error.message);
         setAllowed(!!data?.can_create_matches);
         setLoading(false);
+        clearTimeout(timeout);
       });
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, [user?.id, isAdmin, userLoading, adminChecking]);
 
