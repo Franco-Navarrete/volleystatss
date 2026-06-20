@@ -954,6 +954,19 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const filled = lineup.filter(Boolean).length;
   const [pickingSlot, setPickingSlot] = useState<number | null>(null);
 
+  const designatedLiberoIds = new Set<string>(
+    (step === 1
+      ? [match.liberoA1Id, match.liberoA2Id]
+      : [match.liberoB1Id, match.liberoB2Id]
+    ).filter(Boolean) as string[],
+  );
+  const isLiberoPlayer = (playerId: string) => {
+    if (designatedLiberoIds.has(playerId)) return true;
+    const pl = team.players.find((x) => x.id === playerId);
+    return pl?.position === "libero";
+  };
+  const isFrontRowSlot = (slot: number) => slot === 1 || slot === 2 || slot === 3;
+
   const grid: { idx: number; label: string; sub?: string }[][] = [
     [{ idx: 3, label: "4" }, { idx: 2, label: "3" }, { idx: 1, label: "2" }],
     [{ idx: 4, label: "5" }, { idx: 5, label: "6" }, { idx: 0, label: "1", sub: "saca" }],
