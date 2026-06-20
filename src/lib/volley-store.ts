@@ -658,6 +658,25 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      overrideLineup: (matchId, side, lineup) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: LineupOverrideEvent = {
+              id: uid(),
+              kind: "lineupOverride",
+              side,
+              lineup: [...lineup],
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            const next = { ...m, events: [...m.events, ev] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
+          }),
+        }));
+      },
+
       undoLastEvent: (matchId) => {
         set((s) => ({
           matches: s.matches.map((m) => {
