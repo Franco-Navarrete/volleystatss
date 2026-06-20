@@ -9,7 +9,22 @@ import {
   type SubstitutionEvent,
   type LiberoEvent,
   type PointEvent,
+  type PointType,
 } from "@/lib/volley-store";
+
+const PDF_ABBR: Record<PointType, string> = {
+  attack: "ATA",
+  block: "BLO",
+  ace: "S",
+  counter_attack: "C.A",
+  rotation_attack: "A.R",
+  opponent_error: "E.R",
+  opponent_rotation_error: "E.Rot",
+  serve_error: "E.S",
+  unforced_error: "ENF",
+  rotation_error: "E.Rot",
+  attack_error: "E.A",
+};
 
 const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
 const mvpScore = (p: PlayerStat) =>
@@ -89,7 +104,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     doc.setTextColor(80, 80, 80);
     y += 5;
     doc.text(
-      `Índice ${mvpScore(mvp).toFixed(1)} · ${mvp.attack} ATK · ${mvp.block} BLK · ${mvp.ace} ACE · ${mvp.unforcedError} errores`,
+      `Índice ${mvpScore(mvp).toFixed(1)} · ${mvp.attack} ATA · ${mvp.block} BLO · ${mvp.ace} S · ${mvp.unforcedError} ENF`,
       margin,
       y,
     );
@@ -101,7 +116,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   const tB = stats.teams.get(teamB.id);
   autoTable(doc, {
     startY: y,
-    head: [["Equipo", "Puntos", "Ataque", "Ataque rot.", "Contraataque", "Bloqueo", "Ace", "Err. rival", "Err. saque", "Err. ataque", "Err. no forz."]],
+    head: [["Equipo", "PTS", "ATA", "A.R", "C.A", "BLO", "S", "E.R", "E.S", "E.A", "ENF"]],
     body: [
       [teamA.name, tA?.total ?? 0, tA?.attack ?? 0, tA?.rotationAttack ?? 0, tA?.counterAttack ?? 0, tA?.block ?? 0, tA?.ace ?? 0, tA?.opponentErrors ?? 0, tA?.serveErrors ?? 0, tA?.attackErrors ?? 0, tA?.unforcedErrors ?? 0],
       [teamB.name, tB?.total ?? 0, tB?.attack ?? 0, tB?.rotationAttack ?? 0, tB?.counterAttack ?? 0, tB?.block ?? 0, tB?.ace ?? 0, tB?.opponentErrors ?? 0, tB?.serveErrors ?? 0, tB?.attackErrors ?? 0, tB?.unforcedErrors ?? 0],
@@ -124,7 +139,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     y += 3;
     autoTable(doc, {
       startY: y,
-      head: [["#", "Jugador", "ATK", "Rot.", "Contra", "BLK", "ACE", "E.Saq", "E.Atk", "E.NF", "TOT"]],
+      head: [["#", "Jugador", "ATA", "A.R", "C.A", "BLO", "S", "E.S", "E.A", "ENF", "TOT"]],
       body: rows.length
         ? rows.map((p) => [p.number, p.name, p.attack, p.rotationAttack, p.counterAttack, p.block, p.ace, p.serveError, p.attackError, p.unforcedError, p.total])
         : [["-", "Sin puntos registrados", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
@@ -213,7 +228,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
           `${runA}-${runB}`,
           `Punto de ${team.shortName || team.name}`,
           who,
-          POINT_TYPE_LABEL[ev.type] ?? ev.type,
+          PDF_ABBR[ev.type] ?? ev.type,
         ];
       });
       autoTable(doc, {
