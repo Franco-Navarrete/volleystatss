@@ -53,7 +53,16 @@ function MatchesIndex() {
       <div className="space-y-8">
         {groups.map((g) => (
           <section key={g.label}>
-            <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">{g.label} · {g.items.length}</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{g.label} · {g.items.length}</h2>
+              {canCreate && g.addTo && (
+                <Button asChild size="sm" variant="outline" className="h-8 gap-1.5">
+                  <Link to="/matches/new" search={{ mode: g.addTo }}>
+                    <Plus className="size-3.5" /> Nuevo
+                  </Link>
+                </Button>
+              )}
+            </div>
             {g.items.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border/60 px-5 py-8 text-center text-sm text-muted-foreground">
                 Sin partidos.
