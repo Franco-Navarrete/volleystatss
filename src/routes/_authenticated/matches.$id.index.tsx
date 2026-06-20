@@ -676,9 +676,20 @@ function CompactShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ScoreColumn({ team, score, sets, align, serving }: {
-  team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean;
+function ScoreColumn({ team, score, sets, align, serving, onScoreClick }: {
+  team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean; onScoreClick?: () => void;
 }) {
+  const scoreEl = (
+    <button
+      type="button"
+      onClick={onScoreClick}
+      disabled={!onScoreClick}
+      className={`inline-flex items-center gap-1 ${onScoreClick ? "cursor-pointer hover:opacity-80 active:scale-95 transition-all" : ""}`}
+    >
+      <span className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl font-black leading-none text-primary">{score}</span>
+      {onScoreClick && <Edit3 className="size-3 md:size-4 text-muted-foreground opacity-60" />}
+    </button>
+  );
   return (
     <div className={`flex items-center gap-1.5 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
       {team.logoUrl ? (
@@ -698,9 +709,9 @@ function ScoreColumn({ team, score, sets, align, serving }: {
         <div className="text-[8px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="hidden md:block scoreboard-digit md:text-7xl font-black leading-none md:mt-1 text-primary">{score}</div>
+        <div className="hidden md:block mt-1">{scoreEl}</div>
       </div>
-      <div className="scoreboard-digit text-3xl sm:text-4xl font-black leading-none text-primary shrink-0 md:hidden">{score}</div>
+      <div className="md:hidden shrink-0">{scoreEl}</div>
     </div>
   );
 }
