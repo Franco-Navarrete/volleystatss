@@ -344,6 +344,9 @@ function replayMatch(m: Match): {
             liberoB = null;
           }
         }
+      } else if (ev.kind === "lineupOverride") {
+        if (ev.side === "A") { onCourtA = [...ev.lineup]; liberoA = null; }
+        else { onCourtB = [...ev.lineup]; liberoB = null; }
       }
       continue;
     }
