@@ -827,19 +827,19 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[180px] md:min-h-[420px] bg-[#1e5fa8] p-3 sm:p-5 md:p-7">
+    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[180px] md:min-h-[420px] bg-[#1e5fa8] p-2 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
-      <div className="absolute inset-3 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
+      <div className="absolute inset-2 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — the two front-row columns */}
-      <div className="absolute inset-y-3 sm:inset-y-5 md:inset-y-7 left-1/2 -translate-x-1/2 flex pointer-events-none">
+      <div className="absolute inset-y-2 sm:inset-y-5 md:inset-y-7 left-1/2 -translate-x-1/2 flex pointer-events-none">
 
         <div className="h-full w-[calc(50vw)] max-w-none" />
       </div>
       {/* dashed center net line */}
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0 border-l-2 border-dashed border-white pointer-events-none z-10" />
       {/* antenna dots top/bottom of net */}
-      <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white z-10" />
-      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white z-10" />
+      <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white z-10" />
+      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white z-10" />
       {/* attack-line dashes (3m lines) */}
       <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
@@ -852,7 +852,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
           return (
             <div
               key={ci}
-              className={`grid grid-rows-3 gap-1.5 sm:gap-3 h-full px-1 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+              className={`grid grid-rows-3 gap-1 sm:gap-3 h-full px-0.5 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
             >
               {col.idxs.map((idx) => {
                 const pid = onCourt[idx];
@@ -876,24 +876,24 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                     key={`${ci}-${idx}`}
                     onClick={() => p && onPlayerClick(col.side, p.id)}
                     disabled={!p}
-                    className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full overflow-hidden ${isServer ? "ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
+                    className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
                     style={isLibero
                       ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                       : { background: col.team.color }}
                     title={p ? `#${p.number} ${p.name}` : ""}
                   >
-                    <span className="scoreboard-digit leading-none text-base sm:text-xl md:text-3xl">{p?.number ?? "?"}</span>
+                    <span className="scoreboard-digit leading-none text-sm sm:text-xl md:text-3xl">{p?.number ?? "?"}</span>
                     {p && (
-                      <span className="max-w-[90%] truncate text-[7px] sm:text-[9px] md:text-[11px] font-bold leading-tight">{p.name}</span>
+                      <span className="max-w-[90%] truncate text-[6px] sm:text-[9px] md:text-[11px] font-bold leading-tight">{p.name}</span>
                     )}
                     {isLibero && replacedName && (
-                      <span className="max-w-[90%] truncate text-[6px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
+                      <span className="max-w-[90%] truncate text-[5px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
                     )}
                     {isLibero && (
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[6px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
+                      <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
                     )}
                     {isServer && (
-                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[8px] font-bold uppercase tracking-widest">Saque</span>
+                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
                     )}
                   </button>
                 );
