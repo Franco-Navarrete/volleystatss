@@ -391,6 +391,9 @@ function LiveMatch() {
             const other = pendingPlayer.side === "A" ? teamB : teamA;
             const player = t.players.find((p) => p.id === pendingPlayer.playerId);
             const isServer = server.side === pendingPlayer.side && server.playerId === pendingPlayer.playerId;
+            const activeLibero = pendingPlayer.side === "A" ? match.liberoActiveA : match.liberoActiveB;
+            const isActiveLibero = !!activeLibero && activeLibero.liberoId === pendingPlayer.playerId;
+            const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedId) : null;
             const actions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger" }[] = [
               { type: "attack", label: "Ataque", tone: "primary" },
               { type: "block", label: "Bloqueo", tone: "primary" },
