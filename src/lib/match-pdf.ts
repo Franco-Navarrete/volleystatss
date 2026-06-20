@@ -151,8 +151,77 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
     doc.setTextColor(...primary);
     doc.text(`Set ${s.number} (${s.scoreA}-${s.scoreB})`, margin, y);
     y += 5;
-    playerTable(`${teamA.name}`, spA);
-    playerTable(`${teamB.name}`, spB);
+
+    // Alineación inicial del set
+    const lineupA = match.lineupsBySet?.[s.number]?.A ?? match.startingLineupA;
+    const lineupB = match.lineupsBySet?.[s.number]?.B ?? match.startingLineupB;
+    const fmtLineup = (team: Team, ids: string[]) =>
+      ids.length
+        ? ids.map((id, i) => `P${i + 1}: ${playerName(team, id)}`).join("  ·  ")
+        : "Sin alineación registrada";
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...dark);
+    doc.text(`Alineación inicial · Set ${s.number}`, margin, y);
+    y += 3;
+    autoTable(doc, {
+      startY: y,
+      head: [["Equipo", "Formación (P1 = saca)"]],
+      body: [
+        [teamA.shortName || teamA.name, fmtLineup(teamA, lineupA)],
+        [teamB.shortName || teamB.name, fmtLineup(teamB, lineupB)],
+      ],
+      headStyles: { fillColor: dark, fontSize: 8 },
+      bodyStyles: { fontSize: 8 },
+      columnStyles: { 0: { cellWidth: 24, fontStyle: "bold" } },
+      margin: { left: margin, right: margin },
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
+
+    playerTable(`${teamA.name} · Estadísticas Set ${s.number}`, spA);
+    playerTable(`${teamB.name} · Estadísticas Set ${s.number}`, spB);
+
+    // Punto a punto del set
+    const points = match.events.filter(
+      (e): e is PointEvent =>
+        !("kind" in e) && (e as PointEvent).setNumber === s.number,
+    );
+    if (points.length) {
+      if (y > 240) { doc.addPage(); y = 16; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...dark);
+      doc.text(`Punto a punto · Set ${s.number}`, margin, y);
+      y += 3;
+      let runA = 0;
+      let runB = 0;
+      const rows = points.map((ev, idx) => {
+        if (ev.scoringSide === "A") runA++; else runB++;
+        const team = ev.scoringSide === "A" ? teamA : teamB;
+        const playerTeam = ev.playerSide === "A" ? teamA : ev.playerSide === "B" ? teamB : null;
+        const who = playerTeam && ev.playerId ? playerName(playerTeam, ev.playerId) : "—";
+        return [
+          String(idx + 1),
+          `${runA}-${runB}`,
+          `Punto de ${team.shortName || team.name}`,
+          who,
+          POINT_TYPE_LABEL[ev.type] ?? ev.type,
+        ];
+      });
+      autoTable(doc, {
+        startY: y,
+        head: [["#", "Marcador", "Punto", "Jugador", "Acción"]],
+        body: rows,
+        headStyles: { fillColor: dark, fontSize: 7 },
+        bodyStyles: { fontSize: 7 },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 18, fontStyle: "bold" },
+        },
+        margin: { left: margin, right: margin },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
 
     // Cambios y líberos del set
     const changes = match.events.filter(
