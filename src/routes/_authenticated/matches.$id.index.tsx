@@ -480,6 +480,16 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Format dialog */}
+      <Dialog open={showFormatDialog} onOpenChange={setShowFormatDialog}>
+        <DialogContent className="max-w-xs">
+          <FormatDialog
+            match={match}
+            onSave={(stw, pps) => { updateMatchFormat(match.id, stw, pps); setShowFormatDialog(false); }}
+            onCancel={() => setShowFormatDialog(false)}
+          />
+        </DialogContent>
+
       {/* Sanction dialog */}
       <Dialog open={!!sanctionSide} onOpenChange={(o) => !o && setSanctionSide(null)}>
         <DialogContent className="max-w-md">
