@@ -614,9 +614,15 @@ function LiveMatch() {
               teamA={teamA}
               teamB={teamB}
               onSave={(lineupA, lineupB) => {
-                setSetLineup(match.id, "A", lineupA);
-                setSetLineup(match.id, "B", lineupB);
-                confirmSetLineup(match.id);
+                if (setNotStarted) {
+                  setSetLineup(match.id, "A", lineupA);
+                  setSetLineup(match.id, "B", lineupB);
+                  confirmSetLineup(match.id);
+                } else {
+                  // Mid-set correction: append override events so future rotations follow new positions.
+                  overrideLineup(match.id, "A", lineupA);
+                  overrideLineup(match.id, "B", lineupB);
+                }
                 setShowLineupEditor(false);
               }}
             />
