@@ -368,7 +368,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
-          league_id: string
+          league_id: string | null
           logo_url: string | null
           name: string
           short_name: string
@@ -379,7 +379,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
-          league_id: string
+          league_id?: string | null
           logo_url?: string | null
           name: string
           short_name: string
@@ -390,7 +390,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
-          league_id?: string
+          league_id?: string | null
           logo_url?: string | null
           name?: string
           short_name?: string
