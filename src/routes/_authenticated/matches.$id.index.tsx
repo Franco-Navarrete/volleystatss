@@ -824,7 +824,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[180px] md:min-h-[420px] bg-[#1e5fa8] p-2 sm:p-5 md:p-7">
+    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-2 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
       <div className="absolute inset-2 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — the two front-row columns */}
@@ -849,7 +849,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
           return (
               <div
                 key={ci}
-                className={`grid grid-rows-3 items-center gap-1 sm:gap-3 h-full px-0.5 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+                className={`grid grid-rows-3 items-center gap-2 sm:gap-3 h-full px-1 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
               >
                 {col.idxs.map((idx) => {
                   const pid = onCourt[idx];
@@ -873,7 +873,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       key={`${ci}-${idx}`}
                       onClick={() => p && onPlayerClick(col.side, p.id)}
                       disabled={!p}
-                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[85%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
+                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[78%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
                       style={isLibero
                         ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                         : { background: col.team.color }}
