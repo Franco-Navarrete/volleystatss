@@ -26,15 +26,14 @@ export function useCanCreateMatches() {
       return;
     }
     setLoading(true);
-    // Failsafe: si la consulta tarda demasiado (red móvil flaky),
-    // mostramos los botones igual. La RLS del backend bloquea escrituras
-    // no autorizadas, así que es seguro ser optimistas en el cliente.
+    // Si la consulta falla o tarda demasiado, asumimos NO permitido
+    // (sólo admins o usuarios con permiso explícito pueden crear).
     const timeout = setTimeout(() => {
       if (!cancelled) {
-        setAllowed(true);
+        setAllowed(false);
         setLoading(false);
       }
-    }, 3000);
+    }, 4000);
     supabase
       .from("user_permissions")
       .select("can_create_matches")
@@ -45,7 +44,7 @@ export function useCanCreateMatches() {
         clearTimeout(timeout);
         if (error) {
           console.warn("[useCanCreateMatches] error:", error.message);
-          setAllowed(true); // fallback optimista ante error de red
+          setAllowed(false);
         } else {
           setAllowed(!!data?.can_create_matches);
         }
