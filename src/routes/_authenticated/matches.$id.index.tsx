@@ -847,54 +847,54 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
           const serverPid = serverSide === col.side ? serverPlayerId : null;
           const isFront = ci === 1 || ci === 2;
           return (
-            <div
-              key={ci}
-              className={`grid grid-rows-3 gap-1 sm:gap-3 h-full px-0.5 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
-            >
-              {col.idxs.map((idx) => {
-                const pid = onCourt[idx];
-                const p = col.team.players.find((x) => x.id === pid);
-                const isServer = pid && pid === serverPid;
-                const designated = (col.side === "A"
-                  ? [match.liberoA1Id, match.liberoA2Id]
-                  : [match.liberoB1Id, match.liberoB2Id]
-                ).filter(Boolean) as string[];
-                const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
-                let replacedName: string | null = null;
-                if (isLibero && pid) {
-                  const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
-                  if (active && active.liberoId === pid) {
-                    const rp = col.team.players.find((x) => x.id === active.replacedId);
-                    replacedName = rp ? `#${rp.number} ${rp.name}` : null;
+              <div
+                key={ci}
+                className={`grid grid-rows-3 items-center gap-1 sm:gap-3 h-full px-0.5 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+              >
+                {col.idxs.map((idx) => {
+                  const pid = onCourt[idx];
+                  const p = col.team.players.find((x) => x.id === pid);
+                  const isServer = pid && pid === serverPid;
+                  const designated = (col.side === "A"
+                    ? [match.liberoA1Id, match.liberoA2Id]
+                    : [match.liberoB1Id, match.liberoB2Id]
+                  ).filter(Boolean) as string[];
+                  const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
+                  let replacedName: string | null = null;
+                  if (isLibero && pid) {
+                    const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
+                    if (active && active.liberoId === pid) {
+                      const rp = col.team.players.find((x) => x.id === active.replacedId);
+                      replacedName = rp ? `#${rp.number} ${rp.name}` : null;
+                    }
                   }
-                }
-                return (
-                  <button
-                    key={`${ci}-${idx}`}
-                    onClick={() => p && onPlayerClick(col.side, p.id)}
-                    disabled={!p}
-                    className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-full overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
-                    style={isLibero
-                      ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
-                      : { background: col.team.color }}
-                    title={p ? `#${p.number} ${p.name}` : ""}
-                  >
-                    <span className="scoreboard-digit leading-none text-sm sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
-                    {p && (
-                      <span className="max-w-[90%] truncate text-[9px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
-                    )}
-                    {isLibero && replacedName && (
-                      <span className="max-w-[90%] truncate text-[5px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
-                    )}
-                    {isLibero && (
-                      <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
-                    )}
-                    {isServer && (
-                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
-                    )}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={`${ci}-${idx}`}
+                      onClick={() => p && onPlayerClick(col.side, p.id)}
+                      disabled={!p}
+                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[85%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""}`}
+                      style={isLibero
+                        ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
+                        : { background: col.team.color }}
+                      title={p ? `#${p.number} ${p.name}` : ""}
+                    >
+                      <span className="scoreboard-digit leading-none text-sm sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
+                      {p && (
+                        <span className="max-w-[90%] truncate text-[9px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
+                      )}
+                      {isLibero && replacedName && (
+                        <span className="max-w-[90%] truncate text-[5px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
+                      )}
+                      {isLibero && (
+                        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
+                      )}
+                      {isServer && (
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
+                      )}
+                    </button>
+                  );
+                })}
             </div>
           );
         })}
