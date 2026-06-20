@@ -257,6 +257,7 @@ interface VolleyState {
     sanction: SanctionType
   ) => void;
   overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
   undoLastEvent: (matchId: string) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
@@ -707,6 +708,17 @@ export const useVolley = create<VolleyState>()(
               timestamp: Date.now(),
             };
             const next = { ...m, events: [...m.events, ev] };
+            const r = replayMatch(next);
+            return { ...next, ...r };
+          }),
+        }));
+      },
+
+      updateMatchFormat: (matchId, setsToWin, pointsPerSet) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const next = { ...m, setsToWin, pointsPerSet };
             const r = replayMatch(next);
             return { ...next, ...r };
           }),
