@@ -25,11 +25,16 @@ function LeaguePage() {
   const teams = useVolley((s) => s.teams);
   const matches = useVolley((s) => s.matches);
   const seed = useVolley((s) => s.seedDemo);
+  const seedMatch = useVolley((s) => s.seedDemoMatch);
   const { allowed: canCreate } = useCanCreateMatches();
 
   useEffect(() => {
     if (teams.length === 0) seed();
   }, [teams.length, seed]);
+
+  useEffect(() => {
+    if (teams.length >= 2 && matches.length === 0) seedMatch();
+  }, [teams.length, matches.length, seedMatch]);
 
   const standings = useMemo(() => computeStandings(teams, matches), [teams, matches]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
