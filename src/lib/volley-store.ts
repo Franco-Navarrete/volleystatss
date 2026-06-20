@@ -530,9 +530,45 @@ export const useVolley = create<VolleyState>()(
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
-            const next = { ...m, events: [...m.events, ev] };
-            const r = replayMatch(next);
-            return { ...next, ...r };
+            const prevServing = m.servingSide;
+            let next: Match = { ...m, events: [...m.events, ev] };
+            let r = replayMatch(next);
+            next = { ...next, ...r };
+
+            // Cambio automático de líbero: si el equipo que perdió el saque
+            // tenía un central en posición 1 (sacó), entra el líbero por él.
+            if (r.servingSide !== prevServing && r.status !== "finished") {
+              const losingSide: "A" | "B" = prevServing;
+              const team = s.teams.find(
+                (t) => t.id === (losingSide === "A" ? next.teamAId : next.teamBId)
+              );
+              const libIds = (
+                losingSide === "A"
+                  ? [next.liberoA1Id, next.liberoA2Id]
+                  : [next.liberoB1Id, next.liberoB2Id]
+              ).filter(Boolean) as string[];
+              const libActive = losingSide === "A" ? r.liberoActiveA : r.liberoActiveB;
+              const onCourt = losingSide === "A" ? r.onCourtA : r.onCourtB;
+              const serverId = onCourt[0];
+              const serverPlayer = team?.players.find((p) => p.id === serverId);
+              const liberoId = libIds.find((id) => !onCourt.includes(id));
+              if (!libActive && serverPlayer?.position === "central" && liberoId && serverId) {
+                const libEv: LiberoEvent = {
+                  id: uid(),
+                  kind: "libero",
+                  side: losingSide,
+                  action: "in",
+                  liberoId,
+                  replacedId: serverId,
+                  setNumber: next.currentSet,
+                  timestamp: Date.now() + 1,
+                };
+                next = { ...next, events: [...next.events, libEv] };
+                const r2 = replayMatch(next);
+                next = { ...next, ...r2 };
+              }
+            }
+            return next;
           }),
         }));
       },

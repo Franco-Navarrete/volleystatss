@@ -5,6 +5,8 @@ import {
   type Match,
   type PlayerStat,
   type Team,
+  type SubstitutionEvent,
+  type LiberoEvent,
 } from "@/lib/volley-store";
 
 const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
@@ -130,6 +132,12 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
   playerTable(`${teamB.name} · Jugadores`, playersB);
 
   // Set breakdown
+  const playerName = (team: Team, id: string | null | undefined) => {
+    if (!id) return "—";
+    const p = team.players.find((x) => x.id === id);
+    return p ? `#${p.number} ${p.name}` : id;
+  };
+
   for (const s of match.sets) {
     const setStats = computeSetStats(match, s.number);
     const spA = enrich(teamA, setStats.players);
@@ -145,6 +153,41 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
     y += 5;
     playerTable(`${teamA.name}`, spA);
     playerTable(`${teamB.name}`, spB);
+
+    // Cambios y líberos del set
+    const changes = match.events.filter(
+      (e): e is SubstitutionEvent | LiberoEvent =>
+        "kind" in e &&
+        (e.kind === "sub" || e.kind === "libero") &&
+        e.setNumber === s.number,
+    );
+    if (changes.length) {
+      if (y > 255) { doc.addPage(); y = 16; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...dark);
+      doc.text(`Cambios · Set ${s.number}`, margin, y);
+      y += 3;
+      autoTable(doc, {
+        startY: y,
+        head: [["Equipo", "Tipo", "Entra", "Sale"]],
+        body: changes.map((e) => {
+          const team = e.side === "A" ? teamA : teamB;
+          if (e.kind === "sub") {
+            return [team.shortName, "Cambio", playerName(team, e.playerInId), playerName(team, e.playerOutId)];
+          }
+          // libero
+          const tipo = e.action === "in" ? "Líbero entra" : e.action === "out" ? "Líbero sale" : "Líbero sale (rotación)";
+          const entra = e.action === "in" ? playerName(team, e.liberoId) : playerName(team, e.replacedId);
+          const sale = e.action === "in" ? playerName(team, e.replacedId) : playerName(team, e.liberoId);
+          return [team.shortName, tipo, entra, sale];
+        }),
+        headStyles: { fillColor: dark, fontSize: 8 },
+        bodyStyles: { fontSize: 8 },
+        margin: { left: margin, right: margin },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
   }
 
   // Footer
