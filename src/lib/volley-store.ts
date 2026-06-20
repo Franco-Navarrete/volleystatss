@@ -737,6 +737,24 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      recordReception: (matchId, side, playerId, rating) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: ReceptionEvent = {
+              id: uid(),
+              kind: "reception",
+              side,
+              playerId,
+              rating,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            return { ...m, events: [...m.events, ev] };
+          }),
+        }));
+      },
+
       updateMatchFormat: (matchId, setsToWin, pointsPerSet) => {
         set((s) => ({
           matches: s.matches.map((m) => {
