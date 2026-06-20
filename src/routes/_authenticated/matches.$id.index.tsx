@@ -1450,11 +1450,22 @@ function FormatDialog({ match, onSave, onCancel }: {
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Puntos por set</label>
-          <select value={pointsPerSet} onChange={(e) => setPointsPerSet(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm">
-            <option value={15}>15 puntos</option>
-            <option value={21}>21 puntos</option>
-            <option value={25}>25 puntos</option>
-          </select>
+          <div className="flex gap-2">
+            {[15, 21, 25].map((pts) => (
+              <button
+                key={pts}
+                type="button"
+                onClick={() => setPointsPerSet(pts)}
+                className={`flex-1 rounded-lg border px-2 py-3 text-center transition-colors ${
+                  pointsPerSet === pts
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-input bg-background text-foreground'
+                }`}
+              >
+                <div className="text-sm font-semibold">{pts} puntos</div>
+              </button>
+            ))}
+          </div>
         </div>
         {willFinish && (
           <p className="text-xs text-warning">
