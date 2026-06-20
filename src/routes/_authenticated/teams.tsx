@@ -185,13 +185,12 @@ function TeamsPage() {
         </div>
       )}
 
-      {leagues.length === 0 && (
+      {leagues.length === 0 && !canEdit && (
         <div className="mb-4 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3 text-sm flex items-start gap-2">
           <Lock className="size-4 mt-0.5 text-muted-foreground" />
           <div>
-            {canEdit
-              ? "Aún no hay ligas creadas. Creá una desde Administración → Ligas para poder agregar equipos."
-              : "No tenés acceso a ninguna liga todavía. Un admin tiene que asignarte una liga desde el panel de administración antes de que puedas ver o crear equipos."}
+            No tenés acceso a ninguna liga todavía. Un admin tiene que asignarte una liga
+            desde el panel de administración antes de que puedas ver o crear equipos.
           </div>
         </div>
       )}
