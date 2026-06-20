@@ -965,6 +965,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                     : [match.liberoB1Id, match.liberoB2Id]
                   ).filter(Boolean) as string[];
                   const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
+                  const isSetter = !!p && p.position === "armador";
                   let replacedName: string | null = null;
                   if (isLibero && pid) {
                     const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
@@ -980,7 +981,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       key={`${ci}-${idx}`}
                       onClick={() => p && onPlayerClick(col.side, p.id)}
                       disabled={!p}
-                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""} ${isReceiverHighlight ? "ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""}`}
+                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary border-2 border-white" : ""} ${isLibero ? "border-2" : ""} ${isSetter && !isLibero ? "ring-2 ring-amber-300/80" : ""} ${isReceiverHighlight ? "ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""}`}
                       style={isLibero
                         ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                         : { background: col.team.color }}
@@ -995,6 +996,9 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       )}
                       {isLibero && (
                         <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
+                      )}
+                      {isSetter && !isLibero && (
+                        <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-amber-400 text-black text-[8px] sm:text-[10px] md:text-xs font-black flex items-center justify-center shadow-md">A</span>
                       )}
                       {isServer && (
                         <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
