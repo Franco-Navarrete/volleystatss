@@ -395,13 +395,13 @@ function LiveMatch() {
             const isActiveLibero = !!activeLibero && activeLibero.liberoId === pendingPlayer.playerId;
             const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedId) : null;
             const actions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger" }[] = [
-              { type: "block", label: "Bloqueo", tone: "primary" },
-              { type: "counter_attack", label: "Contraataque", tone: "primary" },
-              { type: "rotation_attack", label: "Ataque de rotación", tone: "primary" },
               { type: "ace", label: "Saque (Ace)", tone: "primary" },
-              { type: "attack_error", label: "Error de ataque", tone: "danger" },
-              { type: "unforced_error", label: "Error no forzado", tone: "danger" },
               { type: "serve_error", label: "Error de saque", tone: "danger" },
+              { type: "rotation_attack", label: "Ataque de rotación", tone: "primary" },
+              { type: "attack_error", label: "Error de ataque", tone: "danger" },
+              { type: "counter_attack", label: "Contraataque", tone: "primary" },
+              { type: "unforced_error", label: "Error no forzado", tone: "danger" },
+              { type: "block", label: "Bloqueo", tone: "primary" },
             ];
             return (
               <>
