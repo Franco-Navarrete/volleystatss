@@ -954,6 +954,19 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const filled = lineup.filter(Boolean).length;
   const [pickingSlot, setPickingSlot] = useState<number | null>(null);
 
+  const designatedLiberoIds = new Set<string>(
+    (step === 1
+      ? [match.liberoA1Id, match.liberoA2Id]
+      : [match.liberoB1Id, match.liberoB2Id]
+    ).filter(Boolean) as string[],
+  );
+  const isLiberoPlayer = (playerId: string) => {
+    if (designatedLiberoIds.has(playerId)) return true;
+    const pl = team.players.find((x) => x.id === playerId);
+    return pl?.position === "libero";
+  };
+  const isFrontRowSlot = (slot: number) => slot === 1 || slot === 2 || slot === 3;
+
   const grid: { idx: number; label: string; sub?: string }[][] = [
     [{ idx: 3, label: "4" }, { idx: 2, label: "3" }, { idx: 1, label: "2" }],
     [{ idx: 4, label: "5" }, { idx: 5, label: "6" }, { idx: 0, label: "1", sub: "saca" }],
@@ -1078,11 +1091,25 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                 const slotOfPl = lineup.indexOf(pl.id);
                 const takenElsewhere = slotOfPl >= 0 && slotOfPl !== pickingSlot;
                 const isCurrent = lineup[pickingSlot] === pl.id;
+                const isLib = isLiberoPlayer(pl.id);
+                const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
+                const otherLiberoOnCourt = isLib && lineup.some(
+                  (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid),
+                );
+                const liberoForbidden = liberoInFront || otherLiberoOnCourt;
+                const disabled = takenElsewhere || liberoForbidden;
+                const reason = liberoInFront
+                  ? "líbero no en frente"
+                  : otherLiberoOnCourt
+                    ? "ya hay un líbero"
+                    : takenElsewhere
+                      ? "en cancha"
+                      : null;
                 return (
                   <button
                     key={pl.id}
                     type="button"
-                    disabled={takenElsewhere}
+                    disabled={disabled}
                     onClick={() => { setSlot(pickingSlot, pl.id); setPickingSlot(null); }}
                     className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors min-w-0 ${
                       isCurrent ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-secondary/70"
@@ -1098,8 +1125,9 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                     <span className="truncate flex-1 min-w-0">
                       <span className="scoreboard-digit font-bold mr-1">#{pl.number}</span>
                       {pl.name}
+                      {isLib && <span className="ml-1 text-[9px] uppercase opacity-70">líb</span>}
                     </span>
-                    {takenElsewhere && <span className="text-[9px] uppercase opacity-70 shrink-0">en cancha</span>}
+                    {reason && <span className="text-[9px] uppercase opacity-70 shrink-0">{reason}</span>}
                     {isCurrent && <Check className="size-3.5 shrink-0" />}
                   </button>
                 );
