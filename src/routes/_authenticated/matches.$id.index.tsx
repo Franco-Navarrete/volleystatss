@@ -201,9 +201,7 @@ function LiveMatch() {
     }
     if (needsSetStart) return;
     if (needsReception && side === receivingSide) {
-      if (receiverIds.has(playerId)) {
-        setPendingReception({ side, playerId });
-      }
+      setPendingReception({ side, playerId });
       return;
     }
     setPendingPlayer({ side, playerId });
