@@ -489,6 +489,7 @@ function LiveMatch() {
             onCancel={() => setShowFormatDialog(false)}
           />
         </DialogContent>
+      </Dialog>
 
       {/* Sanction dialog */}
       <Dialog open={!!sanctionSide} onOpenChange={(o) => !o && setSanctionSide(null)}>
