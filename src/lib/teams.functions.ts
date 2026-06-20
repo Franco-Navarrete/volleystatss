@@ -63,7 +63,7 @@ export const listTeams = createServerFn({ method: "GET" })
 export const createTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: {
-    leagueId: string;
+    leagueId?: string | null;
     name: string;
     shortName: string;
     color: string;
@@ -71,7 +71,7 @@ export const createTeam = createServerFn({ method: "POST" })
   }) =>
     z
       .object({
-        leagueId: uuidSchema,
+        leagueId: uuidSchema.nullable().optional(),
         name: nameSchema,
         shortName: shortSchema,
         color: colorSchema,
@@ -83,7 +83,7 @@ export const createTeam = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase
       .from("teams")
       .insert({
-        league_id: data.leagueId,
+        league_id: data.leagueId ?? null,
         name: data.name,
         short_name: data.shortName,
         color: data.color,
@@ -104,7 +104,7 @@ export const updateTeam = createServerFn({ method: "POST" })
     shortName?: string;
     color?: string;
     logoUrl?: string | null;
-    leagueId?: string;
+    leagueId?: string | null;
   }) =>
     z
       .object({
@@ -113,7 +113,7 @@ export const updateTeam = createServerFn({ method: "POST" })
         shortName: shortSchema.optional(),
         color: colorSchema.optional(),
         logoUrl: optionalUrl,
-        leagueId: uuidSchema.optional(),
+        leagueId: uuidSchema.nullable().optional(),
       })
       .parse(input),
   )

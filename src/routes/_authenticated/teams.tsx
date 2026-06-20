@@ -185,13 +185,12 @@ function TeamsPage() {
         </div>
       )}
 
-      {leagues.length === 0 && (
+      {leagues.length === 0 && !canEdit && (
         <div className="mb-4 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3 text-sm flex items-start gap-2">
           <Lock className="size-4 mt-0.5 text-muted-foreground" />
           <div>
-            {canEdit
-              ? "Aún no hay ligas creadas. Creá una desde Administración → Ligas para poder agregar equipos."
-              : "No tenés acceso a ninguna liga todavía. Un admin tiene que asignarte una liga desde el panel de administración antes de que puedas ver o crear equipos."}
+            No tenés acceso a ninguna liga todavía. Un admin tiene que asignarte una liga
+            desde el panel de administración antes de que puedas ver o crear equipos.
           </div>
         </div>
       )}
@@ -231,7 +230,7 @@ function TeamsPage() {
             )}
           </ul>
 
-          {canEdit && leagues.length > 0 && (
+          {canEdit && (
             <div className="space-y-2 border-t border-border/60 pt-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Nuevo equipo
@@ -283,7 +282,7 @@ function TeamsPage() {
                 onChange={(e) => setNewLeagueId(e.target.value)}
                 className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
               >
-                <option value="">Elegí una liga…</option>
+                <option value="">Sin liga</option>
                 {leagues.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name}
@@ -304,11 +303,11 @@ function TeamsPage() {
               </div>
               <Button
                 className="w-full"
-                disabled={!name || !shortName || !newLeagueId || busy}
+                disabled={!name || !shortName || busy}
                 onClick={async () => {
                   try {
                     const res = await mut.createTeam.mutateAsync({
-                      leagueId: newLeagueId,
+                      leagueId: newLeagueId || null,
                       name,
                       shortName,
                       color,
@@ -429,14 +428,17 @@ function TeamsPage() {
 
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <select
-                    value={activeTeam.leagueId}
+                    value={activeTeam.leagueId ?? ""}
                     disabled={!canEdit}
                     onChange={(e) => {
-                      if (!e.target.value) return;
-                      mut.updateTeam.mutate({ id: activeTeam.id, leagueId: e.target.value });
+                      mut.updateTeam.mutate({
+                        id: activeTeam.id,
+                        leagueId: e.target.value || null,
+                      });
                     }}
                     className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
                   >
+                    <option value="">Sin liga</option>
                     {leagues.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
