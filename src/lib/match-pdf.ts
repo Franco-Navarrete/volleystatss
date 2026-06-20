@@ -276,13 +276,34 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team) {
   }
 
   const fileName = `${teamA.name} vs ${teamB.name} - estadisticas.pdf`.replace(/[/\\:*?"<>|]/g, "-");
-  const blob = doc.output("blob");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+
+  // En navegadores móviles y dentro del iframe del preview, el atributo
+  // `download` suele ser ignorado o bloqueado. Usamos `doc.save()` (que
+  // internamente usa FileSaver) y además abrimos el blob en una nueva
+  // pestaña como respaldo para que el usuario pueda guardarlo a mano.
+  try {
+    doc.save(fileName);
+  } catch (e) {
+    console.warn("doc.save falló, usando fallback", e);
+  }
+
+  try {
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank");
+    if (!win) {
+      // Popup bloqueado: forzamos un click en un <a target="_blank">
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (e) {
+    console.error("Fallback de apertura de PDF falló", e);
+  }
 }
