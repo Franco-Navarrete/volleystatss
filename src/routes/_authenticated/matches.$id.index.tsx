@@ -368,6 +368,9 @@ function LiveMatch() {
             serverPlayerId={server.playerId}
             serverSide={server.side}
             onPlayerClick={onPlayerClick}
+            receivingSide={receivingSide}
+            needsReception={needsReception}
+            receiverIds={receiverIds}
           />
 
           <SideActions
