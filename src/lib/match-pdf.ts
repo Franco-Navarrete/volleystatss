@@ -89,7 +89,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     doc.setTextColor(80, 80, 80);
     y += 5;
     doc.text(
-      `Índice ${mvpScore(mvp).toFixed(1)} · ${mvp.attack} ATK · ${mvp.block} BLK · ${mvp.ace} ACE · ${mvp.unforcedError} errores`,
+      `Índice ${mvpScore(mvp).toFixed(1)} · ${mvp.attack} ATA · ${mvp.block} BLO · ${mvp.ace} S · ${mvp.unforcedError} ENF`,
       margin,
       y,
     );
