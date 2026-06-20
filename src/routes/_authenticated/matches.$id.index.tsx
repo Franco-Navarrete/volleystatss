@@ -1092,21 +1092,27 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
               )}
               {team.players.map((pl) => {
                 const slotOfPl = lineup.indexOf(pl.id);
-                const takenElsewhere = slotOfPl >= 0 && slotOfPl !== pickingSlot;
+                const onCourt = slotOfPl >= 0;
+                const takenElsewhere = onCourt && slotOfPl !== pickingSlot;
                 const isCurrent = lineup[pickingSlot] === pl.id;
                 const isLib = isLiberoPlayer(pl.id);
                 const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
+                // Sólo bloquear si hay OTRO líbero en cancha que NO sea el que vamos a intercambiar
+                const currentPidInSlot = lineup[pickingSlot];
                 const otherLiberoOnCourt = isLib && lineup.some(
-                  (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid),
+                  (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid) && pid !== currentPidInSlot,
                 );
                 const liberoForbidden = liberoInFront || otherLiberoOnCourt;
-                const disabled = takenElsewhere || liberoForbidden;
+                const disabled = liberoForbidden;
+                const swapLabel = takenElsewhere
+                  ? (grid.flat().find((g) => g.idx === slotOfPl)?.label ?? "")
+                  : "";
                 const reason = liberoInFront
                   ? "líbero no en frente"
                   : otherLiberoOnCourt
                     ? "ya hay un líbero"
                     : takenElsewhere
-                      ? "en cancha"
+                      ? `P${swapLabel} ⇄`
                       : null;
                 return (
                   <button
@@ -1114,8 +1120,12 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                     type="button"
                     disabled={disabled}
                     onClick={() => { setSlot(pickingSlot, pl.id); setPickingSlot(null); }}
-                    className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors min-w-0 ${
-                      isCurrent ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-secondary/70"
+                    className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors min-w-0 border ${
+                      isCurrent
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : takenElsewhere
+                          ? "bg-primary/15 border-primary/60 text-foreground hover:bg-primary/25"
+                          : "bg-secondary border-transparent hover:bg-secondary/70"
                     } disabled:opacity-40 disabled:cursor-not-allowed`}
                   >
                     {pl.photoUrl ? (
@@ -1130,7 +1140,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                       {pl.name}
                       {isLib && <span className="ml-1 text-[9px] uppercase opacity-70">líb</span>}
                     </span>
-                    {reason && <span className="text-[9px] uppercase opacity-70 shrink-0">{reason}</span>}
+                    {reason && <span className="text-[9px] uppercase opacity-80 shrink-0 font-bold">{reason}</span>}
                     {isCurrent && <Check className="size-3.5 shrink-0" />}
                   </button>
                 );
