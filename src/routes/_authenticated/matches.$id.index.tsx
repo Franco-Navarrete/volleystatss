@@ -144,18 +144,29 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
 
-  // Set timer (ticks every second while current set is live).
+  // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
+  const prevSetEndedAt = match.currentSet > 1
+    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && match.currentSet > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
   useEffect(() => {
-    if (!setStartedAt || match.status === "finished" || currentSet.finished) return;
+    if (match.status === "finished") return;
+    if (!setStartedAt && !inBreak) return;
+    if (setStartedAt && currentSet.finished) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [setStartedAt, match.status, currentSet.finished]);
+  }, [setStartedAt, match.status, currentSet.finished, inBreak]);
   const setEndedAt = currentSet.finished
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
     : undefined;
   const elapsedMs = setStartedAt ? (setEndedAt ?? now) - setStartedAt : 0;
   const setTimerLabel = setStartedAt ? formatDurationMs(elapsedMs) : null;
+  const BREAK_MS = 3 * 60 * 1000;
+  const breakRemainingMs = inBreak && prevSetEndedAt ? Math.max(0, BREAK_MS - (now - prevSetEndedAt)) : 0;
+  const breakMinutes = Math.floor(breakRemainingMs / 60000);
+  const breakSeconds = Math.floor((breakRemainingMs % 60000) / 1000);
+  const breakLabel = `${breakMinutes}:${String(breakSeconds).padStart(2, "0")}`;
 
 
 
