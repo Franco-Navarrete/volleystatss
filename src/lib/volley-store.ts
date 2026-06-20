@@ -762,6 +762,8 @@ export interface PlayerStat {
   name: string;
   number: number;
   attack: number;
+  rotationAttack: number;
+  counterAttack: number;
   block: number;
   ace: number;
   serveError: number;
@@ -772,6 +774,8 @@ export interface PlayerStat {
 export interface TeamStat {
   teamId: string;
   attack: number;
+  rotationAttack: number;
+  counterAttack: number;
   block: number;
   ace: number;
   opponentErrors: number;
