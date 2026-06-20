@@ -429,14 +429,17 @@ function TeamsPage() {
 
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <select
-                    value={activeTeam.leagueId}
+                    value={activeTeam.leagueId ?? ""}
                     disabled={!canEdit}
                     onChange={(e) => {
-                      if (!e.target.value) return;
-                      mut.updateTeam.mutate({ id: activeTeam.id, leagueId: e.target.value });
+                      mut.updateTeam.mutate({
+                        id: activeTeam.id,
+                        leagueId: e.target.value || null,
+                      });
                     }}
                     className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
                   >
+                    <option value="">Sin liga</option>
                     {leagues.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
