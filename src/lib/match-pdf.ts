@@ -101,13 +101,13 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   const tB = stats.teams.get(teamB.id);
   autoTable(doc, {
     startY: y,
-    head: [["Equipo", "Puntos", "Ataque", "Ataque rot.", "Contraataque", "Bloqueo", "Ace", "Err. rival", "Err. propios"]],
+    head: [["Equipo", "Puntos", "Ataque", "Ataque rot.", "Contraataque", "Bloqueo", "Ace", "Err. rival", "Err. saque", "Err. ataque", "Err. no forz."]],
     body: [
-      [teamA.name, tA?.total ?? 0, tA?.attack ?? 0, tA?.rotationAttack ?? 0, tA?.counterAttack ?? 0, tA?.block ?? 0, tA?.ace ?? 0, tA?.opponentErrors ?? 0, tA?.unforcedErrors ?? 0],
-      [teamB.name, tB?.total ?? 0, tB?.attack ?? 0, tB?.rotationAttack ?? 0, tB?.counterAttack ?? 0, tB?.block ?? 0, tB?.ace ?? 0, tB?.opponentErrors ?? 0, tB?.unforcedErrors ?? 0],
+      [teamA.name, tA?.total ?? 0, tA?.attack ?? 0, tA?.rotationAttack ?? 0, tA?.counterAttack ?? 0, tA?.block ?? 0, tA?.ace ?? 0, tA?.opponentErrors ?? 0, tA?.serveErrors ?? 0, tA?.attackErrors ?? 0, tA?.unforcedErrors ?? 0],
+      [teamB.name, tB?.total ?? 0, tB?.attack ?? 0, tB?.rotationAttack ?? 0, tB?.counterAttack ?? 0, tB?.block ?? 0, tB?.ace ?? 0, tB?.opponentErrors ?? 0, tB?.serveErrors ?? 0, tB?.attackErrors ?? 0, tB?.unforcedErrors ?? 0],
     ],
-    headStyles: { fillColor: primary, fontSize: 8 },
-    bodyStyles: { fontSize: 8 },
+    headStyles: { fillColor: primary, fontSize: 7 },
+    bodyStyles: { fontSize: 7 },
     margin: { left: margin, right: margin },
   });
   y = (doc as any).lastAutoTable.finalY + 8;
@@ -124,13 +124,13 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     y += 3;
     autoTable(doc, {
       startY: y,
-      head: [["#", "Jugador", "ATK", "Rot.", "Contra", "BLK", "ACE", "Err.", "TOT"]],
+      head: [["#", "Jugador", "ATK", "Rot.", "Contra", "BLK", "ACE", "E.Saq", "E.Atk", "E.NF", "TOT"]],
       body: rows.length
-        ? rows.map((p) => [p.number, p.name, p.attack, p.rotationAttack, p.counterAttack, p.block, p.ace, p.unforcedError, p.total])
-        : [["-", "Sin puntos registrados", "-", "-", "-", "-", "-", "-", "-"]],
-      headStyles: { fillColor: dark, fontSize: 8 },
-      bodyStyles: { fontSize: 8 },
-      columnStyles: { 0: { cellWidth: 10 }, 8: { fontStyle: "bold" } },
+        ? rows.map((p) => [p.number, p.name, p.attack, p.rotationAttack, p.counterAttack, p.block, p.ace, p.serveError, p.attackError, p.unforcedError, p.total])
+        : [["-", "Sin puntos registrados", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
+      headStyles: { fillColor: dark, fontSize: 7 },
+      bodyStyles: { fontSize: 7 },
+      columnStyles: { 0: { cellWidth: 10 }, 10: { fontStyle: "bold" } },
       margin: { left: margin, right: margin },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
