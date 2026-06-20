@@ -950,11 +950,23 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
             </div>
           </div>
         </div>
-        <span className="text-xs scoreboard-digit font-bold shrink-0">
-          <span className={stepValid ? "text-success" : "text-primary"}>{filled}</span>
-          <span className="text-muted-foreground"> / 6</span>
+        <span className="text-xs scoreboard-digit font-bold shrink-0 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={rotateLineup}
+            disabled={!stepValid}
+            title="Rotar formación"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border/60 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary hover:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <ArrowLeftRight className="size-3" /> Rotar
+          </button>
+          <span>
+            <span className={stepValid ? "text-success" : "text-primary"}>{filled}</span>
+            <span className="text-muted-foreground"> / 6</span>
+          </span>
         </span>
       </div>
+
 
       <div className="relative rounded-xl bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
         <div className="text-center text-[9px] uppercase tracking-widest text-muted-foreground mb-1">— red —</div>
