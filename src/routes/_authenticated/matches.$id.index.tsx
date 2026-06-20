@@ -28,12 +28,13 @@ import {
   ArrowLeftRight,
   ChartBarBig,
   Check,
+  Edit3,
   Flag,
   Hourglass,
+  Minus,
   Play,
   Plus,
   Shirt,
-  
   Undo2,
   Users,
   X,
@@ -86,6 +87,7 @@ function LiveMatch() {
   const recordSanction = useVolley((s) => s.recordSanction);
   const overrideLineup = useVolley((s) => s.overrideLineup);
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
+  const overrideScore = useVolley((s) => s.overrideScore);
   const undo = useVolley((s) => s.undoLastEvent);
   const finishMatch = useVolley((s) => s.finishMatch);
 
@@ -100,6 +102,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [showScoreDialog, setShowScoreDialog] = useState(false);
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
@@ -183,7 +186,7 @@ function LiveMatch() {
       <div className="relative flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px] select-none">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-1 md:py-4 shrink-0">
-          <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} />
+          <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
           <div className="text-center px-1 md:px-4 flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0">
             <div className="flex flex-col items-center">
               <div className="text-[8px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
@@ -214,7 +217,7 @@ function LiveMatch() {
               </button>
             </div>
           </div>
-          <ScoreColumn team={rightTeam} score={rightSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={rightSide === "A" ? w.a : w.b} align="left" serving={server.side === rightSide} />
+          <ScoreColumn team={rightTeam} score={rightSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={rightSide === "A" ? w.a : w.b} align="left" serving={server.side === rightSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
         </header>
 
         {match.status === "scheduled" && (
@@ -643,6 +646,21 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Score correction dialog */}
+      <Dialog open={showScoreDialog} onOpenChange={setShowScoreDialog}>
+        <DialogContent className="max-w-xs">
+          <ScoreCorrectionDialog
+            setNumber={match.currentSet}
+            teamA={teamA}
+            teamB={teamB}
+            scoreA={currentSet.scoreA}
+            scoreB={currentSet.scoreB}
+            onSave={(sa, sb) => { overrideScore(match.id, sa, sb); setShowScoreDialog(false); }}
+            onCancel={() => setShowScoreDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Live stats */}
       <Dialog open={showLiveStats} onOpenChange={setShowLiveStats}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
@@ -673,9 +691,20 @@ function CompactShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ScoreColumn({ team, score, sets, align, serving }: {
-  team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean;
+function ScoreColumn({ team, score, sets, align, serving, onScoreClick }: {
+  team: Team; score: number; sets: number; align: "left" | "right"; serving: boolean; onScoreClick?: () => void;
 }) {
+  const scoreEl = (
+    <button
+      type="button"
+      onClick={onScoreClick}
+      disabled={!onScoreClick}
+      className={`inline-flex items-center gap-1 ${onScoreClick ? "cursor-pointer hover:opacity-80 active:scale-95 transition-all" : ""}`}
+    >
+      <span className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl font-black leading-none text-primary">{score}</span>
+      {onScoreClick && <Edit3 className="size-3 md:size-4 text-muted-foreground opacity-60" />}
+    </button>
+  );
   return (
     <div className={`flex items-center gap-1.5 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
       {team.logoUrl ? (
@@ -695,9 +724,9 @@ function ScoreColumn({ team, score, sets, align, serving }: {
         <div className="text-[8px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="hidden md:block scoreboard-digit md:text-7xl font-black leading-none md:mt-1 text-primary">{score}</div>
+        <div className="hidden md:block mt-1">{scoreEl}</div>
       </div>
-      <div className="scoreboard-digit text-3xl sm:text-4xl font-black leading-none text-primary shrink-0 md:hidden">{score}</div>
+      <div className="md:hidden shrink-0">{scoreEl}</div>
     </div>
   );
 }
@@ -1265,6 +1294,47 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
     );
   };
   return <div className="grid md:grid-cols-2 gap-3 mt-2">{renderTeam(teamA)}{renderTeam(teamB)}</div>;
+}
+
+function ScoreCorrectionDialog({ setNumber, teamA, teamB, scoreA, scoreB, onSave, onCancel }: {
+  setNumber: number;
+  teamA: Team; teamB: Team;
+  scoreA: number; scoreB: number;
+  onSave: (sa: number, sb: number) => void;
+  onCancel: () => void;
+}) {
+  const [sa, setSa] = useState(scoreA);
+  const [sb, setSb] = useState(scoreB);
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="text-center text-sm md:text-base">Corregir marcador · Set {setNumber}</DialogTitle>
+      </DialogHeader>
+      <div className="flex items-center justify-center gap-4 md:gap-6 py-3">
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-[10px] md:text-xs uppercase tracking-widest font-bold" style={{ color: teamA.color }}>{teamA.shortName}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setSa((v) => Math.max(0, v - 1))} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Minus className="size-4" /></button>
+            <span className="scoreboard-digit text-3xl md:text-4xl font-black w-12 text-center">{sa}</span>
+            <button type="button" onClick={() => setSa((v) => v + 1)} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Plus className="size-4" /></button>
+          </div>
+        </div>
+        <span className="text-muted-foreground font-bold text-lg">–</span>
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-[10px] md:text-xs uppercase tracking-widest font-bold" style={{ color: teamB.color }}>{teamB.shortName}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setSb((v) => Math.max(0, v - 1))} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Minus className="size-4" /></button>
+            <span className="scoreboard-digit text-3xl md:text-4xl font-black w-12 text-center">{sb}</span>
+            <button type="button" onClick={() => setSb((v) => v + 1)} className="size-8 md:size-10 rounded-lg bg-secondary hover:bg-secondary/70 flex items-center justify-center active:scale-95 transition"><Plus className="size-4" /></button>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Button variant="secondary" className="flex-1" onClick={onCancel}>Cancelar</Button>
+        <Button className="flex-1" onClick={() => onSave(sa, sb)}>Guardar</Button>
+      </div>
+    </>
+  );
 }
 
 function FormatDialog({ match, onSave, onCancel }: {
