@@ -762,6 +762,8 @@ export interface PlayerStat {
   name: string;
   number: number;
   attack: number;
+  rotationAttack: number;
+  counterAttack: number;
   block: number;
   ace: number;
   serveError: number;
@@ -772,6 +774,8 @@ export interface PlayerStat {
 export interface TeamStat {
   teamId: string;
   attack: number;
+  rotationAttack: number;
+  counterAttack: number;
   block: number;
   ace: number;
   opponentErrors: number;
@@ -787,7 +791,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     let t = teams.get(id);
     if (!t) {
       t = {
-        teamId: id, attack: 0, block: 0, ace: 0,
+        teamId: id, attack: 0, rotationAttack: 0, counterAttack: 0, block: 0, ace: 0,
         opponentErrors: 0, total: 0, unforcedErrors: 0, serveErrors: 0,
       };
       teams.set(id, t);
@@ -797,7 +801,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
   const ensurePlayer = (pid: string): PlayerStat => {
     let p = players.get(pid);
     if (!p) {
-      p = { playerId: pid, name: "", number: 0, attack: 0, block: 0, ace: 0, serveError: 0, unforcedError: 0, total: 0 };
+      p = { playerId: pid, name: "", number: 0, attack: 0, rotationAttack: 0, counterAttack: 0, block: 0, ace: 0, serveError: 0, unforcedError: 0, total: 0 };
       players.set(pid, p);
     }
     return p;
@@ -810,7 +814,8 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (ev.type === "attack") scoringTeam.attack++;
     if (ev.type === "block") scoringTeam.block++;
     if (ev.type === "ace") scoringTeam.ace++;
-    if (ev.type === "counter_attack" || ev.type === "rotation_attack") scoringTeam.attack++;
+    if (ev.type === "rotation_attack") { scoringTeam.attack++; scoringTeam.rotationAttack++; }
+    if (ev.type === "counter_attack") { scoringTeam.attack++; scoringTeam.counterAttack++; }
     if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
     if (ev.type === "opponent_rotation_error") scoringTeam.opponentErrors++;
 
@@ -827,6 +832,8 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     } else if (ev.playerId) {
       const p = ensurePlayer(ev.playerId);
       if (ev.type === "attack" || ev.type === "counter_attack" || ev.type === "rotation_attack") p.attack++;
+      if (ev.type === "rotation_attack") p.rotationAttack++;
+      if (ev.type === "counter_attack") p.counterAttack++;
       if (ev.type === "block") p.block++;
       if (ev.type === "ace") p.ace++;
       p.total++;
