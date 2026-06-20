@@ -976,7 +976,10 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     const next = [...lineup];
     if (playerId) {
       const prev = next.indexOf(playerId);
-      if (prev >= 0) next[prev] = "";
+      if (prev >= 0 && prev !== slotIdx) {
+        // Intercambio: el jugador que estaba en slotIdx pasa al slot previo
+        next[prev] = next[slotIdx] ?? "";
+      }
     }
     next[slotIdx] = playerId ?? "";
     setLineup(next);
