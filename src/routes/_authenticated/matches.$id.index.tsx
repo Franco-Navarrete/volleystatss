@@ -503,6 +503,57 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Reception rating dialog */}
+      <Dialog open={!!pendingReception} onOpenChange={(o) => !o && setPendingReception(null)}>
+        <DialogContent className="w-[calc(100dvw-24px)] max-w-[360px] rounded-xl border-border/60 p-3 gap-2">
+          {pendingReception && (() => {
+            const t = pendingReception.side === "A" ? teamA : teamB;
+            const player = t.players.find((p) => p.id === pendingReception.playerId);
+            return (
+              <>
+                <DialogHeader className="pr-8 space-y-0 text-left">
+                  <DialogTitle className="flex items-center gap-3 min-w-0">
+                    <span className="size-9 shrink-0 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
+                      {player?.number}
+                    </span>
+                    <span className="min-w-0 truncate">
+                      <span className="block text-sm font-bold">{player?.name}</span>
+                      <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                        Recepción · {t.name}
+                      </span>
+                    </span>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <button
+                    onClick={() => submitReception("positive")}
+                    className="min-h-14 rounded-lg bg-success text-success-foreground font-black text-2xl active:scale-95 transition"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => submitReception("neutral")}
+                    className="min-h-14 rounded-lg bg-muted text-foreground font-black text-2xl active:scale-95 transition"
+                  >
+                    0
+                  </button>
+                  <button
+                    onClick={() => submitReception("negative")}
+                    className="min-h-14 rounded-lg bg-destructive text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                  >
+                    −
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground text-center mt-2">
+                  + Positiva · 0 Neutra · − Negativa
+                </p>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+
 
       {/* Substitution panel: local to the rotated match screen so it never gets clipped off-screen. */}
       {subState && (() => {
