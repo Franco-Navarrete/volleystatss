@@ -33,7 +33,7 @@ import {
   Play,
   Plus,
   Shirt,
-  StopCircle,
+  
   Undo2,
   Users,
   X,
