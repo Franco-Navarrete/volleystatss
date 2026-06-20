@@ -239,6 +239,15 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     playerTable(`${teamA.name} · Estadísticas Set ${s.number}`, spA);
     playerTable(`${teamB.name} · Estadísticas Set ${s.number}`, spB);
 
+    // Recepción del set
+    const setEvents = match.events.filter((e) => "setNumber" in e && e.setNumber === s.number);
+    const recSetA = computeReceptionStats(setEvents, "A");
+    const recSetB = computeReceptionStats(setEvents, "B");
+    if (recSetA.size > 0) receptionTable(`${teamA.name} · Recepción Set ${s.number}`, teamA, recSetA);
+    if (recSetB.size > 0) receptionTable(`${teamB.name} · Recepción Set ${s.number}`, teamB, recSetB);
+
+
+
     // Punto a punto del set
     const points = match.events.filter(
       (e): e is PointEvent =>
