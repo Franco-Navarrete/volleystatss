@@ -216,8 +216,9 @@ function UserRow({
             )}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {user.leagueIds.length} liga{user.leagueIds.length === 1 ? "" : "s"} ·{" "}
-            {user.canCreateMatches ? "Puede crear partidos" : "Sin permiso de crear"}
+            {user.isAdmin
+              ? "Acceso total a todas las ligas y partidos"
+              : `${user.leagueIds.length} liga${user.leagueIds.length === 1 ? "" : "s"} · ${user.canCreateMatches ? "Puede crear partidos" : "Sin permiso de crear"}`}
           </div>
         </div>
       </button>
