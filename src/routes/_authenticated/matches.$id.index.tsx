@@ -1245,3 +1245,49 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
   };
   return <div className="grid md:grid-cols-2 gap-3 mt-2">{renderTeam(teamA)}{renderTeam(teamB)}</div>;
 }
+
+function FormatDialog({ match, onSave, onCancel }: {
+  match: Match;
+  onSave: (setsToWin: number, pointsPerSet: number) => void;
+  onCancel: () => void;
+}) {
+  const setsPlayedA = match.sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
+  const setsPlayedB = match.sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
+  const maxWon = Math.max(setsPlayedA, setsPlayedB);
+  const [setsToWin, setSetsToWin] = useState(match.setsToWin);
+  const [pointsPerSet, setPointsPerSet] = useState(match.pointsPerSet);
+  const tooFew = setsToWin <= maxWon && maxWon > 0;
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="text-center">Formato del partido</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-2">
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Sets para ganar</label>
+          <select value={setsToWin} onChange={(e) => setSetsToWin(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm">
+            <option value={2}>Mejor de 3 (gana al 2do set)</option>
+            <option value={3}>Mejor de 5 (gana al 3er set)</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Puntos por set</label>
+          <select value={pointsPerSet} onChange={(e) => setPointsPerSet(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm">
+            <option value={15}>15 puntos</option>
+            <option value={21}>21 puntos</option>
+            <option value={25}>25 puntos</option>
+          </select>
+        </div>
+        {tooFew && (
+          <p className="text-xs text-destructive">
+            Un equipo ya ganó {maxWon} set(s). Elegí un formato que requiera al menos {maxWon + 1}.
+          </p>
+        )}
+        <div className="flex gap-2 pt-2">
+          <Button variant="secondary" className="flex-1" onClick={onCancel}>Cancelar</Button>
+          <Button className="flex-1" disabled={tooFew} onClick={() => onSave(setsToWin, pointsPerSet)}>Guardar</Button>
+        </div>
+      </div>
+    </>
+  );
+}
