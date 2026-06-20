@@ -85,6 +85,7 @@ function LiveMatch() {
   const recordTimeout = useVolley((s) => s.recordTimeout);
   const recordSanction = useVolley((s) => s.recordSanction);
   const overrideLineup = useVolley((s) => s.overrideLineup);
+  const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
   const undo = useVolley((s) => s.undoLastEvent);
   const finishMatch = useVolley((s) => s.finishMatch);
 
