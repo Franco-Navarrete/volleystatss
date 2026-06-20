@@ -143,7 +143,19 @@ export interface LineupOverrideEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent;
+export type ReceptionRating = "positive" | "neutral" | "negative";
+
+export interface ReceptionEvent {
+  id: string;
+  kind: "reception";
+  side: "A" | "B";
+  playerId: string;
+  rating: ReceptionRating;
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent;
 
 export interface MatchSet {
   number: number;
