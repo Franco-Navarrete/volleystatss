@@ -932,6 +932,11 @@ export function getPlayer(team: Team | undefined, id: string | null) {
   return team.players.find((p) => p.id === id);
 }
 export function setsWon(match: Match) {
+  if (match.status === "finished") {
+    const a = match.sets.filter((s) => s.scoreA > s.scoreB).length;
+    const b = match.sets.filter((s) => s.scoreB > s.scoreA).length;
+    return { a, b };
+  }
   const a = match.sets.filter((s) => s.finished && s.scoreA > s.scoreB).length;
   const b = match.sets.filter((s) => s.finished && s.scoreB > s.scoreA).length;
   return { a, b };
