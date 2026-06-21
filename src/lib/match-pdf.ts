@@ -477,7 +477,8 @@ function openPdfDataUrlInWindow(targetWindow: Window, dataUrl: string, fileName:
     <div class="title"><span>${safeFileName}</span><small>${sizeKb} KB · RALLY</small></div>
     <div class="actions">
       <a id="openPdf" class="btn secondary" href="#">Abrir</a>
-      <a id="downloadPdf" class="btn" href="#" download="${safeFileName}">Descargar</a>
+      <a id="sharePdf" class="btn" href="#" style="display:none">Compartir</a>
+      <a id="downloadPdf" class="btn secondary" href="#" download="${safeFileName}">Descargar</a>
     </div>
   </header>
   <iframe id="viewer" class="viewer" title="PDF ${safeFileName}"></iframe>
@@ -489,9 +490,12 @@ function openPdfDataUrlInWindow(targetWindow: Window, dataUrl: string, fileName:
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-    const pdfUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const pdfUrl = URL.createObjectURL(blob);
+    const file = new File([blob], fileName, { type: 'application/pdf' });
     const viewer = document.getElementById('viewer');
     const openPdf = document.getElementById('openPdf');
+    const sharePdf = document.getElementById('sharePdf');
     const downloadPdf = document.getElementById('downloadPdf');
     viewer.src = pdfUrl;
     openPdf.href = pdfUrl;
@@ -501,6 +505,13 @@ function openPdfDataUrlInWindow(targetWindow: Window, dataUrl: string, fileName:
       event.preventDefault();
       window.location.href = pdfUrl;
     });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      sharePdf.style.display = '';
+      sharePdf.addEventListener('click', (event) => {
+        event.preventDefault();
+        navigator.share({ files: [file], title: fileName });
+      });
+    }
   </script>
 </body>
 </html>`);
