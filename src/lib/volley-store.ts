@@ -273,6 +273,13 @@ interface VolleyState {
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
+  reclassifyPointEvent: (
+    matchId: string,
+    eventId: string,
+    newType: PointType,
+    playerSide: "A" | "B",
+    playerId: string | null
+  ) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
   seedDemo: () => void;
