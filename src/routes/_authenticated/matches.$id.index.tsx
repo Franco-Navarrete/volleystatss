@@ -955,7 +955,7 @@ function receptionLineup(lineup: string[], team: Team, designatedLiberos: string
   }
   const maps: Record<number, Record<number, keyof typeof roles>> = {
     1: { 1: "PF", 2: "A", 3: "C", 4: "O", 5: "PB", 6: "L" },
-    2: { 1: "L", 2: "A", 3: "C", 4: "PF", 5: "PB", 6: "O" },
+    2: { 1: "L", 2: "A", 3: "O", 4: "C", 5: "PF", 6: "PB" },
     3: { 1: "PB", 2: "C", 3: "A", 4: "PF", 5: "L", 6: "O" },
     4: { 1: "L", 2: "O", 3: "C", 4: "A", 5: "PF", 6: "PB" },
     5: { 1: "L", 2: "O", 3: "A", 4: "C", 5: "PF", 6: "PB" },
