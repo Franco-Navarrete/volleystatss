@@ -1014,6 +1014,73 @@ function receptionVisualPositions(formation: ReceptionFormation, side: "A" | "B"
   return positions;
 }
 
+function PlayerDisc({ p, team, designated, active, isServer, isReceptionTarget, isReceiverHighlight, className = "", style, onClick }: {
+  p: Player | undefined;
+  team: Team;
+  designated: string[];
+  active?: Match["liberoActiveA"];
+  isServer: boolean;
+  isReceptionTarget: boolean;
+  isReceiverHighlight: boolean;
+  className?: string;
+  style?: CSSProperties;
+  onClick: () => void;
+}) {
+  const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
+  const pairColor = p && !isLibero
+    ? (p.position === "armador" || p.position === "opuesto"
+        ? "#22d3ee"
+        : p.position === "punta"
+        ? "#a3e635"
+        : p.position === "central"
+        ? "#f472b6"
+        : null)
+    : null;
+  const roleLabel = p && !isLibero
+    ? (p.position === "armador" ? "A"
+        : p.position === "opuesto" ? "O"
+        : p.position === "punta" ? "P"
+        : p.position === "central" ? "C"
+        : null)
+    : null;
+  let replacedName: string | null = null;
+  if (isLibero && p && active?.liberoId === p.id) {
+    const rp = team.players.find((x) => x.id === active.replacedId);
+    replacedName = rp ? `#${rp.number} ${rp.name}` : null;
+  }
+  return (
+    <button
+      onClick={onClick}
+      disabled={!p}
+      className={`relative rounded-full flex flex-col items-center justify-center font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[3px] sm:border-4" : ""} ${isReceiverHighlight ? "ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""} ${className}`}
+      style={{
+        ...(isLibero
+          ? { background: "#ffffff", color: team.color, borderColor: team.color }
+          : { background: team.color, color: "#ffffff", borderColor: pairColor ?? undefined }),
+        ...style,
+      }}
+      title={p ? `#${p.number} ${p.name}` : ""}
+    >
+      <span className="scoreboard-digit leading-none text-sm sm:text-xl md:text-3xl" style={{ textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000" }}>{p?.number ?? "?"}</span>
+      {p && (
+        <span className="max-w-[90%] truncate text-[9px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: "-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000" }}>{p.name}</span>
+      )}
+      {isLibero && replacedName && (
+        <span className="max-w-[90%] truncate text-[5px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
+      )}
+      {isLibero && (
+        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest" style={{ background: team.color, color: "#ffffff" }}>L</span>
+      )}
+      {roleLabel && (
+        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 rounded-b text-[7px] sm:text-[10px] font-black uppercase tracking-widest shadow-md" style={{ background: pairColor ?? undefined, color: "#000000" }}>{roleLabel}</span>
+      )}
+      {isServer && (
+        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
+      )}
+    </button>
+  );
+}
+
 function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
