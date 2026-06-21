@@ -304,15 +304,22 @@ function LiveMatch() {
 
         {/* Descanso entre sets: 3 minutos */}
         {inBreak && (
-          <div className={`rounded-lg md:rounded-xl border-2 px-3 py-2 md:px-5 md:py-3 flex items-center justify-center gap-2 md:gap-4 shrink-0 ${breakRemainingMs > 0 ? "border-amber-500/60 bg-amber-500/10" : "border-success/60 bg-success/10"}`}>
-            <Hourglass className={`size-4 md:size-5 ${breakRemainingMs > 0 ? "text-amber-500" : "text-success"}`} />
-            <p className="text-xs md:text-sm font-semibold text-center">
-              {breakRemainingMs > 0 ? (
-                <>Descanso entre sets · <span className="scoreboard-digit tabular-nums font-bold text-amber-600 dark:text-amber-400">{breakLabel}</span></>
-              ) : (
-                <span className="text-success font-bold">Fin del descanso · listos para el Set {match.currentSet}</span>
-              )}
-            </p>
+          <div className={`rounded-lg md:rounded-xl border-2 px-3 py-2 md:px-5 md:py-3 flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 shrink-0 ${breakRemainingMs > 0 ? "border-amber-500/60 bg-amber-500/10" : "border-success/60 bg-success/10"}`}>
+            <div className="flex items-center gap-2 md:gap-3">
+              <Hourglass className={`size-4 md:size-5 ${breakRemainingMs > 0 ? "text-amber-500" : "text-success"}`} />
+              <p className="text-xs md:text-sm font-semibold text-center">
+                {breakRemainingMs > 0 ? (
+                  <>Descanso entre sets · <span className="scoreboard-digit tabular-nums font-bold text-amber-600 dark:text-amber-400">{breakLabel}</span></>
+                ) : (
+                  <span className="text-success font-bold">Fin del descanso · listos para el Set {match.currentSet}</span>
+                )}
+              </p>
+            </div>
+            <Button asChild size="sm" variant="outline" className="h-8 md:h-10 text-xs md:text-sm">
+              <Link to="/matches/$id/stats" params={{ id: match.id }}>
+                <ChartBarBig className="size-3.5 md:size-4" /> Ver estadísticas
+              </Link>
+            </Button>
           </div>
         )}
 
