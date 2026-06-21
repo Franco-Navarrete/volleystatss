@@ -944,7 +944,7 @@ function getReceptionFormation(lineup: string[], team: Team, designatedLiberos: 
   const puntaBackSlot = puntaFrontSlot === p1S ? p2S : p1S;
   const centrals = [slotByRole.C1, slotByRole.C2].filter((s) => s !== liberoSlot);
   const centralSlot = centrals.find((s) => isFront(s)) ?? centrals[0] ?? slotByRole.C1;
-  const roles: Record<string, string> = {
+  const roles: Record<ReceptionRole, string> = {
     A: lineup[slotByRole.A] ?? "",
     O: lineup[slotByRole.O] ?? "",
     PF: lineup[puntaFrontSlot] ?? "",
