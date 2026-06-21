@@ -936,7 +936,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[140px] sm:min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-1.5 sm:p-5 md:p-7">
+    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[140px] [@media(max-width:360px)]:min-h-[100px] sm:min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
       <div className="absolute inset-2 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — the two front-row columns */}
