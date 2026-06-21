@@ -851,6 +851,20 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      reclassifyPointEvent: (matchId, eventId, newType, playerSide, playerId) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const events = m.events.map((e) => {
+              if (e.id !== eventId || !("type" in e)) return e;
+              const scoringSide = scoringSideFor(playerSide, newType);
+              return { ...e, type: newType, playerSide, playerId, scoringSide };
+            });
+            return { ...m, events };
+          }),
+        }));
+      },
+
       finishMatch: (id) =>
         set((s) => ({
           matches: s.matches.map((m) => (m.id === id ? { ...m, status: "finished" } : m)),
