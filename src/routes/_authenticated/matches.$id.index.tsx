@@ -1180,25 +1180,43 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
 
       <div className="relative rounded-xl bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
         <div className="text-center text-[9px] uppercase tracking-widest text-muted-foreground mb-1">— red —</div>
-        {grid.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
-            {row.map(({ idx, label, sub }) => {
-              const pid = lineup[idx];
-              const p = team.players.find((x) => x.id === pid);
-              return (
-                <LineupSlotCell
-                  key={idx}
-                  label={label}
-                  sub={sub}
-                  teamColor={team.color}
-                  player={p}
-                  onOpen={() => setPickingSlot(idx)}
-                  onClear={() => setSlot(idx, null)}
-                />
-              );
-            })}
-          </div>
-        ))}
+        {(() => {
+          // Rol por slot en base a la posición del armador (sentido antihorario).
+          // slotIdx 0..5 ↔ pos 1..6; secuencia CCW: 1→6→5→4→3→2.
+          const ccwIndexByPos: Record<number, number> = { 1: 0, 6: 1, 5: 2, 4: 3, 3: 4, 2: 5 };
+          const roleOrder = ["A", "P1", "C1", "O", "P2", "C2"];
+          const armadorSlot = lineup.findIndex((pid) => {
+            const pl = team.players.find((x) => x.id === pid);
+            return pl?.position === "armador";
+          });
+          const armadorPos = armadorSlot >= 0 ? armadorSlot + 1 : -1;
+          const roleFor = (slotIdx: number): string | null => {
+            if (armadorPos < 0) return null;
+            const pos = slotIdx + 1;
+            const offset = (ccwIndexByPos[pos] - ccwIndexByPos[armadorPos] + 6) % 6;
+            return roleOrder[offset];
+          };
+          return grid.map((row, ri) => (
+            <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
+              {row.map(({ idx, label, sub }) => {
+                const pid = lineup[idx];
+                const p = team.players.find((x) => x.id === pid);
+                return (
+                  <LineupSlotCell
+                    key={idx}
+                    label={label}
+                    sub={sub}
+                    role={roleFor(idx)}
+                    teamColor={team.color}
+                    player={p}
+                    onOpen={() => setPickingSlot(idx)}
+                    onClear={() => setSlot(idx, null)}
+                  />
+                );
+              })}
+            </div>
+          ));
+        })()}
 
         {pickingSlot !== null && (
           <div className="absolute inset-0 rounded-xl bg-background/95 backdrop-blur-sm flex flex-col p-2 z-20">
