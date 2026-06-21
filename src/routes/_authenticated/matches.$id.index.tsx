@@ -1036,18 +1036,24 @@ function receptionVisualPositions(formation: ReceptionFormation, side: "A" | "B"
   const reference = receptionReferenceCoords[formation.setterPos];
   const positions = new Map<string, ReceptionCoord>();
   if (!reference) return positions;
-  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+  // Padding (en % de ancho/alto del overlay) para que el disco no se corte ni cruce la red.
+  const padX = 12; // horizontal, dentro de cada media cancha (50% total → usable 26%)
+  const padY = 12; // vertical
+  const halfWidth = 50 - padX * 2; // ancho usable de la media cancha
+  const fullHeight = 100 - padY * 2; // alto usable
   Object.entries(formation.roles).forEach(([role, playerId]) => {
     if (!playerId) return;
     const coord = reference[role as ReceptionRole];
     if (!coord) return;
+    // coord.x = 0 (izq) → 1 (der) de su propia cancha; coord.y = 0 (red) → 1 (fondo).
     const visual = side === leftSide
-      ? { x: (1 - coord.y) * 50, y: coord.x * 100 }
-      : { x: 50 + coord.y * 50, y: (1 - coord.x) * 100 };
-    positions.set(playerId, { x: clamp(visual.x, 7, 93), y: clamp(visual.y, 8, 92) });
+      ? { x: padX + (1 - coord.y) * halfWidth, y: padY + coord.x * fullHeight }
+      : { x: 50 + padX + coord.y * halfWidth, y: padY + (1 - coord.x) * fullHeight };
+    positions.set(playerId, visual);
   });
   return positions;
 }
+
 
 function PlayerDisc({ p, team, designated, active, isServer, isReceptionTarget, isReceiverHighlight, className = "", style, onClick }: {
   p: Player | undefined;
