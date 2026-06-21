@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Volleyball } from "lucide-react";
 import {
   useVolley,
@@ -14,6 +14,7 @@ import {
   type PointType,
   type SanctionType,
   type ReceptionRating,
+  type Player,
   type Team,
   type Match,
 } from "@/lib/volley-store";
