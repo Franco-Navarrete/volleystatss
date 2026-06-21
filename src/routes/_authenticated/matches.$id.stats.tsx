@@ -274,6 +274,11 @@ function StatsPage() {
         <TeamSummary team={teamB} stat={teamStatB} />
       </div>
 
+      <div className="mb-6 flex justify-end">
+        <ReclassifyEventsPanel match={match} teamA={teamA} teamB={teamB} />
+      </div>
+
+
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
         <PlayerStatsTable team={teamA} rows={playersA} />
