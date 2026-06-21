@@ -961,7 +961,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
           return (
               <div
                 key={ci}
-                className={`grid grid-rows-3 items-center gap-1 sm:gap-3 h-full px-0.5 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+                className={`grid grid-rows-3 items-center gap-1 [@media(max-width:360px)]:gap-0.5 sm:gap-3 h-full px-0.5 [@media(max-width:360px)]:px-0 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
               >
                 {col.idxs.map((idx) => {
                   const pid = onCourt[idx];
