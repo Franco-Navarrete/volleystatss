@@ -1037,8 +1037,8 @@ function receptionVisualPositions(formation: ReceptionFormation, side: "A" | "B"
   const positions = new Map<string, ReceptionCoord>();
   if (!reference) return positions;
   // Padding (en % de ancho/alto del overlay) para que el disco no se corte ni cruce la red.
-  const padX = 12; // horizontal, dentro de cada media cancha (50% total → usable 26%)
-  const padY = 12; // vertical
+  const padX = 16; // horizontal, dentro de cada media cancha (50% total → usable 18%)
+  const padY = 14; // vertical
   const halfWidth = 50 - padX * 2; // ancho usable de la media cancha
   const fullHeight = 100 - padY * 2; // alto usable
   Object.entries(formation.roles).forEach(([role, playerId]) => {
