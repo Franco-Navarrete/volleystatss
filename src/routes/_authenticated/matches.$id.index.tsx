@@ -911,14 +911,81 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
+// Reordena los 6 ids de la formación rotacional a la formación de recepción 5-1
+// según la posición del armador (1..6). Índice 0=P1, 5=P6.
+function receptionLineup(lineup: string[], team: Team, designatedLiberos: string[]): string[] {
+  const players = lineup.map((pid) => team.players.find((p) => p.id === pid));
+  const armadorSlot = players.findIndex((p) => p?.position === "armador");
+  if (armadorSlot < 0) return lineup;
+  const setterPos = armadorSlot + 1;
+  const ccwIdx: Record<number, number> = { 1: 0, 6: 1, 5: 2, 4: 3, 3: 4, 2: 5 };
+  const posByOffset: Record<number, number> = {};
+  for (let pos = 1; pos <= 6; pos++) {
+    const off = (ccwIdx[pos] - ccwIdx[setterPos] + 6) % 6;
+    posByOffset[off] = pos;
+  }
+  const slotByRole: Record<string, number> = {};
+  ["A", "P1", "C1", "O", "P2", "C2"].forEach((role, off) => {
+    slotByRole[role] = posByOffset[off] - 1;
+  });
+  const isFront = (slot: number) => slot === 1 || slot === 2 || slot === 3;
+  const isLib = (pid: string) => {
+    if (!pid) return false;
+    if (designatedLiberos.includes(pid)) return true;
+    const p = team.players.find((x) => x.id === pid);
+    return p?.position === "libero";
+  };
+  const liberoSlot = lineup.findIndex((pid) => isLib(pid));
+  const p1S = slotByRole.P1, p2S = slotByRole.P2;
+  const puntaFrontSlot = isFront(p1S) ? p1S : p2S;
+  const puntaBackSlot = puntaFrontSlot === p1S ? p2S : p1S;
+  const centrals = [slotByRole.C1, slotByRole.C2].filter((s) => s !== liberoSlot);
+  const centralSlot = centrals.find((s) => isFront(s)) ?? centrals[0] ?? slotByRole.C1;
+  const roles: Record<string, string> = {
+    A: lineup[slotByRole.A] ?? "",
+    O: lineup[slotByRole.O] ?? "",
+    PF: lineup[puntaFrontSlot] ?? "",
+    PB: lineup[puntaBackSlot] ?? "",
+    C: lineup[centralSlot] ?? "",
+    L: liberoSlot >= 0 ? (lineup[liberoSlot] ?? "") : "",
+  };
+  if (!roles.L) {
+    const otherC = centrals.find((s) => s !== centralSlot);
+    if (otherC !== undefined) roles.L = lineup[otherC] ?? "";
+  }
+  const maps: Record<number, Record<number, keyof typeof roles>> = {
+    1: { 1: "PF", 2: "A", 3: "C", 4: "O", 5: "PB", 6: "L" },
+    2: { 1: "L", 2: "A", 3: "C", 4: "PF", 5: "PB", 6: "O" },
+    3: { 1: "PB", 2: "C", 3: "A", 4: "PF", 5: "L", 6: "O" },
+    4: { 1: "L", 2: "O", 3: "C", 4: "A", 5: "PF", 6: "PB" },
+    5: { 1: "L", 2: "O", 3: "A", 4: "C", 5: "PF", 6: "PB" },
+    6: { 1: "PB", 2: "C", 3: "A", 4: "O", 5: "PF", 6: "L" },
+  };
+  const m = maps[setterPos];
+  if (!m) return lineup;
+  const out = ["", "", "", "", "", ""];
+  for (let pos = 1; pos <= 6; pos++) {
+    out[pos - 1] = roles[m[pos]] || lineup[pos - 1];
+  }
+  // Si quedó algún slot vacío o se duplicó un jugador, conservar el id original.
+  const seen = new Set<string>();
+  for (let i = 0; i < 6; i++) {
+    if (!out[i] || seen.has(out[i])) out[i] = lineup[i];
+    seen.add(out[i]);
+  }
+  return out;
+}
+
 function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
 }) {
-  const a = match.onCourtA;
-  const b = match.onCourtB;
+  const liberosA = [match.liberoA1Id, match.liberoA2Id].filter(Boolean) as string[];
+  const liberosB = [match.liberoB1Id, match.liberoB2Id].filter(Boolean) as string[];
+  const a = needsReception && receivingSide === "A" ? receptionLineup(match.onCourtA, teamA, liberosA) : match.onCourtA;
+  const b = needsReception && receivingSide === "B" ? receptionLineup(match.onCourtB, teamB, liberosB) : match.onCourtB;
   const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
   // 4 columns left→right: left back, left front, right front, right back
