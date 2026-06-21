@@ -402,7 +402,7 @@ function LiveMatch() {
           </Button>
           <Button asChild size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm">
             <Link to="/matches/$id/stats" params={{ id: match.id }}>
-              <ChartBarBig className="size-3 md:size-4" /> Stats final
+              <ChartBarBig className="size-3 md:size-4" /> Estadísticas
             </Link>
           </Button>
           <Button size="sm" variant="outline" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"} onClick={() => setShowFormatDialog(true)}>
