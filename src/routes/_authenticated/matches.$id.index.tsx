@@ -1127,7 +1127,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
       <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
 
-      {needsReception && receptionPositions.size > 0 ? (
+      {needsReception && receptionPositions.size > 0 && (
         <div className="absolute inset-5 sm:inset-8 md:inset-10 z-20">
           {receivingOnCourt.map((pid) => {
             const p = receivingTeam.players.find((x) => x.id === pid);
@@ -1154,9 +1154,10 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
             );
           })}
         </div>
-      ) : (
+      )}
       <div className="absolute inset-5 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
         {columns.map((col, ci) => {
+          if (needsReception && receptionPositions.size > 0 && col.side === receivingSide) return null;
           const onCourt = col.side === "A" ? a : b;
           const serverPid = serverSide === col.side ? serverPlayerId : null;
           const isFront = ci === 1 || ci === 2;
@@ -1194,7 +1195,6 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
           );
         })}
       </div>
-      )}
     </div>
   );
 }
