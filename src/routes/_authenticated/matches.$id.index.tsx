@@ -354,7 +354,7 @@ function LiveMatch() {
 
 
         {/* Court + side controls */}
-        <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 md:min-h-[420px]">
+        <div className="grid grid-cols-[auto_1fr_auto] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 md:min-h-[420px]">
           <SideActions
             side="left"
             disabled={actionsDisabled}
@@ -885,7 +885,7 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onLibero, onTiemp
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1 md:gap-2.5 w-[52px] sm:w-[92px] md:w-[140px] shrink-0">
+    <div className="flex flex-col gap-1 md:gap-2.5 w-[52px] [@media(max-width:360px)]:w-[44px] sm:w-[92px] md:w-[140px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton icon={<Shirt className="size-3 md:size-5" />} label="Líbero" onClick={onLibero} disabled={disabled} reverse={reverse} />
       <SideButton
@@ -936,11 +936,11 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[140px] sm:min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-1.5 sm:p-5 md:p-7">
+    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[140px] [@media(max-width:360px)]:min-h-[100px] sm:min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
-      <div className="absolute inset-2 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
+      <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — the two front-row columns */}
-      <div className="absolute inset-y-2 sm:inset-y-5 md:inset-y-7 left-1/2 -translate-x-1/2 flex pointer-events-none">
+      <div className="absolute inset-y-2 [@media(max-width:360px)]:inset-y-1.5 sm:inset-y-5 md:inset-y-7 left-1/2 -translate-x-1/2 flex pointer-events-none">
 
         <div className="h-full w-[calc(50vw)] max-w-none" />
       </div>
@@ -953,7 +953,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
       <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
 
-      <div className="absolute inset-3 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
+      <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
         {columns.map((col, ci) => {
           const onCourt = col.side === "A" ? a : b;
           const serverPid = serverSide === col.side ? serverPlayerId : null;
@@ -961,7 +961,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
           return (
               <div
                 key={ci}
-                className={`grid grid-rows-3 items-center gap-1 sm:gap-3 h-full px-0.5 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+                className={`grid grid-rows-3 items-center gap-1 [@media(max-width:360px)]:gap-0.5 sm:gap-3 h-full px-0.5 [@media(max-width:360px)]:px-0 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
               >
                 {col.idxs.map((idx) => {
                   const pid = onCourt[idx];
@@ -1004,27 +1004,27 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       key={`${ci}-${idx}`}
                       onClick={() => p && onPlayerClick(col.side, p.id)}
                       disabled={!p}
-                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""}`}
+                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] [@media(max-width:360px)]:h-[48%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""}`}
                       style={isLibero
                         ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                         : { background: col.team.color, borderColor: pairColor ?? undefined }}
                       title={p ? `#${p.number} ${p.name}` : ""}
                     >
-                      <span className="scoreboard-digit leading-none text-sm sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
+                      <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
                       {p && (
-                        <span className="max-w-[90%] truncate text-[9px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
+                        <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
                       )}
                       {isLibero && replacedName && (
-                        <span className="max-w-[90%] truncate text-[5px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
+                        <span className="max-w-[90%] truncate text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
                       )}
                       {isLibero && (
-                        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
+                        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
                       )}
                       {roleLabel && (
-                        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 rounded-b text-[7px] sm:text-[10px] font-black uppercase tracking-widest text-black shadow-md" style={{ background: pairColor ?? undefined }}>{roleLabel}</span>
+                        <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 rounded-b text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[10px] font-black uppercase tracking-widest text-black shadow-md" style={{ background: pairColor ?? undefined }}>{roleLabel}</span>
                       )}
                       {isServer && (
-                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
                       )}
 
                     </button>
