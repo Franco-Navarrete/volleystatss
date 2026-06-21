@@ -105,3 +105,45 @@ export function stopCloudSync() {
   startedFor = null;
   suppressNextChange = false;
 }
+
+/**
+ * Fuerza traer el estado desde la nube y sobrescribe el local,
+ * ignorando los timestamps. Útil para recuperar datos cuando el
+ * local quedó desfasado (last-write-wins lo dejó vacío o viejo).
+ */
+export async function forceReloadFromCloud(userId: string): Promise<{
+  ok: boolean;
+  teams: number;
+  matches: number;
+  leagues: number;
+  totalEvents: number;
+}> {
+  const { data: row, error } = await supabase
+    .from("app_state")
+    .select("data, updated_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  const cloud = (row?.data as CloudData | null) ?? null;
+  if (!cloud) {
+    return { ok: false, teams: 0, matches: 0, leagues: 0, totalEvents: 0 };
+  }
+  const teams = cloud.teams ?? [];
+  const matches = cloud.matches ?? [];
+  const leagues = cloud.leagues ?? [];
+  suppressNextChange = true;
+  useVolley.setState({ teams, matches, leagues });
+  const cloudTs = row?.updated_at ? Date.parse(row.updated_at) : Date.now();
+  setLocalTs(cloudTs);
+  const totalEvents = matches.reduce(
+    (acc, m) => acc + ((m as { events?: unknown[] }).events?.length ?? 0),
+    0,
+  );
+  return {
+    ok: true,
+    teams: teams.length,
+    matches: matches.length,
+    leagues: leagues.length,
+    totalEvents,
+  };
+}
