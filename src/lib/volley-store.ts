@@ -273,6 +273,13 @@ interface VolleyState {
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
+  reclassifyPointEvent: (
+    matchId: string,
+    eventId: string,
+    newType: PointType,
+    playerSide: "A" | "B",
+    playerId: string | null
+  ) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
   seedDemo: () => void;
@@ -840,6 +847,20 @@ export const useVolley = create<VolleyState>()(
             const r = replayMatch(next);
             // If still has events, stay live; if no events and was finished, revert
             return { ...next, ...r };
+          }),
+        }));
+      },
+
+      reclassifyPointEvent: (matchId, eventId, newType, playerSide, playerId) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const events = m.events.map((e) => {
+              if (e.id !== eventId || !("type" in e)) return e;
+              const scoringSide = scoringSideFor(playerSide, newType);
+              return { ...e, type: newType, playerSide, playerId, scoringSide };
+            });
+            return { ...m, events };
           }),
         }));
       },

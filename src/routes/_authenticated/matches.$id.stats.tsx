@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Crown, Download, ExternalLink, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
 import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
+import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
@@ -272,6 +273,11 @@ function StatsPage() {
         <TeamSummary team={teamA} stat={teamStatA} />
         <TeamSummary team={teamB} stat={teamStatB} />
       </div>
+
+      <div className="mb-6 flex justify-end">
+        <ReclassifyEventsPanel match={match} teamA={teamA} teamB={teamB} />
+      </div>
+
 
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
