@@ -674,10 +674,13 @@ function LiveMatch() {
             const totalLiberos = t.players.filter((p) => liberoCandidateIds.has(p.id)).length;
             const allOnCourt = totalLiberos > 0 && liberos.length === 0;
 
-            // Si ya hay un líbero activo en esta cancha: ofrecer cerrar el cambio.
+            // Si ya hay un líbero activo en esta cancha: ofrecer intercambio por otro líbero o cerrar el cambio.
             if (active) {
               const liberoPlayer = t.players.find((p) => p.id === active.liberoId);
               const replacedPlayer = t.players.find((p) => p.id === active.replacedId);
+              const otherLiberos = t.players.filter(
+                (p) => liberoCandidateIds.has(p.id) && p.id !== active.liberoId && !onCourtSet.has(p.id),
+              );
               return (
                 <>
                   <DialogHeader>
@@ -692,6 +695,36 @@ function LiveMatch() {
                         Reemplaza a #{replacedPlayer?.number} {replacedPlayer?.name}
                       </p>
                     </div>
+
+                    {otherLiberos.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] md:text-xs text-muted-foreground">
+                          Intercambiar por otro líbero (ej.: recepción ↔ defensa)
+                        </p>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {otherLiberos.map((p) => (
+                            <button
+                              key={p.id}
+                              onClick={() => {
+                                const replacedId = active.replacedId;
+                                recordLiberoOut(match.id, liberoState.side);
+                                recordLiberoIn(match.id, liberoState.side, p.id, replacedId);
+                                setLiberoState(null);
+                              }}
+                              className="flex items-center gap-1.5 p-2 md:p-3 rounded-lg bg-secondary hover:bg-primary/20 active:scale-95 transition"
+                            >
+                              <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">
+                                {p.number}
+                              </span>
+                              <span className="text-[11px] md:text-sm truncate min-w-0 text-left">
+                                Entra #{p.number} {p.name}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-[11px] md:text-xs text-muted-foreground">
                       El líbero saldrá automáticamente cuando su jugador rote a posición 4. Podés cerrar el cambio manualmente acá.
                     </p>
