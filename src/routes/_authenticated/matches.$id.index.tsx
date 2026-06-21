@@ -1037,8 +1037,8 @@ function receptionVisualPositions(formation: ReceptionFormation, side: "A" | "B"
   const positions = new Map<string, ReceptionCoord>();
   if (!reference) return positions;
   // Padding (en % de ancho/alto del overlay) para que el disco no se corte ni cruce la red.
-  const padX = 12; // horizontal, dentro de cada media cancha (50% total → usable 26%)
-  const padY = 12; // vertical
+  const padX = 16; // horizontal, dentro de cada media cancha (50% total → usable 18%)
+  const padY = 14; // vertical
   const halfWidth = 50 - padX * 2; // ancho usable de la media cancha
   const fullHeight = 100 - padY * 2; // alto usable
   Object.entries(formation.roles).forEach(([role, playerId]) => {
@@ -1188,7 +1188,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 isServer={false}
                 isReceptionTarget={true}
                 isReceiverHighlight={receiverIds.has(pid)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 w-[18%] max-w-[88px] min-w-[44px]"
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-[14%] max-w-[68px] min-w-[36px]"
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                 onClick={() => onPlayerClick(receivingSide, p.id)}
               />
