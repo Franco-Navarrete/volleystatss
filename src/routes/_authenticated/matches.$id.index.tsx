@@ -1021,13 +1021,15 @@ function receptionLineup(lineup: string[], team: Team, designatedLiberos: string
   return out;
 }
 
+// Coords are in the own court frame: x = 0 (left) → 1 (right), y = 0 (net) → 1 (back line).
+// Positions follow standard 5-1 reception formations for each setter rotation.
 const receptionReferenceCoords: Record<number, Record<ReceptionRole, ReceptionCoord>> = {
-  1: { A: { x: 0.88, y: 0.72 }, O: { x: 0.1, y: 0.5 }, C: { x: 0.5, y: 0.28 }, PF: { x: 0.74, y: 0.72 }, PB: { x: 0.25, y: 0.72 }, L: { x: 0.5, y: 0.72 } },
-  2: { A: { x: 0.76, y: 0.25 }, O: { x: 0.5, y: 0.88 }, C: { x: 0.12, y: 0.25 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.5, y: 0.72 }, L: { x: 0.75, y: 0.72 } },
-  3: { A: { x: 0.58, y: 0.23 }, O: { x: 0.9, y: 0.86 }, C: { x: 0.72, y: 0.35 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.75, y: 0.72 }, L: { x: 0.5, y: 0.72 } },
-  4: { A: { x: 0.14, y: 0.27 }, O: { x: 0.92, y: 0.72 }, C: { x: 0.28, y: 0.43 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.5, y: 0.72 }, L: { x: 0.75, y: 0.72 } },
-  5: { A: { x: 0.5, y: 0.42 }, O: { x: 0.88, y: 0.25 }, C: { x: 0.12, y: 0.25 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.5, y: 0.72 }, L: { x: 0.75, y: 0.72 } },
-  6: { A: { x: 0.5, y: 0.45 }, O: { x: 0.58, y: 0.24 }, C: { x: 0.8, y: 0.28 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.75, y: 0.72 }, L: { x: 0.5, y: 0.72 } },
+  1: { PF: { x: 0.18, y: 0.32 }, C: { x: 0.50, y: 0.12 }, O: { x: 0.85, y: 0.20 }, PB: { x: 0.22, y: 0.80 }, L: { x: 0.55, y: 0.82 }, A: { x: 0.85, y: 0.78 } },
+  2: { PF: { x: 0.18, y: 0.32 }, C: { x: 0.50, y: 0.12 }, A: { x: 0.85, y: 0.22 }, PB: { x: 0.22, y: 0.80 }, L: { x: 0.55, y: 0.82 }, O: { x: 0.85, y: 0.78 } },
+  3: { PF: { x: 0.18, y: 0.32 }, A: { x: 0.50, y: 0.18 }, C: { x: 0.82, y: 0.12 }, PB: { x: 0.20, y: 0.80 }, L: { x: 0.55, y: 0.82 }, O: { x: 0.88, y: 0.82 } },
+  4: { A: { x: 0.18, y: 0.20 }, C: { x: 0.50, y: 0.12 }, PF: { x: 0.32, y: 0.40 }, PB: { x: 0.20, y: 0.82 }, L: { x: 0.55, y: 0.82 }, O: { x: 0.88, y: 0.78 } },
+  5: { A: { x: 0.18, y: 0.82 }, C: { x: 0.50, y: 0.12 }, O: { x: 0.85, y: 0.20 }, PF: { x: 0.18, y: 0.45 }, L: { x: 0.55, y: 0.82 }, PB: { x: 0.85, y: 0.78 } },
+  6: { C: { x: 0.85, y: 0.12 }, O: { x: 0.85, y: 0.30 }, PF: { x: 0.18, y: 0.32 }, L: { x: 0.20, y: 0.82 }, A: { x: 0.50, y: 0.82 }, PB: { x: 0.82, y: 0.82 } },
 };
 
 function receptionVisualPositions(formation: ReceptionFormation, side: "A" | "B", leftSide: "A" | "B") {
