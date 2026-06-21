@@ -953,7 +953,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
       <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
 
-      <div className="absolute inset-5 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
+      <div className="absolute inset-3 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
         {columns.map((col, ci) => {
           const onCourt = col.side === "A" ? a : b;
           const serverPid = serverSide === col.side ? serverPlayerId : null;
