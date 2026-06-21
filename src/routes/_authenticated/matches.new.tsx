@@ -439,15 +439,15 @@ function RolePicker({
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Capitán</span>
-            {renderSelect(captain, setCaptain, [])}
+            {renderSelect(captain, setCaptain, [], players)}
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 1</span>
-            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean))}
+            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean), liberoPlayers)}
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 2</span>
-            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean))}
+            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean), liberoPlayers)}
           </label>
         </div>
       )}
