@@ -409,7 +409,13 @@ function RolePicker({
   libero2: string; setLibero2: (v: string) => void;
 }) {
   const players = team?.players ?? [];
-  const renderSelect = (value: string, onChange: (v: string) => void, exclude: string[]) => (
+  const liberoPlayers = players.filter((p) => p.position === "libero");
+  const renderSelect = (
+    value: string,
+    onChange: (v: string) => void,
+    exclude: string[],
+    list: typeof players,
+  ) => (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -417,7 +423,7 @@ function RolePicker({
       className="w-full bg-background border border-input rounded-md px-2 py-2 text-sm disabled:opacity-50"
     >
       <option value="">— Sin asignar —</option>
-      {players.map((p) => (
+      {list.map((p) => (
         <option key={p.id} value={p.id} disabled={exclude.includes(p.id)}>
           #{p.number} {p.name}
         </option>
@@ -433,15 +439,15 @@ function RolePicker({
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Capitán</span>
-            {renderSelect(captain, setCaptain, [])}
+            {renderSelect(captain, setCaptain, [], players)}
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 1</span>
-            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean))}
+            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean), liberoPlayers)}
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 2</span>
-            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean))}
+            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean), liberoPlayers)}
           </label>
         </div>
       )}
