@@ -58,6 +58,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   const stats = computeMatchStats(match);
   const w = setsWon(match);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  doc.setProperties({ title: `${teamA.name} vs ${teamB.name}` });
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 14;
   let y = 16;
@@ -67,24 +68,26 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
 
   // Header
   doc.setFillColor(...dark);
-  doc.rect(0, 0, pageW, 34, "F");
+  doc.rect(0, 0, pageW, 38, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text(`${teamA.name}  ${w.a} - ${w.b}  ${teamB.name}`, pageW / 2, 14, { align: "center" });
+  doc.text(`${teamA.name} vs ${teamB.name}`, pageW / 2, 13, { align: "center" });
+  doc.setFontSize(11);
+  doc.text(`${w.a} - ${w.b}`, pageW / 2, 20, { align: "center" });
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   const setLine = match.sets.map((s) => `Set ${s.number}: ${s.scoreA}-${s.scoreB}`).join("   ");
-  doc.text(setLine, pageW / 2, 22, { align: "center" });
+  doc.text(setLine, pageW / 2, 26, { align: "center" });
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 190);
   doc.text(
     match.status === "finished" ? "Resultado final" : "Partido en progreso",
     pageW / 2,
-    28,
+    32,
     { align: "center" },
   );
-  y = 42;
+  y = 46;
 
   doc.setTextColor(0, 0, 0);
 
