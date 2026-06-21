@@ -307,6 +307,9 @@ function StatsPage() {
             const setPlayersB = enrichTeamPlayers(teamB, setStats.players);
             const setTeamA = setStats.teams.get(teamA.id) ?? null;
             const setTeamB = setStats.teams.get(teamB.id) ?? null;
+            const setEvents: MatchEvent[] = match.events.filter((e) => "setNumber" in e && e.setNumber === s.number);
+            const setRecA = computeReceptionStats(setEvents, "A");
+            const setRecB = computeReceptionStats(setEvents, "B");
             return (
               <TabsContent key={s.number} value={`set-${s.number}`}>
                 <div className="grid sm:grid-cols-2 gap-4 mb-4">
@@ -316,6 +319,10 @@ function StatsPage() {
                 <div className="grid lg:grid-cols-2 gap-6">
                   <PlayerStatsTable team={teamA} rows={setPlayersA} />
                   <PlayerStatsTable team={teamB} rows={setPlayersB} />
+                </div>
+                <div className="grid lg:grid-cols-2 gap-6 mt-6">
+                  <ReceptionTable team={teamA} recMap={setRecA} />
+                  <ReceptionTable team={teamB} recMap={setRecB} />
                 </div>
               </TabsContent>
             );
