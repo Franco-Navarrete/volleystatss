@@ -7,6 +7,7 @@ import {
   currentServer,
   timeoutsUsedInSet,
   computeMatchStats,
+  computeReceptionStats,
   getSetDuration,
   formatDurationMs,
   formatLocalTime,
@@ -1477,11 +1478,19 @@ function SanctionDialog({ team, onCourt, onSubmit }: {
 
 function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; teamB: Team }) {
   const stats = useMemo(() => computeMatchStats(match), [match]);
-  const renderTeam = (team: Team) => {
+  const recA = useMemo(() => computeReceptionStats(match.events, "A"), [match.events]);
+  const recB = useMemo(() => computeReceptionStats(match.events, "B"), [match.events]);
+  const renderTeam = (team: Team, recMap: Map<string, ReturnType<typeof computeReceptionStats> extends Map<string, infer V> ? V : never>) => {
     const tStat = stats.teams.get(team.id);
+    const recTotals = [...recMap.values()].reduce(
+      (acc, r) => ({ pos: acc.pos + r.positive, neu: acc.neu + r.neutral, neg: acc.neg + r.negative, total: acc.total + r.total }),
+      { pos: 0, neu: 0, neg: 0, total: 0 },
+    );
+    const teamEff = recTotals.total > 0 ? ((recTotals.pos - recTotals.neg) / recTotals.total) * 100 : 0;
     const players = team.players
       .map((tp) => {
         const p = stats.players.get(tp.id);
+        const r = recMap.get(tp.id);
         return {
           playerId: tp.id,
           name: tp.name,
@@ -1492,6 +1501,8 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
           serveError: p?.serveError ?? 0,
           unforcedError: p?.unforcedError ?? 0,
           total: p?.total ?? 0,
+          recTotal: r?.total ?? 0,
+          recEff: r?.efficiency ?? 0,
         };
       })
       .sort((a, b) => b.total - a.total || a.number - b.number);
@@ -1513,6 +1524,18 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
           <div className="text-destructive">{tStat?.serveErrors ?? 0}</div>
           <div className="text-destructive">{tStat?.unforcedErrors ?? 0}</div>
         </div>
+        <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between gap-2 text-[11px] bg-secondary/20">
+          <span className="uppercase tracking-widest text-muted-foreground font-bold">Recepción</span>
+          <span className="flex items-center gap-2 tabular-nums">
+            <span className="text-success font-bold">+{recTotals.pos}</span>
+            <span className="text-muted-foreground">0:{recTotals.neu}</span>
+            <span className="text-destructive font-bold">−{recTotals.neg}</span>
+            <span className="text-muted-foreground">· {recTotals.total}</span>
+            <span className={`scoreboard-digit font-black ${teamEff >= 30 ? "text-success" : teamEff <= 0 ? "text-destructive" : "text-primary"}`}>
+              {recTotals.total > 0 ? `${teamEff.toFixed(0)}%` : "—"}
+            </span>
+          </span>
+        </div>
         <table className="w-full text-xs">
           <thead className="text-[9px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
             <tr>
@@ -1520,6 +1543,7 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
               <th className="text-center">ATK</th><th className="text-center">BLK</th>
               <th className="text-center">ACE</th>
               <th className="text-center text-destructive">E.SAQ</th>
+              <th className="text-center">REC</th>
               <th className="text-center px-3 text-primary">TOT</th>
             </tr>
           </thead>
@@ -1531,19 +1555,29 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
                 <td className="text-center tabular-nums">{p.block}</td>
                 <td className="text-center tabular-nums">{p.ace}</td>
                 <td className={`text-center tabular-nums ${p.serveError > 0 ? "text-destructive font-bold" : ""}`}>{p.serveError}</td>
+                <td className="text-center tabular-nums">
+                  {p.recTotal > 0 ? (
+                    <span className={`font-bold ${p.recEff >= 30 ? "text-success" : p.recEff <= 0 ? "text-destructive" : ""}`}>
+                      {p.recEff.toFixed(0)}%<span className="text-muted-foreground font-normal"> ({p.recTotal})</span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
                 <td className="text-center tabular-nums font-bold text-primary px-3">{p.total}</td>
               </tr>
             ))}
             {players.length === 0 && (
-              <tr><td colSpan={6} className="text-center py-3 text-muted-foreground">Sin puntos aún.</td></tr>
+              <tr><td colSpan={7} className="text-center py-3 text-muted-foreground">Sin puntos aún.</td></tr>
             )}
           </tbody>
         </table>
       </div>
     );
   };
-  return <div className="grid md:grid-cols-2 gap-3 mt-2">{renderTeam(teamA)}{renderTeam(teamB)}</div>;
+  return <div className="grid md:grid-cols-2 gap-3 mt-2">{renderTeam(teamA, recA)}{renderTeam(teamB, recB)}</div>;
 }
+
 
 function ScoreCorrectionDialog({ setNumber, teamA, teamB, scoreA, scoreB, onSave, onCancel }: {
   setNumber: number;

@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import {
-  computeMatchStats, computeSetStats, setsWon, useVolley, getSetDuration, formatDurationMs, formatLocalTime,
-  type PlayerStat, type Team,
+  computeMatchStats, computeSetStats, computeReceptionStats, setsWon, useVolley, getSetDuration, formatDurationMs, formatLocalTime,
+  type PlayerStat, type ReceptionStat, type Team, type MatchEvent,
 } from "@/lib/volley-store";
 
 import { Button } from "@/components/ui/button";
@@ -279,6 +279,12 @@ function StatsPage() {
         <PlayerStatsTable team={teamB} rows={playersB} />
       </div>
 
+      {/* Reception */}
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <ReceptionTable team={teamA} recMap={computeReceptionStats(match.events, "A")} />
+        <ReceptionTable team={teamB} recMap={computeReceptionStats(match.events, "B")} />
+      </div>
+
       {/* Set breakdown */}
       <section className="mt-8">
         <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Desglose por set</h2>
@@ -301,6 +307,9 @@ function StatsPage() {
             const setPlayersB = enrichTeamPlayers(teamB, setStats.players);
             const setTeamA = setStats.teams.get(teamA.id) ?? null;
             const setTeamB = setStats.teams.get(teamB.id) ?? null;
+            const setEvents: MatchEvent[] = match.events.filter((e) => "setNumber" in e && e.setNumber === s.number);
+            const setRecA = computeReceptionStats(setEvents, "A");
+            const setRecB = computeReceptionStats(setEvents, "B");
             return (
               <TabsContent key={s.number} value={`set-${s.number}`}>
                 <div className="grid sm:grid-cols-2 gap-4 mb-4">
@@ -310,6 +319,10 @@ function StatsPage() {
                 <div className="grid lg:grid-cols-2 gap-6">
                   <PlayerStatsTable team={teamA} rows={setPlayersA} />
                   <PlayerStatsTable team={teamB} rows={setPlayersB} />
+                </div>
+                <div className="grid lg:grid-cols-2 gap-6 mt-6">
+                  <ReceptionTable team={teamA} recMap={setRecA} />
+                  <ReceptionTable team={teamB} recMap={setRecB} />
                 </div>
               </TabsContent>
             );
@@ -440,6 +453,102 @@ function PlayerStatsTable({
             ))}
             {rows.length === 0 && (
               <tr><td colSpan={5} className="text-center py-8 text-sm text-muted-foreground">Sin puntos registrados.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function ReceptionTable({
+  team, recMap,
+}: {
+  team: Team;
+  recMap: Map<string, ReceptionStat>;
+}) {
+  const rows = team.players
+    .map((tp) => {
+      const r = recMap.get(tp.id);
+      return {
+        playerId: tp.id,
+        name: tp.name,
+        number: tp.number,
+        positive: r?.positive ?? 0,
+        neutral: r?.neutral ?? 0,
+        negative: r?.negative ?? 0,
+        total: r?.total ?? 0,
+        efficiency: r?.efficiency ?? 0,
+      };
+    })
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total || b.efficiency - a.efficiency);
+
+  const totals = rows.reduce(
+    (acc, r) => ({
+      pos: acc.pos + r.positive,
+      neu: acc.neu + r.neutral,
+      neg: acc.neg + r.negative,
+      total: acc.total + r.total,
+    }),
+    { pos: 0, neu: 0, neg: 0, total: 0 },
+  );
+  const teamEff = totals.total > 0 ? ((totals.pos - totals.neg) / totals.total) * 100 : 0;
+  const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
+
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header className="px-5 py-3 flex items-center gap-3 border-b border-border/60">
+        <TeamBadge team={team} size="sm" />
+        <h2 className="font-bold truncate flex-1">{team.name} · recepción</h2>
+        {totals.total > 0 && (
+          <span className={`scoreboard-digit font-black text-xl tabular-nums ${effClass(teamEff)}`}>
+            {teamEff.toFixed(0)}%
+          </span>
+        )}
+      </header>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
+            <tr>
+              <th className="text-left py-2 px-4">Receptor</th>
+              <th className="text-center py-2 px-2 text-success">+</th>
+              <th className="text-center py-2 px-2">0</th>
+              <th className="text-center py-2 px-2 text-destructive">−</th>
+              <th className="text-center py-2 px-2">Total</th>
+              <th className="text-center py-2 px-4 text-primary">Eficiencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => (
+              <tr key={p.playerId} className="border-t border-border/40">
+                <td className="py-2 px-4">
+                  <div className="flex items-center gap-2">
+                    <span className="size-7 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-xs">{p.number}</span>
+                    <span className="font-medium truncate">{p.name}</span>
+                  </div>
+                </td>
+                <td className="text-center tabular-nums text-success font-bold">{p.positive}</td>
+                <td className="text-center tabular-nums">{p.neutral}</td>
+                <td className="text-center tabular-nums text-destructive font-bold">{p.negative}</td>
+                <td className="text-center tabular-nums">{p.total}</td>
+                <td className={`text-center tabular-nums font-bold px-4 ${effClass(p.efficiency)}`}>
+                  {p.efficiency.toFixed(0)}%
+                </td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">Sin recepciones registradas.</td></tr>
+            )}
+            {rows.length > 0 && (
+              <tr className="border-t-2 border-border bg-secondary/30">
+                <td className="py-2 px-4 font-bold text-xs uppercase tracking-widest text-muted-foreground">Total equipo</td>
+                <td className="text-center tabular-nums text-success font-bold">{totals.pos}</td>
+                <td className="text-center tabular-nums">{totals.neu}</td>
+                <td className="text-center tabular-nums text-destructive font-bold">{totals.neg}</td>
+                <td className="text-center tabular-nums font-bold">{totals.total}</td>
+                <td className={`text-center tabular-nums font-black px-4 ${effClass(teamEff)}`}>{teamEff.toFixed(0)}%</td>
+              </tr>
             )}
           </tbody>
         </table>
