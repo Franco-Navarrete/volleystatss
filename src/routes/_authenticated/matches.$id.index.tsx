@@ -936,7 +936,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-2 sm:p-5 md:p-7">
+    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[140px] sm:min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-1.5 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
       <div className="absolute inset-2 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — the two front-row columns */}
@@ -953,7 +953,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
       <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
 
-      <div className="absolute inset-5 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
+      <div className="absolute inset-3 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
         {columns.map((col, ci) => {
           const onCourt = col.side === "A" ? a : b;
           const serverPid = serverSide === col.side ? serverPlayerId : null;
@@ -961,7 +961,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
           return (
               <div
                 key={ci}
-                className={`grid grid-rows-3 items-center gap-2 sm:gap-3 h-full px-1 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+                className={`grid grid-rows-3 items-center gap-1 sm:gap-3 h-full px-0.5 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
               >
                 {col.idxs.map((idx) => {
                   const pid = onCourt[idx];
@@ -1004,7 +1004,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       key={`${ci}-${idx}`}
                       onClick={() => p && onPlayerClick(col.side, p.id)}
                       disabled={!p}
-                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[3px] sm:border-4" : ""} ${isReceiverHighlight ? "ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""}`}
+                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""}`}
                       style={isLibero
                         ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                         : { background: col.team.color, borderColor: pairColor ?? undefined }}
