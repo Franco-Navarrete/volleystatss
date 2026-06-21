@@ -1004,7 +1004,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       key={`${ci}-${idx}`}
                       onClick={() => p && onPlayerClick(col.side, p.id)}
                       disabled={!p}
-                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[3px] sm:border-4" : ""} ${isReceiverHighlight ? "ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""}`}
+                      className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 ring-white/50" : ""}`}
                       style={isLibero
                         ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                         : { background: col.team.color, borderColor: pairColor ?? undefined }}
