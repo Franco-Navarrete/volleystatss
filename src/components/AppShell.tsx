@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut, ShieldCheck, Volleyball } from "lucide-react";
+import { LogOut, Settings, ShieldCheck, Volleyball } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { stopCloudSync } from "@/lib/cloud-sync";
