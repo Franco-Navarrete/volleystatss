@@ -1339,18 +1339,36 @@ function StepChip({ n, label, active, done, onClick, color, disabled }: {
   );
 }
 
-function LineupSlotCell({ label, sub, teamColor, player, onOpen, onClear }: {
+function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }: {
   label: string;
   sub?: string;
+  role?: string | null;
   teamColor: string;
   player: Team["players"][number] | undefined;
   onOpen: () => void;
   onClear: () => void;
 }) {
+  const roleColor = role
+    ? (role === "A" || role === "O"
+        ? "#22d3ee"
+        : role.startsWith("P")
+        ? "#a3e635"
+        : role.startsWith("C")
+        ? "#f472b6"
+        : null)
+    : null;
   return (
     <div className="rounded-md bg-background/40 border border-border/40 p-2 text-center relative min-h-[88px] flex flex-col">
       <div className="absolute top-1 left-1 text-[9px] scoreboard-digit font-bold text-primary px-1 rounded bg-background/80 z-10">P{label}</div>
       {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold z-10">{sub}</div>}
+      {role && (
+        <div
+          className="absolute bottom-1 left-1 text-[9px] font-black uppercase tracking-widest px-1.5 rounded text-black z-10"
+          style={{ background: roleColor ?? "#cbd5e1" }}
+        >
+          {role}
+        </div>
+      )}
       {player && (
         <button
           type="button"
