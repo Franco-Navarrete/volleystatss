@@ -50,6 +50,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span className="hidden sm:inline">Admin</span>
               </Link>
             )}
+            <Link
+              to="/settings"
+              className="px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors font-medium flex items-center gap-1"
+              activeProps={{
+                className:
+                  "px-3 py-2 rounded-md text-foreground bg-secondary font-semibold flex items-center gap-1",
+              }}
+            >
+              <Settings className="size-4" />
+              <span className="hidden sm:inline">Ajustes</span>
+            </Link>
           </nav>
           <button
             onClick={() => void signOut()}
