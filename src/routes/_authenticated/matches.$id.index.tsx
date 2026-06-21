@@ -938,9 +938,9 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
   return (
     <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[140px] [@media(max-width:360px)]:min-h-[100px] sm:min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
-      <div className="absolute inset-2 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
+      <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — the two front-row columns */}
-      <div className="absolute inset-y-2 sm:inset-y-5 md:inset-y-7 left-1/2 -translate-x-1/2 flex pointer-events-none">
+      <div className="absolute inset-y-2 [@media(max-width:360px)]:inset-y-1.5 sm:inset-y-5 md:inset-y-7 left-1/2 -translate-x-1/2 flex pointer-events-none">
 
         <div className="h-full w-[calc(50vw)] max-w-none" />
       </div>
