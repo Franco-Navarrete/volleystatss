@@ -1188,7 +1188,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 isServer={false}
                 isReceptionTarget={true}
                 isReceiverHighlight={receiverIds.has(pid)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 h-[22%] max-h-24 min-h-12"
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-[18%] max-w-[88px] min-w-[44px]"
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                 onClick={() => onPlayerClick(receivingSide, p.id)}
               />
