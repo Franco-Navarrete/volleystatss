@@ -1180,25 +1180,43 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
 
       <div className="relative rounded-xl bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
         <div className="text-center text-[9px] uppercase tracking-widest text-muted-foreground mb-1">— red —</div>
-        {grid.map((row, ri) => (
-          <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
-            {row.map(({ idx, label, sub }) => {
-              const pid = lineup[idx];
-              const p = team.players.find((x) => x.id === pid);
-              return (
-                <LineupSlotCell
-                  key={idx}
-                  label={label}
-                  sub={sub}
-                  teamColor={team.color}
-                  player={p}
-                  onOpen={() => setPickingSlot(idx)}
-                  onClear={() => setSlot(idx, null)}
-                />
-              );
-            })}
-          </div>
-        ))}
+        {(() => {
+          // Rol por slot en base a la posición del armador (sentido antihorario).
+          // slotIdx 0..5 ↔ pos 1..6; secuencia CCW: 1→6→5→4→3→2.
+          const ccwIndexByPos: Record<number, number> = { 1: 0, 6: 1, 5: 2, 4: 3, 3: 4, 2: 5 };
+          const roleOrder = ["A", "P1", "C1", "O", "P2", "C2"];
+          const armadorSlot = lineup.findIndex((pid) => {
+            const pl = team.players.find((x) => x.id === pid);
+            return pl?.position === "armador";
+          });
+          const armadorPos = armadorSlot >= 0 ? armadorSlot + 1 : -1;
+          const roleFor = (slotIdx: number): string | null => {
+            if (armadorPos < 0) return null;
+            const pos = slotIdx + 1;
+            const offset = (ccwIndexByPos[pos] - ccwIndexByPos[armadorPos] + 6) % 6;
+            return roleOrder[offset];
+          };
+          return grid.map((row, ri) => (
+            <div key={ri} className="grid grid-cols-3 gap-2 mb-2 last:mb-0">
+              {row.map(({ idx, label, sub }) => {
+                const pid = lineup[idx];
+                const p = team.players.find((x) => x.id === pid);
+                return (
+                  <LineupSlotCell
+                    key={idx}
+                    label={label}
+                    sub={sub}
+                    role={roleFor(idx)}
+                    teamColor={team.color}
+                    player={p}
+                    onOpen={() => setPickingSlot(idx)}
+                    onClear={() => setSlot(idx, null)}
+                  />
+                );
+              })}
+            </div>
+          ));
+        })()}
 
         {pickingSlot !== null && (
           <div className="absolute inset-0 rounded-xl bg-background/95 backdrop-blur-sm flex flex-col p-2 z-20">
@@ -1321,18 +1339,36 @@ function StepChip({ n, label, active, done, onClick, color, disabled }: {
   );
 }
 
-function LineupSlotCell({ label, sub, teamColor, player, onOpen, onClear }: {
+function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }: {
   label: string;
   sub?: string;
+  role?: string | null;
   teamColor: string;
   player: Team["players"][number] | undefined;
   onOpen: () => void;
   onClear: () => void;
 }) {
+  const roleColor = role
+    ? (role === "A" || role === "O"
+        ? "#22d3ee"
+        : role.startsWith("P")
+        ? "#a3e635"
+        : role.startsWith("C")
+        ? "#f472b6"
+        : null)
+    : null;
   return (
     <div className="rounded-md bg-background/40 border border-border/40 p-2 text-center relative min-h-[88px] flex flex-col">
       <div className="absolute top-1 left-1 text-[9px] scoreboard-digit font-bold text-primary px-1 rounded bg-background/80 z-10">P{label}</div>
       {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold z-10">{sub}</div>}
+      {role && (
+        <div
+          className="absolute bottom-1 left-1 text-[9px] font-black uppercase tracking-widest px-1.5 rounded text-black z-10"
+          style={{ background: roleColor ?? "#cbd5e1" }}
+        >
+          {role}
+        </div>
+      )}
       {player && (
         <button
           type="button"
