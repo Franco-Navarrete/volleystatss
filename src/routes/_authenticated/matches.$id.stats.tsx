@@ -279,6 +279,12 @@ function StatsPage() {
         <PlayerStatsTable team={teamB} rows={playersB} />
       </div>
 
+      {/* Reception */}
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <ReceptionTable team={teamA} recMap={computeReceptionStats(match.events, "A")} />
+        <ReceptionTable team={teamB} recMap={computeReceptionStats(match.events, "B")} />
+      </div>
+
       {/* Set breakdown */}
       <section className="mt-8">
         <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Desglose por set</h2>
