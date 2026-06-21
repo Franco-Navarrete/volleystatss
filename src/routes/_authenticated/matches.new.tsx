@@ -409,7 +409,13 @@ function RolePicker({
   libero2: string; setLibero2: (v: string) => void;
 }) {
   const players = team?.players ?? [];
-  const renderSelect = (value: string, onChange: (v: string) => void, exclude: string[]) => (
+  const liberoPlayers = players.filter((p) => p.position === "libero");
+  const renderSelect = (
+    value: string,
+    onChange: (v: string) => void,
+    exclude: string[],
+    list: typeof players,
+  ) => (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -417,7 +423,7 @@ function RolePicker({
       className="w-full bg-background border border-input rounded-md px-2 py-2 text-sm disabled:opacity-50"
     >
       <option value="">— Sin asignar —</option>
-      {players.map((p) => (
+      {list.map((p) => (
         <option key={p.id} value={p.id} disabled={exclude.includes(p.id)}>
           #{p.number} {p.name}
         </option>
