@@ -911,12 +911,14 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-// Reordena los 6 ids de la formación rotacional a la formación de recepción 5-1
-// según la posición del armador (1..6). Índice 0=P1, 5=P6.
-function receptionLineup(lineup: string[], team: Team, designatedLiberos: string[]): string[] {
+type ReceptionRole = "A" | "O" | "PF" | "PB" | "C" | "L";
+type ReceptionFormation = { setterPos: number; roles: Record<ReceptionRole, string> };
+type ReceptionCoord = { x: number; y: number };
+
+function getReceptionFormation(lineup: string[], team: Team, designatedLiberos: string[]): ReceptionFormation | null {
   const players = lineup.map((pid) => team.players.find((p) => p.id === pid));
   const armadorSlot = players.findIndex((p) => p?.position === "armador");
-  if (armadorSlot < 0) return lineup;
+  if (armadorSlot < 0) return null;
   const setterPos = armadorSlot + 1;
   const ccwIdx: Record<number, number> = { 1: 0, 6: 1, 5: 2, 4: 3, 3: 4, 2: 5 };
   const posByOffset: Record<number, number> = {};
@@ -953,7 +955,16 @@ function receptionLineup(lineup: string[], team: Team, designatedLiberos: string
     const otherC = centrals.find((s) => s !== centralSlot);
     if (otherC !== undefined) roles.L = lineup[otherC] ?? "";
   }
-  const maps: Record<number, Record<number, keyof typeof roles>> = {
+  return { setterPos, roles };
+}
+
+// Reordena los 6 ids de la formación rotacional a la formación de recepción 5-1
+// según la posición del armador (1..6). Índice 0=P1, 5=P6.
+function receptionLineup(lineup: string[], team: Team, designatedLiberos: string[]): string[] {
+  const formation = getReceptionFormation(lineup, team, designatedLiberos);
+  if (!formation) return lineup;
+  const { setterPos, roles } = formation;
+  const maps: Record<number, Record<number, ReceptionRole>> = {
     1: { 1: "PF", 2: "A", 3: "C", 4: "O", 5: "PB", 6: "L" },
     2: { 1: "L", 2: "A", 3: "O", 4: "C", 5: "PF", 6: "PB" },
     3: { 1: "PB", 2: "C", 3: "A", 4: "PF", 5: "L", 6: "O" },
@@ -974,6 +985,32 @@ function receptionLineup(lineup: string[], team: Team, designatedLiberos: string
     seen.add(out[i]);
   }
   return out;
+}
+
+const receptionReferenceCoords: Record<number, Record<ReceptionRole, ReceptionCoord>> = {
+  1: { A: { x: 0.88, y: 0.72 }, O: { x: 0.1, y: 0.5 }, C: { x: 0.5, y: 0.28 }, PF: { x: 0.74, y: 0.72 }, PB: { x: 0.25, y: 0.72 }, L: { x: 0.5, y: 0.72 } },
+  2: { A: { x: 0.76, y: 0.25 }, O: { x: 0.5, y: 0.88 }, C: { x: 0.12, y: 0.25 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.5, y: 0.72 }, L: { x: 0.75, y: 0.72 } },
+  3: { A: { x: 0.58, y: 0.23 }, O: { x: 0.9, y: 0.86 }, C: { x: 0.72, y: 0.35 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.75, y: 0.72 }, L: { x: 0.5, y: 0.72 } },
+  4: { A: { x: 0.14, y: 0.27 }, O: { x: 0.92, y: 0.72 }, C: { x: 0.28, y: 0.43 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.5, y: 0.72 }, L: { x: 0.75, y: 0.72 } },
+  5: { A: { x: 0.5, y: 0.42 }, O: { x: 0.88, y: 0.25 }, C: { x: 0.12, y: 0.25 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.5, y: 0.72 }, L: { x: 0.75, y: 0.72 } },
+  6: { A: { x: 0.5, y: 0.45 }, O: { x: 0.58, y: 0.24 }, C: { x: 0.8, y: 0.28 }, PF: { x: 0.25, y: 0.72 }, PB: { x: 0.75, y: 0.72 }, L: { x: 0.5, y: 0.72 } },
+};
+
+function receptionVisualPositions(formation: ReceptionFormation, side: "A" | "B", leftSide: "A" | "B") {
+  const reference = receptionReferenceCoords[formation.setterPos];
+  const positions = new Map<string, ReceptionCoord>();
+  if (!reference) return positions;
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+  Object.entries(formation.roles).forEach(([role, playerId]) => {
+    if (!playerId) return;
+    const coord = reference[role as ReceptionRole];
+    if (!coord) return;
+    const visual = side === leftSide
+      ? { x: (1 - coord.y) * 50, y: coord.x * 100 }
+      : { x: 50 + coord.y * 50, y: (1 - coord.x) * 100 };
+    positions.set(playerId, { x: clamp(visual.x, 7, 93), y: clamp(visual.y, 8, 92) });
+  });
+  return positions;
 }
 
 function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds }: {
