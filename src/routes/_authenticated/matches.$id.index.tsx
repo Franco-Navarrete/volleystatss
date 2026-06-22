@@ -21,6 +21,7 @@ import {
   ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
+import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1680,6 +1681,12 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
           Rotaciones · Set {match.currentSet}
         </p>
         <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} compact />
+      </div>
+      <div>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+          Zonas de ataque · Set {match.currentSet}
+        </p>
+        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={match.currentSet} />
       </div>
     </div>
   );
