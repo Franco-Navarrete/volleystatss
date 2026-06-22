@@ -65,6 +65,19 @@ export const TEAM_GENDER_LABEL: Record<TeamGender, string> = {
   F: "Femenino",
 };
 
+export type TeamCategory = "12" | "14" | "16" | "18" | "21" | "primera";
+
+export const TEAM_CATEGORIES: TeamCategory[] = ["12", "14", "16", "18", "21", "primera"];
+
+export const TEAM_CATEGORY_LABEL: Record<TeamCategory, string> = {
+  "12": "Sub-12",
+  "14": "Sub-14",
+  "16": "Sub-16",
+  "18": "Sub-18",
+  "21": "Sub-21",
+  primera: "Primera",
+};
+
 export interface Team {
   id: string;
   name: string;
@@ -77,7 +90,10 @@ export interface Team {
   logoUrl?: string;
   /** Optional team gender (masculino / femenino). */
   gender?: TeamGender;
+  /** Optional age category. */
+  category?: TeamCategory;
 }
+
 
 
 /** Zona desde la que se ejecutó el ataque. 4/3/2 = frente, 1/6/5 = zaguero. */
