@@ -208,21 +208,19 @@ html.force-landscape .live-stats-dialog {
   display: flex !important;
   flex-direction: column !important;
   width: min(720px, calc(100dvh - 28px)) !important;
+  height: calc(100dvw - 28px) !important;
   padding: 0 !important;
   gap: 0 !important;
   overflow: hidden !important;
 }
 .live-stats-scroll {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  overscroll-behavior: auto;
+  touch-action: auto;
+  overflow-y: scroll !important;
   scroll-behavior: auto;
   transform: translateZ(0);
-  will-change: scroll-position;
-  contain: layout paint style;
-}
-.live-stats-scroll > * {
-  contain: content;
+  will-change: auto;
 }
 html.force-landscape .live-stats-scroll {
   min-height: 0;
