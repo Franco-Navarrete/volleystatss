@@ -104,6 +104,7 @@ function LiveMatch() {
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
+  const [pendingZone, setPendingZone] = useState<{ side: "A" | "B"; playerId: string; type: PointType } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
   const [showLineupEditor, setShowLineupEditor] = useState(false);
