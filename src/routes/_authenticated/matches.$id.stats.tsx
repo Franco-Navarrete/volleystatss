@@ -331,6 +331,10 @@ function StatsPage() {
                   <ReceptionTable team={teamA} recMap={setRecA} />
                   <ReceptionTable team={teamB} recMap={setRecB} />
                 </div>
+                <div className="mt-6">
+                  <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
+                  <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
+                </div>
               </TabsContent>
             );
           })}
