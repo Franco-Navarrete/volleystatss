@@ -15,6 +15,7 @@ const positionSchema = z
   .enum(["punta", "central", "opuesto", "armador", "libero"])
   .optional()
   .nullable();
+const genderSchema = z.enum(["M", "F"]).optional().nullable();
 
 // ---------------- READ ----------------
 
@@ -25,7 +26,7 @@ export const listTeams = createServerFn({ method: "GET" })
     const [teamsRes, playersRes] = await Promise.all([
       supabase
         .from("teams")
-        .select("id, league_id, name, short_name, color, logo_url, created_at")
+        .select("id, league_id, name, short_name, color, logo_url, gender, created_at")
         .order("created_at", { ascending: true }),
       supabase
         .from("players")
@@ -48,6 +49,7 @@ export const listTeams = createServerFn({ method: "GET" })
       shortName: t.short_name,
       color: t.color,
       logoUrl: t.logo_url ?? undefined,
+      gender: (t.gender === "M" || t.gender === "F" ? t.gender : undefined) as "M" | "F" | undefined,
       players: (playersByTeam.get(t.id) ?? []).map((p) => ({
         id: p.id,
         name: p.name,
@@ -68,6 +70,7 @@ export const createTeam = createServerFn({ method: "POST" })
     shortName: string;
     color: string;
     logoUrl?: string | null;
+    gender?: "M" | "F" | null;
   }) =>
     z
       .object({
@@ -76,6 +79,7 @@ export const createTeam = createServerFn({ method: "POST" })
         shortName: shortSchema,
         color: colorSchema,
         logoUrl: optionalUrl,
+        gender: genderSchema,
       })
       .parse(input),
   )
@@ -88,6 +92,7 @@ export const createTeam = createServerFn({ method: "POST" })
         short_name: data.shortName,
         color: data.color,
         logo_url: data.logoUrl ?? null,
+        gender: data.gender ?? null,
         created_by: context.userId,
       })
       .select("id")
@@ -105,6 +110,7 @@ export const updateTeam = createServerFn({ method: "POST" })
     color?: string;
     logoUrl?: string | null;
     leagueId?: string | null;
+    gender?: "M" | "F" | null;
   }) =>
     z
       .object({
@@ -114,6 +120,7 @@ export const updateTeam = createServerFn({ method: "POST" })
         color: colorSchema.optional(),
         logoUrl: optionalUrl,
         leagueId: uuidSchema.nullable().optional(),
+        gender: genderSchema,
       })
       .parse(input),
   )
@@ -124,6 +131,7 @@ export const updateTeam = createServerFn({ method: "POST" })
     if (data.color !== undefined) patch.color = data.color;
     if (data.logoUrl !== undefined) patch.logo_url = data.logoUrl;
     if (data.leagueId !== undefined) patch.league_id = data.leagueId;
+    if (data.gender !== undefined) patch.gender = data.gender;
     const { error } = await context.supabase.from("teams").update(patch).eq("id", data.id);
     if (error) throw error;
     return { ok: true };

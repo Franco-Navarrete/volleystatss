@@ -58,6 +58,13 @@ export interface League {
   color?: string;
 }
 
+export type TeamGender = "M" | "F";
+
+export const TEAM_GENDER_LABEL: Record<TeamGender, string> = {
+  M: "Masculino",
+  F: "Femenino",
+};
+
 export interface Team {
   id: string;
   name: string;
@@ -68,6 +75,8 @@ export interface Team {
   leagueId?: string;
   /** Optional team logo/crest as data URL or remote URL. */
   logoUrl?: string;
+  /** Optional team gender (masculino / femenino). */
+  gender?: TeamGender;
 }
 
 
