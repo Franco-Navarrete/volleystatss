@@ -201,20 +201,36 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
       updateRecord("block", ps.block);
       updateRecord("ace", ps.ace);
     }
+
+    // Reception aggregates for this match
+    const recMap = computeReceptionStats(match.events);
+    for (const rec of recMap.values()) {
+      const agg = ensure(rec.playerId);
+      if (!agg) continue;
+      agg.totals.receptionPositive += rec.positive;
+      agg.totals.receptionNeutral += rec.neutral;
+      agg.totals.receptionNegative += rec.negative;
+      agg.totals.receptionTotal += rec.total;
+    }
   }
 
   for (const agg of aggs.values()) {
     const mp = agg.matchesPlayed || 1;
+    const recTot = agg.totals.receptionTotal;
     agg.averages = {
       points: agg.totals.points / mp,
       attack: agg.totals.attack / mp,
       block: agg.totals.block / mp,
       ace: agg.totals.ace / mp,
+      receptionEfficiency: recTot > 0
+        ? ((agg.totals.receptionPositive - agg.totals.receptionNegative) / recTot) * 100
+        : 0,
     };
     // Most recent first
     agg.allPerformances.reverse();
     agg.lastMatches = agg.allPerformances.slice(0, 5);
   }
+
 
   return [...aggs.values()];
 }
@@ -226,7 +242,9 @@ export type RankingMetric =
   | "block"
   | "ace"
   | "mvp"
-  | "avgPoints";
+  | "avgPoints"
+  | "receptionEfficiency";
+
 
 export interface RankingMetricDef {
   key: RankingMetric;
