@@ -67,6 +67,14 @@ function StatsPage() {
   const teamStatB = stats.teams.get(teamB.id) ?? null;
   const w = setsWon(match);
 
+  const currentSetNumber = match.currentSet;
+  const orderedSets = useMemo(() => {
+    const current = match.sets.find((s) => s.number === currentSetNumber);
+    const others = match.sets.filter((s) => s.number !== currentSetNumber).sort((a, b) => a.number - b.number);
+    return current ? [current, ...others] : match.sets;
+  }, [match.sets, currentSetNumber]);
+
+
   const allPlayers: EnrichedPlayer[] = [
     ...playersA.map((p) => ({ ...p, teamId: teamA.id, teamName: teamA.name, teamColor: teamA.color })),
     ...playersB.map((p) => ({ ...p, teamId: teamB.id, teamName: teamB.name, teamColor: teamB.color })),
@@ -280,31 +288,12 @@ function StatsPage() {
         <ReclassifyEventsPanel match={match} teamA={teamA} teamB={teamB} />
       </div>
 
-
-      {/* Zonas de ataque (total partido) */}
+      {/* Set breakdown — current set first */}
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Zonas de ataque</h2>
-        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} />
-      </section>
-
-      {/* Player tables */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <PlayerStatsTable team={teamA} rows={playersA} />
-        <PlayerStatsTable team={teamB} rows={playersB} />
-      </div>
-
-      {/* Reception */}
-      <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <ReceptionTable team={teamA} recMap={computeReceptionStats(match.events, "A")} />
-        <ReceptionTable team={teamB} recMap={computeReceptionStats(match.events, "B")} />
-      </div>
-
-      {/* Set breakdown */}
-      <section className="mt-8">
         <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Desglose por set</h2>
-        <Tabs defaultValue={`set-${match.sets[0]?.number ?? 1}`}>
+        <Tabs defaultValue={`set-${currentSetNumber}`}>
           <TabsList className="mb-4 flex-wrap h-auto">
-            {match.sets.map((s) => {
+            {orderedSets.map((s) => {
               const dur = getSetDuration(match, s.number);
               return (
                 <TabsTrigger key={s.number} value={`set-${s.number}`}>
@@ -315,7 +304,7 @@ function StatsPage() {
             })}
 
           </TabsList>
-          {match.sets.map((s) => {
+          {orderedSets.map((s) => {
             const setStats = computeSetStats(match, s.number);
             const setPlayersA = enrichTeamPlayers(teamA, setStats.players);
             const setPlayersB = enrichTeamPlayers(teamB, setStats.players);
@@ -351,6 +340,25 @@ function StatsPage() {
           })}
         </Tabs>
       </section>
+
+      {/* Zonas de ataque (total partido) */}
+      <section className="mb-6">
+        <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Zonas de ataque · Total</h2>
+        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} />
+      </section>
+
+      {/* Player tables */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <PlayerStatsTable team={teamA} rows={playersA} />
+        <PlayerStatsTable team={teamB} rows={playersB} />
+      </div>
+
+      {/* Reception */}
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <ReceptionTable team={teamA} recMap={computeReceptionStats(match.events, "A")} />
+        <ReceptionTable team={teamB} recMap={computeReceptionStats(match.events, "B")} />
+      </div>
+
     </AppShell>
   );
 }
