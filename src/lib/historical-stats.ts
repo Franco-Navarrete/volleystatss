@@ -1,10 +1,12 @@
 import {
   computeMatchStats,
+  computeReceptionStats,
   type Match,
   type Player,
   type PlayerStat,
   type Team,
 } from "./volley-store";
+
 
 const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
 export const mvpScore = (p: Pick<PlayerStat, "attack" | "block" | "ace" | "unforcedError">) =>
@@ -52,12 +54,18 @@ export interface PlayerAggregate {
     attackError: number;
     unforcedError: number;
     mvp: number;
+    receptionPositive: number;
+    receptionNeutral: number;
+    receptionNegative: number;
+    receptionTotal: number;
   };
   averages: {
     points: number;
     attack: number;
     block: number;
     ace: number;
+    /** (pos - neg) / total * 100, all-time. */
+    receptionEfficiency: number;
   };
   records: {
     points: PlayerRecord | null;
@@ -70,6 +78,7 @@ export interface PlayerAggregate {
   allPerformances: MatchPerformance[];
 }
 
+
 function emptyAgg(player: Player, team: Team): PlayerAggregate {
   return {
     player,
@@ -78,13 +87,15 @@ function emptyAgg(player: Player, team: Team): PlayerAggregate {
     totals: {
       points: 0, attack: 0, counterAttack: 0, rotationAttack: 0,
       block: 0, ace: 0, serveError: 0, attackError: 0, unforcedError: 0, mvp: 0,
+      receptionPositive: 0, receptionNeutral: 0, receptionNegative: 0, receptionTotal: 0,
     },
-    averages: { points: 0, attack: 0, block: 0, ace: 0 },
+    averages: { points: 0, attack: 0, block: 0, ace: 0, receptionEfficiency: 0 },
     records: { points: null, block: null, ace: null },
     lastMatches: [],
     allPerformances: [],
   };
 }
+
 
 /** Build all-time per-player aggregates from finished matches. */
 export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerAggregate[] {
@@ -190,20 +201,36 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
       updateRecord("block", ps.block);
       updateRecord("ace", ps.ace);
     }
+
+    // Reception aggregates for this match
+    const recMap = computeReceptionStats(match.events);
+    for (const rec of recMap.values()) {
+      const agg = ensure(rec.playerId);
+      if (!agg) continue;
+      agg.totals.receptionPositive += rec.positive;
+      agg.totals.receptionNeutral += rec.neutral;
+      agg.totals.receptionNegative += rec.negative;
+      agg.totals.receptionTotal += rec.total;
+    }
   }
 
   for (const agg of aggs.values()) {
     const mp = agg.matchesPlayed || 1;
+    const recTot = agg.totals.receptionTotal;
     agg.averages = {
       points: agg.totals.points / mp,
       attack: agg.totals.attack / mp,
       block: agg.totals.block / mp,
       ace: agg.totals.ace / mp,
+      receptionEfficiency: recTot > 0
+        ? ((agg.totals.receptionPositive - agg.totals.receptionNegative) / recTot) * 100
+        : 0,
     };
     // Most recent first
     agg.allPerformances.reverse();
     agg.lastMatches = agg.allPerformances.slice(0, 5);
   }
+
 
   return [...aggs.values()];
 }
@@ -215,7 +242,9 @@ export type RankingMetric =
   | "block"
   | "ace"
   | "mvp"
-  | "avgPoints";
+  | "avgPoints"
+  | "receptionEfficiency";
+
 
 export interface RankingMetricDef {
   key: RankingMetric;
@@ -227,7 +256,10 @@ export interface RankingMetricDef {
   format: (a: PlayerAggregate) => string;
   /** Numeric value used to sort. */
   value: (a: PlayerAggregate) => number;
+  /** Optional custom qualification predicate (defaults to value > 0). */
+  qualifies?: (a: PlayerAggregate) => boolean;
 }
+
 
 export const RANKING_METRICS: RankingMetricDef[] = [
   {
@@ -266,6 +298,12 @@ export const RANKING_METRICS: RankingMetricDef[] = [
     format: (a) => a.averages.points.toFixed(1),
     value: (a) => a.averages.points,
   },
+  {
+    key: "receptionEfficiency", label: "Mejor % de recepción", shortLabel: "% Recep.",
+    format: (a) => `${a.averages.receptionEfficiency.toFixed(0)}%`,
+    value: (a) => a.averages.receptionEfficiency,
+    qualifies: (a) => a.totals.receptionTotal >= 10,
+  },
 ];
 
 export function rankBy(
@@ -274,8 +312,10 @@ export function rankBy(
   limit = 10,
 ): PlayerAggregate[] {
   const min = metric.minMatches ?? 0;
+  const qualifies = metric.qualifies ?? ((a: PlayerAggregate) => metric.value(a) > 0);
   return aggs
-    .filter((a) => a.matchesPlayed >= min && metric.value(a) > 0)
+    .filter((a) => a.matchesPlayed >= min && qualifies(a))
     .sort((x, y) => metric.value(y) - metric.value(x))
     .slice(0, limit);
 }
+
