@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Crown, Download, ExternalLink, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
 import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
 import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
+import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
@@ -329,6 +330,10 @@ function StatsPage() {
                 <div className="grid lg:grid-cols-2 gap-6 mt-6">
                   <ReceptionTable team={teamA} recMap={setRecA} />
                   <ReceptionTable team={teamB} recMap={setRecB} />
+                </div>
+                <div className="mt-6">
+                  <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
+                  <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
                 </div>
               </TabsContent>
             );
