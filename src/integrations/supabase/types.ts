@@ -367,6 +367,7 @@ export type Database = {
           color: string
           created_at: string
           created_by: string | null
+          gender: string | null
           id: string
           league_id: string | null
           logo_url: string | null
@@ -378,6 +379,7 @@ export type Database = {
           color?: string
           created_at?: string
           created_by?: string | null
+          gender?: string | null
           id?: string
           league_id?: string | null
           logo_url?: string | null
@@ -389,6 +391,7 @@ export type Database = {
           color?: string
           created_at?: string
           created_by?: string | null
+          gender?: string | null
           id?: string
           league_id?: string | null
           logo_url?: string | null
