@@ -18,6 +18,7 @@ import {
   type Team,
   type Match,
 } from "@/lib/volley-store";
+import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
