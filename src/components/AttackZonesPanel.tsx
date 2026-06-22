@@ -40,7 +40,7 @@ interface ZoneStats {
 }
 
 function emptyZoneStats(): Record<ZoneKey, ZoneStats> {
-  return { "4": { points: 0, errors: 0 }, "3": { points: 0, errors: 0 }, "2": { points: 0, errors: 0 }, back: { points: 0, errors: 0 } };
+  return { "4": { points: 0, errors: 0 }, "3": { points: 0, errors: 0 }, "2": { points: 0, errors: 0 }, "1": { points: 0, errors: 0 }, "6": { points: 0, errors: 0 }, "5": { points: 0, errors: 0 } };
 }
 
 export function AttackZonesPanel({ match, teamA, teamB, setNumber }: Props) {
