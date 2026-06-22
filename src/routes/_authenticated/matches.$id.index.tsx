@@ -17,6 +17,9 @@ import {
   type ReceptionRating,
   type Team,
   type Match,
+  type AttackZone,
+  ATTACK_ZONES,
+  ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 
@@ -101,6 +104,7 @@ function LiveMatch() {
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
+  const [pendingZone, setPendingZone] = useState<{ side: "A" | "B"; playerId: string; type: PointType } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
   const [showLineupEditor, setShowLineupEditor] = useState(false);
@@ -211,8 +215,19 @@ function LiveMatch() {
 
   const submitAction = (type: PointType) => {
     if (!pendingPlayer) return;
+    if (type === "rotation_attack" || type === "counter_attack") {
+      setPendingZone({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type });
+      setPendingPlayer(null);
+      return;
+    }
     recordPoint(match.id, pendingPlayer.side, type, pendingPlayer.playerId);
     setPendingPlayer(null);
+  };
+
+  const submitZone = (zone: AttackZone) => {
+    if (!pendingZone) return;
+    recordPoint(match.id, pendingZone.side, pendingZone.type, pendingZone.playerId, zone);
+    setPendingZone(null);
   };
 
   const submitReception = (rating: ReceptionRating) => {
@@ -509,6 +524,71 @@ function LiveMatch() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Attack zone picker (after rotation/counter attack) */}
+      <Dialog open={!!pendingZone} onOpenChange={(o) => !o && setPendingZone(null)}>
+        <DialogContent className="w-[calc(100dvw-24px)] max-w-[340px] rounded-xl border-border/60 p-3 gap-2">
+          {pendingZone && (() => {
+            const t = pendingZone.side === "A" ? teamA : teamB;
+            const player = t.players.find((p) => p.id === pendingZone.playerId);
+            const actionLabel = pendingZone.type === "counter_attack" ? "Contraataque" : "Ataque de rotación";
+            return (
+              <>
+                <DialogHeader className="pr-8 space-y-0 text-left">
+                  <DialogTitle className="flex items-center gap-3 min-w-0">
+                    <span className="size-9 shrink-0 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
+                      {player?.number}
+                    </span>
+                    <span className="min-w-0 truncate">
+                      <span className="block text-sm font-bold">{player?.name}</span>
+                      <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                        {actionLabel} · ¿desde qué zona?
+                      </span>
+                    </span>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  <button
+                    onClick={() => submitZone(4)}
+                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">4</span>
+                    <span className="text-[10px] opacity-80 mt-1">Punta</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone(3)}
+                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">3</span>
+                    <span className="text-[10px] opacity-80 mt-1">Central</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone(2)}
+                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">2</span>
+                    <span className="text-[10px] opacity-80 mt-1">Opuesto</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone("back")}
+                    className="col-span-3 min-h-12 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all"
+                  >
+                    Zaguero (1 · 6 · 5)
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPendingZone(null)}
+                  className="mt-2 text-[11px] text-muted-foreground hover:text-foreground underline self-center"
+                >
+                  Sin zona / cancelar
+                </button>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
 
       {/* Reception rating dialog */}
       <Dialog open={!!pendingReception} onOpenChange={(o) => !o && setPendingReception(null)}>

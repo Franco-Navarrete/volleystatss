@@ -13,6 +13,7 @@ import { ArrowLeft, Crown, Download, ExternalLink, Shield, Target, Trophy, Zap, 
 import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
 import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
+import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
@@ -280,6 +281,12 @@ function StatsPage() {
       </div>
 
 
+      {/* Zonas de ataque (total partido) */}
+      <section className="mb-6">
+        <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Zonas de ataque</h2>
+        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} />
+      </section>
+
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
         <PlayerStatsTable team={teamA} rows={playersA} />
@@ -334,6 +341,10 @@ function StatsPage() {
                 <div className="mt-6">
                   <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
                   <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
+                </div>
+                <div className="mt-6">
+                  <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
+                  <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
                 </div>
               </TabsContent>
             );
