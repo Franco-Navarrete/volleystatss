@@ -17,6 +17,9 @@ import {
   type ReceptionRating,
   type Team,
   type Match,
+  type AttackZone,
+  ATTACK_ZONES,
+  ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 
