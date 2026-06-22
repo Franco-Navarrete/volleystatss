@@ -1,60 +1,84 @@
-# Equipos y partidos compartidos en el servidor
+# Rankings históricos
 
-Hoy todo vive en un blob JSON por usuario (`app_state`). Para que los equipos y **cada partido** queden guardados en el servidor y sean visibles para los usuarios autorizados de la liga, los movemos a tablas reales con RLS por liga.
+## Resumen
 
-Es un cambio grande; lo divido en **2 fases** que podemos hacer seguidas. La app sigue funcionando entre medio.
+Nueva sección **Rankings** con todos los acumulados de jugadoras a lo largo de todos los partidos finalizados. Además, dentro de cada equipo se agrega una pestaña *Rankings* con la misma información filtrada al plantel del equipo.
 
-## Fase 1 — Backend (migración SQL)
+Se incluyen récords personales, últimos 5 partidos y promedios por partido.
 
-Nuevas tablas en el servidor, todas con RLS basada en `user_league_access`:
+## Nota técnica sobre "tabla acumulada"
 
-- `teams` (league_id, name, short_name, color, logo_url)
-- `players` (team_id, name, number, position, photo_url)
-- `matches` (league_id, team_a_id, team_b_id, status, scheduled_at, sets_to_win, points_per_set, initial_serving_side, captains, líberos, sides_flipped)
-- `match_sets` (match_id, number, score_a, score_b, finished, started_at)
-- `match_events` (match_id, set_number, kind, payload jsonb, created_at) — **una fila por punto, sustitución, líbero, timeout, sanción, lineup override**
-- `match_lineups` (match_id, set_number, side, lineup uuid[], confirmed)
+Elegiste mantener una tabla acumulada que se actualice al finalizar el partido. Hay un detalle importante de tu app: hoy **todos los datos viven en un único `app_state` (jsonb)** sincronizado desde zustand. El cálculo "al vuelo" desde los partidos finalizados es prácticamente instantáneo y nunca puede desincronizarse.
 
-Reglas de acceso (RLS):
-- **Ver**: cualquier usuario con acceso a la liga (o admin) ve equipos, jugadores, partidos y eventos de esa liga.
-- **Crear/editar equipos y jugadores**: usuarios con acceso a la liga + permiso `can_manage_teams` (nuevo flag en `user_permissions`), o admin.
-- **Crear partido**: usuarios con `can_create_matches` + acceso a la liga, o admin.
-- **Registrar eventos del partido** (puntos, etc.): mismos permisos que crear partido.
+Voy a implementarlo de la siguiente forma, que combina lo mejor de los dos enfoques:
 
-## Fase 2 — Migrar la app al nuevo modelo
+- Un módulo `src/lib/historical-stats.ts` que recorre `matches.filter(status === "finished")` y devuelve los acumulados.
+- El resultado se cachea con `useMemo` y solo se recalcula cuando cambia la lista de partidos (es decir, cuando finalizás uno). UX idéntica a una tabla acumulada, sin riesgo de quedar desincronizado y sin migración de datos viejos.
 
-Reemplazar `volley-store.ts` (zustand persistido) + `cloud-sync.ts` por:
+Si más adelante el volumen crece mucho podemos persistirlo en `app_state.cachedStats` sin cambiar la UI.
 
-- **TanStack Query** para leer equipos, jugadores, partidos y eventos desde las tablas.
-- **Server functions** (`createServerFn` con `requireSupabaseAuth`) para todas las escrituras: crear/editar equipo, agregar jugador, crear partido, registrar punto/sub/líbero/timeout/sanción, deshacer último evento, terminar partido, eliminar partido.
-- Cada acción del scorer hace un insert inmediato en `match_events` → **el partido nunca depende del navegador para persistir**.
-- Zustand queda solo para estado efímero de UI (no fuente de verdad).
-- `cloud-sync.ts` y la tabla `app_state` quedan obsoletos (los dejo un tiempo por compatibilidad, sin escribir).
+## Qué se construye
 
-UI:
-- Selector de liga en la barra superior cuando el usuario tiene acceso a más de una.
-- Equipos y partidos filtrados por la liga seleccionada.
-- Indicador "Guardado ✓ / Guardando… / Error" en el scorer.
-- Botones de crear/editar ocultos si el usuario no tiene permiso.
+### Datos calculados por jugadora (todo el histórico)
 
-## Migración de datos existentes
+- Partidos jugados (donde tuvo al menos 1 evento o estuvo en lineup)
+- Puntos totales = ataques + bloqueos + aces
+- Ataques, contraataques, ataques de rotación, bloqueos, aces
+- Errores: saque, ataque, no forzados
+- MVP ganados (índice MVP más alto del partido, mismo cálculo que ya usás en `matches.$id.stats.tsx`)
+- Promedios por partido de cada métrica
+- **Récords**: mejor marca en un solo partido (puntos, bloqueos, aces) con rival y fecha
+- **Últimos 5 partidos**: rival, fecha, puntos
 
-Script único (server function admin) que toma el `app_state` del super-admin, lo asocia a una liga elegida y crea las filas en las tablas nuevas. Los blobs de los demás usuarios no se migran automáticamente — si querés conservar algo específico me decís y lo importo a mano.
+### Rankings mostrados
 
-## Riesgos / a confirmar
+- Máximas anotadoras (puntos)
+- Mejores atacantes
+- Mejores contraatacantes
+- Mejores bloqueadoras
+- Mejores sacadoras (aces)
+- Más MVP
+- (Bonus) Mejor promedio de puntos (mínimo 3 partidos para evitar outliers)
 
-- **Partidos en vivo**: si hay alguno "live" al hacer Fase 2, conviene terminarlo antes para no migrar a mitad de partido.
-- **Permiso `can_manage_teams`**: hoy no existe. Por defecto lo dejo en `false` para todos menos admin; vos decís a quién dárselo desde el panel admin.
-- **Performance del scorer**: cada acción será un round-trip al servidor (≈100–300 ms). Uso updates optimistas para que la UI responda al toque y la confirmación llegue después.
-- Fase 2 toca **todas** las páginas (scorer, stats, listados, PDF). Es la parte cara.
+Cada lista muestra top 10, con podio destacado para los 3 primeros, foto y equipo.
 
-## Detalles técnicos
+### Pantallas
 
-- Server fns en `src/lib/teams.functions.ts`, `src/lib/matches.functions.ts`, `src/lib/match-events.functions.ts`.
-- RLS de tablas hijas se basa en `has_league_access(auth.uid(), league_id)` (función ya existe).
-- `match_events` con índice `(match_id, created_at)` para reconstruir el partido en orden.
-- Generación del PDF lee de las tablas, no del store local.
+1. **Nueva ruta `/rankings`** (global, todas las jugadoras de todos los equipos).
+   - Tabs: *Puntos · Ataques · Contraataques · Bloqueos · Aces · MVP · Promedios · Récords*.
+   - Link nuevo en el menú principal (header).
+2. **Pestaña "Rankings" dentro de cada equipo** (`/teams` → equipo seleccionado).
+   - Mismas tabs pero filtradas al plantel.
+3. **Vista detalle de jugadora** (modal o sheet) al tocarla en un ranking:
+   - Totales + promedios.
+   - Récords personales.
+   - Últimos 5 partidos.
 
-## ¿Empezamos por Fase 1?
+## Diseño
 
-Si aprobás, arranco con la migración SQL. La app sigue funcionando con el sistema actual hasta que enganchemos Fase 2.
+Mobile-first (90% celular). Reusa los tokens existentes (sin colores hardcodeados):
+
+- Podio top 3 con medallas 🥇🥈🥉, número grande tabular, foto circular.
+- Resto en lista compacta con #posición · foto · nombre · equipo · valor.
+- Tabs horizontales con scroll si no entran.
+
+## Archivos a crear / modificar
+
+```text
+src/lib/historical-stats.ts           NUEVO  agregador + tipos + cálculo MVP por partido
+src/routes/_authenticated/rankings.tsx NUEVO  pantalla global con tabs
+src/components/RankingList.tsx        NUEVO  lista reutilizable (podio + top N)
+src/components/PlayerHistoryCard.tsx  NUEVO  detalle: totales, récords, últimos 5
+src/routes/_authenticated/teams.tsx   EDIT   nueva tab "Rankings" dentro del equipo
+src/components/AppShell.tsx           EDIT   nuevo NavLink "Rankings"
+```
+
+## Cambios de datos
+
+Ninguno. No se modifican tablas ni `app_state`. Se trabaja con los `matches` ya existentes (cualquier partido en estado `finished` cuenta).
+
+## Fuera de alcance (para iteraciones futuras)
+
+- Filtros por liga / temporada / año (pediste solo "toda la historia").
+- Persistencia del agregado en la base.
+- Comparar dos jugadoras lado a lado.
