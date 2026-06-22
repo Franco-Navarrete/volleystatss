@@ -212,13 +212,22 @@ html.force-landscape .live-stats-dialog {
   gap: 0 !important;
   overflow: hidden !important;
 }
+.live-stats-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scroll-behavior: auto;
+  transform: translateZ(0);
+  will-change: scroll-position;
+  contain: layout paint style;
+}
+.live-stats-scroll > * {
+  contain: content;
+}
 html.force-landscape .live-stats-scroll {
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
 }
 
 
