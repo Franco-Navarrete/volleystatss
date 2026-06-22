@@ -264,7 +264,8 @@ interface VolleyState {
     matchId: string,
     playerSide: "A" | "B",
     type: PointType,
-    playerId: string | null
+    playerId: string | null,
+    attackZone?: AttackZone
   ) => void;
   recordSubstitution: (
     matchId: string,
