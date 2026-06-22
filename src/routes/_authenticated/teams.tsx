@@ -86,6 +86,7 @@ function TeamsPage() {
   const [color, setColor] = useState(COLORS[0]);
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [newLeagueId, setNewLeagueId] = useState<string>("");
+  const [newGender, setNewGender] = useState<"" | "M" | "F">("");
   const [selected, setSelected] = useState<string | null>(null);
   const [pName, setPName] = useState("");
   const [pNum, setPNum] = useState<number | "">("");
@@ -289,6 +290,15 @@ function TeamsPage() {
                   </option>
                 ))}
               </select>
+              <select
+                value={newGender}
+                onChange={(e) => setNewGender(e.target.value as "" | "M" | "F")}
+                className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+              >
+                <option value="">Sin género</option>
+                <option value="F">Femenino</option>
+                <option value="M">Masculino</option>
+              </select>
               <div className="flex flex-wrap gap-1.5">
                 {COLORS.map((c) => (
                   <button
@@ -312,10 +322,12 @@ function TeamsPage() {
                       shortName,
                       color,
                       logoUrl: logo,
+                      gender: newGender || null,
                     });
                     setName("");
                     setShortName("");
                     setNewLeagueId("");
+                    setNewGender("");
                     setLogo(undefined);
                     setSelected(res.id);
                   } catch {
