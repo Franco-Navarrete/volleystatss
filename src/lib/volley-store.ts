@@ -566,7 +566,7 @@ export const useVolley = create<VolleyState>()(
           ),
         })),
 
-      recordPoint: (matchId, playerSide, type, playerId) => {
+      recordPoint: (matchId, playerSide, type, playerId, attackZone) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId || m.status === "finished") return m;
@@ -579,6 +579,7 @@ export const useVolley = create<VolleyState>()(
               type,
               setNumber: m.currentSet,
               timestamp: Date.now(),
+              ...(attackZone !== undefined && isAttackType(type) ? { attackZone } : {}),
             };
             const prevServing = m.servingSide;
             let next: Match = { ...m, events: [...m.events, ev] };
