@@ -204,6 +204,23 @@ html.force-landscape [data-slot="dialog-content"] [data-slot="dialog-header"] {
   gap: 2px !important;
 }
 
+html.force-landscape .live-stats-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(720px, calc(100dvh - 28px)) !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+}
+html.force-landscape .live-stats-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
 
 /* Compact button paddings inside live-match dialogs on mobile rotated view */
 html.force-landscape [data-slot="dialog-content"] button {

@@ -6,7 +6,7 @@ import {
   setsWon,
   currentServer,
   timeoutsUsedInSet,
-  computeMatchStats,
+  computeSetStats,
   computeReceptionStats,
   getSetDuration,
   formatDurationMs,
@@ -910,9 +910,13 @@ function LiveMatch() {
 
       {/* Live stats */}
       <Dialog open={showLiveStats} onOpenChange={setShowLiveStats}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Estadísticas en vivo</DialogTitle></DialogHeader>
-          <LiveStatsPanel match={match} teamA={teamA} teamB={teamB} />
+        <DialogContent className="live-stats-dialog flex max-h-[85dvh] w-[calc(100dvw-24px)] max-w-3xl flex-col overflow-hidden rounded-xl border-border/60 p-0 gap-0">
+          <DialogHeader className="shrink-0 border-b border-border/60 px-4 py-3 pr-12 text-left">
+            <DialogTitle>Estadísticas en vivo</DialogTitle>
+          </DialogHeader>
+          <div className="live-stats-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
+            <LiveStatsPanel key={`${showLiveStats}-${match.currentSet}`} match={match} teamA={teamA} teamB={teamB} />
+          </div>
         </DialogContent>
       </Dialog>
     </CompactShell>
@@ -1575,9 +1579,18 @@ function SanctionDialog({ team, onCourt, onSubmit }: {
 }
 
 function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; teamB: Team }) {
-  const stats = useMemo(() => computeMatchStats(match), [match]);
-  const recA = useMemo(() => computeReceptionStats(match.events, "A"), [match.events]);
-  const recB = useMemo(() => computeReceptionStats(match.events, "B"), [match.events]);
+  const [selectedSet, setSelectedSet] = useState(match.currentSet);
+  useEffect(() => setSelectedSet(match.currentSet), [match.currentSet]);
+  const setNumber = match.sets.some((s) => s.number === selectedSet) ? selectedSet : match.currentSet;
+  const orderedSets = useMemo(() => {
+    const current = match.sets.find((s) => s.number === match.currentSet);
+    const others = match.sets.filter((s) => s.number !== match.currentSet).sort((a, b) => a.number - b.number);
+    return current ? [current, ...others] : match.sets;
+  }, [match.sets, match.currentSet]);
+  const stats = useMemo(() => computeSetStats(match, setNumber), [match, setNumber]);
+  const setEvents = useMemo(() => match.events.filter((e) => "setNumber" in e && e.setNumber === setNumber), [match.events, setNumber]);
+  const recA = useMemo(() => computeReceptionStats(setEvents, "A"), [setEvents]);
+  const recB = useMemo(() => computeReceptionStats(setEvents, "B"), [setEvents]);
   const renderTeam = (team: Team, recMap: Map<string, ReturnType<typeof computeReceptionStats> extends Map<string, infer V> ? V : never>) => {
     const tStat = stats.teams.get(team.id);
     const recTotals = [...recMap.values()].reduce(
@@ -1675,18 +1688,37 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
   };
   return (
     <div className="space-y-3 mt-2">
+      <div className="sticky top-0 z-10 -mx-4 -mt-2 border-b border-border/60 bg-background/95 px-4 py-2 backdrop-blur">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {orderedSets.map((s) => (
+            <button
+              key={s.number}
+              type="button"
+              onClick={() => setSelectedSet(s.number)}
+              className={`shrink-0 rounded-md border px-3 py-1.5 text-xs font-black uppercase tracking-widest transition ${
+                s.number === setNumber
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Set {s.number}
+              <span className="ml-1.5 scoreboard-digit tabular-nums opacity-80">{s.scoreA}-{s.scoreB}</span>
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="grid md:grid-cols-2 gap-3">{renderTeam(teamA, recA)}{renderTeam(teamB, recB)}</div>
       <div>
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
-          Rotaciones · Set {match.currentSet}
+          Rotaciones · Set {setNumber}
         </p>
-        <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} compact />
+        <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} compact />
       </div>
       <div>
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
-          Zonas de ataque · Set {match.currentSet}
+          Zonas de ataque · Set {setNumber}
         </p>
-        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={match.currentSet} />
+        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} />
       </div>
     </div>
   );
