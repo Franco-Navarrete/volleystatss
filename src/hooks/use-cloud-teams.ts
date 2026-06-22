@@ -30,7 +30,9 @@ export type CloudTeam = {
   color: string;
   logoUrl?: string;
   gender?: "M" | "F";
+  category?: "12" | "14" | "16" | "18" | "21" | "primera";
   players: CloudPlayer[];
+
 };
 
 export type CloudLeague = {

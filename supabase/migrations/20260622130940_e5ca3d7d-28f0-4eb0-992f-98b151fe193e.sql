@@ -1,0 +1,1 @@
+ALTER TABLE public.teams ADD COLUMN IF NOT EXISTS category TEXT CHECK (category IN ('12','14','16','18','21','primera'));

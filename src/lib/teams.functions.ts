@@ -16,6 +16,8 @@ const positionSchema = z
   .optional()
   .nullable();
 const genderSchema = z.enum(["M", "F"]).optional().nullable();
+const categorySchema = z.enum(["12", "14", "16", "18", "21", "primera"]).optional().nullable();
+
 
 // ---------------- READ ----------------
 
@@ -26,7 +28,7 @@ export const listTeams = createServerFn({ method: "GET" })
     const [teamsRes, playersRes] = await Promise.all([
       supabase
         .from("teams")
-        .select("id, league_id, name, short_name, color, logo_url, gender, created_at")
+        .select("id, league_id, name, short_name, color, logo_url, gender, category, created_at")
         .order("created_at", { ascending: true }),
       supabase
         .from("players")
@@ -42,6 +44,8 @@ export const listTeams = createServerFn({ method: "GET" })
       arr.push(p);
       playersByTeam.set(p.team_id, arr);
     }
+    const VALID_CATEGORIES = ["12", "14", "16", "18", "21", "primera"] as const;
+    type Cat = (typeof VALID_CATEGORIES)[number];
     return (teamsRes.data ?? []).map((t) => ({
       id: t.id,
       leagueId: t.league_id,
@@ -50,6 +54,9 @@ export const listTeams = createServerFn({ method: "GET" })
       color: t.color,
       logoUrl: t.logo_url ?? undefined,
       gender: (t.gender === "M" || t.gender === "F" ? t.gender : undefined) as "M" | "F" | undefined,
+      category: (VALID_CATEGORIES.includes((t as { category?: string }).category as Cat)
+        ? ((t as { category?: string }).category as Cat)
+        : undefined),
       players: (playersByTeam.get(t.id) ?? []).map((p) => ({
         id: p.id,
         name: p.name,
@@ -59,6 +66,7 @@ export const listTeams = createServerFn({ method: "GET" })
       })),
     }));
   });
+
 
 // ---------------- TEAM WRITES ----------------
 
@@ -71,6 +79,7 @@ export const createTeam = createServerFn({ method: "POST" })
     color: string;
     logoUrl?: string | null;
     gender?: "M" | "F" | null;
+    category?: "12" | "14" | "16" | "18" | "21" | "primera" | null;
   }) =>
     z
       .object({
@@ -80,6 +89,7 @@ export const createTeam = createServerFn({ method: "POST" })
         color: colorSchema,
         logoUrl: optionalUrl,
         gender: genderSchema,
+        category: categorySchema,
       })
       .parse(input),
   )
@@ -93,13 +103,15 @@ export const createTeam = createServerFn({ method: "POST" })
         color: data.color,
         logo_url: data.logoUrl ?? null,
         gender: data.gender ?? null,
+        category: data.category ?? null,
         created_by: context.userId,
-      })
+      } as TeamUpdate & { name: string; short_name: string; color: string; created_by: string })
       .select("id")
       .single();
     if (error) throw error;
     return { id: row.id };
   });
+
 
 export const updateTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -111,6 +123,7 @@ export const updateTeam = createServerFn({ method: "POST" })
     logoUrl?: string | null;
     leagueId?: string | null;
     gender?: "M" | "F" | null;
+    category?: "12" | "14" | "16" | "18" | "21" | "primera" | null;
   }) =>
     z
       .object({
@@ -121,21 +134,24 @@ export const updateTeam = createServerFn({ method: "POST" })
         logoUrl: optionalUrl,
         leagueId: uuidSchema.nullable().optional(),
         gender: genderSchema,
+        category: categorySchema,
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: TeamUpdate = {};
+    const patch: TeamUpdate & { category?: string | null } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.shortName !== undefined) patch.short_name = data.shortName;
     if (data.color !== undefined) patch.color = data.color;
     if (data.logoUrl !== undefined) patch.logo_url = data.logoUrl;
     if (data.leagueId !== undefined) patch.league_id = data.leagueId;
     if (data.gender !== undefined) patch.gender = data.gender;
+    if (data.category !== undefined) patch.category = data.category;
     const { error } = await context.supabase.from("teams").update(patch).eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
+
 
 export const deleteTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

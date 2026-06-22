@@ -364,6 +364,7 @@ export type Database = {
       }
       teams: {
         Row: {
+          category: string | null
           color: string
           created_at: string
           created_by: string | null
@@ -376,6 +377,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           color?: string
           created_at?: string
           created_by?: string | null
@@ -388,6 +390,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           color?: string
           created_at?: string
           created_by?: string | null

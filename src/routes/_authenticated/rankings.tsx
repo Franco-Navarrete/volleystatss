@@ -2,7 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { RankingList } from "@/components/RankingList";
-import { useVolley } from "@/lib/volley-store";
+import {
+  useVolley,
+  PLAYER_POSITIONS,
+  PLAYER_POSITION_LABEL,
+  TEAM_CATEGORIES,
+  TEAM_CATEGORY_LABEL,
+  type PlayerPosition,
+  type TeamCategory,
+} from "@/lib/volley-store";
 import { computeHistoricalStats, RANKING_METRICS, type RankingMetric } from "@/lib/historical-stats";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy } from "lucide-react";
@@ -23,19 +31,25 @@ function RankingsPage() {
 
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<"all" | "F" | "M">("all");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | TeamCategory>("all");
+  const [positionFilter, setPositionFilter] = useState<"all" | PlayerPosition>("all");
   const [metricKey, setMetricKey] = useState<RankingMetric>("points");
 
   const aggregates = useMemo(() => {
     let list = allAggregates;
     if (genderFilter !== "all") list = list.filter((a) => a.team.gender === genderFilter);
+    if (categoryFilter !== "all") list = list.filter((a) => a.team.category === categoryFilter);
     if (teamFilter !== "all") list = list.filter((a) => a.team.id === teamFilter);
+    if (positionFilter !== "all") list = list.filter((a) => a.player.position === positionFilter);
     return list;
-  }, [allAggregates, teamFilter, genderFilter]);
+  }, [allAggregates, teamFilter, genderFilter, categoryFilter, positionFilter]);
 
   const visibleTeams = useMemo(() => {
-    if (genderFilter === "all") return teams;
-    return teams.filter((t) => t.gender === genderFilter);
-  }, [teams, genderFilter]);
+    let list = teams;
+    if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
+    if (categoryFilter !== "all") list = list.filter((t) => t.category === categoryFilter);
+    return list;
+  }, [teams, genderFilter, categoryFilter]);
 
   const metric = RANKING_METRICS.find((m) => m.key === metricKey) ?? RANKING_METRICS[0];
 
@@ -43,6 +57,7 @@ function RankingsPage() {
     () => matches.filter((m) => m.status === "finished").length,
     [matches],
   );
+
 
   return (
     <AppShell>
@@ -90,6 +105,42 @@ function RankingsPage() {
           })}
         </div>
 
+        {/* Category + Position filters */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+              Categoría
+            </label>
+            <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as "all" | TeamCategory)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {TEAM_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>{TEAM_CATEGORY_LABEL[c]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+              Rol
+            </label>
+            <Select value={positionFilter} onValueChange={(v) => setPositionFilter(v as "all" | PlayerPosition)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {PLAYER_POSITIONS.map((p) => (
+                  <SelectItem key={p} value={p}>{PLAYER_POSITION_LABEL[p]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Team filter */}
         {visibleTeams.length > 0 && (
           <div className="flex items-center gap-2">
@@ -111,6 +162,7 @@ function RankingsPage() {
             </Select>
           </div>
         )}
+
 
         {/* Metric chips */}
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">

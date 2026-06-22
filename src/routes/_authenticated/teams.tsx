@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
-import { PLAYER_POSITIONS, PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
+import { PLAYER_POSITIONS, PLAYER_POSITION_LABEL, TEAM_CATEGORIES, TEAM_CATEGORY_LABEL, type PlayerPosition, type TeamCategory } from "@/lib/volley-store";
 import {
   useCloudLeagues,
   useCloudTeams,
@@ -87,6 +87,8 @@ function TeamsPage() {
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [newLeagueId, setNewLeagueId] = useState<string>("");
   const [newGender, setNewGender] = useState<"" | "M" | "F">("");
+  const [newCategory, setNewCategory] = useState<"" | TeamCategory>("");
+
   const [selected, setSelected] = useState<string | null>(null);
   const [pName, setPName] = useState("");
   const [pNum, setPNum] = useState<number | "">("");
@@ -299,6 +301,17 @@ function TeamsPage() {
                 <option value="F">Femenino</option>
                 <option value="M">Masculino</option>
               </select>
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value as "" | TeamCategory)}
+                className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+              >
+                <option value="">Sin categoría</option>
+                {TEAM_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{TEAM_CATEGORY_LABEL[c]}</option>
+                ))}
+              </select>
+
               <div className="flex flex-wrap gap-1.5">
                 {COLORS.map((c) => (
                   <button
@@ -323,11 +336,14 @@ function TeamsPage() {
                       color,
                       logoUrl: logo,
                       gender: newGender || null,
+                      category: newCategory || null,
                     });
                     setName("");
                     setShortName("");
                     setNewLeagueId("");
                     setNewGender("");
+                    setNewCategory("");
+
                     setLogo(undefined);
                     setSelected(res.id);
                   } catch {
@@ -474,6 +490,25 @@ function TeamsPage() {
                     <option value="F">Femenino</option>
                     <option value="M">Masculino</option>
                   </select>
+                  <select
+                    value={activeTeam.category ?? ""}
+                    disabled={!canEdit}
+                    onChange={(e) => {
+                      const v = e.target.value as "" | TeamCategory;
+                      mut.updateTeam.mutate({
+                        id: activeTeam.id,
+                        category: v || null,
+                      });
+                    }}
+                    className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
+                    title="Categoría del equipo"
+                  >
+                    <option value="">Sin categoría</option>
+                    {TEAM_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{TEAM_CATEGORY_LABEL[c]}</option>
+                    ))}
+                  </select>
+
                   {canEdit &&
                     (editingTeam ? (
                       <>
