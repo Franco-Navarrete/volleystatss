@@ -13,6 +13,7 @@ import { ArrowLeft, Crown, Download, ExternalLink, Shield, Target, Trophy, Zap, 
 import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
 import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
+import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
