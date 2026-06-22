@@ -215,8 +215,19 @@ function LiveMatch() {
 
   const submitAction = (type: PointType) => {
     if (!pendingPlayer) return;
+    if (type === "rotation_attack" || type === "counter_attack") {
+      setPendingZone({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type });
+      setPendingPlayer(null);
+      return;
+    }
     recordPoint(match.id, pendingPlayer.side, type, pendingPlayer.playerId);
     setPendingPlayer(null);
+  };
+
+  const submitZone = (zone: AttackZone) => {
+    if (!pendingZone) return;
+    recordPoint(match.id, pendingZone.side, pendingZone.type, pendingZone.playerId, zone);
+    setPendingZone(null);
   };
 
   const submitReception = (rating: ReceptionRating) => {
