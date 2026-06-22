@@ -256,7 +256,10 @@ export interface RankingMetricDef {
   format: (a: PlayerAggregate) => string;
   /** Numeric value used to sort. */
   value: (a: PlayerAggregate) => number;
+  /** Optional custom qualification predicate (defaults to value > 0). */
+  qualifies?: (a: PlayerAggregate) => boolean;
 }
+
 
 export const RANKING_METRICS: RankingMetricDef[] = [
   {
@@ -295,6 +298,12 @@ export const RANKING_METRICS: RankingMetricDef[] = [
     format: (a) => a.averages.points.toFixed(1),
     value: (a) => a.averages.points,
   },
+  {
+    key: "receptionEfficiency", label: "Mejor % de recepción", shortLabel: "% Recep.",
+    format: (a) => `${a.averages.receptionEfficiency.toFixed(0)}%`,
+    value: (a) => a.averages.receptionEfficiency,
+    qualifies: (a) => a.totals.receptionTotal >= 10,
+  },
 ];
 
 export function rankBy(
@@ -303,8 +312,10 @@ export function rankBy(
   limit = 10,
 ): PlayerAggregate[] {
   const min = metric.minMatches ?? 0;
+  const qualifies = metric.qualifies ?? ((a: PlayerAggregate) => metric.value(a) > 0);
   return aggs
-    .filter((a) => a.matchesPlayed >= min && metric.value(a) > 0)
+    .filter((a) => a.matchesPlayed >= min && qualifies(a))
     .sort((x, y) => metric.value(y) - metric.value(x))
     .slice(0, limit);
 }
+
