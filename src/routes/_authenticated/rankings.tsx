@@ -105,6 +105,42 @@ function RankingsPage() {
           })}
         </div>
 
+        {/* Category + Position filters */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+              Categoría
+            </label>
+            <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as "all" | TeamCategory)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {TEAM_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>{TEAM_CATEGORY_LABEL[c]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+              Rol
+            </label>
+            <Select value={positionFilter} onValueChange={(v) => setPositionFilter(v as "all" | PlayerPosition)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {PLAYER_POSITIONS.map((p) => (
+                  <SelectItem key={p} value={p}>{PLAYER_POSITION_LABEL[p]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Team filter */}
         {visibleTeams.length > 0 && (
           <div className="flex items-center gap-2">
@@ -126,6 +162,7 @@ function RankingsPage() {
             </Select>
           </div>
         )}
+
 
         {/* Metric chips */}
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
