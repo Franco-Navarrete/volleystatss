@@ -16,12 +16,23 @@ interface Props {
   setNumber?: number;
 }
 
-type ZoneKey = "4" | "3" | "2" | "back";
-const ZONE_KEYS: ZoneKey[] = ["4", "3", "2", "back"];
+type ZoneKey = "4" | "3" | "2" | "1" | "6" | "5";
+const ZONE_KEYS: ZoneKey[] = ["4", "3", "2", "1", "6", "5"];
 
-function zoneKey(z: AttackZone): ZoneKey {
-  return (typeof z === "number" ? String(z) : z) as ZoneKey;
+const ZONE_SHORT_LABEL: Record<ZoneKey, string> = {
+  "4": "Punta",
+  "3": "Central",
+  "2": "Opuesto",
+  "1": "Zag. 1",
+  "6": "Zag. 6",
+  "5": "Zag. 5",
+};
+
+function zoneKey(z: AttackZone | "back"): ZoneKey {
+  if (z === "back") return "1";
+  return String(z) as ZoneKey;
 }
+
 
 interface ZoneStats {
   points: number;
