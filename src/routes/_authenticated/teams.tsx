@@ -457,6 +457,23 @@ function TeamsPage() {
                       </option>
                     ))}
                   </select>
+                  <select
+                    value={activeTeam.gender ?? ""}
+                    disabled={!canEdit}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      mut.updateTeam.mutate({
+                        id: activeTeam.id,
+                        gender: v === "M" || v === "F" ? v : null,
+                      });
+                    }}
+                    className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
+                    title="Género del equipo"
+                  >
+                    <option value="">Sin género</option>
+                    <option value="F">Femenino</option>
+                    <option value="M">Masculino</option>
+                  </select>
                   {canEdit &&
                     (editingTeam ? (
                       <>
