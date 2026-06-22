@@ -5,7 +5,6 @@ import {
   type PointEvent,
   type AttackZone,
   isAttackType,
-  ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 
 interface Props {
