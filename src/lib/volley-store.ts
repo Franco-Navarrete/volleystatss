@@ -71,6 +71,22 @@ export interface Team {
 }
 
 
+/** Zona desde la que se ejecutó el ataque. "back" = ataque de zaguero (zonas 1/5/6). */
+export type AttackZone = 4 | 3 | 2 | "back";
+
+export const ATTACK_ZONES: AttackZone[] = [4, 3, 2, "back"];
+
+export const ATTACK_ZONE_LABEL: Record<string, string> = {
+  "4": "Zona 4",
+  "3": "Zona 3",
+  "2": "Zona 2",
+  back: "Zaguero",
+};
+
+export function isAttackType(t: PointType): boolean {
+  return t === "attack" || t === "rotation_attack" || t === "counter_attack";
+}
+
 export interface PointEvent {
   id: string;
   /** Side that scored the point. */
@@ -81,6 +97,8 @@ export interface PointEvent {
   type: PointType;
   setNumber: number;
   timestamp: number;
+  /** Sólo para ataques (rotation_attack / counter_attack / attack). */
+  attackZone?: AttackZone;
 }
 
 export interface SubstitutionEvent {
