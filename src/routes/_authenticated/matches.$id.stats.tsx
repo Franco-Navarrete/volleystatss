@@ -342,6 +342,10 @@ function StatsPage() {
                   <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
                   <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
                 </div>
+                <div className="mt-6">
+                  <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
+                  <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
+                </div>
               </TabsContent>
             );
           })}
