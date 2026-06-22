@@ -281,6 +281,12 @@ function StatsPage() {
       </div>
 
 
+      {/* Zonas de ataque (total partido) */}
+      <section className="mb-6">
+        <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Zonas de ataque</h2>
+        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} />
+      </section>
+
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
         <PlayerStatsTable team={teamA} rows={playersA} />
