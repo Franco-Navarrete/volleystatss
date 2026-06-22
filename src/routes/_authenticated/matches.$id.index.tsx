@@ -525,6 +525,71 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Attack zone picker (after rotation/counter attack) */}
+      <Dialog open={!!pendingZone} onOpenChange={(o) => !o && setPendingZone(null)}>
+        <DialogContent className="w-[calc(100dvw-24px)] max-w-[340px] rounded-xl border-border/60 p-3 gap-2">
+          {pendingZone && (() => {
+            const t = pendingZone.side === "A" ? teamA : teamB;
+            const player = t.players.find((p) => p.id === pendingZone.playerId);
+            const actionLabel = pendingZone.type === "counter_attack" ? "Contraataque" : "Ataque de rotación";
+            return (
+              <>
+                <DialogHeader className="pr-8 space-y-0 text-left">
+                  <DialogTitle className="flex items-center gap-3 min-w-0">
+                    <span className="size-9 shrink-0 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
+                      {player?.number}
+                    </span>
+                    <span className="min-w-0 truncate">
+                      <span className="block text-sm font-bold">{player?.name}</span>
+                      <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                        {actionLabel} · ¿desde qué zona?
+                      </span>
+                    </span>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  <button
+                    onClick={() => submitZone(4)}
+                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">4</span>
+                    <span className="text-[10px] opacity-80 mt-1">Punta</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone(3)}
+                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">3</span>
+                    <span className="text-[10px] opacity-80 mt-1">Central</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone(2)}
+                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">2</span>
+                    <span className="text-[10px] opacity-80 mt-1">Opuesto</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone("back")}
+                    className="col-span-3 min-h-12 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all"
+                  >
+                    Zaguero (1 · 6 · 5)
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPendingZone(null)}
+                  className="mt-2 text-[11px] text-muted-foreground hover:text-foreground underline self-center"
+                >
+                  Sin zona / cancelar
+                </button>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+
       {/* Reception rating dialog */}
       <Dialog open={!!pendingReception} onOpenChange={(o) => !o && setPendingReception(null)}>
         <DialogContent className="w-[calc(100dvw-24px)] max-w-[360px] rounded-xl border-border/60 p-3 gap-2">
