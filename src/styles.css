@@ -214,11 +214,11 @@ html.force-landscape .live-stats-dialog {
 }
 .live-stats-scroll {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
+  overscroll-behavior: auto;
+  touch-action: auto;
   scroll-behavior: auto;
   transform: translateZ(0);
-  will-change: scroll-position;
+  will-change: auto;
   contain: layout paint style;
 }
 .live-stats-scroll > * {
