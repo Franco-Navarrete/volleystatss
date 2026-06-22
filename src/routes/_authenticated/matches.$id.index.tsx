@@ -1575,7 +1575,17 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
       </div>
     );
   };
-  return <div className="grid md:grid-cols-2 gap-3 mt-2">{renderTeam(teamA, recA)}{renderTeam(teamB, recB)}</div>;
+  return (
+    <div className="space-y-3 mt-2">
+      <div className="grid md:grid-cols-2 gap-3">{renderTeam(teamA, recA)}{renderTeam(teamB, recB)}</div>
+      <div>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+          Rotaciones · Set {match.currentSet}
+        </p>
+        <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} compact />
+      </div>
+    </div>
+  );
 }
 
 
