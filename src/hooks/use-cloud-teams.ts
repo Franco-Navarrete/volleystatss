@@ -29,6 +29,7 @@ export type CloudTeam = {
   shortName: string;
   color: string;
   logoUrl?: string;
+  gender?: "M" | "F";
   players: CloudPlayer[];
 };
 

@@ -26,6 +26,7 @@ export function useSyncCloudToStore() {
       color: t.color,
       logoUrl: t.logoUrl,
       leagueId: t.leagueId ?? undefined,
+      gender: t.gender,
       players: (t.players ?? []).map<Player>((p) => ({
         id: p.id,
         name: p.name,

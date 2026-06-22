@@ -22,12 +22,20 @@ function RankingsPage() {
   );
 
   const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [genderFilter, setGenderFilter] = useState<"all" | "F" | "M">("all");
   const [metricKey, setMetricKey] = useState<RankingMetric>("points");
 
   const aggregates = useMemo(() => {
-    if (teamFilter === "all") return allAggregates;
-    return allAggregates.filter((a) => a.team.id === teamFilter);
-  }, [allAggregates, teamFilter]);
+    let list = allAggregates;
+    if (genderFilter !== "all") list = list.filter((a) => a.team.gender === genderFilter);
+    if (teamFilter !== "all") list = list.filter((a) => a.team.id === teamFilter);
+    return list;
+  }, [allAggregates, teamFilter, genderFilter]);
+
+  const visibleTeams = useMemo(() => {
+    if (genderFilter === "all") return teams;
+    return teams.filter((t) => t.gender === genderFilter);
+  }, [teams, genderFilter]);
 
   const metric = RANKING_METRICS.find((m) => m.key === metricKey) ?? RANKING_METRICS[0];
 
@@ -52,8 +60,38 @@ function RankingsPage() {
           </div>
         </header>
 
+        {/* Gender filter */}
+        <div className="grid grid-cols-3 gap-1.5 bg-card/40 border border-border/40 rounded-xl p-1">
+          {(["all", "F", "M"] as const).map((g) => {
+            const label = g === "all" ? "Todos" : g === "F" ? "Femenino" : "Masculino";
+            const active = genderFilter === g;
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => {
+                  setGenderFilter(g);
+                  // si el equipo elegido ya no aplica, lo limpio
+                  if (teamFilter !== "all") {
+                    const stillValid = teams.find((t) => t.id === teamFilter);
+                    if (g !== "all" && stillValid?.gender !== g) setTeamFilter("all");
+                  }
+                }}
+                className={[
+                  "py-1.5 rounded-lg text-xs font-bold transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Team filter */}
-        {teams.length > 0 && (
+        {visibleTeams.length > 0 && (
           <div className="flex items-center gap-2">
             <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
               Equipo
@@ -64,7 +102,7 @@ function RankingsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los equipos</SelectItem>
-                {teams.map((t) => (
+                {visibleTeams.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                   </SelectItem>
