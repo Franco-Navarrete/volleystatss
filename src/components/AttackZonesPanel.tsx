@@ -99,14 +99,14 @@ export function AttackZonesPanel({ match, teamA, teamB, setNumber }: Props) {
         {total === 0 ? (
           <p className="text-xs text-muted-foreground">Sin ataques con zona registrada.</p>
         ) : (
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             {ZONE_KEYS.map((k) => {
               const pts = z[k].points;
               const pct = total > 0 ? Math.round((pts / total) * 100) : 0;
               return (
                 <div key={k} className="rounded-md bg-muted/40 px-2 py-1.5 text-center">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                    {ATTACK_ZONE_LABEL[k]}
+                    {ZONE_SHORT_LABEL[k]}
                   </div>
                   <div className="scoreboard-digit text-base font-black">{pts}</div>
                   <div className="text-[10px] text-muted-foreground tabular-nums">{pct}%</div>
@@ -114,6 +114,7 @@ export function AttackZonesPanel({ match, teamA, teamB, setNumber }: Props) {
               );
             })}
           </div>
+
         )}
 
         {/* Jugadoras del equipo */}
@@ -152,31 +153,36 @@ function PlayerZoneTable({
   return (
     <div className="mt-3 overflow-x-auto">
       <table className="w-full text-xs">
-        <thead>
-          <tr className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-            <th className="text-left py-1 pr-2">Jugadora</th>
-            <th className="text-right px-1">Z4</th>
-            <th className="text-right px-1">Z3</th>
-            <th className="text-right px-1">Z2</th>
-            <th className="text-right px-1">Zag</th>
-            <th className="text-right pl-2">Tot</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.player.id} className="border-t border-border/40">
-              <td className="py-1 pr-2 truncate">
-                <span className="scoreboard-digit text-muted-foreground mr-1">#{r.player.number}</span>
-                {r.player.name}
-              </td>
-              <td className="text-right px-1 tabular-nums">{r.zones["4"].points || ""}</td>
-              <td className="text-right px-1 tabular-nums">{r.zones["3"].points || ""}</td>
-              <td className="text-right px-1 tabular-nums">{r.zones["2"].points || ""}</td>
-              <td className="text-right px-1 tabular-nums">{r.zones.back.points || ""}</td>
-              <td className="text-right pl-2 font-bold tabular-nums">{r.total}</td>
+          <thead>
+            <tr className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              <th className="text-left py-1 pr-2">Jugadora</th>
+              <th className="text-right px-1">Z4</th>
+              <th className="text-right px-1">Z3</th>
+              <th className="text-right px-1">Z2</th>
+              <th className="text-right px-1">Z1</th>
+              <th className="text-right px-1">Z6</th>
+              <th className="text-right px-1">Z5</th>
+              <th className="text-right pl-2">Tot</th>
             </tr>
-          ))}
-        </tbody>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.player.id} className="border-t border-border/40">
+                <td className="py-1 pr-2 truncate">
+                  <span className="scoreboard-digit text-muted-foreground mr-1">#{r.player.number}</span>
+                  {r.player.name}
+                </td>
+                <td className="text-right px-1 tabular-nums">{r.zones["4"].points || ""}</td>
+                <td className="text-right px-1 tabular-nums">{r.zones["3"].points || ""}</td>
+                <td className="text-right px-1 tabular-nums">{r.zones["2"].points || ""}</td>
+                <td className="text-right px-1 tabular-nums">{r.zones["1"].points || ""}</td>
+                <td className="text-right px-1 tabular-nums">{r.zones["6"].points || ""}</td>
+                <td className="text-right px-1 tabular-nums">{r.zones["5"].points || ""}</td>
+                <td className="text-right pl-2 font-bold tabular-nums">{r.total}</td>
+              </tr>
+            ))}
+          </tbody>
+
       </table>
     </div>
   );
