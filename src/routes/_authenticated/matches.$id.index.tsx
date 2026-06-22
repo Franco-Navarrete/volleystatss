@@ -569,11 +569,11 @@ function LiveMatch() {
                     <span className="text-[10px] opacity-80 mt-1">Opuesto</span>
                   </button>
                   <button
-                    onClick={() => submitZone(1)}
+                    onClick={() => submitZone(5)}
                     className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
                   >
-                    <span className="text-lg leading-none">1</span>
-                    <span className="text-[10px] opacity-80 mt-1">Zag. 1</span>
+                    <span className="text-lg leading-none">5</span>
+                    <span className="text-[10px] opacity-80 mt-1">Zag. 5</span>
                   </button>
                   <button
                     onClick={() => submitZone(6)}
@@ -583,12 +583,13 @@ function LiveMatch() {
                     <span className="text-[10px] opacity-80 mt-1">Zag. 6</span>
                   </button>
                   <button
-                    onClick={() => submitZone(5)}
+                    onClick={() => submitZone(1)}
                     className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
                   >
-                    <span className="text-lg leading-none">5</span>
-                    <span className="text-[10px] opacity-80 mt-1">Zag. 5</span>
+                    <span className="text-lg leading-none">1</span>
+                    <span className="text-[10px] opacity-80 mt-1">Zag. 1</span>
                   </button>
+
                 </div>
 
                 <button
