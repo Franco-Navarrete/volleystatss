@@ -71,17 +71,21 @@ export interface Team {
 }
 
 
-/** Zona desde la que se ejecutó el ataque. "back" = ataque de zaguero (zonas 1/5/6). */
-export type AttackZone = 4 | 3 | 2 | "back";
+/** Zona desde la que se ejecutó el ataque. 4/3/2 = frente, 1/6/5 = zaguero. */
+export type AttackZone = 4 | 3 | 2 | 1 | 6 | 5;
 
-export const ATTACK_ZONES: AttackZone[] = [4, 3, 2, "back"];
+export const ATTACK_ZONES: AttackZone[] = [4, 3, 2, 1, 6, 5];
 
 export const ATTACK_ZONE_LABEL: Record<string, string> = {
   "4": "Zona 4",
   "3": "Zona 3",
   "2": "Zona 2",
+  "1": "Zaguero 1",
+  "6": "Zaguero 6",
+  "5": "Zaguero 5",
   back: "Zaguero",
 };
+
 
 export function isAttackType(t: PointType): boolean {
   return t === "attack" || t === "rotation_attack" || t === "counter_attack";

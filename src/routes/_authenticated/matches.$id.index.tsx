@@ -18,7 +18,6 @@ import {
   type Team,
   type Match,
   type AttackZone,
-  ATTACK_ZONES,
   ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
@@ -570,12 +569,28 @@ function LiveMatch() {
                     <span className="text-[10px] opacity-80 mt-1">Opuesto</span>
                   </button>
                   <button
-                    onClick={() => submitZone("back")}
-                    className="col-span-3 min-h-12 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all"
+                    onClick={() => submitZone(1)}
+                    className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
                   >
-                    Zaguero (1 · 6 · 5)
+                    <span className="text-lg leading-none">1</span>
+                    <span className="text-[10px] opacity-80 mt-1">Zag. 1</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone(6)}
+                    className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">6</span>
+                    <span className="text-[10px] opacity-80 mt-1">Zag. 6</span>
+                  </button>
+                  <button
+                    onClick={() => submitZone(5)}
+                    className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
+                  >
+                    <span className="text-lg leading-none">5</span>
+                    <span className="text-[10px] opacity-80 mt-1">Zag. 5</span>
                   </button>
                 </div>
+
                 <button
                   type="button"
                   onClick={() => setPendingZone(null)}
