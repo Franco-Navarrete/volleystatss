@@ -302,7 +302,7 @@ export const RANKING_METRICS: RankingMetricDef[] = [
     key: "receptionEfficiency", label: "Mejor % de recepción", shortLabel: "% Recep.",
     format: (a) => `${a.averages.receptionEfficiency.toFixed(0)}%`,
     value: (a) => a.averages.receptionEfficiency,
-    qualifies: (a) => a.totals.receptionTotal >= 10,
+    qualifies: (a) => a.totals.receptionTotal > 0,
   },
 ];
 

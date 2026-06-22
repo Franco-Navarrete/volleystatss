@@ -758,11 +758,16 @@ function TeamsPage() {
                             onClick={() => canEdit && setEditingPlayerId(p.id)}
                             className="flex-1 min-w-0 text-left"
                           >
-                            <div className="truncate font-medium">{p.name}</div>
-                            <div className="text-[11px] text-muted-foreground">
+                            <div className="truncate font-medium flex items-center gap-1">
+                              {p.name}
+                              {!p.position && (
+                                <AlertTriangle className="size-3 text-amber-500 shrink-0" aria-label="Sin posición asignada" />
+                              )}
+                            </div>
+                            <div className={`text-[11px] ${p.position ? "text-muted-foreground" : "text-amber-600 font-medium"}`}>
                               {p.position
                                 ? PLAYER_POSITION_LABEL[p.position as PlayerPosition]
-                                : "Sin posición"}
+                                : "Asignar posición"}
                             </div>
                           </button>
                         </>
