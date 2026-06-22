@@ -37,6 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavLink to="/leagues">Ligas</NavLink>
             <NavLink to="/teams">Equipos</NavLink>
             <NavLink to="/matches">Partidos</NavLink>
+            <NavLink to="/rankings">Rankings</NavLink>
             {isAdmin && (
               <Link
                 to="/admin"

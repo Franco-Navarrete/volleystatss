@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedRankingsRouteImport } from './routes/_authenticated/rankings'
 import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
@@ -44,6 +45,11 @@ const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRankingsRoute = AuthenticatedRankingsRouteImport.update({
+  id: '/rankings',
+  path: '/rankings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaguesRoute = AuthenticatedLeaguesRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
+  '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/teams': typeof AuthenticatedTeamsRoute
   '/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
+  '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/teams': typeof AuthenticatedTeamsRoute
   '/': typeof AuthenticatedIndexRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/leagues': typeof AuthenticatedLeaguesRoute
+  '/_authenticated/rankings': typeof AuthenticatedRankingsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/teams': typeof AuthenticatedTeamsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/leagues'
+    | '/rankings'
     | '/settings'
     | '/teams'
     | '/matches/$id'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/leagues'
+    | '/rankings'
     | '/settings'
     | '/teams'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/leagues'
+    | '/_authenticated/rankings'
     | '/_authenticated/settings'
     | '/_authenticated/teams'
     | '/_authenticated/'
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rankings': {
+      id: '/_authenticated/rankings'
+      path: '/rankings'
+      fullPath: '/rankings'
+      preLoaderRoute: typeof AuthenticatedRankingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leagues': {
@@ -280,6 +299,7 @@ const AuthenticatedMatchesIdRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedLeaguesRoute: typeof AuthenticatedLeaguesRoute
+  AuthenticatedRankingsRoute: typeof AuthenticatedRankingsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -291,6 +311,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedLeaguesRoute: AuthenticatedLeaguesRoute,
+  AuthenticatedRankingsRoute: AuthenticatedRankingsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
