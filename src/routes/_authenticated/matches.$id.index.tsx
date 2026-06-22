@@ -6,7 +6,7 @@ import {
   setsWon,
   currentServer,
   timeoutsUsedInSet,
-  computeMatchStats,
+  computeSetStats,
   computeReceptionStats,
   getSetDuration,
   formatDurationMs,
@@ -910,9 +910,13 @@ function LiveMatch() {
 
       {/* Live stats */}
       <Dialog open={showLiveStats} onOpenChange={setShowLiveStats}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Estadísticas en vivo</DialogTitle></DialogHeader>
-          <LiveStatsPanel match={match} teamA={teamA} teamB={teamB} />
+        <DialogContent className="live-stats-dialog flex max-h-[85dvh] w-[calc(100dvw-24px)] max-w-3xl flex-col overflow-hidden rounded-xl border-border/60 p-0 gap-0">
+          <DialogHeader className="shrink-0 border-b border-border/60 px-4 py-3 pr-12 text-left">
+            <DialogTitle>Estadísticas en vivo</DialogTitle>
+          </DialogHeader>
+          <div className="live-stats-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
+            <LiveStatsPanel match={match} teamA={teamA} teamB={teamB} />
+          </div>
         </DialogContent>
       </Dialog>
     </CompactShell>
