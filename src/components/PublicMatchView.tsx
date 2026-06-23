@@ -125,6 +125,9 @@ export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchView
         <RankingCard title="Mejores sacadores" icon={Target} rows={topServers} valueKey="ace" />
       </div>
 
+      {/* Punto a punto */}
+      <PlayByPlay match={match} teamA={teamA} teamB={teamB} />
+
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
         <PlayerStatsTable team={teamA} rows={playersA} />
@@ -139,6 +142,132 @@ export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchView
     </div>
   );
 }
+
+interface Rally {
+  id: string;
+  scoreA: number;
+  scoreB: number;
+  scoringSide: "A" | "B";
+}
+
+function buildRalliesBySet(events: MatchEvent[]): Map<number, Rally[]> {
+  const bySet = new Map<number, Rally[]>();
+  const tally: Record<number, { a: number; b: number }> = {};
+  for (const ev of events) {
+    if ((ev as PointEvent).scoringSide === undefined) continue;
+    const p = ev as PointEvent;
+    const cur = (tally[p.setNumber] ??= { a: 0, b: 0 });
+    if (p.scoringSide === "A") cur.a++;
+    else cur.b++;
+    const arr = bySet.get(p.setNumber) ?? [];
+    arr.push({ id: p.id, scoreA: cur.a, scoreB: cur.b, scoringSide: p.scoringSide });
+    bySet.set(p.setNumber, arr);
+  }
+  return bySet;
+}
+
+function PlayByPlay({ match, teamA, teamB }: { match: Match; teamA: Team; teamB: Team }) {
+  const ralliesBySet = useMemo(() => buildRalliesBySet(match.events), [match.events]);
+  const setNumbers = Array.from(ralliesBySet.keys()).sort((a, b) => a - b);
+  if (setNumbers.length === 0) {
+    return (
+      <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+        <header className="px-4 py-3 flex items-center gap-2 border-b border-border/60 bg-secondary/30">
+          <ListOrdered className="size-4 text-primary" />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Punto a punto</h3>
+        </header>
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+          Todavía no hay puntos registrados.
+        </p>
+      </section>
+    );
+  }
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header className="px-4 py-3 flex items-center gap-2 border-b border-border/60 bg-secondary/30">
+        <ListOrdered className="size-4 text-primary" />
+        <h3 className="font-bold text-sm uppercase tracking-wider flex-1">Punto a punto</h3>
+        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+          <span className="flex items-center gap-1">
+            <span className="size-2 rounded-full" style={{ background: teamA.color }} />
+            {teamA.shortName || teamA.name.slice(0, 3)}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="size-2 rounded-full" style={{ background: teamB.color }} />
+            {teamB.shortName || teamB.name.slice(0, 3)}
+          </span>
+        </div>
+      </header>
+      <div className="divide-y divide-border/40">
+        {setNumbers.map((n) => {
+          const rallies = ralliesBySet.get(n)!;
+          const last = rallies[rallies.length - 1];
+          const setMeta = match.sets.find((s) => s.number === n);
+          return (
+            <details key={n} open={n === match.currentSet || setNumbers.length === 1} className="group">
+              <summary className="px-4 py-2.5 flex items-center gap-3 cursor-pointer hover:bg-secondary/20 select-none">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Set {n}</span>
+                <span className="scoreboard-digit font-black text-base tabular-nums">
+                  {last.scoreA}–{last.scoreB}
+                </span>
+                {setMeta?.finished ? (
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">final</span>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-widest text-success font-bold flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-success animate-pulse" /> en juego
+                  </span>
+                )}
+                <span className="ml-auto text-[10px] text-muted-foreground">{rallies.length} pts</span>
+              </summary>
+              <ol className="max-h-80 overflow-y-auto">
+                {[...rallies].reverse().map((r) => {
+                  const aWon = r.scoringSide === "A";
+                  return (
+                    <li
+                      key={r.id}
+                      className="px-4 py-1.5 grid grid-cols-[1fr_auto_1fr] items-center text-sm odd:bg-background/40"
+                    >
+                      <div className="flex items-center justify-end gap-2">
+                        {aWon && (
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ background: teamA.color }}
+                            aria-label={`Punto ${teamA.name}`}
+                          />
+                        )}
+                        <span
+                          className={`scoreboard-digit tabular-nums font-bold ${aWon ? "text-primary" : "text-muted-foreground"}`}
+                        >
+                          {r.scoreA}
+                        </span>
+                      </div>
+                      <span className="px-2 text-[10px] text-muted-foreground">–</span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`scoreboard-digit tabular-nums font-bold ${!aWon ? "text-primary" : "text-muted-foreground"}`}
+                        >
+                          {r.scoreB}
+                        </span>
+                        {!aWon && (
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ background: teamB.color }}
+                            aria-label={`Punto ${teamB.name}`}
+                          />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </details>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 
 function TeamHeader({
   team, sets, highlight, align,
