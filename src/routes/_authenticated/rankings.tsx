@@ -23,12 +23,14 @@ export const Route = createFileRoute("/_authenticated/rankings")({
 function RankingsPage() {
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
+  const leagues = useVolley((s) => s.leagues);
 
   const allAggregates = useMemo(
     () => computeHistoricalStats(matches, teams),
     [matches, teams],
   );
 
+  const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<"all" | "F" | "M">("all");
   const [categoryFilter, setCategoryFilter] = useState<"all" | TeamCategory>("all");
@@ -37,19 +39,21 @@ function RankingsPage() {
 
   const aggregates = useMemo(() => {
     let list = allAggregates;
+    if (leagueFilter !== "all") list = list.filter((a) => a.team.leagueId === leagueFilter);
     if (genderFilter !== "all") list = list.filter((a) => a.team.gender === genderFilter);
     if (categoryFilter !== "all") list = list.filter((a) => a.team.category === categoryFilter);
     if (teamFilter !== "all") list = list.filter((a) => a.team.id === teamFilter);
     if (positionFilter !== "all") list = list.filter((a) => a.player.position === positionFilter);
     return list;
-  }, [allAggregates, teamFilter, genderFilter, categoryFilter, positionFilter]);
+  }, [allAggregates, leagueFilter, teamFilter, genderFilter, categoryFilter, positionFilter]);
 
   const visibleTeams = useMemo(() => {
     let list = teams;
+    if (leagueFilter !== "all") list = list.filter((t) => t.leagueId === leagueFilter);
     if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
     if (categoryFilter !== "all") list = list.filter((t) => t.category === categoryFilter);
     return list;
-  }, [teams, genderFilter, categoryFilter]);
+  }, [teams, leagueFilter, genderFilter, categoryFilter]);
 
   const metric = RANKING_METRICS.find((m) => m.key === metricKey) ?? RANKING_METRICS[0];
 
