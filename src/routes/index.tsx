@@ -106,6 +106,14 @@ function PublicHome() {
             </div>
           </section>
 
+          {/* Filters */}
+          <section className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
+              <Filter className="size-3.5" /> Filtrar por género
+            </h2>
+            <GenderFilter value={genderFilter} onChange={setGenderFilter} />
+          </section>
+
           {/* Live */}
           <Section
             icon={<Radio className="size-4 text-destructive animate-pulse" />}
