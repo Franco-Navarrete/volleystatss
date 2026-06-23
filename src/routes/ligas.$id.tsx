@@ -185,21 +185,37 @@ function StandingsTab({
 
 function MatchesTab({ teams, matches }: { teams: Team[]; matches: Match[] }) {
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+  const [genderFilter, setGenderFilter] = useState<GenderFilterValue>("all");
+  const filtered = useMemo(() => {
+    if (genderFilter === "all") return matches;
+    return matches.filter((m) => matchGender(m, teamById) === genderFilter);
+  }, [matches, genderFilter, teamById]);
   const sorted = useMemo(
-    () => [...matches].sort((a, b) => b.scheduledAt - a.scheduledAt),
-    [matches],
+    () => [...filtered].sort((a, b) => b.scheduledAt - a.scheduledAt),
+    [filtered],
   );
 
   if (sorted.length === 0) {
     return (
-      <div className="rounded-2xl bg-card border border-border/60 p-8 text-center text-sm text-muted-foreground">
-        No hay partidos.
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Filter className="size-3.5 text-muted-foreground" />
+          <GenderFilter value={genderFilter} onChange={setGenderFilter} />
+        </div>
+        <div className="rounded-2xl bg-card border border-border/60 p-8 text-center text-sm text-muted-foreground">
+          No hay partidos.
+        </div>
       </div>
     );
   }
 
   return (
-    <ul className="rounded-2xl bg-card border border-border/60 divide-y divide-border/40 overflow-hidden">
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Filter className="size-3.5 text-muted-foreground" />
+        <GenderFilter value={genderFilter} onChange={setGenderFilter} />
+      </div>
+      <ul className="rounded-2xl bg-card border border-border/60 divide-y divide-border/40 overflow-hidden">
       {sorted.map((m) => {
         const a = teamById.get(m.teamAId);
         const b = teamById.get(m.teamBId);
