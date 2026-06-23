@@ -1,12 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Trophy, Users, Filter } from "lucide-react";
 
 import { PublicShell } from "@/components/PublicShell";
 import { TeamBadge } from "@/components/TeamBadge";
+import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
 import { usePublicData } from "@/lib/use-public-data";
 import {
   computeStandings,
+  matchGender,
   setsWon,
   type Match,
   type Team,
