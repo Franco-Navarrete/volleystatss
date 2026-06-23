@@ -252,6 +252,13 @@ export interface Match {
   liberoActiveA?: { liberoId: string; replacedId: string } | null;
   liberoActiveB?: { liberoId: string; replacedId: string } | null;
 }
+export function matchGender(match: Match, teamById: Map<string, Team>): TeamGender | null {
+  const a = teamById.get(match.teamAId);
+  const b = teamById.get(match.teamBId);
+  if (!a?.gender || !b?.gender) return null;
+  if (a.gender !== b.gender) return null;
+  return a.gender;
+}
 
 
 interface VolleyState {
