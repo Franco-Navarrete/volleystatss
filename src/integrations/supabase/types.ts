@@ -362,6 +362,36 @@ export type Database = {
         }
         Relationships: []
       }
+      public_matches: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          is_public: boolean
+          match_id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id: string
+          is_public?: boolean
+          match_id: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          is_public?: boolean
+          match_id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       teams: {
         Row: {
           category: string | null
