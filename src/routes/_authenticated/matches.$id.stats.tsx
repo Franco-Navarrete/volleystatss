@@ -14,6 +14,7 @@ import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
 import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
+import { ShareMatchCard } from "@/components/ShareMatchCard";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
