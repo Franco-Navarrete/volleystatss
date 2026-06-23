@@ -32,7 +32,6 @@ export function buildPublicMatchSnapshot(
   // Only include players that actually appear in the match (rosters can change).
   const filterPlayers = (team: Team): Team => {
     const playerIds = new Set<string>();
-    for (const id of team.startingLineupA ?? []) playerIds.add(id);
     for (const id of [
       ...match.startingLineupA,
       ...match.startingLineupB,
