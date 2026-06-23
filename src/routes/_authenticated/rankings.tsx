@@ -79,6 +79,37 @@ function RankingsPage() {
           </div>
         </header>
 
+        {/* League filter */}
+        {leagues.length > 0 && (
+          <div className="flex items-center gap-2">
+            <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
+              Liga
+            </label>
+            <Select
+              value={leagueFilter}
+              onValueChange={(v) => {
+                setLeagueFilter(v);
+                if (teamFilter !== "all") {
+                  const t = teams.find((x) => x.id === teamFilter);
+                  if (v !== "all" && t?.leagueId !== v) setTeamFilter("all");
+                }
+              }}
+            >
+              <SelectTrigger className="flex-1 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ligas</SelectItem>
+                {leagues.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.name}{l.season ? ` · ${l.season}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Gender filter */}
         <div className="grid grid-cols-3 gap-1.5 bg-card/40 border border-border/40 rounded-xl p-1">
           {(["all", "F", "M"] as const).map((g) => {
