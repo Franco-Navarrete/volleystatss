@@ -37,6 +37,7 @@ function PublicHome() {
   const teams = data?.teams ?? [];
   const matches = data?.matches ?? [];
   const leagues = data?.leagues ?? [];
+  const [genderFilter, setGenderFilter] = useState<GenderFilterValue>("all");
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const leagueById = useMemo(
@@ -44,31 +45,36 @@ function PublicHome() {
     [leagues],
   );
 
+  const matchesByGender = useMemo(() => {
+    if (genderFilter === "all") return matches;
+    return matches.filter((m) => matchGender(m, teamById) === genderFilter);
+  }, [matches, genderFilter, teamById]);
+
   const live = useMemo(
     () =>
-      matches
+      matchesByGender
         .filter((m) => m.status === "live")
         .sort((a, b) => a.scheduledAt - b.scheduledAt),
-    [matches],
+    [matchesByGender],
   );
 
   const now = Date.now();
   const upcoming = useMemo(
     () =>
-      matches
+      matchesByGender
         .filter((m) => m.status === "scheduled" && m.scheduledAt >= now - 60_000)
         .sort((a, b) => a.scheduledAt - b.scheduledAt)
         .slice(0, 6),
-    [matches, now],
+    [matchesByGender, now],
   );
 
   const recent = useMemo(
     () =>
-      matches
+      matchesByGender
         .filter((m) => m.status === "finished")
         .sort((a, b) => b.createdAt - a.createdAt)
         .slice(0, 6),
-    [matches],
+    [matchesByGender],
   );
 
   const activeLeagues = useMemo(() => {
