@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { CalendarDays, Radio, Trophy } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CalendarDays, Radio, Trophy, Filter } from "lucide-react";
 
 import { PublicShell } from "@/components/PublicShell";
 import { TeamBadge } from "@/components/TeamBadge";
+import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
 import { usePublicData } from "@/lib/use-public-data";
-import { setsWon, type Match, type Team, type League } from "@/lib/volley-store";
+import { matchGender, setsWon, type Match, type Team, type League } from "@/lib/volley-store";
 
 const SITE_URL = "https://volleystatss.lovable.app";
 
@@ -36,6 +37,7 @@ function PublicHome() {
   const teams = data?.teams ?? [];
   const matches = data?.matches ?? [];
   const leagues = data?.leagues ?? [];
+  const [genderFilter, setGenderFilter] = useState<GenderFilterValue>("all");
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const leagueById = useMemo(
@@ -43,31 +45,36 @@ function PublicHome() {
     [leagues],
   );
 
+  const matchesByGender = useMemo(() => {
+    if (genderFilter === "all") return matches;
+    return matches.filter((m) => matchGender(m, teamById) === genderFilter);
+  }, [matches, genderFilter, teamById]);
+
   const live = useMemo(
     () =>
-      matches
+      matchesByGender
         .filter((m) => m.status === "live")
         .sort((a, b) => a.scheduledAt - b.scheduledAt),
-    [matches],
+    [matchesByGender],
   );
 
   const now = Date.now();
   const upcoming = useMemo(
     () =>
-      matches
+      matchesByGender
         .filter((m) => m.status === "scheduled" && m.scheduledAt >= now - 60_000)
         .sort((a, b) => a.scheduledAt - b.scheduledAt)
         .slice(0, 6),
-    [matches, now],
+    [matchesByGender, now],
   );
 
   const recent = useMemo(
     () =>
-      matches
+      matchesByGender
         .filter((m) => m.status === "finished")
         .sort((a, b) => b.createdAt - a.createdAt)
         .slice(0, 6),
-    [matches],
+    [matchesByGender],
   );
 
   const activeLeagues = useMemo(() => {
@@ -97,6 +104,14 @@ function PublicHome() {
                 tiempo real.
               </p>
             </div>
+          </section>
+
+          {/* Filters */}
+          <section className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
+              <Filter className="size-3.5" /> Filtrar por género
+            </h2>
+            <GenderFilter value={genderFilter} onChange={setGenderFilter} />
           </section>
 
           {/* Live */}
