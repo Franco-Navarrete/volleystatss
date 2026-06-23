@@ -1,143 +1,146 @@
-## Plan — Compartir partidos públicos + Premios Rally
+## Fase 1 — Inicio público + Liga + Partido (modo espectador)
 
-### 1. Compartir partido por enlace público
-
-**Modelo de datos (nueva tabla `public_matches`)**
-
-Hoy los partidos viven dentro del jsonb `app_state.data` de cada usuario, sin granularidad para RLS por partido. Para no romper eso, agrego una tabla `public_matches` que guarda un snapshot autocontenido por partido. Al finalizar un partido (o al togglear "Compartir"), se hace upsert del snapshot.
-
-```sql
-create table public.public_matches (
-  id text primary key,                 -- slug corto (8 chars, base62) único
-  match_id text not null,              -- id interno del partido
-  owner_id uuid not null references auth.users(id) on delete cascade,
-  is_public boolean not null default true,
-  data jsonb not null,                 -- snapshot { match, teamA, teamB, league?, players[] }
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (owner_id, match_id)
-);
-grant select on public.public_matches to anon;          -- solo cuando is_public
-grant select, insert, update, delete on public.public_matches to authenticated;
-grant all on public.public_matches to service_role;
-alter table public.public_matches enable row level security;
-
-create policy "Public can read shared matches"
-  on public.public_matches for select to anon
-  using (is_public = true);
-
-create policy "Owner manages own shares"
-  on public.public_matches for all to authenticated
-  using (owner_id = auth.uid()) with check (owner_id = auth.uid());
-```
-
-Snapshot incluye: encabezado (equipos, escudos, liga, fecha), `sets[]`, `events[]` (timeline), `lineupHistory`, `mvpPlayerId`, y un `players` enriquecido con `name`/`number`/`position` para no depender del estado del owner.
-
-**Server function pública**
-
-`src/lib/public-match.functions.ts`:
-- `getPublicMatch({ slug })`: usa cliente publishable (no admin) + policy `anon`. Devuelve el snapshot o `notFound()` si `is_public=false`.
-- `publishMatch({ matchId })` (auth, requireSupabaseAuth): construye snapshot desde el estado actual, upsert con slug autogenerado si no existe.
-- `unpublishMatch({ matchId })`: set `is_public=false`.
-
-**Auto-publicar al finalizar**
-
-En `finishMatch` (volley-store) o en el handler de cierre, además del cambio local, se dispara `publishMatch` y se guarda el slug en `match.publicSlug` (campo opcional nuevo). El comportamiento por defecto del usuario es público al finalizar.
-
-**Ruta pública SSR**
-
-`src/routes/m.$slug.tsx` (top-level, **fuera** de `_authenticated`):
-- `loader` llama `getPublicMatch({ data: { slug } })` (server fn pública, sin bearer).
-- `head()` arma title `"Equipo A X – Y Equipo B · RALLY"`, description con MVP y resultado por set, `og:title`, `og:description`, `og:type: "article"`, `og:url`, canonical autoreferencial. Sin `og:image` por ahora (se puede agregar después con generación dinámica).
-- Sin login. `errorComponent` y `notFoundComponent` obligatorios.
-
-**Componente público de detalle**
-
-Reutiliza la presentación actual de `matches.$id.stats.tsx` pero con un wrapper "PublicMatchView" que recibe el snapshot ya armado (no toca zustand). Secciones: header con marcador, sets, MVP, stats por equipo (puntos, ataques, contraataques, bloqueos, aces, errores), stats individuales (tabla), recepción, timeline punto a punto.
-
-**Botón Compartir**
-
-En `matches.$id.tsx` (vista del owner): card "Compartir" con
-- Switch público/privado (`is_public`).
-- Input read-only con la URL `https://volleystatss.lovable.app/m/{slug}`.
-- Botones: Copiar enlace, WhatsApp (`wa.me/?text=`), Facebook (`facebook.com/sharer`), Instagram (no tiene share URL → copiamos y avisamos "pegalo en tu historia"), X/Twitter, "Compartir nativo" (`navigator.share` si existe).
-
-**Sincronización**
-
-`cloud-sync.ts` no toca `public_matches` (es independiente). Si el usuario elimina el partido localmente, agregamos un cleanup en `deleteMatch` que también borra el row público.
+Esta fase entrega la experiencia de visitante para Inicio, Liga y Partido, con dos menús separados (invitado vs admin). **Equipos** y **Rankings** públicos completos quedan para Fase 2 (los rankings de la home y los del share de partido ya existen y se reutilizan).
 
 ---
 
-### 2. Premios Rally (Equipo Ideal + premios individuales)
+### Decisión arquitectónica clave
 
-**Ruta nueva** `src/routes/_authenticated/awards.tsx` agregada al sidebar/`AppShell` con icono trofeo.
+Hoy los datos viven en `zustand` + `app_state` jsonb por usuario. Las tablas `leagues / teams / players / matches / match_sets / match_events / match_lineups` existen en la DB pero **no se usan como fuente de verdad** del frontend.
 
-**Filtros (selector)**
-- Liga: todas / liga específica (default: liga activa más reciente con partidos finalizados).
-- Categoría: todas / 12/14/16/18/21/Primera.
-- Género: todos / F / M.
+Para que cualquier visitante vea TODO sin login, propongo un **enfoque híbrido** que evita reescribir el store y todo el flujo de carga:
 
-Se calculan **sobre los partidos finalizados que entren en el filtro**.
+- Mantener `zustand + app_state` como fuente de verdad del autor (admin).
+- Agregar un **mirror público** automático: cada vez que el admin sincroniza a la nube, los datos se proyectan también a las tablas relacionales con políticas `TO anon SELECT`.
+- El frontend público lee **sólo** de esas tablas relacionales vía server functions con cliente publishable (sin login).
 
-**Algoritmo**
-
-Nuevo módulo `src/lib/awards.ts`:
+Esto es ~80% del beneficio de la opción "migrar a tablas relacionales" con ~20% del riesgo. La migración total del store queda como evolución posterior cuando se quiera permitir carga colaborativa.
 
 ```text
-score_armadora   = w.mvp*mvpCount + w.wins*teamWinPct + w.eff*teamOffEff
-score_punta      = w.atk*attackPts + w.counter*counterPts + w.ace*aces + w.eff*atkEff
-score_central    = w.blk*blocks + w.atk*attackPts + w.eff*atkEff
-score_opuesta    = w.pts*totalPts + w.counter*counterPts + w.eff*atkEff
-score_libero     = w.rec*goodRec + w.recEff*recEff − w.err*recErrors
+Admin (zustand)
+   │ cloud-sync.ts (existente)
+   ▼
+app_state.data (jsonb por usuario)   ← fuente de verdad del autor
+   │ NUEVO: projectToPublicTables()
+   ▼
+leagues / teams / players / matches / match_sets / match_events  ← lectura pública
+   │
+   ▼
+Visitantes (sin login) — server fns con cliente publishable
 ```
-
-Pesos default (configurables en UI con sliders en un sheet "Ajustar fórmula", persistidos en localStorage):
-- Ataques 40 / Bloqueos 30 / Aces 15 / MVP 15 (base), con ajustes por posición.
-
-Requisito mínimo: jugadora debe haber jugado en >= N partidos del scope (slider, default 3) o el N% de partidos, para evitar oneshots.
-
-**Selección**
-- Por cada posición, tomar el top score. Para Puntas/Centrales tomar top 2.
-- Si no hay suficientes en una posición se muestra slot vacío con mensaje "Sin candidatas".
-
-**Premios individuales**
-- MVP del torneo: top score combinado (ataques+bloqueos+aces+MVP) sin restricción de posición.
-- Mejor atacante: max puntos de ataque.
-- Mejor bloqueadora: max bloqueos.
-- Mejor sacadora: max aces.
-- Mejor receptora: max % recepción (con mínimo de recepciones).
-- Máxima anotadora: max puntos totales.
-- Revelación: top jugadora con menos partidos previos en la liga (heurística: jugó solo en últimos 30% de fechas y entró en top 10 de puntos).
-
-**UI**
-
-`awards.tsx`:
-- Header "Premios Rally" + selector liga/categoría/género + botón "Ajustar fórmula".
-- Sección **Equipo Ideal** con 7 cards (Armadora / Puntas / Centrales / Opuesta / Líbero) mostrando foto/inicial, nombre, equipo, score y top stat.
-- Sección **Premios individuales** en grid 2-cols mobile con cada categoría.
-- Mensaje vacío si no hay partidos finalizados en el scope.
-- Botón "Compartir Premios" → mismo flujo que el compartir partido pero generando un slug en `public_awards` (futuro; no incluido en este plan para no inflar el scope, se puede agregar después).
 
 ---
 
-### 3. Orden de ejecución y verificación
+### 1. Base de datos (migración)
 
-1. Migración `public_matches` (paso a aprobación).
-2. Server fns `getPublicMatch` / `publishMatch` / `unpublishMatch`.
-3. Ruta `/m/$slug` + componente `PublicMatchView` reutilizando piezas de stats.
-4. Card "Compartir" en detalle del partido + autopublicación en `finishMatch`.
-5. Verificar con Playwright: abrir `/m/<slug>` sin sesión, comprobar render + meta tags.
-6. `awards.ts` (lógica pura) + tests rápidos en consola con un partido seed.
-7. `awards.tsx` + entrada en `AppShell`.
-8. Verificación visual mobile (430px).
+**Columnas nuevas** (no se rompe nada existente):
+- `leagues.is_public boolean default true`, `leagues.owner_id uuid` (apunta al user que la publica; el superadmin por defecto).
+- `teams.is_public`, `teams.owner_id`.
+- `matches.is_public`, `matches.owner_id`, `matches.public_slug text unique` (mismo slug que `public_matches` cuando exista, para compatibilidad).
+- `players.is_public`, `players.owner_id`.
 
-Sin cambios en `client.ts`, `types.ts` se regenera tras la migración.
+**Políticas RLS nuevas** (`TO anon` SELECT) en `leagues`, `teams`, `players`, `matches`, `match_sets`, `match_events`, `match_lineups` filtrando por `is_public = true` (o por el `is_public` de la liga/partido padre en el caso de hijos). Las políticas `authenticated` existentes se conservan.
 
-### Detalles técnicos para no olvidar
+**GRANT SELECT TO anon** en esas 7 tablas.
 
-- Slug: `nanoid(8)` base62 (paquete `nanoid` ya disponible en deps de TanStack; si no, custom con `crypto.getRandomValues`).
-- Snapshot: hacer deep clone con `structuredClone` para no compartir refs con zustand.
-- Server fn pública usa cliente publishable creado dentro del handler (no admin), respetando la policy `anon`.
-- `head()` recibe `loaderData`; arma texto en español ("Femenino · Sub-16 · Liga Apertura 2026").
-- Recepción %: ya está en `historical-stats.ts`, reutilizar `computeHistoricalStats` filtrado por scope para alimentar Premios.
-- Pesos por posición vivos en `mem://features/awards-formula` para que sobrevivan a refactors.
+**Función `public.project_user_state_to_public(_user_id uuid, _data jsonb)`** (security definer): toma el `app_state.data` del usuario y hace `upsert` en las tablas relacionales con `is_public = true`, `owner_id = _user_id`. Borra filas huérfanas del mismo `owner_id` que ya no estén en el snapshot. Esto se llama desde el server fn de sync, no por trigger (más fácil de testear y revertir).
+
+---
+
+### 2. Sincronización pública
+
+Editar `src/lib/cloud-sync.ts` (o crear un wrapper `src/lib/public-mirror.functions.ts`) para que el `saveAppState` server fn, después de guardar `app_state`, llame a `project_user_state_to_public(userId, data)`.
+
+- Es idempotente (upsert + delete por diferencia).
+- Sólo afecta a usuarios marcados como "publicadores" (en Fase 1: sólo el superadmin `franco.e.navarrete@gmail.com`). Esto se controla con una flag simple en el server fn: `if (await hasRole(userId, 'admin')) { project... }`.
+- Esto reemplaza la necesidad del `ShareMatchCard` de mantener un snapshot separado por partido (sigue existiendo `public_matches` para el live ya implementado y se conserva).
+
+---
+
+### 3. Server functions públicas
+
+Nuevo archivo `src/lib/public-data.functions.ts` con un cliente publishable (sin auth, sin `localStorage`):
+
+- `getHomeData()` → devuelve `{ liveMatches, upcomingMatches, recentMatches, activeLeagues, topRankings }`. Una sola llamada para la home, cacheable.
+- `getLeague({ id })` → liga + equipos + partidos + posiciones calculadas.
+- `getPublicMatch({ id | slug })` → ya existe; se extiende para aceptar `id` además del `slug`.
+
+Todas son `createServerFn({ method: 'GET' })` sin `requireSupabaseAuth`, leyendo con cliente publishable + RLS `anon`.
+
+---
+
+### 4. Rutas y navegación
+
+**Públicas nuevas** (fuera de `_authenticated/`):
+- `src/routes/index.tsx` — **se reemplaza** la home actual por la home espectador (5 secciones). La home actual de admin se mueve a `src/routes/_authenticated/dashboard.tsx`.
+- `src/routes/ligas.tsx` (layout) y `src/routes/ligas.index.tsx` (listado).
+- `src/routes/ligas.$id.tsx` — pestañas Tabla / Partidos / Equipos / Estadísticas (las 4 pestañas se muestran; en Fase 1 "Equipos" y "Estadísticas" usan componentes mínimos que linkean a Fase 2).
+- `src/routes/partidos.$id.tsx` — vista pública en vivo del partido (reutiliza `PublicMatchView` ya implementado, con auto-refresh cada 8 s mientras esté `live`).
+- `src/routes/auth.tsx` — ya existe.
+
+Cada ruta nueva con `head()` con `title`, `description`, `og:title`, `og:description`, `og:url`, canonical (en leaf). El partido también lleva `og:type: article`.
+
+**Admin** (se renombra menú): el `AppShell` actual (Partidos, Equipos, Ligas, Rankings, Premios, Settings) sigue bajo `/_authenticated/*` pero se le agrega un header distinto que diga "Panel de admin" y un link "Volver al sitio público". Las rutas internas siguen donde están.
+
+**Componente nuevo `PublicShell`** (header móvil con: Inicio · Ligas · Partidos · Equipos · Rankings · Iniciar sesión). Si el usuario está logueado, "Iniciar sesión" se reemplaza por un botón "Panel admin" que va a `/_authenticated/dashboard`.
+
+---
+
+### 5. Páginas (Fase 1)
+
+**Inicio espectador** — 5 secciones tal como pidió, mobile-first (90% celular):
+1. Partidos en vivo (cards con marcador, set actual, botón "Ver partido" → `/partidos/$id`).
+2. Próximos partidos (orden por fecha; toma `matches` con `status='scheduled'` y `scheduled_at >= now()`).
+3. Últimos resultados (`status='finished'`, orden desc).
+4. Ligas activas (cards con nombre, temporada, cantidad de equipos).
+5. Rankings destacados (4 cards: máxima anotadora, mejor bloqueadora, mejor sacadora, MVP). Reutiliza lógica de `historical-stats.ts` y `awards.ts` ya implementadas.
+
+**Liga `/ligas/$id`** — header con nombre/temporada/categoría/género + tabs:
+- Tabla: posiciones (puntos por sets ganados/perdidos, victorias, derrotas).
+- Partidos: lista por fecha (pasados y futuros).
+- Equipos: grid de cards (Fase 1: nombre + escudo + link futuro).
+- Estadísticas: top 5 de cada ranking (Fase 1: reutiliza componente compacto de `RankingList`).
+
+**Partido `/partidos/$id`** — vista pública existente (`PublicMatchView`) con punto a punto y refresh 8 s. Funciona para `live` y `finished`. URL canónica nueva; el viejo `/m/$slug` redirige a `/partidos/$id` para no romper links compartidos.
+
+---
+
+### 6. Caché y performance
+
+- `getHomeData` con `staleTime: 30_000` en el cliente (TanStack Query) y `refetchInterval: 15_000` sólo si hay matches `live`.
+- `getLeague`: `staleTime: 60_000`.
+- `getPublicMatch`: refetch 8 s en `live`, sin refetch en `finished`.
+- SSR habilitado en todas las rutas públicas para SEO (las protegidas siguen `ssr: false`).
+
+---
+
+### 7. SEO
+
+- `head()` por ruta con `og:*` y `twitter:*`.
+- Canonical en cada leaf apuntando a `https://volleystatss.lovable.app/...`.
+- JSON-LD `SportsEvent` en `/partidos/$id` y `SportsTeam` para listas (cuando lleguen en Fase 2).
+- Robots: index por defecto en todas las públicas.
+
+---
+
+### 8. Plan de ejecución (orden)
+
+1. **Migración SQL**: columnas nuevas + función `project_user_state_to_public` + políticas RLS `TO anon` + GRANTs. *(Una sola migración.)*
+2. **Backfill** del superadmin: invocar `project_user_state_to_public` una vez con su estado actual.
+3. **Modificar `cloud-sync`** para llamar la proyección después de guardar.
+4. **`public-data.functions.ts`** + cliente publishable server-side.
+5. **`PublicShell`** + reemplazo de `src/routes/index.tsx` (mover la actual a `_authenticated/dashboard.tsx`).
+6. **Rutas `/ligas`, `/ligas/$id`, `/partidos/$id`** con `head()` SEO.
+7. **Redirect** de `/m/$slug` → `/partidos/$id`.
+8. **Verificación** en preview móvil (430 px) y test rápido como invitado (incógnito).
+
+---
+
+### Lo que NO entra en Fase 1
+
+- Página `/equipos/$id` completa (Fase 2).
+- Página `/rankings` completa con filtros (Fase 2).
+- Migración total del store a tablas relacionales (queda para cuando se quiera carga colaborativa).
+- Cambios en flujos de admin (carga de partidos, score keeper, etc. — siguen intactos).
+
+¿Aprobás este plan para que empiece con la migración?

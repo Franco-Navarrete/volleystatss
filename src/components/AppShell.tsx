@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut, Settings, ShieldCheck, Volleyball } from "lucide-react";
+import { Globe, LogOut, Settings, ShieldCheck, Volleyball } from "lucide-react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { stopCloudSync } from "@/lib/cloud-sync";
@@ -21,19 +21,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+          <Link to="/dashboard" className="flex items-center gap-2.5 group shrink-0">
             <div className="size-9 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
               <Volleyball className="size-5 text-primary-foreground" />
             </div>
             <div className="leading-tight hidden sm:block">
-              <div className="font-bold text-sm tracking-tight">RALLY</div>
+              <div className="font-bold text-sm tracking-tight">RALLY · Admin</div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                Live Stats
+                Panel de carga
               </div>
             </div>
           </Link>
           <nav className="flex items-center gap-1 text-sm overflow-x-auto">
-            <NavLink to="/">Liga</NavLink>
+            <NavLink to="/dashboard">Panel</NavLink>
             <NavLink to="/leagues">Ligas</NavLink>
             <NavLink to="/teams">Equipos</NavLink>
             <NavLink to="/matches">Partidos</NavLink>
@@ -64,13 +64,22 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="hidden sm:inline">Ajustes</span>
             </Link>
           </nav>
-          <button
-            onClick={() => void signOut()}
-            title={user?.email ? `Cerrar sesión (${user.email})` : "Cerrar sesión"}
-            className="shrink-0 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-          >
-            <LogOut className="size-4" />
-          </button>
+          <div className="shrink-0 flex items-center gap-1">
+            <Link
+              to="/"
+              title="Ver sitio público"
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <Globe className="size-4" />
+            </Link>
+            <button
+              onClick={() => void signOut()}
+              title={user?.email ? `Cerrar sesión (${user.email})` : "Cerrar sesión"}
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <LogOut className="size-4" />
+            </button>
+          </div>
         </div>
       </header>
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">

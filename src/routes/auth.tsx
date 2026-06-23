@@ -28,7 +28,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) navigate({ to: "/", replace: true });
+      if (data.session?.user) navigate({ to: "/dashboard", replace: true });
     });
   }, [navigate]);
 
@@ -49,7 +49,7 @@ function AuthPage() {
       );
       return;
     }
-    navigate({ to: "/", replace: true });
+    navigate({ to: "/dashboard", replace: true });
   };
 
   const signUp = async () => {
