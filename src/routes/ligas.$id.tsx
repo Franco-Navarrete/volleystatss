@@ -264,6 +264,7 @@ function MatchesTab({ teams, matches }: { teams: Team[]; matches: Match[] }) {
         );
       })}
     </ul>
+    </div>
   );
 }
 
