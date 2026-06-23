@@ -64,13 +64,22 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="hidden sm:inline">Ajustes</span>
             </Link>
           </nav>
-          <button
-            onClick={() => void signOut()}
-            title={user?.email ? `Cerrar sesión (${user.email})` : "Cerrar sesión"}
-            className="shrink-0 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
-          >
-            <LogOut className="size-4" />
-          </button>
+          <div className="shrink-0 flex items-center gap-1">
+            <Link
+              to="/"
+              title="Ver sitio público"
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <Globe className="size-4" />
+            </Link>
+            <button
+              onClick={() => void signOut()}
+              title={user?.email ? `Cerrar sesión (${user.email})` : "Cerrar sesión"}
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <LogOut className="size-4" />
+            </button>
+          </div>
         </div>
       </header>
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
