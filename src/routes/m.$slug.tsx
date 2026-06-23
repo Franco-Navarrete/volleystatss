@@ -12,7 +12,13 @@ const publicMatchQuery = (slug: string) =>
   queryOptions({
     queryKey: ["public-match", slug],
     queryFn: () => getPublicMatch({ data: { slug } }),
+    refetchInterval: (q) => {
+      const status = q.state.data?.snapshot?.match?.status;
+      return status === "live" ? 8000 : false;
+    },
+    refetchIntervalInBackground: false,
   });
+
 
 export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params, context }) => {
