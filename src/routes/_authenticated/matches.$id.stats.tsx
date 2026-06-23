@@ -191,6 +191,8 @@ function StatsPage() {
       )}
 
 
+      <ShareMatchCard match={match} />
+
       {/* Final */}
       <section className="rounded-3xl bg-gradient-surface border border-border/60 p-6 sm:p-8 shadow-elevated mb-6">
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-3">
