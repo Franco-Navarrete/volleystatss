@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { CalendarDays, Radio, Trophy } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CalendarDays, Radio, Trophy, Filter } from "lucide-react";
 
 import { PublicShell } from "@/components/PublicShell";
 import { TeamBadge } from "@/components/TeamBadge";
+import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
 import { usePublicData } from "@/lib/use-public-data";
-import { setsWon, type Match, type Team, type League } from "@/lib/volley-store";
+import { matchGender, setsWon, type Match, type Team, type League } from "@/lib/volley-store";
 
 const SITE_URL = "https://volleystatss.lovable.app";
 
