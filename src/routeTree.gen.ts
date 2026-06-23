@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LigasRouteImport } from './routes/ligas'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,6 +27,11 @@ import { Route as AuthenticatedMatchesIdRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMatchesIdIndexRouteImport } from './routes/_authenticated/matches.$id.index'
 import { Route as AuthenticatedMatchesIdStatsRouteImport } from './routes/_authenticated/matches.$id.stats'
 
+const LigasRoute = LigasRouteImport.update({
+  id: '/ligas',
+  path: '/ligas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -112,6 +118,7 @@ const AuthenticatedMatchesIdStatsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ligas': typeof LigasRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/awards': typeof AuthenticatedAwardsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ligas': typeof LigasRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/awards': typeof AuthenticatedAwardsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/ligas': typeof LigasRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/awards': typeof AuthenticatedAwardsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/ligas'
     | '/admin'
     | '/awards'
     | '/dashboard'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/ligas'
     | '/admin'
     | '/awards'
     | '/dashboard'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/ligas'
     | '/_authenticated/admin'
     | '/_authenticated/awards'
     | '/_authenticated/dashboard'
@@ -219,11 +231,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  LigasRoute: typeof LigasRoute
   MSlugRoute: typeof MSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ligas': {
+      id: '/ligas'
+      path: '/ligas'
+      fullPath: '/ligas'
+      preLoaderRoute: typeof LigasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -388,6 +408,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  LigasRoute: LigasRoute,
   MSlugRoute: MSlugRoute,
 }
 export const routeTree = rootRouteImport
