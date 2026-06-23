@@ -21,19 +21,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+          <Link to="/dashboard" className="flex items-center gap-2.5 group shrink-0">
             <div className="size-9 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
               <Volleyball className="size-5 text-primary-foreground" />
             </div>
             <div className="leading-tight hidden sm:block">
-              <div className="font-bold text-sm tracking-tight">RALLY</div>
+              <div className="font-bold text-sm tracking-tight">RALLY · Admin</div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                Live Stats
+                Panel de carga
               </div>
             </div>
           </Link>
           <nav className="flex items-center gap-1 text-sm overflow-x-auto">
-            <NavLink to="/">Liga</NavLink>
+            <NavLink to="/dashboard">Panel</NavLink>
             <NavLink to="/leagues">Ligas</NavLink>
             <NavLink to="/teams">Equipos</NavLink>
             <NavLink to="/matches">Partidos</NavLink>
