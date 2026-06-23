@@ -50,15 +50,30 @@ export function ShareMatchCard({ match }: { match: Match }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["own-public-match", match.id] }),
   });
 
-  // Auto-publish when the match finishes and no share exists yet.
+  // Auto-publish as soon as the match goes live (or finishes) if no share exists yet.
   useEffect(() => {
     if (isLoading) return;
     if (own) return;
-    if (match.status !== "finished") return;
+    if (match.status === "scheduled") return;
     if (!snapshot) return;
     publishMut.mutate(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, own, match.status]);
+
+  // Keep the public snapshot fresh while the match is live (debounced).
+  const eventsLen = match.events.length;
+  const setsKey = match.sets.map((s) => `${s.scoreA}-${s.scoreB}-${s.finished}`).join("|");
+  useEffect(() => {
+    if (!own?.id) return;
+    if (match.status !== "live") return;
+    if (!snapshot) return;
+    const t = setTimeout(() => {
+      publishMut.mutate(own.is_public);
+    }, 2000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [own?.id, match.status, eventsLen, setsKey]);
+
 
   const slug = own?.id;
   const isPublic = !!own?.is_public;
