@@ -1,0 +1,350 @@
+import { useMemo } from "react";
+import { Crown, Shield, Sparkles, Target, Trophy, Zap } from "lucide-react";
+import {
+  computeMatchStats,
+  computeReceptionStats,
+  setsWon,
+  type Match,
+  type PlayerStat,
+  type ReceptionStat,
+  type Team,
+  type League,
+} from "@/lib/volley-store";
+
+const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
+const mvpScore = (p: PlayerStat) =>
+  p.attack * MVP_WEIGHTS.attack +
+  p.block * MVP_WEIGHTS.block +
+  p.ace * MVP_WEIGHTS.ace +
+  p.unforcedError * MVP_WEIGHTS.unforcedError;
+
+type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
+
+export interface PublicMatchViewProps {
+  match: Match;
+  teamA: Team;
+  teamB: Team;
+  league?: League | null;
+}
+
+export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchViewProps) {
+  const stats = useMemo(() => computeMatchStats(match), [match]);
+  const w = setsWon(match);
+
+  const enrichPlayers = (team: Team): PlayerStat[] =>
+    [...stats.players.values()]
+      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = team.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+
+  const playersA = enrichPlayers(teamA);
+  const playersB = enrichPlayers(teamB);
+  const allPlayers: EnrichedPlayer[] = [
+    ...playersA.map((p) => ({ ...p, teamId: teamA.id, teamName: teamA.name, teamColor: teamA.color })),
+    ...playersB.map((p) => ({ ...p, teamId: teamB.id, teamName: teamB.name, teamColor: teamB.color })),
+  ];
+  const mvp = [...allPlayers].sort((a, b) => mvpScore(b) - mvpScore(a))[0];
+  const topScorers = [...allPlayers].filter((p) => p.total > 0).sort((a, b) => b.total - a.total).slice(0, 5);
+  const topBlockers = [...allPlayers].filter((p) => p.block > 0).sort((a, b) => b.block - a.block).slice(0, 5);
+  const topServers = [...allPlayers].filter((p) => p.ace > 0).sort((a, b) => b.ace - a.ace).slice(0, 5);
+
+  const teamStatA = stats.teams.get(teamA.id) ?? null;
+  const teamStatB = stats.teams.get(teamB.id) ?? null;
+  const recA = computeReceptionStats(match.events, "A");
+  const recB = computeReceptionStats(match.events, "B");
+
+  return (
+    <div className="space-y-6">
+      {/* Header / Final */}
+      <section className="rounded-3xl bg-gradient-surface border border-border/60 p-6 sm:p-8 shadow-elevated">
+        {league && (
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-2">
+            {league.name}{league.season ? ` · ${league.season}` : ""}
+          </div>
+        )}
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-3">
+          {match.status === "finished" ? "Resultado final" : "En progreso"}
+        </div>
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-4 sm:gap-8 items-center">
+          <TeamHeader team={teamA} sets={w.a} highlight={w.a > w.b} align="left" />
+          <div className="text-2xl text-muted-foreground font-bold">–</div>
+          <TeamHeader team={teamB} sets={w.b} highlight={w.b > w.a} align="right" />
+        </div>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          {match.sets.map((s) => (
+            <span
+              key={s.number}
+              className="px-3 py-1.5 rounded-md bg-background/40 border border-border/60 text-xs scoreboard-digit font-bold tabular-nums"
+            >
+              Set {s.number}: {s.scoreA}–{s.scoreB}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* MVP */}
+      {mvp && (
+        <section className="rounded-2xl bg-gradient-primary p-[1px] shadow-glow">
+          <div className="rounded-[calc(theme(borderRadius.2xl)-1px)] bg-card p-5 flex items-center gap-4">
+            <div className="size-14 rounded-full bg-gradient-primary flex items-center justify-center shrink-0">
+              <Crown className="size-7 text-primary-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-widest text-primary font-bold flex items-center gap-1">
+                <Sparkles className="size-3" /> MVP del partido
+              </div>
+              <div className="text-xl font-extrabold mt-0.5 truncate">#{mvp.number} {mvp.name}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {mvp.teamName} · {mvp.attack} ATK · {mvp.block} BLK · {mvp.ace} ACE
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="scoreboard-digit text-4xl font-black text-primary tabular-nums">{mvp.total}</div>
+              <div className="text-[10px] text-muted-foreground">pts totales</div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Team totals */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        <TeamSummary team={teamA} stat={teamStatA} />
+        <TeamSummary team={teamB} stat={teamStatB} />
+      </div>
+
+      {/* Rankings */}
+      <div className="grid md:grid-cols-3 gap-4">
+        <RankingCard title="Máximos anotadores" icon={Zap} rows={topScorers} valueKey="total" />
+        <RankingCard title="Mejores bloqueadores" icon={Shield} rows={topBlockers} valueKey="block" />
+        <RankingCard title="Mejores sacadores" icon={Target} rows={topServers} valueKey="ace" />
+      </div>
+
+      {/* Player tables */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <PlayerStatsTable team={teamA} rows={playersA} />
+        <PlayerStatsTable team={teamB} rows={playersB} />
+      </div>
+
+      {/* Reception */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <ReceptionTable team={teamA} recMap={recA} />
+        <ReceptionTable team={teamB} recMap={recB} />
+      </div>
+    </div>
+  );
+}
+
+function TeamHeader({
+  team, sets, highlight, align,
+}: {
+  team: Team; sets: number; highlight: boolean; align: "left" | "right";
+}) {
+  return (
+    <div className={`flex items-center gap-4 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
+      <div
+        className="size-14 rounded-xl flex items-center justify-center font-black text-lg shrink-0 overflow-hidden"
+        style={{ background: team.color + "20", color: team.color }}
+      >
+        {team.logoUrl
+          ? <img src={team.logoUrl} alt={team.name} className="size-full object-cover" />
+          : team.shortName?.slice(0, 3) || team.name.slice(0, 3)}
+      </div>
+      <div className="min-w-0">
+        <div className="font-bold truncate">{team.name}</div>
+        <div className="scoreboard-digit text-5xl font-black mt-1 leading-none">
+          <span className={highlight ? "text-primary" : "text-muted-foreground"}>{sets}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeamSummary({ team, stat }: { team: Team; stat: { total: number; attack: number; block: number; ace: number; opponentErrors: number; unforcedErrors: number } | null }) {
+  const items = [
+    { icon: Zap, label: "Puntos", value: stat?.total ?? 0, accent: true },
+    { icon: Target, label: "Ataque", value: stat?.attack ?? 0 },
+    { icon: Shield, label: "Bloqueo", value: stat?.block ?? 0 },
+    { icon: Trophy, label: "Ace", value: stat?.ace ?? 0 },
+  ];
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header
+        className="px-5 py-3 flex items-center gap-3 border-b border-border/60"
+        style={{ background: `linear-gradient(90deg, ${team.color}1a, transparent)` }}
+      >
+        <span className="size-3 rounded-full" style={{ background: team.color }} />
+        <h2 className="font-bold truncate">{team.name}</h2>
+      </header>
+      <div className="grid grid-cols-4 divide-x divide-border/40">
+        {items.map((it) => (
+          <div key={it.label} className="p-4 text-center">
+            <it.icon className={`size-4 mx-auto mb-1 ${it.accent ? "text-primary" : "text-muted-foreground"}`} />
+            <div className={`scoreboard-digit font-black text-2xl ${it.accent ? "text-primary" : ""}`}>{it.value}</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{it.label}</div>
+          </div>
+        ))}
+      </div>
+      <div className="px-5 py-3 border-t border-border/40 flex justify-between text-xs text-muted-foreground">
+        <span>Errores rival a favor: <span className="text-foreground font-bold">{stat?.opponentErrors ?? 0}</span></span>
+        <span>Errores propios: <span className="text-destructive font-bold">{stat?.unforcedErrors ?? 0}</span></span>
+      </div>
+    </section>
+  );
+}
+
+function RankingCard({
+  title, icon: Icon, rows, valueKey,
+}: {
+  title: string;
+  icon: typeof Trophy;
+  rows: EnrichedPlayer[];
+  valueKey: "total" | "block" | "ace";
+}) {
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header className="px-4 py-3 flex items-center gap-2 border-b border-border/60 bg-secondary/30">
+        <Icon className="size-4 text-primary" />
+        <h3 className="font-bold text-sm uppercase tracking-wider">{title}</h3>
+      </header>
+      <ol className="divide-y divide-border/40">
+        {rows.map((p, i) => (
+          <li key={p.playerId} className="px-4 py-2.5 flex items-center gap-3">
+            <span className={`scoreboard-digit font-black text-sm w-5 text-center ${i === 0 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
+            <span className="size-2 rounded-full shrink-0" style={{ background: p.teamColor }} />
+            <span className="size-6 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-[11px] shrink-0">{p.number}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">{p.name}</div>
+              <div className="text-[10px] text-muted-foreground truncate">{p.teamName}</div>
+            </div>
+            <span className="scoreboard-digit font-black text-xl text-primary tabular-nums">{p[valueKey]}</span>
+          </li>
+        ))}
+        {rows.length === 0 && (
+          <li className="px-4 py-6 text-center text-xs text-muted-foreground">Sin registros.</li>
+        )}
+      </ol>
+    </section>
+  );
+}
+
+function PlayerStatsTable({ team, rows }: { team: Team; rows: PlayerStat[] }) {
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header className="px-5 py-3 flex items-center gap-3 border-b border-border/60">
+        <span className="size-3 rounded-full" style={{ background: team.color }} />
+        <h2 className="font-bold truncate">{team.name} · jugadores</h2>
+      </header>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
+            <tr>
+              <th className="text-left py-2 px-4">Jugador</th>
+              <th className="text-center py-2 px-2">ATK</th>
+              <th className="text-center py-2 px-2">BLK</th>
+              <th className="text-center py-2 px-2">ACE</th>
+              <th className="text-center py-2 px-4 text-primary">TOT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => (
+              <tr key={p.playerId} className="border-t border-border/40">
+                <td className="py-2 px-4">
+                  <div className="flex items-center gap-2">
+                    <span className="size-7 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-xs">{p.number}</span>
+                    <span className="font-medium truncate">{p.name}</span>
+                  </div>
+                </td>
+                <td className="text-center tabular-nums">{p.attack}</td>
+                <td className="text-center tabular-nums">{p.block}</td>
+                <td className="text-center tabular-nums">{p.ace}</td>
+                <td className="text-center tabular-nums font-bold text-primary px-4">{p.total}</td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={5} className="text-center py-8 text-sm text-muted-foreground">Sin puntos registrados.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function ReceptionTable({ team, recMap }: { team: Team; recMap: Map<string, ReceptionStat> }) {
+  const rows = team.players
+    .map((tp) => {
+      const r = recMap.get(tp.id);
+      return {
+        playerId: tp.id,
+        name: tp.name,
+        number: tp.number,
+        positive: r?.positive ?? 0,
+        neutral: r?.neutral ?? 0,
+        negative: r?.negative ?? 0,
+        total: r?.total ?? 0,
+        efficiency: r?.efficiency ?? 0,
+      };
+    })
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.total - a.total || b.efficiency - a.efficiency);
+
+  const totals = rows.reduce(
+    (acc, r) => ({ pos: acc.pos + r.positive, neu: acc.neu + r.neutral, neg: acc.neg + r.negative, total: acc.total + r.total }),
+    { pos: 0, neu: 0, neg: 0, total: 0 },
+  );
+  const teamEff = totals.total > 0 ? ((totals.pos - totals.neg) / totals.total) * 100 : 0;
+  const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
+
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header className="px-5 py-3 flex items-center gap-3 border-b border-border/60">
+        <span className="size-3 rounded-full" style={{ background: team.color }} />
+        <h2 className="font-bold truncate flex-1">{team.name} · recepción</h2>
+        {totals.total > 0 && (
+          <span className={`scoreboard-digit font-black text-xl tabular-nums ${effClass(teamEff)}`}>
+            {teamEff.toFixed(0)}%
+          </span>
+        )}
+      </header>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
+            <tr>
+              <th className="text-left py-2 px-4">Receptor</th>
+              <th className="text-center py-2 px-2 text-success">+</th>
+              <th className="text-center py-2 px-2">0</th>
+              <th className="text-center py-2 px-2 text-destructive">−</th>
+              <th className="text-center py-2 px-2">Total</th>
+              <th className="text-center py-2 px-4 text-primary">Eficiencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p) => (
+              <tr key={p.playerId} className="border-t border-border/40">
+                <td className="py-2 px-4">
+                  <div className="flex items-center gap-2">
+                    <span className="size-7 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-xs">{p.number}</span>
+                    <span className="font-medium truncate">{p.name}</span>
+                  </div>
+                </td>
+                <td className="text-center tabular-nums text-success font-bold">{p.positive}</td>
+                <td className="text-center tabular-nums">{p.neutral}</td>
+                <td className="text-center tabular-nums text-destructive font-bold">{p.negative}</td>
+                <td className="text-center tabular-nums">{p.total}</td>
+                <td className={`text-center tabular-nums font-bold px-4 ${effClass(p.efficiency)}`}>
+                  {p.efficiency.toFixed(0)}%
+                </td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">Sin recepciones registradas.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
