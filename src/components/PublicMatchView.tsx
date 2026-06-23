@@ -1,27 +1,14 @@
 import { useMemo } from "react";
-import { Crown, ListOrdered, Shield, Sparkles, Target, Trophy, Zap } from "lucide-react";
+import { ListOrdered } from "lucide-react";
 import {
-  computeMatchStats,
-  computeReceptionStats,
+  currentServer,
   setsWon,
   type Match,
   type MatchEvent,
   type PointEvent,
-  type PlayerStat,
-  type ReceptionStat,
   type Team,
   type League,
 } from "@/lib/volley-store";
-
-
-const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
-const mvpScore = (p: PlayerStat) =>
-  p.attack * MVP_WEIGHTS.attack +
-  p.block * MVP_WEIGHTS.block +
-  p.ace * MVP_WEIGHTS.ace +
-  p.unforcedError * MVP_WEIGHTS.unforcedError;
-
-type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
 
 export interface PublicMatchViewProps {
   match: Match;
@@ -31,33 +18,8 @@ export interface PublicMatchViewProps {
 }
 
 export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchViewProps) {
-  const stats = useMemo(() => computeMatchStats(match), [match]);
   const w = setsWon(match);
-
-  const enrichPlayers = (team: Team): PlayerStat[] =>
-    [...stats.players.values()]
-      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
-      .map((p) => {
-        const tp = team.players.find((x) => x.id === p.playerId)!;
-        return { ...p, name: tp.name, number: tp.number };
-      })
-      .sort((a, b) => b.total - a.total);
-
-  const playersA = enrichPlayers(teamA);
-  const playersB = enrichPlayers(teamB);
-  const allPlayers: EnrichedPlayer[] = [
-    ...playersA.map((p) => ({ ...p, teamId: teamA.id, teamName: teamA.name, teamColor: teamA.color })),
-    ...playersB.map((p) => ({ ...p, teamId: teamB.id, teamName: teamB.name, teamColor: teamB.color })),
-  ];
-  const mvp = [...allPlayers].sort((a, b) => mvpScore(b) - mvpScore(a))[0];
-  const topScorers = [...allPlayers].filter((p) => p.total > 0).sort((a, b) => b.total - a.total).slice(0, 5);
-  const topBlockers = [...allPlayers].filter((p) => p.block > 0).sort((a, b) => b.block - a.block).slice(0, 5);
-  const topServers = [...allPlayers].filter((p) => p.ace > 0).sort((a, b) => b.ace - a.ace).slice(0, 5);
-
-  const teamStatA = stats.teams.get(teamA.id) ?? null;
-  const teamStatB = stats.teams.get(teamB.id) ?? null;
-  const recA = computeReceptionStats(match.events, "A");
-  const recB = computeReceptionStats(match.events, "B");
+  const server = currentServer(match);
 
   return (
     <div className="space-y-6">
@@ -69,7 +31,7 @@ export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchView
           </div>
         )}
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-3">
-          {match.status === "finished" ? "Resultado final" : "En progreso"}
+          {match.status === "finished" ? "Resultado final" : match.status === "live" ? "En vivo" : "Próximamente"}
         </div>
         <div className="grid grid-cols-[1fr_auto_1fr] gap-4 sm:gap-8 items-center">
           <TeamHeader team={teamA} sets={w.a} highlight={w.a > w.b} align="left" />
@@ -88,60 +50,143 @@ export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchView
         </div>
       </section>
 
-      {/* MVP */}
-      {mvp && (
-        <section className="rounded-2xl bg-gradient-primary p-[1px] shadow-glow">
-          <div className="rounded-[calc(theme(borderRadius.2xl)-1px)] bg-card p-5 flex items-center gap-4">
-            <div className="size-14 rounded-full bg-gradient-primary flex items-center justify-center shrink-0">
-              <Crown className="size-7 text-primary-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[10px] uppercase tracking-widest text-primary font-bold flex items-center gap-1">
-                <Sparkles className="size-3" /> MVP del partido
-              </div>
-              <div className="text-xl font-extrabold mt-0.5 truncate">#{mvp.number} {mvp.name}</div>
-              <div className="text-xs text-muted-foreground truncate">
-                {mvp.teamName} · {mvp.attack} ATK · {mvp.block} BLK · {mvp.ace} ACE
-              </div>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="scoreboard-digit text-4xl font-black text-primary tabular-nums">{mvp.total}</div>
-              <div className="text-[10px] text-muted-foreground">pts totales</div>
-            </div>
-          </div>
-        </section>
+      {/* Cancha en vivo */}
+      {match.status !== "scheduled" && (
+        <PublicCourt
+          match={match}
+          teamA={teamA}
+          teamB={teamB}
+          serverSide={server.side}
+          serverPlayerId={server.playerId}
+        />
       )}
-
-      {/* Team totals */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <TeamSummary team={teamA} stat={teamStatA} />
-        <TeamSummary team={teamB} stat={teamStatB} />
-      </div>
-
-      {/* Rankings */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <RankingCard title="Máximos anotadores" icon={Zap} rows={topScorers} valueKey="total" />
-        <RankingCard title="Mejores bloqueadores" icon={Shield} rows={topBlockers} valueKey="block" />
-        <RankingCard title="Mejores sacadores" icon={Target} rows={topServers} valueKey="ace" />
-      </div>
 
       {/* Punto a punto */}
       <PlayByPlay match={match} teamA={teamA} teamB={teamB} />
+    </div>
+  );
+}
 
-      {/* Player tables */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <PlayerStatsTable team={teamA} rows={playersA} />
-        <PlayerStatsTable team={teamB} rows={playersB} />
+function TeamHeader({
+  team, sets, highlight, align,
+}: {
+  team: Team; sets: number; highlight: boolean; align: "left" | "right";
+}) {
+  return (
+    <div className={`flex items-center gap-4 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
+      <div
+        className="size-14 rounded-xl flex items-center justify-center font-black text-lg shrink-0 overflow-hidden"
+        style={{ background: team.color + "20", color: team.color }}
+      >
+        {team.logoUrl
+          ? <img src={team.logoUrl} alt={team.name} className="size-full object-cover" />
+          : team.shortName?.slice(0, 3) || team.name.slice(0, 3)}
       </div>
-
-      {/* Reception */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <ReceptionTable team={teamA} recMap={recA} />
-        <ReceptionTable team={teamB} recMap={recB} />
+      <div className="min-w-0">
+        <div className="font-bold truncate">{team.name}</div>
+        <div className="scoreboard-digit text-5xl font-black mt-1 leading-none">
+          <span className={highlight ? "text-primary" : "text-muted-foreground"}>{sets}</span>
+        </div>
       </div>
     </div>
   );
 }
+
+/* ---------------- Cancha pública (solo lectura) ---------------- */
+
+function PublicCourt({
+  match, teamA, teamB, serverSide, serverPlayerId,
+}: {
+  match: Match; teamA: Team; teamB: Team;
+  serverSide: "A" | "B"; serverPlayerId: string | null;
+}) {
+  // A siempre a la izquierda en la vista pública
+  const leftSide: "A" | "B" = "A";
+  const rightSide: "A" | "B" = "B";
+  const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
+  const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
+    { side: leftSide, team: teamFor(leftSide), idxs: [4, 5, 0] },
+    { side: leftSide, team: teamFor(leftSide), idxs: [3, 2, 1] },
+    { side: rightSide, team: teamFor(rightSide), idxs: [1, 2, 3] },
+    { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
+  ];
+
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
+      <header className="px-4 py-3 flex items-center gap-2 border-b border-border/60 bg-secondary/30">
+        <h3 className="font-bold text-sm uppercase tracking-wider flex-1">En cancha</h3>
+        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+          <span className="flex items-center gap-1">
+            <span className="size-2 rounded-full" style={{ background: teamA.color }} />
+            {teamA.shortName || teamA.name.slice(0, 3)}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="size-2 rounded-full" style={{ background: teamB.color }} />
+            {teamB.shortName || teamB.name.slice(0, 3)}
+          </span>
+        </div>
+      </header>
+      <div className="p-3 sm:p-4">
+        <div className="relative rounded-lg md:rounded-xl overflow-hidden min-h-[180px] [@media(max-width:360px)]:min-h-[140px] sm:min-h-[260px] md:min-h-[380px] bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7">
+          <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
+          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0 border-l-2 border-dashed border-white pointer-events-none z-10" />
+          <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white z-10" />
+          <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white z-10" />
+          <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
+          <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
+
+          <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
+            {columns.map((col, ci) => {
+              const onCourt = col.side === "A" ? match.onCourtA : match.onCourtB;
+              const serverPid = serverSide === col.side ? serverPlayerId : null;
+              const isFront = ci === 1 || ci === 2;
+              return (
+                <div
+                  key={ci}
+                  className={`grid grid-rows-3 items-center gap-1 [@media(max-width:360px)]:gap-0.5 sm:gap-3 h-full px-0.5 [@media(max-width:360px)]:px-0 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+                >
+                  {col.idxs.map((idx) => {
+                    const pid = onCourt[idx];
+                    const p = col.team.players.find((x) => x.id === pid);
+                    const isServer = !!pid && pid === serverPid;
+                    const designated = (col.side === "A"
+                      ? [match.liberoA1Id, match.liberoA2Id]
+                      : [match.liberoB1Id, match.liberoB2Id]
+                    ).filter(Boolean) as string[];
+                    const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
+                    return (
+                      <div
+                        key={`${ci}-${idx}`}
+                        className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md aspect-square mx-auto h-[58%] [@media(max-width:360px)]:h-[48%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""}`}
+                        style={isLibero
+                          ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
+                          : { background: col.team.color }}
+                        title={p ? `#${p.number} ${p.name}` : ""}
+                      >
+                        <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
+                        {p && (
+                          <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
+                        )}
+                        {isLibero && (
+                          <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
+                        )}
+                        {isServer && (
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Punto a punto ---------------- */
 
 interface Rally {
   id: string;
@@ -263,219 +308,6 @@ function PlayByPlay({ match, teamA, teamB }: { match: Match; teamA: Team; teamB:
             </details>
           );
         })}
-      </div>
-    </section>
-  );
-}
-
-
-function TeamHeader({
-  team, sets, highlight, align,
-}: {
-  team: Team; sets: number; highlight: boolean; align: "left" | "right";
-}) {
-  return (
-    <div className={`flex items-center gap-4 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
-      <div
-        className="size-14 rounded-xl flex items-center justify-center font-black text-lg shrink-0 overflow-hidden"
-        style={{ background: team.color + "20", color: team.color }}
-      >
-        {team.logoUrl
-          ? <img src={team.logoUrl} alt={team.name} className="size-full object-cover" />
-          : team.shortName?.slice(0, 3) || team.name.slice(0, 3)}
-      </div>
-      <div className="min-w-0">
-        <div className="font-bold truncate">{team.name}</div>
-        <div className="scoreboard-digit text-5xl font-black mt-1 leading-none">
-          <span className={highlight ? "text-primary" : "text-muted-foreground"}>{sets}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TeamSummary({ team, stat }: { team: Team; stat: { total: number; attack: number; block: number; ace: number; opponentErrors: number; unforcedErrors: number } | null }) {
-  const items = [
-    { icon: Zap, label: "Puntos", value: stat?.total ?? 0, accent: true },
-    { icon: Target, label: "Ataque", value: stat?.attack ?? 0 },
-    { icon: Shield, label: "Bloqueo", value: stat?.block ?? 0 },
-    { icon: Trophy, label: "Ace", value: stat?.ace ?? 0 },
-  ];
-  return (
-    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
-      <header
-        className="px-5 py-3 flex items-center gap-3 border-b border-border/60"
-        style={{ background: `linear-gradient(90deg, ${team.color}1a, transparent)` }}
-      >
-        <span className="size-3 rounded-full" style={{ background: team.color }} />
-        <h2 className="font-bold truncate">{team.name}</h2>
-      </header>
-      <div className="grid grid-cols-4 divide-x divide-border/40">
-        {items.map((it) => (
-          <div key={it.label} className="p-4 text-center">
-            <it.icon className={`size-4 mx-auto mb-1 ${it.accent ? "text-primary" : "text-muted-foreground"}`} />
-            <div className={`scoreboard-digit font-black text-2xl ${it.accent ? "text-primary" : ""}`}>{it.value}</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{it.label}</div>
-          </div>
-        ))}
-      </div>
-      <div className="px-5 py-3 border-t border-border/40 flex justify-between text-xs text-muted-foreground">
-        <span>Errores rival a favor: <span className="text-foreground font-bold">{stat?.opponentErrors ?? 0}</span></span>
-        <span>Errores propios: <span className="text-destructive font-bold">{stat?.unforcedErrors ?? 0}</span></span>
-      </div>
-    </section>
-  );
-}
-
-function RankingCard({
-  title, icon: Icon, rows, valueKey,
-}: {
-  title: string;
-  icon: typeof Trophy;
-  rows: EnrichedPlayer[];
-  valueKey: "total" | "block" | "ace";
-}) {
-  return (
-    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
-      <header className="px-4 py-3 flex items-center gap-2 border-b border-border/60 bg-secondary/30">
-        <Icon className="size-4 text-primary" />
-        <h3 className="font-bold text-sm uppercase tracking-wider">{title}</h3>
-      </header>
-      <ol className="divide-y divide-border/40">
-        {rows.map((p, i) => (
-          <li key={p.playerId} className="px-4 py-2.5 flex items-center gap-3">
-            <span className={`scoreboard-digit font-black text-sm w-5 text-center ${i === 0 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
-            <span className="size-2 rounded-full shrink-0" style={{ background: p.teamColor }} />
-            <span className="size-6 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-[11px] shrink-0">{p.number}</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">{p.name}</div>
-              <div className="text-[10px] text-muted-foreground truncate">{p.teamName}</div>
-            </div>
-            <span className="scoreboard-digit font-black text-xl text-primary tabular-nums">{p[valueKey]}</span>
-          </li>
-        ))}
-        {rows.length === 0 && (
-          <li className="px-4 py-6 text-center text-xs text-muted-foreground">Sin registros.</li>
-        )}
-      </ol>
-    </section>
-  );
-}
-
-function PlayerStatsTable({ team, rows }: { team: Team; rows: PlayerStat[] }) {
-  return (
-    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
-      <header className="px-5 py-3 flex items-center gap-3 border-b border-border/60">
-        <span className="size-3 rounded-full" style={{ background: team.color }} />
-        <h2 className="font-bold truncate">{team.name} · jugadores</h2>
-      </header>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
-            <tr>
-              <th className="text-left py-2 px-4">Jugador</th>
-              <th className="text-center py-2 px-2">ATK</th>
-              <th className="text-center py-2 px-2">BLK</th>
-              <th className="text-center py-2 px-2">ACE</th>
-              <th className="text-center py-2 px-4 text-primary">TOT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={p.playerId} className="border-t border-border/40">
-                <td className="py-2 px-4">
-                  <div className="flex items-center gap-2">
-                    <span className="size-7 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-xs">{p.number}</span>
-                    <span className="font-medium truncate">{p.name}</span>
-                  </div>
-                </td>
-                <td className="text-center tabular-nums">{p.attack}</td>
-                <td className="text-center tabular-nums">{p.block}</td>
-                <td className="text-center tabular-nums">{p.ace}</td>
-                <td className="text-center tabular-nums font-bold text-primary px-4">{p.total}</td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr><td colSpan={5} className="text-center py-8 text-sm text-muted-foreground">Sin puntos registrados.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-function ReceptionTable({ team, recMap }: { team: Team; recMap: Map<string, ReceptionStat> }) {
-  const rows = team.players
-    .map((tp) => {
-      const r = recMap.get(tp.id);
-      return {
-        playerId: tp.id,
-        name: tp.name,
-        number: tp.number,
-        positive: r?.positive ?? 0,
-        neutral: r?.neutral ?? 0,
-        negative: r?.negative ?? 0,
-        total: r?.total ?? 0,
-        efficiency: r?.efficiency ?? 0,
-      };
-    })
-    .filter((r) => r.total > 0)
-    .sort((a, b) => b.total - a.total || b.efficiency - a.efficiency);
-
-  const totals = rows.reduce(
-    (acc, r) => ({ pos: acc.pos + r.positive, neu: acc.neu + r.neutral, neg: acc.neg + r.negative, total: acc.total + r.total }),
-    { pos: 0, neu: 0, neg: 0, total: 0 },
-  );
-  const teamEff = totals.total > 0 ? ((totals.pos - totals.neg) / totals.total) * 100 : 0;
-  const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
-
-  return (
-    <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
-      <header className="px-5 py-3 flex items-center gap-3 border-b border-border/60">
-        <span className="size-3 rounded-full" style={{ background: team.color }} />
-        <h2 className="font-bold truncate flex-1">{team.name} · recepción</h2>
-        {totals.total > 0 && (
-          <span className={`scoreboard-digit font-black text-xl tabular-nums ${effClass(teamEff)}`}>
-            {teamEff.toFixed(0)}%
-          </span>
-        )}
-      </header>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
-            <tr>
-              <th className="text-left py-2 px-4">Receptor</th>
-              <th className="text-center py-2 px-2 text-success">+</th>
-              <th className="text-center py-2 px-2">0</th>
-              <th className="text-center py-2 px-2 text-destructive">−</th>
-              <th className="text-center py-2 px-2">Total</th>
-              <th className="text-center py-2 px-4 text-primary">Eficiencia</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={p.playerId} className="border-t border-border/40">
-                <td className="py-2 px-4">
-                  <div className="flex items-center gap-2">
-                    <span className="size-7 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-xs">{p.number}</span>
-                    <span className="font-medium truncate">{p.name}</span>
-                  </div>
-                </td>
-                <td className="text-center tabular-nums text-success font-bold">{p.positive}</td>
-                <td className="text-center tabular-nums">{p.neutral}</td>
-                <td className="text-center tabular-nums text-destructive font-bold">{p.negative}</td>
-                <td className="text-center tabular-nums">{p.total}</td>
-                <td className={`text-center tabular-nums font-bold px-4 ${effClass(p.efficiency)}`}>
-                  {p.efficiency.toFixed(0)}%
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && (
-              <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">Sin recepciones registradas.</td></tr>
-            )}
-          </tbody>
-        </table>
       </div>
     </section>
   );
