@@ -51,11 +51,48 @@ export interface Player {
   position?: PlayerPosition;
 }
 
+export type StatsMode = "liga" | "entrenador";
+
+export const STATS_MODE_LABEL: Record<StatsMode, string> = {
+  liga: "Modo Liga · Planillero",
+  entrenador: "Modo Entrenador · Avanzado",
+};
+
+export const STATS_MODE_DESCRIPTION: Record<StatsMode, string> = {
+  liga: "Carga rápida. Solo resultados, tabla, rankings y MVP. Sin recepción ni zonas de ataque.",
+  entrenador: "Incluye recepción por calidad, zonas de ataque, rotaciones y estadísticas avanzadas.",
+};
+
 export interface League {
   id: string;
   name: string;
   season?: string;
   color?: string;
+  /** Define qué interfaz y estadísticas se muestran para los partidos de esta liga. */
+  statsMode?: StatsMode;
+}
+
+/** Modo por defecto cuando una liga no lo define o cuando el partido no pertenece a ninguna liga. */
+export const DEFAULT_STATS_MODE: StatsMode = "liga";
+
+export function getLeagueStatsMode(leagueId: string | undefined | null, leagues: League[]): StatsMode {
+  if (!leagueId) return DEFAULT_STATS_MODE;
+  const l = leagues.find((x) => x.id === leagueId);
+  return l?.statsMode ?? DEFAULT_STATS_MODE;
+}
+
+export function getMatchStatsMode(
+  match: { teamAId: string; teamBId: string } | null | undefined,
+  teams: Team[],
+  leagues: League[],
+): StatsMode {
+  if (!match) return DEFAULT_STATS_MODE;
+  const a = teams.find((t) => t.id === match.teamAId);
+  const b = teams.find((t) => t.id === match.teamBId);
+  if (a?.leagueId && a.leagueId === b?.leagueId) {
+    return getLeagueStatsMode(a.leagueId, leagues);
+  }
+  return DEFAULT_STATS_MODE;
 }
 
 export type TeamGender = "M" | "F";
