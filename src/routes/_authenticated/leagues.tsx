@@ -115,6 +115,35 @@ function LeaguesPage() {
                 </Button>
               </div>
 
+              <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
+                  Modo de estadísticas
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["liga", "entrenador"] as StatsMode[]).map((m) => {
+                    const current = active.statsMode ?? "liga";
+                    const isActive = current === m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => updateLeague(active.id, { statsMode: m })}
+                        className={`text-left rounded-lg border p-2.5 transition-colors ${
+                          isActive
+                            ? "border-primary bg-primary/10"
+                            : "border-border/60 bg-card hover:bg-secondary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-bold">{STATS_MODE_LABEL[m]}</div>
+                        <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                          {STATS_MODE_DESCRIPTION[m]}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
                   <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Equipos en la liga</h3>
