@@ -416,13 +416,18 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 md:gap-3 shrink-0">
+        <div className={`grid grid-cols-3 ${isCoach ? "sm:grid-cols-7" : "sm:grid-cols-6"} gap-1 md:gap-3 shrink-0`}>
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "scheduled" || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3 md:size-4" /> Deshacer
           </Button>
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => setShowLineupEditor(true)}>
             <Users className="size-3 md:size-4" /> Formación
           </Button>
+          {isCoach && (
+            <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" disabled={!isLive || actionsDisabled} onClick={() => setShowSettingDialog(true)}>
+              <Target className="size-3 md:size-4" /> Armado
+            </Button>
+          )}
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
             <ChartBarBig className="size-3 md:size-4" /> Stats vivo
           </Button>
