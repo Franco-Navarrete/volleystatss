@@ -37,6 +37,7 @@ import {
   adminListUsers,
   adminSetExtraRole,
   adminSetLeagueAccess,
+  adminSetPassword,
   adminSetPermissions,
   adminSetRole,
   type ExtraRole,
