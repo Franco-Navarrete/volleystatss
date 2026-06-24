@@ -13,7 +13,7 @@ import {
 import { PublicShell } from "@/components/PublicShell";
 import { usePublicData } from "@/lib/use-public-data";
 import {
-  POSITION_LABEL,
+  PLAYER_POSITION_LABEL,
   type Match,
   type Player,
   type Team,
@@ -133,7 +133,7 @@ function PlayerProfile() {
   if (!found) throw notFound();
 
   const { player, team } = found;
-  const positionLabel = player.position ? POSITION_LABEL[player.position] : null;
+  const positionLabel = player.position ? PLAYER_POSITION_LABEL[player.position] : null;
 
   const handleShare = async () => {
     const url = `${SITE_URL}/jugadora/${id}`;
