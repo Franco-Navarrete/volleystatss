@@ -80,6 +80,7 @@ function LiveMatch() {
   const { id } = Route.useParams();
   const match = useVolley((s) => s.matches.find((m) => m.id === id));
   const teams = useVolley((s) => s.teams);
+  const leagues = useVolley((s) => s.leagues);
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const setSetLineup = useVolley((s) => s.setSetLineup);
