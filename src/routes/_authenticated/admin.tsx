@@ -290,6 +290,16 @@ function UserRow({
             <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
           </div>
 
+          <div>
+            <Label className="text-sm mb-1.5 block">Rol</Label>
+            <ExtraRoleSelector value={extraRole} onChange={setExtraRoleState} disabled={isAdmin} />
+            {isAdmin && (
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                Los administradores no necesitan rol adicional.
+              </p>
+            )}
+          </div>
+
           {isAdmin ? (
             <p className="text-xs text-muted-foreground">
               Los administradores tienen acceso total. No hay permisos individuales que editar.
