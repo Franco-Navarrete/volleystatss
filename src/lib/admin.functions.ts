@@ -69,13 +69,20 @@ export const adminListUsers = createServerFn({ method: "GET" })
 
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { email: string; password: string; leagueIds: string[]; canCreateMatches: boolean }) =>
+  .inputValidator((input: {
+    email: string;
+    password: string;
+    leagueIds: string[];
+    canCreateMatches: boolean;
+    extraRole?: ExtraRole | null;
+  }) =>
     z
       .object({
         email: emailSchema,
         password: passwordSchema,
         leagueIds: z.array(uuidSchema).max(200),
         canCreateMatches: z.boolean(),
+        extraRole: extraRoleSchema.optional().default(null),
       })
       .parse(input),
   )
@@ -113,7 +120,44 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       if (accessErr) throw accessErr;
     }
 
+    if (data.extraRole) {
+      const { error: roleErr } = await supabaseAdmin
+        .from("user_roles")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert({ user_id: newUserId, role: data.extraRole as any });
+      if (roleErr) throw roleErr;
+    }
+
     return { id: newUserId };
+  });
+
+// ---------- Asignar / quitar rol extra (entrenador / planillero) ----------
+
+export const adminSetExtraRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; role: ExtraRole | null }) =>
+    z.object({ userId: uuidSchema, role: extraRoleSchema }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Borra los roles no-admin existentes
+    const { error: delErr } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId)
+      .in("role", ["entrenador", "planillero"]);
+    if (delErr) throw delErr;
+
+    if (data.role) {
+      const { error: insErr } = await supabaseAdmin
+        .from("user_roles")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert({ user_id: data.userId, role: data.role as any });
+      if (insErr) throw insErr;
+    }
+    return { ok: true };
   });
 
 // ---------- Eliminar usuario ----------
