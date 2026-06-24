@@ -160,6 +160,23 @@ export const adminSetExtraRole = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---------- Cambiar contraseña ----------
+
+export const adminSetPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; password: string }) =>
+    z.object({ userId: uuidSchema, password: passwordSchema }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      password: data.password,
+    });
+    if (error) throw error;
+    return { ok: true };
+  });
+
 // ---------- Eliminar usuario ----------
 
 export const adminDeleteUser = createServerFn({ method: "POST" })
