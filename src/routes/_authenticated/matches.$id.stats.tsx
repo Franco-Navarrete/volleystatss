@@ -330,18 +330,24 @@ function StatsPage() {
                   <PlayerStatsTable team={teamA} rows={setPlayersA} />
                   <PlayerStatsTable team={teamB} rows={setPlayersB} />
                 </div>
-                <div className="grid lg:grid-cols-2 gap-6 mt-6">
-                  <ReceptionTable team={teamA} recMap={setRecA} />
-                  <ReceptionTable team={teamB} recMap={setRecB} />
-                </div>
-                <div className="mt-6">
-                  <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
-                  <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
-                </div>
-                <div className="mt-6">
-                  <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
-                  <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
-                </div>
+                {isCoach && (
+                  <div className="grid lg:grid-cols-2 gap-6 mt-6">
+                    <ReceptionTable team={teamA} recMap={setRecA} />
+                    <ReceptionTable team={teamB} recMap={setRecB} />
+                  </div>
+                )}
+                {isCoach && (
+                  <div className="mt-6">
+                    <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
+                    <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
+                  </div>
+                )}
+                {isCoach && (
+                  <div className="mt-6">
+                    <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
+                    <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
+                  </div>
+                )}
               </TabsContent>
             );
           })}
@@ -349,10 +355,12 @@ function StatsPage() {
       </section>
 
       {/* Zonas de ataque (total partido) */}
-      <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Zonas de ataque · Total</h2>
-        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} />
-      </section>
+      {isCoach && (
+        <section className="mb-6">
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Zonas de ataque · Total</h2>
+          <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} />
+        </section>
+      )}
 
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
