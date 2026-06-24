@@ -6,6 +6,7 @@ import { useIsAdmin } from "@/hooks/use-auth";
 const PUBLIC_NAV = [
   { to: "/", label: "Inicio" },
   { to: "/ligas", label: "Ligas" },
+  { to: "/equipos", label: "Equipos" },
 ] as const;
 
 export function PublicShell({ children }: { children: ReactNode }) {
