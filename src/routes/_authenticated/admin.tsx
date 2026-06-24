@@ -209,6 +209,7 @@ function UserRow({
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
   const [extraRole, setExtraRoleState] = useState<ExtraRole | null>(user.extraRole);
   const [open, setOpen] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
 
   const dirty = useMemo(() => {
     if (isAdmin !== user.isAdmin) return true;
