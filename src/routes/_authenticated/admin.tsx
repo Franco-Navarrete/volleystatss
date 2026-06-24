@@ -488,6 +488,10 @@ function CreateUserDialog({
           </div>
           {!isAdmin && (
             <>
+              <div>
+                <Label className="mb-1.5 block">Rol</Label>
+                <ExtraRoleSelector value={extraRole} onChange={setExtraRole} />
+              </div>
               <div className="flex items-center justify-between gap-2">
                 <Label>Puede crear partidos</Label>
                 <Switch checked={canCreate} onCheckedChange={setCanCreate} />
