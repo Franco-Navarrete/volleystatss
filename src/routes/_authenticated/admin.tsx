@@ -36,6 +36,7 @@ import {
   adminListUsers,
   adminSetLeagueAccess,
   adminSetPermissions,
+  adminSetRole,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -157,25 +158,34 @@ function UserRow({
 }) {
   const setPerms = useServerFn(adminSetPermissions);
   const setAccess = useServerFn(adminSetLeagueAccess);
+  const setRole = useServerFn(adminSetRole);
   const deleteUser = useServerFn(adminDeleteUser);
 
   const [selected, setSelected] = useState<Set<string>>(new Set(user.leagueIds));
   const [canCreate, setCanCreate] = useState(user.canCreateMatches);
+  const [isAdmin, setIsAdmin] = useState(user.isAdmin);
   const [open, setOpen] = useState(false);
 
   const dirty = useMemo(() => {
+    if (isAdmin !== user.isAdmin) return true;
     const orig = new Set(user.leagueIds);
     if (selected.size !== orig.size) return true;
     for (const id of selected) if (!orig.has(id)) return true;
     return canCreate !== user.canCreateMatches;
-  }, [selected, canCreate, user]);
+  }, [selected, canCreate, isAdmin, user]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      await Promise.all([
-        setPerms({ data: { userId: user.id, canCreateMatches: canCreate } }),
-        setAccess({ data: { userId: user.id, leagueIds: Array.from(selected) } }),
-      ]);
+      // Role change first, since it changes downstream meaning
+      if (isAdmin !== user.isAdmin) {
+        await setRole({ data: { userId: user.id, isAdmin } });
+      }
+      if (!isAdmin) {
+        await Promise.all([
+          setPerms({ data: { userId: user.id, canCreateMatches: canCreate } }),
+          setAccess({ data: { userId: user.id, leagueIds: Array.from(selected) } }),
+        ]);
+      }
     },
     onSuccess: () => {
       toast.success("Usuario actualizado");
