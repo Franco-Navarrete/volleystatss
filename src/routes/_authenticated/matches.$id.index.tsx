@@ -155,6 +155,8 @@ function LiveMatch() {
   const setStartedAt = match.setStartTimes?.[match.currentSet];
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
+  const statsMode = getMatchStatsMode(match, teams, leagues);
+  const isCoach = statsMode === "entrenador";
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
   const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
