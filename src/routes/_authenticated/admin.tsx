@@ -359,17 +359,22 @@ function UserRow({
           )}
 
           <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              onClick={() => {
-                if (confirm(`¿Eliminar la cuenta ${user.email}?`)) delMut.mutate();
-              }}
-              disabled={delMut.isPending}
-            >
-              <Trash2 className="size-4" /> Eliminar
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                  if (confirm(`¿Eliminar la cuenta ${user.email}?`)) delMut.mutate();
+                }}
+                disabled={delMut.isPending}
+              >
+                <Trash2 className="size-4" /> Eliminar
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setPwOpen(true)}>
+                <KeyRound className="size-4" /> Contraseña
+              </Button>
+            </div>
             <Button
               size="sm"
               onClick={() => saveMut.mutate()}
@@ -379,9 +384,107 @@ function UserRow({
               Guardar cambios
             </Button>
           </div>
+          <ChangePasswordDialog
+            open={pwOpen}
+            onOpenChange={setPwOpen}
+            userId={user.id}
+            email={user.email}
+          />
         </div>
       )}
     </div>
+  );
+}
+
+function ChangePasswordDialog({
+  open,
+  onOpenChange,
+  userId,
+  email,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  userId: string;
+  email: string;
+}) {
+  const setPassword = useServerFn(adminSetPassword);
+  const [password, setPasswordValue] = useState("");
+
+  const generate = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let out = "";
+    const arr = new Uint32Array(12);
+    crypto.getRandomValues(arr);
+    for (let i = 0; i < 12; i++) out += chars[arr[i] % chars.length];
+    setPasswordValue(out);
+  };
+
+  const mut = useMutation({
+    mutationFn: () => setPassword({ data: { userId, password } }),
+    onSuccess: () => {
+      toast.success("Contraseña actualizada");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(password);
+      toast.success("Copiada al portapapeles");
+    } catch {
+      toast.error("No se pudo copiar");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) setPasswordValue(""); onOpenChange(v); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Cambiar contraseña</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Definí una nueva contraseña para <span className="font-medium text-foreground">{email}</span>. Guardala o compartila con el usuario: una vez cerrado este diálogo no se podrá volver a ver.
+          </p>
+          <div>
+            <Label htmlFor="pw-new">Nueva contraseña</Label>
+            <Input
+              id="pw-new"
+              type="text"
+              value={password}
+              onChange={(e) => setPasswordValue(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+              autoComplete="off"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={generate} className="flex-1">
+              Generar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={copy}
+              disabled={!password}
+              className="flex-1"
+            >
+              Copiar
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cerrar</Button>
+          <Button
+            onClick={() => mut.mutate()}
+            disabled={password.length < 8 || mut.isPending}
+          >
+            {mut.isPending && <Loader2 className="size-4 animate-spin" />}
+            Guardar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
