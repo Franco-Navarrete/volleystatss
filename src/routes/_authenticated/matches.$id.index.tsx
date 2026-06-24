@@ -1582,7 +1582,7 @@ function SanctionDialog({ team, onCourt, onSubmit }: {
   );
 }
 
-function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; teamB: Team }) {
+function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA: Team; teamB: Team; isCoach: boolean }) {
   const [selectedSet, setSelectedSet] = useState(match.currentSet);
   useEffect(() => setSelectedSet(match.currentSet), [match.currentSet]);
   const setNumber = match.sets.some((s) => s.number === selectedSet) ? selectedSet : match.currentSet;
