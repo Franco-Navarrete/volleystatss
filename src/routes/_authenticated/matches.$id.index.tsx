@@ -919,7 +919,7 @@ function LiveMatch() {
             <DialogTitle>Estadísticas en vivo</DialogTitle>
           </DialogHeader>
           <div className="live-stats-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
-            <LiveStatsPanel key={`${showLiveStats}-${match.currentSet}`} match={match} teamA={teamA} teamB={teamB} />
+            <LiveStatsPanel key={`${showLiveStats}-${match.currentSet}`} match={match} teamA={teamA} teamB={teamB} isCoach={isCoach} />
           </div>
         </DialogContent>
       </Dialog>
