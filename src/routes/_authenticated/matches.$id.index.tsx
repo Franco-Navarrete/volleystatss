@@ -45,6 +45,7 @@ import {
   Play,
   Plus,
   Shirt,
+  Target,
   Undo2,
   Users,
   X,
