@@ -34,10 +34,50 @@ import {
   adminDeleteUser,
   adminListLeagues,
   adminListUsers,
+  adminSetExtraRole,
   adminSetLeagueAccess,
   adminSetPermissions,
   adminSetRole,
+  type ExtraRole,
 } from "@/lib/admin.functions";
+
+const EXTRA_ROLE_OPTIONS: { value: ExtraRole | null; label: string; hint: string }[] = [
+  { value: null, label: "Sin rol", hint: "Solo permisos por liga" },
+  { value: "entrenador", label: "Entrenador", hint: "Acceso a estadísticas avanzadas" },
+  { value: "planillero", label: "Planillero", hint: "Carga rápida modo liga" },
+];
+
+function ExtraRoleSelector({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: ExtraRole | null;
+  onChange: (v: ExtraRole | null) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {EXTRA_ROLE_OPTIONS.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(opt.value)}
+            className={`text-left rounded-md border px-2.5 py-2 transition-colors ${
+              active ? "border-primary bg-primary/10" : "border-border/60 bg-card hover:bg-secondary/50"
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <div className="text-xs font-bold">{opt.label}</div>
+            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{opt.hint}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Administración · vstats" }] }),
