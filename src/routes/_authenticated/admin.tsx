@@ -335,28 +335,36 @@ function CreateUserDialog({
   onCreated: () => void;
 }) {
   const create = useServerFn(adminCreateUser);
+  const setRole = useServerFn(adminSetRole);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [canCreate, setCanCreate] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reset = () => {
     setEmail("");
     setPassword("");
     setCanCreate(false);
+    setIsAdmin(false);
     setSelected(new Set());
   };
 
   const mut = useMutation({
-    mutationFn: () =>
-      create({
+    mutationFn: async () => {
+      const res = await create({
         data: {
           email: email.trim(),
           password,
-          canCreateMatches: canCreate,
-          leagueIds: Array.from(selected),
+          canCreateMatches: isAdmin ? false : canCreate,
+          leagueIds: isAdmin ? [] : Array.from(selected),
         },
-      }),
+      });
+      if (isAdmin && res?.id) {
+        await setRole({ data: { userId: res.id, isAdmin: true } });
+      }
+      return res;
+    },
     onSuccess: () => {
       toast.success("Usuario creado");
       reset();
@@ -409,33 +417,44 @@ function CreateUserDialog({
               El usuario la podrá cambiar después.
             </p>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <Label>Puede crear partidos</Label>
-            <Switch checked={canCreate} onCheckedChange={setCanCreate} />
+          <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
+            <div>
+              <Label>Rol Administrador</Label>
+              <p className="text-xs text-muted-foreground">Acceso total a todo.</p>
+            </div>
+            <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
           </div>
-          <div>
-            <Label className="mb-2 block">Acceso a ligas</Label>
-            {leagues.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No hay ligas creadas.</p>
-            ) : (
-              <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                {leagues.map((l) => (
-                  <label
-                    key={l.id}
-                    className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(l.id)}
-                      onChange={() => toggle(l.id)}
-                      className="size-4 accent-primary"
-                    />
-                    <span className="text-sm flex-1 truncate">{l.name}</span>
-                  </label>
-                ))}
+          {!isAdmin && (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <Label>Puede crear partidos</Label>
+                <Switch checked={canCreate} onCheckedChange={setCanCreate} />
               </div>
-            )}
-          </div>
+              <div>
+                <Label className="mb-2 block">Acceso a ligas</Label>
+                {leagues.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No hay ligas creadas.</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                    {leagues.map((l) => (
+                      <label
+                        key={l.id}
+                        className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected.has(l.id)}
+                          onChange={() => toggle(l.id)}
+                          className="size-4 accent-primary"
+                        />
+                        <span className="text-sm flex-1 truncate">{l.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
