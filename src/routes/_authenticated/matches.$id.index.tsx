@@ -1712,18 +1712,22 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
         </div>
       </div>
       <div className="grid md:grid-cols-2 gap-3">{renderTeam(teamA, recA)}{renderTeam(teamB, recB)}</div>
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
-          Rotaciones · Set {setNumber}
-        </p>
-        <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} compact />
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
-          Zonas de ataque · Set {setNumber}
-        </p>
-        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} />
-      </div>
+      {isCoach && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+            Rotaciones · Set {setNumber}
+          </p>
+          <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} compact />
+        </div>
+      )}
+      {isCoach && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+            Zonas de ataque · Set {setNumber}
+          </p>
+          <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} />
+        </div>
+      )}
     </div>
   );
 }
