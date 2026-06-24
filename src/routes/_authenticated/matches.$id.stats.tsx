@@ -363,6 +363,14 @@ function StatsPage() {
         </section>
       )}
 
+      {/* Armado · Modo Entrenador */}
+      {isCoach && (
+        <section className="mb-6">
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Armado · Distribución y eficiencia</h2>
+          <SettingPanel match={match} teamA={teamA} teamB={teamB} />
+        </section>
+      )}
+
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
         <PlayerStatsTable team={teamA} rows={playersA} />
