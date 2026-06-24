@@ -417,6 +417,18 @@ interface VolleyState {
   ) => void;
   overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
+  recordSetting: (
+    matchId: string,
+    side: "A" | "B",
+    payload: {
+      setterId: string;
+      quality: SettingQuality;
+      attackerId: string;
+      attackZone: SettingAttackZone;
+      attackResult: SettingAttackResult;
+      receptionQuality?: SettingQuality;
+    }
+  ) => void;
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
