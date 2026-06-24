@@ -169,6 +169,35 @@ export const adminSetLeagueAccess = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---------- Asignar / quitar rol admin ----------
+
+export const adminSetRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; isAdmin: boolean }) =>
+    z.object({ userId: uuidSchema, isAdmin: z.boolean() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.userId === context.userId && !data.isAdmin) {
+      throw new Error("No podés quitarte tu propio rol de admin.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.isAdmin) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .eq("role", "admin");
+      if (error) throw error;
+    }
+    return { ok: true };
+  });
+
 // ---------- Ligas compartidas ----------
 
 export const adminListLeagues = createServerFn({ method: "GET" })

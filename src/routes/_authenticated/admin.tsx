@@ -36,6 +36,7 @@ import {
   adminListUsers,
   adminSetLeagueAccess,
   adminSetPermissions,
+  adminSetRole,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -157,25 +158,34 @@ function UserRow({
 }) {
   const setPerms = useServerFn(adminSetPermissions);
   const setAccess = useServerFn(adminSetLeagueAccess);
+  const setRole = useServerFn(adminSetRole);
   const deleteUser = useServerFn(adminDeleteUser);
 
   const [selected, setSelected] = useState<Set<string>>(new Set(user.leagueIds));
   const [canCreate, setCanCreate] = useState(user.canCreateMatches);
+  const [isAdmin, setIsAdmin] = useState(user.isAdmin);
   const [open, setOpen] = useState(false);
 
   const dirty = useMemo(() => {
+    if (isAdmin !== user.isAdmin) return true;
     const orig = new Set(user.leagueIds);
     if (selected.size !== orig.size) return true;
     for (const id of selected) if (!orig.has(id)) return true;
     return canCreate !== user.canCreateMatches;
-  }, [selected, canCreate, user]);
+  }, [selected, canCreate, isAdmin, user]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      await Promise.all([
-        setPerms({ data: { userId: user.id, canCreateMatches: canCreate } }),
-        setAccess({ data: { userId: user.id, leagueIds: Array.from(selected) } }),
-      ]);
+      // Role change first, since it changes downstream meaning
+      if (isAdmin !== user.isAdmin) {
+        await setRole({ data: { userId: user.id, isAdmin } });
+      }
+      if (!isAdmin) {
+        await Promise.all([
+          setPerms({ data: { userId: user.id, canCreateMatches: canCreate } }),
+          setAccess({ data: { userId: user.id, leagueIds: Array.from(selected) } }),
+        ]);
+      }
     },
     onSuccess: () => {
       toast.success("Usuario actualizado");
@@ -211,12 +221,12 @@ function UserRow({
         <div className="min-w-0">
           <div className="font-medium text-sm truncate flex items-center gap-2">
             {user.email}
-            {user.isAdmin && (
+            {isAdmin && (
               <Badge variant="secondary" className="text-[10px]">Admin</Badge>
             )}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {user.isAdmin
+            {isAdmin
               ? "Acceso total a todas las ligas y partidos"
               : `${user.leagueIds.length} liga${user.leagueIds.length === 1 ? "" : "s"} · ${user.canCreateMatches ? "Puede crear partidos" : "Sin permiso de crear"}`}
           </div>
@@ -224,9 +234,19 @@ function UserRow({
       </button>
       {open && (
         <div className="border-t border-border/60 px-4 py-4 space-y-4">
-          {user.isAdmin ? (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <Label className="text-sm">Rol Administrador</Label>
+              <p className="text-xs text-muted-foreground">
+                Acceso total: ligas, partidos, equipos y panel admin.
+              </p>
+            </div>
+            <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
+          </div>
+
+          {isAdmin ? (
             <p className="text-xs text-muted-foreground">
-              Los administradores tienen acceso total. No se editan permisos individuales.
+              Los administradores tienen acceso total. No hay permisos individuales que editar.
             </p>
           ) : (
             <>
@@ -273,30 +293,30 @@ function UserRow({
                   </div>
                 )}
               </div>
-
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => {
-                    if (confirm(`¿Eliminar la cuenta ${user.email}?`)) delMut.mutate();
-                  }}
-                  disabled={delMut.isPending}
-                >
-                  <Trash2 className="size-4" /> Eliminar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => saveMut.mutate()}
-                  disabled={!dirty || saveMut.isPending}
-                >
-                  {saveMut.isPending && <Loader2 className="size-4 animate-spin" />}
-                  Guardar cambios
-                </Button>
-              </div>
             </>
           )}
+
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => {
+                if (confirm(`¿Eliminar la cuenta ${user.email}?`)) delMut.mutate();
+              }}
+              disabled={delMut.isPending}
+            >
+              <Trash2 className="size-4" /> Eliminar
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => saveMut.mutate()}
+              disabled={!dirty || saveMut.isPending}
+            >
+              {saveMut.isPending && <Loader2 className="size-4 animate-spin" />}
+              Guardar cambios
+            </Button>
+          </div>
         </div>
       )}
     </div>
@@ -315,28 +335,36 @@ function CreateUserDialog({
   onCreated: () => void;
 }) {
   const create = useServerFn(adminCreateUser);
+  const setRole = useServerFn(adminSetRole);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [canCreate, setCanCreate] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reset = () => {
     setEmail("");
     setPassword("");
     setCanCreate(false);
+    setIsAdmin(false);
     setSelected(new Set());
   };
 
   const mut = useMutation({
-    mutationFn: () =>
-      create({
+    mutationFn: async () => {
+      const res = await create({
         data: {
           email: email.trim(),
           password,
-          canCreateMatches: canCreate,
-          leagueIds: Array.from(selected),
+          canCreateMatches: isAdmin ? false : canCreate,
+          leagueIds: isAdmin ? [] : Array.from(selected),
         },
-      }),
+      });
+      if (isAdmin && res?.id) {
+        await setRole({ data: { userId: res.id, isAdmin: true } });
+      }
+      return res;
+    },
     onSuccess: () => {
       toast.success("Usuario creado");
       reset();
@@ -389,33 +417,44 @@ function CreateUserDialog({
               El usuario la podrá cambiar después.
             </p>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <Label>Puede crear partidos</Label>
-            <Switch checked={canCreate} onCheckedChange={setCanCreate} />
+          <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
+            <div>
+              <Label>Rol Administrador</Label>
+              <p className="text-xs text-muted-foreground">Acceso total a todo.</p>
+            </div>
+            <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
           </div>
-          <div>
-            <Label className="mb-2 block">Acceso a ligas</Label>
-            {leagues.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No hay ligas creadas.</p>
-            ) : (
-              <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                {leagues.map((l) => (
-                  <label
-                    key={l.id}
-                    className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(l.id)}
-                      onChange={() => toggle(l.id)}
-                      className="size-4 accent-primary"
-                    />
-                    <span className="text-sm flex-1 truncate">{l.name}</span>
-                  </label>
-                ))}
+          {!isAdmin && (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <Label>Puede crear partidos</Label>
+                <Switch checked={canCreate} onCheckedChange={setCanCreate} />
               </div>
-            )}
-          </div>
+              <div>
+                <Label className="mb-2 block">Acceso a ligas</Label>
+                {leagues.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No hay ligas creadas.</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                    {leagues.map((l) => (
+                      <label
+                        key={l.id}
+                        className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected.has(l.id)}
+                          onChange={() => toggle(l.id)}
+                          className="size-4 accent-primary"
+                        />
+                        <span className="text-sm flex-1 truncate">{l.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>

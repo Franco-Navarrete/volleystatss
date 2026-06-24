@@ -5,12 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Iniciar sesión · vstats" },
+      { title: "Iniciar sesión · RALLY" },
       { name: "description", content: "Accedé a tus estadísticas de vóley en vivo." },
     ],
   }),
@@ -23,7 +22,6 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -32,10 +30,10 @@ function AuthPage() {
     });
   }, [navigate]);
 
-  const signIn = async () => {
+  const signIn = async (e: React.FormEvent) => {
+    e.preventDefault();
     setBusy(true);
     setError(null);
-    setInfo(null);
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -52,27 +50,6 @@ function AuthPage() {
     navigate({ to: "/dashboard", replace: true });
   };
 
-  const signUp = async () => {
-    setBusy(true);
-    setError(null);
-    setInfo(null);
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    setBusy(false);
-    if (error) {
-      setError(
-        error.message.includes("already registered")
-          ? "Ese email ya está registrado. Iniciá sesión."
-          : error.message,
-      );
-      return;
-    }
-    setInfo("Cuenta creada. Revisá tu email para confirmar la cuenta y luego iniciá sesión.");
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
@@ -86,70 +63,53 @@ function AuthPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="login">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Iniciar sesión</TabsTrigger>
-            <TabsTrigger value="signup">Crear cuenta</TabsTrigger>
-          </TabsList>
-
-          {(["login", "signup"] as const).map((mode) => (
-            <TabsContent key={mode} value={mode} className="mt-4">
-              <form
-                className="space-y-4"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (mode === "login") void signIn();
-                  else void signUp();
-                }}
+        <form className="space-y-4" onSubmit={signIn}>
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pass">Contraseña</Label>
+            <div className="relative">
+              <Input
+                id="pass"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
-                <div className="space-y-1.5">
-                  <Label htmlFor={`email-${mode}`}>Email</Label>
-                  <Input
-                    id={`email-${mode}`}
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor={`pass-${mode}`}>Contraseña</Label>
-                  <div className="relative">
-                    <Input
-                      id={`pass-${mode}`}
-                      type={showPassword ? "text" : "password"}
-                      autoComplete={mode === "login" ? "current-password" : "new-password"}
-                      required
-                      minLength={6}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                    >
-                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    </button>
-                  </div>
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                {info && <p className="text-sm text-primary">{info}</p>}
-                <Button type="submit" className="w-full" disabled={busy}>
-                  {busy && <Loader2 className="size-4 animate-spin" />}
-                  {mode === "login" ? "Entrar" : "Registrarme"}
-                </Button>
-              </form>
-            </TabsContent>
-          ))}
-        </Tabs>
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            Entrar
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            ¿No tenés cuenta? Pedile a un administrador que te dé acceso.
+          </p>
+        </form>
       </div>
     </div>
   );
