@@ -415,24 +415,24 @@ function ChangePasswordDialog({
   const [loadingStored, setLoadingStored] = useState(false);
   const [reveal, setReveal] = useState(false);
 
-  // Cargar contraseña guardada al abrir
-  useState(() => null);
-  const loadStored = async () => {
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
     setLoadingStored(true);
-    try {
-      const res = await getPassword({ data: { userId } });
-      setStored(res);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setLoadingStored(false);
-    }
-  };
-
-  // Trigger al abrir
-  if (open && stored === null && !loadingStored) {
-    loadStored();
-  }
+    getPassword({ data: { userId } })
+      .then((res) => {
+        if (!cancelled) setStored(res);
+      })
+      .catch((e: Error) => {
+        if (!cancelled) toast.error(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingStored(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, userId, getPassword]);
 
   const generate = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
