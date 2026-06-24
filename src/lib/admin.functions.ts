@@ -105,6 +105,11 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       .upsert({ id: newUserId, email: data.email });
     if (profileErr) throw profileErr;
 
+    const { error: pwStoreErr } = await supabaseAdmin
+      .from("admin_user_passwords")
+      .upsert({ user_id: newUserId, password: data.password, updated_by: context.userId, updated_at: new Date().toISOString() });
+    if (pwStoreErr) throw pwStoreErr;
+
     const { error: permErr } = await supabaseAdmin
       .from("user_permissions")
       .upsert({ user_id: newUserId, can_create_matches: data.canCreateMatches, can_manage_teams: false });
@@ -174,7 +179,33 @@ export const adminSetPassword = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (error) throw error;
+    const { error: storeErr } = await supabaseAdmin
+      .from("admin_user_passwords")
+      .upsert({
+        user_id: data.userId,
+        password: data.password,
+        updated_by: context.userId,
+        updated_at: new Date().toISOString(),
+      });
+    if (storeErr) throw storeErr;
     return { ok: true };
+  });
+
+// ---------- Ver contraseña asignada por admin ----------
+
+export const adminGetPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => z.object({ userId: uuidSchema }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("admin_user_passwords")
+      .select("password, updated_at")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+    if (error) throw error;
+    return row ? { password: row.password as string, updatedAt: row.updated_at as string } : null;
   });
 
 // ---------- Eliminar usuario ----------
