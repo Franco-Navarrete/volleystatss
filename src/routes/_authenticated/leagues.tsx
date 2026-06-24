@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
-import { computeStandings, useVolley } from "@/lib/volley-store";
+import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, type StatsMode } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Trophy } from "lucide-react";
@@ -19,6 +19,7 @@ function LeaguesPage() {
   const addLeague = useVolley((s) => s.addLeague);
   const removeLeague = useVolley((s) => s.removeLeague);
   const updateTeam = useVolley((s) => s.updateTeam);
+  const updateLeague = useVolley((s) => s.updateLeague);
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
@@ -112,6 +113,35 @@ function LeaguesPage() {
                 >
                   <Trash2 className="size-4 text-destructive" />
                 </Button>
+              </div>
+
+              <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
+                  Modo de estadísticas
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["liga", "entrenador"] as StatsMode[]).map((m) => {
+                    const current = active.statsMode ?? "liga";
+                    const isActive = current === m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => updateLeague(active.id, { statsMode: m })}
+                        className={`text-left rounded-lg border p-2.5 transition-colors ${
+                          isActive
+                            ? "border-primary bg-primary/10"
+                            : "border-border/60 bg-card hover:bg-secondary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-bold">{STATS_MODE_LABEL[m]}</div>
+                        <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                          {STATS_MODE_DESCRIPTION[m]}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-5">

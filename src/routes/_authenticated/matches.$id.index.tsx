@@ -12,6 +12,7 @@ import {
   formatDurationMs,
   formatLocalTime,
   needsReceptionForRally,
+  getMatchStatsMode,
   type PointType,
   type SanctionType,
   type ReceptionRating,
@@ -79,6 +80,7 @@ function LiveMatch() {
   const { id } = Route.useParams();
   const match = useVolley((s) => s.matches.find((m) => m.id === id));
   const teams = useVolley((s) => s.teams);
+  const leagues = useVolley((s) => s.leagues);
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const setSetLineup = useVolley((s) => s.setSetLineup);
@@ -153,6 +155,8 @@ function LiveMatch() {
   const setStartedAt = match.setStartTimes?.[match.currentSet];
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
+  const statsMode = getMatchStatsMode(match, teams, leagues);
+  const isCoach = statsMode === "entrenador";
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
   const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
@@ -171,7 +175,7 @@ function LiveMatch() {
       return false;
     })
   );
-  const needsReception = !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
+  const needsReception = isCoach && !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
@@ -215,7 +219,7 @@ function LiveMatch() {
 
   const submitAction = (type: PointType) => {
     if (!pendingPlayer) return;
-    if (type === "rotation_attack" || type === "counter_attack") {
+    if (isCoach && (type === "rotation_attack" || type === "counter_attack")) {
       setPendingZone({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type });
       setPendingPlayer(null);
       return;
@@ -915,7 +919,7 @@ function LiveMatch() {
             <DialogTitle>Estadísticas en vivo</DialogTitle>
           </DialogHeader>
           <div className="live-stats-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2">
-            <LiveStatsPanel key={`${showLiveStats}-${match.currentSet}`} match={match} teamA={teamA} teamB={teamB} />
+            <LiveStatsPanel key={`${showLiveStats}-${match.currentSet}`} match={match} teamA={teamA} teamB={teamB} isCoach={isCoach} />
           </div>
         </DialogContent>
       </Dialog>
@@ -1578,7 +1582,7 @@ function SanctionDialog({ team, onCourt, onSubmit }: {
   );
 }
 
-function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; teamB: Team }) {
+function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA: Team; teamB: Team; isCoach: boolean }) {
   const [selectedSet, setSelectedSet] = useState(match.currentSet);
   useEffect(() => setSelectedSet(match.currentSet), [match.currentSet]);
   const setNumber = match.sets.some((s) => s.number === selectedSet) ? selectedSet : match.currentSet;
@@ -1708,18 +1712,22 @@ function LiveStatsPanel({ match, teamA, teamB }: { match: Match; teamA: Team; te
         </div>
       </div>
       <div className="grid md:grid-cols-2 gap-3">{renderTeam(teamA, recA)}{renderTeam(teamB, recB)}</div>
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
-          Rotaciones · Set {setNumber}
-        </p>
-        <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} compact />
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
-          Zonas de ataque · Set {setNumber}
-        </p>
-        <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} />
-      </div>
+      {isCoach && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+            Rotaciones · Set {setNumber}
+          </p>
+          <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} compact />
+        </div>
+      )}
+      {isCoach && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+            Zonas de ataque · Set {setNumber}
+          </p>
+          <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} />
+        </div>
+      )}
     </div>
   );
 }
