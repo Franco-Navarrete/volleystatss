@@ -409,7 +409,30 @@ function ChangePasswordDialog({
   email: string;
 }) {
   const setPassword = useServerFn(adminSetPassword);
+  const getPassword = useServerFn(adminGetPassword);
   const [password, setPasswordValue] = useState("");
+  const [stored, setStored] = useState<{ password: string; updatedAt: string } | null>(null);
+  const [loadingStored, setLoadingStored] = useState(false);
+  const [reveal, setReveal] = useState(false);
+
+  // Cargar contraseña guardada al abrir
+  useState(() => null);
+  const loadStored = async () => {
+    setLoadingStored(true);
+    try {
+      const res = await getPassword({ data: { userId } });
+      setStored(res);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLoadingStored(false);
+    }
+  };
+
+  // Trigger al abrir
+  if (open && stored === null && !loadingStored) {
+    loadStored();
+  }
 
   const generate = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -424,54 +447,126 @@ function ChangePasswordDialog({
     mutationFn: () => setPassword({ data: { userId, password } }),
     onSuccess: () => {
       toast.success("Contraseña actualizada");
+      setStored({ password, updatedAt: new Date().toISOString() });
+      setPasswordValue("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const copy = async () => {
+  const copy = async (value: string) => {
     try {
-      await navigator.clipboard.writeText(password);
+      await navigator.clipboard.writeText(value);
       toast.success("Copiada al portapapeles");
     } catch {
       toast.error("No se pudo copiar");
     }
   };
 
+  const sendByEmail = (pw: string) => {
+    const subject = encodeURIComponent("Tus datos de acceso a vstats");
+    const body = encodeURIComponent(
+      `Hola,\n\nEstos son tus datos para ingresar a vstats:\n\nUsuario: ${email}\nContraseña: ${pw}\n\nPodés cambiarla cuando quieras desde tu perfil.\n\nSaludos.`,
+    );
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) setPasswordValue(""); onOpenChange(v); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          setPasswordValue("");
+          setStored(null);
+          setReveal(false);
+        }
+        onOpenChange(v);
+      }}
+    >
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Cambiar contraseña</DialogTitle>
+          <DialogTitle>Contraseña</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Definí una nueva contraseña para <span className="font-medium text-foreground">{email}</span>. Guardala o compartila con el usuario: una vez cerrado este diálogo no se podrá volver a ver.
-          </p>
-          <div>
-            <Label htmlFor="pw-new">Nueva contraseña</Label>
+        <div className="space-y-4">
+          {/* Contraseña actual guardada */}
+          <div className="rounded-lg border border-border/60 bg-secondary/30 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Contraseña actual
+              </Label>
+              {stored && (
+                <button
+                  type="button"
+                  onClick={() => setReveal((v) => !v)}
+                  className="text-[11px] text-primary hover:underline"
+                >
+                  {reveal ? "Ocultar" : "Mostrar"}
+                </button>
+              )}
+            </div>
+            {loadingStored ? (
+              <p className="text-xs text-muted-foreground">Cargando…</p>
+            ) : stored ? (
+              <>
+                <div className="font-mono text-sm bg-background rounded px-2 py-1.5 border border-border/60 break-all">
+                  {reveal ? stored.password : "•".repeat(Math.min(stored.password.length, 14))}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copy(stored.password)}
+                    className="flex-1"
+                  >
+                    Copiar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => sendByEmail(stored.password)}
+                    className="flex-1"
+                  >
+                    Enviar por email
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Última actualización: {new Date(stored.updatedAt).toLocaleString()}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                No hay contraseña guardada para este usuario. Solo se registran las que asignes desde el panel.
+              </p>
+            )}
+          </div>
+
+          {/* Cambiar contraseña */}
+          <div className="space-y-2 pt-1 border-t border-border/40">
+            <Label htmlFor="pw-new" className="text-sm">Cambiar contraseña</Label>
             <Input
               id="pw-new"
               type="text"
               value={password}
               onChange={(e) => setPasswordValue(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
+              placeholder="Nueva contraseña (mín. 8)"
               autoComplete="off"
             />
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={generate} className="flex-1">
-              Generar
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={copy}
-              disabled={!password}
-              className="flex-1"
-            >
-              Copiar
-            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={generate} className="flex-1">
+                Generar
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => copy(password)}
+                disabled={!password}
+                className="flex-1"
+              >
+                Copiar
+              </Button>
+            </div>
           </div>
         </div>
         <DialogFooter>
@@ -481,7 +576,7 @@ function ChangePasswordDialog({
             disabled={password.length < 8 || mut.isPending}
           >
             {mut.isPending && <Loader2 className="size-4 animate-spin" />}
-            Guardar
+            Guardar nueva
           </Button>
         </DialogFooter>
       </DialogContent>
