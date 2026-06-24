@@ -34,10 +34,50 @@ import {
   adminDeleteUser,
   adminListLeagues,
   adminListUsers,
+  adminSetExtraRole,
   adminSetLeagueAccess,
   adminSetPermissions,
   adminSetRole,
+  type ExtraRole,
 } from "@/lib/admin.functions";
+
+const EXTRA_ROLE_OPTIONS: { value: ExtraRole | null; label: string; hint: string }[] = [
+  { value: null, label: "Sin rol", hint: "Solo permisos por liga" },
+  { value: "entrenador", label: "Entrenador", hint: "Acceso a estadísticas avanzadas" },
+  { value: "planillero", label: "Planillero", hint: "Carga rápida modo liga" },
+];
+
+function ExtraRoleSelector({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: ExtraRole | null;
+  onChange: (v: ExtraRole | null) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {EXTRA_ROLE_OPTIONS.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(opt.value)}
+            className={`text-left rounded-md border px-2.5 py-2 transition-colors ${
+              active ? "border-primary bg-primary/10" : "border-border/60 bg-card hover:bg-secondary/50"
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <div className="text-xs font-bold">{opt.label}</div>
+            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{opt.hint}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Administración · vstats" }] }),
@@ -159,26 +199,32 @@ function UserRow({
   const setPerms = useServerFn(adminSetPermissions);
   const setAccess = useServerFn(adminSetLeagueAccess);
   const setRole = useServerFn(adminSetRole);
+  const setExtraRole = useServerFn(adminSetExtraRole);
   const deleteUser = useServerFn(adminDeleteUser);
 
   const [selected, setSelected] = useState<Set<string>>(new Set(user.leagueIds));
   const [canCreate, setCanCreate] = useState(user.canCreateMatches);
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
+  const [extraRole, setExtraRoleState] = useState<ExtraRole | null>(user.extraRole);
   const [open, setOpen] = useState(false);
 
   const dirty = useMemo(() => {
     if (isAdmin !== user.isAdmin) return true;
+    if (extraRole !== user.extraRole) return true;
     const orig = new Set(user.leagueIds);
     if (selected.size !== orig.size) return true;
     for (const id of selected) if (!orig.has(id)) return true;
     return canCreate !== user.canCreateMatches;
-  }, [selected, canCreate, isAdmin, user]);
+  }, [selected, canCreate, isAdmin, extraRole, user]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
       // Role change first, since it changes downstream meaning
       if (isAdmin !== user.isAdmin) {
         await setRole({ data: { userId: user.id, isAdmin } });
+      }
+      if (extraRole !== user.extraRole) {
+        await setExtraRole({ data: { userId: user.id, role: extraRole } });
       }
       if (!isAdmin) {
         await Promise.all([
@@ -224,6 +270,9 @@ function UserRow({
             {isAdmin && (
               <Badge variant="secondary" className="text-[10px]">Admin</Badge>
             )}
+            {!isAdmin && extraRole && (
+              <Badge variant="outline" className="text-[10px] capitalize">{extraRole}</Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
             {isAdmin
@@ -242,6 +291,16 @@ function UserRow({
               </p>
             </div>
             <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
+          </div>
+
+          <div>
+            <Label className="text-sm mb-1.5 block">Rol</Label>
+            <ExtraRoleSelector value={extraRole} onChange={setExtraRoleState} disabled={isAdmin} />
+            {isAdmin && (
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                Los administradores no necesitan rol adicional.
+              </p>
+            )}
           </div>
 
           {isAdmin ? (
@@ -340,6 +399,7 @@ function CreateUserDialog({
   const [password, setPassword] = useState("");
   const [canCreate, setCanCreate] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [extraRole, setExtraRole] = useState<ExtraRole | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reset = () => {
@@ -347,6 +407,7 @@ function CreateUserDialog({
     setPassword("");
     setCanCreate(false);
     setIsAdmin(false);
+    setExtraRole(null);
     setSelected(new Set());
   };
 
@@ -358,6 +419,7 @@ function CreateUserDialog({
           password,
           canCreateMatches: isAdmin ? false : canCreate,
           leagueIds: isAdmin ? [] : Array.from(selected),
+          extraRole: isAdmin ? null : extraRole,
         },
       });
       if (isAdmin && res?.id) {
@@ -426,6 +488,10 @@ function CreateUserDialog({
           </div>
           {!isAdmin && (
             <>
+              <div>
+                <Label className="mb-1.5 block">Rol</Label>
+                <ExtraRoleSelector value={extraRole} onChange={setExtraRole} />
+              </div>
               <div className="flex items-center justify-between gap-2">
                 <Label>Puede crear partidos</Label>
                 <Switch checked={canCreate} onCheckedChange={setCanCreate} />
