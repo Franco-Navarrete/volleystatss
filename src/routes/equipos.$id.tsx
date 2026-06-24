@@ -47,7 +47,7 @@ function TeamDetail() {
     const finished = teamMatches.filter((m) => m.status === "finished");
     let won = 0;
     for (const m of finished) {
-      const [a, b] = setsWon(m);
+      const { a, b } = setsWon(m);
       if ((m.teamAId === id && a > b) || (m.teamBId === id && b > a)) won++;
     }
     return { played: finished.length, won, lost: finished.length - won };
@@ -202,7 +202,7 @@ function TeamDetail() {
                     m.teamAId === id
                       ? teamById.get(m.teamBId)
                       : teamById.get(m.teamAId);
-                  const [a, b] = setsWon(m);
+                  const { a, b } = setsWon(m);
                   const myScore = m.teamAId === id ? a : b;
                   const opScore = m.teamAId === id ? b : a;
                   const isFinished = m.status === "finished";
