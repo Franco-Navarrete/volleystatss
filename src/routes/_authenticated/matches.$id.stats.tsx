@@ -369,10 +369,12 @@ function StatsPage() {
       </div>
 
       {/* Reception */}
-      <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <ReceptionTable team={teamA} recMap={computeReceptionStats(match.events, "A")} />
-        <ReceptionTable team={teamB} recMap={computeReceptionStats(match.events, "B")} />
-      </div>
+      {isCoach && (
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          <ReceptionTable team={teamA} recMap={computeReceptionStats(match.events, "A")} />
+          <ReceptionTable team={teamB} recMap={computeReceptionStats(match.events, "B")} />
+        </div>
+      )}
 
     </AppShell>
   );
