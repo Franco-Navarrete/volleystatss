@@ -105,6 +105,11 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       .upsert({ id: newUserId, email: data.email });
     if (profileErr) throw profileErr;
 
+    const { error: pwStoreErr } = await supabaseAdmin
+      .from("admin_user_passwords")
+      .upsert({ user_id: newUserId, password: data.password, updated_by: context.userId, updated_at: new Date().toISOString() });
+    if (pwStoreErr) throw pwStoreErr;
+
     const { error: permErr } = await supabaseAdmin
       .from("user_permissions")
       .upsert({ user_id: newUserId, can_create_matches: data.canCreateMatches, can_manage_teams: false });
