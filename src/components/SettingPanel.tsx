@@ -7,8 +7,6 @@ import {
   SETTING_QUALITY_LABEL,
   SETTING_ATTACK_ZONE_LABEL,
   SETTING_ATTACK_RESULT_LABEL,
-  type SettingQuality,
-  type SettingAttackZone,
   type SettingAttackResult,
 } from "@/lib/volley-store";
 import {
