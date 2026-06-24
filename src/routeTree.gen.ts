@@ -17,6 +17,7 @@ import { Route as LigasIndexRouteImport } from './routes/ligas.index'
 import { Route as PartidosIdRouteImport } from './routes/partidos.$id'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as LigasIdRouteImport } from './routes/ligas.$id'
+import { Route as JugadoraIdRouteImport } from './routes/jugadora.$id'
 import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedRankingsRouteImport } from './routes/_authenticated/rankings'
@@ -68,6 +69,11 @@ const LigasIdRoute = LigasIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => LigasRoute,
+} as any)
+const JugadoraIdRoute = JugadoraIdRouteImport.update({
+  id: '/jugadora/$id',
+  path: '/jugadora/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
   id: '/teams',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/teams': typeof AuthenticatedTeamsRoute
+  '/jugadora/$id': typeof JugadoraIdRoute
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
   '/partidos/$id': typeof PartidosIdRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/teams': typeof AuthenticatedTeamsRoute
+  '/jugadora/$id': typeof JugadoraIdRoute
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
   '/partidos/$id': typeof PartidosIdRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/rankings': typeof AuthenticatedRankingsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/teams': typeof AuthenticatedTeamsRoute
+  '/jugadora/$id': typeof JugadoraIdRoute
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
   '/partidos/$id': typeof PartidosIdRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/settings'
     | '/teams'
+    | '/jugadora/$id'
     | '/ligas/$id'
     | '/m/$slug'
     | '/partidos/$id'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/rankings'
     | '/settings'
     | '/teams'
+    | '/jugadora/$id'
     | '/ligas/$id'
     | '/m/$slug'
     | '/partidos/$id'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rankings'
     | '/_authenticated/settings'
     | '/_authenticated/teams'
+    | '/jugadora/$id'
     | '/ligas/$id'
     | '/m/$slug'
     | '/partidos/$id'
@@ -266,6 +278,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   LigasRoute: typeof LigasRouteWithChildren
+  JugadoraIdRoute: typeof JugadoraIdRoute
   MSlugRoute: typeof MSlugRoute
   PartidosIdRoute: typeof PartidosIdRoute
 }
@@ -327,6 +340,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ligas/$id'
       preLoaderRoute: typeof LigasIdRouteImport
       parentRoute: typeof LigasRoute
+    }
+    '/jugadora/$id': {
+      id: '/jugadora/$id'
+      path: '/jugadora/$id'
+      fullPath: '/jugadora/$id'
+      preLoaderRoute: typeof JugadoraIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/teams': {
       id: '/_authenticated/teams'
@@ -477,6 +497,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   LigasRoute: LigasRouteWithChildren,
+  JugadoraIdRoute: JugadoraIdRoute,
   MSlugRoute: MSlugRoute,
   PartidosIdRoute: PartidosIdRoute,
 }
