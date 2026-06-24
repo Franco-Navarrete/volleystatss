@@ -12,6 +12,7 @@ import {
   formatDurationMs,
   formatLocalTime,
   needsReceptionForRally,
+  getMatchStatsMode,
   type PointType,
   type SanctionType,
   type ReceptionRating,
