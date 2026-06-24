@@ -270,6 +270,9 @@ function UserRow({
             {isAdmin && (
               <Badge variant="secondary" className="text-[10px]">Admin</Badge>
             )}
+            {!isAdmin && extraRole && (
+              <Badge variant="outline" className="text-[10px] capitalize">{extraRole}</Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
             {isAdmin
