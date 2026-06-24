@@ -399,6 +399,7 @@ function CreateUserDialog({
   const [password, setPassword] = useState("");
   const [canCreate, setCanCreate] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [extraRole, setExtraRole] = useState<ExtraRole | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reset = () => {
@@ -406,6 +407,7 @@ function CreateUserDialog({
     setPassword("");
     setCanCreate(false);
     setIsAdmin(false);
+    setExtraRole(null);
     setSelected(new Set());
   };
 
@@ -417,6 +419,7 @@ function CreateUserDialog({
           password,
           canCreateMatches: isAdmin ? false : canCreate,
           leagueIds: isAdmin ? [] : Array.from(selected),
+          extraRole: isAdmin ? null : extraRole,
         },
       });
       if (isAdmin && res?.id) {
