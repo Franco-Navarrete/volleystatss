@@ -219,7 +219,7 @@ function LiveMatch() {
 
   const submitAction = (type: PointType) => {
     if (!pendingPlayer) return;
-    if (type === "rotation_attack" || type === "counter_attack") {
+    if (isCoach && (type === "rotation_attack" || type === "counter_attack")) {
       setPendingZone({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type });
       setPendingPlayer(null);
       return;
