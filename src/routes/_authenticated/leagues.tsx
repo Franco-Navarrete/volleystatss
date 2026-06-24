@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
-import { computeStandings, useVolley } from "@/lib/volley-store";
+import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, type StatsMode } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Trophy } from "lucide-react";
