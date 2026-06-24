@@ -36,6 +36,9 @@ function StatsPage() {
   const { id } = Route.useParams();
   const match = useVolley((s) => s.matches.find((m) => m.id === id));
   const teams = useVolley((s) => s.teams);
+  const leagues = useVolley((s) => s.leagues);
+  const statsMode = useMemo(() => getMatchStatsMode(match, teams, leagues), [match, teams, leagues]);
+  const isCoach = statsMode === "entrenador";
 
   const teamA = useMemo(() => teams.find((t) => t.id === match?.teamAId), [teams, match]);
   const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);
