@@ -175,7 +175,7 @@ function LiveMatch() {
       return false;
     })
   );
-  const needsReception = !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
+  const needsReception = isCoach && !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
