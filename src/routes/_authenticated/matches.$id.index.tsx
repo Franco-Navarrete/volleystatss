@@ -933,6 +933,22 @@ function LiveMatch() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Armado · Modo Entrenador */}
+      {isCoach && (
+        <SettingDialog
+          open={showSettingDialog}
+          onClose={() => setShowSettingDialog(false)}
+          teamA={teamA}
+          teamB={teamB}
+          onCourtA={match.onCourtA}
+          onCourtB={match.onCourtB}
+          onSubmit={(payload) => {
+            const { side, ...rest } = payload;
+            recordSetting(match.id, side, rest);
+          }}
+        />
+      )}
     </CompactShell>
   );
 }
