@@ -33,6 +33,7 @@ import {
   adminCreateUser,
   adminDeleteLeague,
   adminDeleteUser,
+  adminGetPassword,
   adminListLeagues,
   adminListUsers,
   adminSetExtraRole,
