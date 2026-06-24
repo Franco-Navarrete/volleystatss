@@ -16,6 +16,7 @@ import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
+import { SettingPanel } from "@/components/SettingPanel";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
@@ -359,6 +360,14 @@ function StatsPage() {
         <section className="mb-6">
           <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Zonas de ataque · Total</h2>
           <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} />
+        </section>
+      )}
+
+      {/* Armado · Modo Entrenador */}
+      {isCoach && (
+        <section className="mb-6">
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Armado · Distribución y eficiencia</h2>
+          <SettingPanel match={match} teamA={teamA} teamB={teamB} />
         </section>
       )}
 

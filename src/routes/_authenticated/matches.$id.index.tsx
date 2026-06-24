@@ -23,6 +23,8 @@ import {
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
+import { SettingDialog } from "@/components/scorer/SettingDialog";
+
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,6 +45,7 @@ import {
   Play,
   Plus,
   Shirt,
+  Target,
   Undo2,
   Users,
   X,
@@ -96,6 +99,7 @@ function LiveMatch() {
   const recordSanction = useVolley((s) => s.recordSanction);
   const overrideLineup = useVolley((s) => s.overrideLineup);
   const recordReception = useVolley((s) => s.recordReception);
+  const recordSetting = useVolley((s) => s.recordSetting);
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
   const overrideScore = useVolley((s) => s.overrideScore);
   const undo = useVolley((s) => s.undoLastEvent);
@@ -113,6 +117,7 @@ function LiveMatch() {
   const [timeoutSide, setTimeoutSide] = useState<"A" | "B" | null>(null);
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
+  const [showSettingDialog, setShowSettingDialog] = useState(false);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const navigate = useNavigate();
@@ -411,13 +416,18 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 md:gap-3 shrink-0">
+        <div className={`grid grid-cols-3 ${isCoach ? "sm:grid-cols-7" : "sm:grid-cols-6"} gap-1 md:gap-3 shrink-0`}>
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "scheduled" || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3 md:size-4" /> Deshacer
           </Button>
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => setShowLineupEditor(true)}>
             <Users className="size-3 md:size-4" /> Formación
           </Button>
+          {isCoach && (
+            <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" disabled={!isLive || actionsDisabled} onClick={() => setShowSettingDialog(true)}>
+              <Target className="size-3 md:size-4" /> Armado
+            </Button>
+          )}
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
             <ChartBarBig className="size-3 md:size-4" /> Stats vivo
           </Button>
@@ -923,6 +933,22 @@ function LiveMatch() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Armado · Modo Entrenador */}
+      {isCoach && (
+        <SettingDialog
+          open={showSettingDialog}
+          onClose={() => setShowSettingDialog(false)}
+          teamA={teamA}
+          teamB={teamB}
+          onCourtA={match.onCourtA}
+          onCourtB={match.onCourtB}
+          onSubmit={(payload) => {
+            const { side, ...rest } = payload;
+            recordSetting(match.id, side, rest);
+          }}
+        />
+      )}
     </CompactShell>
   );
 }
