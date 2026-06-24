@@ -239,7 +239,62 @@ export interface ReceptionEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent;
+// ============= Armado (Setting) — Modo Entrenador =============
+
+export type SettingQuality = "++" | "+" | "!" | "-" | "=";
+export const SETTING_QUALITIES: SettingQuality[] = ["++", "+", "!", "-", "="];
+export const SETTING_QUALITY_LABEL: Record<SettingQuality, string> = {
+  "++": "Perfecto",
+  "+": "Bueno",
+  "!": "Jugable",
+  "-": "Malo",
+  "=": "Error",
+};
+
+export type SettingAttackZone = "z4" | "z3" | "z2" | "pipe" | "back";
+export const SETTING_ATTACK_ZONES: SettingAttackZone[] = ["z4", "z3", "z2", "pipe", "back"];
+export const SETTING_ATTACK_ZONE_LABEL: Record<SettingAttackZone, string> = {
+  z4: "Zona 4",
+  z3: "Zona 3",
+  z2: "Zona 2",
+  pipe: "Pipe",
+  back: "Zaguero",
+};
+
+export type SettingAttackResult = "point" | "continuity" | "error" | "blocked";
+export const SETTING_ATTACK_RESULT_LABEL: Record<SettingAttackResult, string> = {
+  point: "Punto",
+  continuity: "Continuidad",
+  error: "Error",
+  blocked: "Bloqueado",
+};
+
+/**
+ * Evento "armado" (setting): cadena completa recepción → armado → ataque cargada
+ * en un solo flujo. NO afecta el marcador: el punto real se sigue cargando con
+ * el flujo regular. Es un evento puramente analítico para el modo Entrenador.
+ */
+export interface SettingEvent {
+  id: string;
+  kind: "setting";
+  side: "A" | "B";
+  /** Jugadora que efectivamente realizó el segundo toque. */
+  setterId: string;
+  /** Calidad del armado. */
+  quality: SettingQuality;
+  /** Jugadora que atacó tras ese armado. */
+  attackerId: string;
+  /** Zona desde la que se ejecutó el ataque. */
+  attackZone: SettingAttackZone;
+  /** Resultado del ataque. */
+  attackResult: SettingAttackResult;
+  /** Calidad de la recepción que originó la jugada (opcional). */
+  receptionQuality?: SettingQuality;
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent;
 
 export interface MatchSet {
   number: number;
