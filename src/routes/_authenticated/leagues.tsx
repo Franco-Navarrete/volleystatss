@@ -19,6 +19,7 @@ function LeaguesPage() {
   const addLeague = useVolley((s) => s.addLeague);
   const removeLeague = useVolley((s) => s.removeLeague);
   const updateTeam = useVolley((s) => s.updateTeam);
+  const updateLeague = useVolley((s) => s.updateLeague);
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
