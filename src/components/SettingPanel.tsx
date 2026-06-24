@@ -260,7 +260,4 @@ function Matrix<R extends string, C extends string>({
   );
 }
 
-// Avoid unused-export lint on the helper types
 export type { TeamData };
-type _UnusedSettingQuality = SettingQuality;
-type _UnusedSettingZone = SettingAttackZone;
