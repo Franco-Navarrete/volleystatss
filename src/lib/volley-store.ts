@@ -941,6 +941,28 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      recordSetting: (matchId, side, payload) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const ev: SettingEvent = {
+              id: uid(),
+              kind: "setting",
+              side,
+              setterId: payload.setterId,
+              quality: payload.quality,
+              attackerId: payload.attackerId,
+              attackZone: payload.attackZone,
+              attackResult: payload.attackResult,
+              ...(payload.receptionQuality ? { receptionQuality: payload.receptionQuality } : {}),
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            return { ...m, events: [...m.events, ev] };
+          }),
+        }));
+      },
+
       updateMatchFormat: (matchId, setsToWin, pointsPerSet) => {
         set((s) => ({
           matches: s.matches.map((m) => {
