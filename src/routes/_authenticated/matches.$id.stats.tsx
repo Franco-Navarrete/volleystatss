@@ -17,6 +17,7 @@ import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
 import { SettingPanel } from "@/components/SettingPanel";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 import { toast } from "sonner";
 
 type EnrichedPlayer = PlayerStat & { teamId: string; teamName: string; teamColor: string };
