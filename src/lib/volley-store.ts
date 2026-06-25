@@ -432,9 +432,9 @@ interface VolleyState {
     payload: {
       setterId: string;
       quality: SettingQuality;
-      attackerId: string;
       attackZone: SettingAttackZone;
-      attackResult: SettingAttackResult;
+      attackerId?: string;
+      attackResult?: SettingAttackResult;
       receptionQuality?: SettingQuality;
     }
   ) => void;
