@@ -24,6 +24,7 @@ import {
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 
 
 import { Button } from "@/components/ui/button";
@@ -132,6 +133,10 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(match?.status === "live");
 
+  // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
+  const { hasAccess: coachOverride } = useCoachAccess();
+
+
   if (!match || !teamA || !teamB) {
     return (
       <CompactShell>
@@ -161,7 +166,7 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teams, leagues);
-  const isCoach = statsMode === "entrenador";
+  const isCoach = statsMode === "entrenador" || coachOverride;
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
   const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
