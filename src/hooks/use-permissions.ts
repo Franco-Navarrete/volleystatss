@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 
 /**
  * Devuelve si el usuario actual puede crear partidos.
