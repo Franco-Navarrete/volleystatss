@@ -99,9 +99,9 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
       case "side": return "Equipo que armó";
       case "reception": return "Calidad de la recepción";
       case "setter": return "Jugadora que armó";
+      case "zone": return "Zona del armado";
       case "quality": return "Calidad del armado";
       case "attacker": return "Jugadora que atacó";
-      case "zone": return "Zona del ataque";
       case "result": return "Resultado del ataque";
     }
   })();
