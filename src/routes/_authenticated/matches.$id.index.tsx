@@ -249,8 +249,18 @@ function LiveMatch() {
 
   const submitReception = (rating: ReceptionRating) => {
     if (!pendingReception) return;
-    recordReception(match.id, pendingReception.side, pendingReception.playerId, rating);
+    const side = pendingReception.side;
+    recordReception(match.id, side, pendingReception.playerId, rating);
     setPendingReception(null);
+    if (isCoach) {
+      // Mapeo rating de recepción (3 niveles) → calidad de armado (5 niveles)
+      const map: Record<ReceptionRating, SettingQuality> = {
+        positive: "++",
+        neutral: "!",
+        negative: "-",
+      };
+      setQuickSetting({ side, receptionQuality: map[rating] });
+    }
   };
 
   const handleTimeout = (side: "A" | "B") => {
