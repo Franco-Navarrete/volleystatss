@@ -38,7 +38,7 @@ interface Props {
   }) => void;
 }
 
-type Step = "side" | "reception" | "setter" | "quality" | "attacker" | "zone" | "result";
+type Step = "side" | "reception" | "setter" | "zone" | "quality" | "attacker" | "result";
 
 const RESULTS: SettingAttackResult[] = ["point", "continuity", "error", "blocked"];
 
