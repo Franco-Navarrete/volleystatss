@@ -288,12 +288,15 @@ export interface SettingEvent {
   setterId: string;
   /** Calidad del armado. */
   quality: SettingQuality;
-  /** Jugadora que atacó tras ese armado. */
-  attackerId: string;
   /** Zona desde la que se ejecutó el ataque. */
   attackZone: SettingAttackZone;
-  /** Resultado del ataque. */
-  attackResult: SettingAttackResult;
+  /**
+   * Jugadora que atacó tras ese armado. Opcional: en el flujo rápido para tablet
+   * sólo cargamos armadora + zona + calidad y se infiere desde la jugada normal.
+   */
+  attackerId?: string;
+  /** Resultado del ataque. Opcional (ver `attackerId`). */
+  attackResult?: SettingAttackResult;
   /** Calidad de la recepción que originó la jugada (opcional). */
   receptionQuality?: SettingQuality;
   setNumber: number;
