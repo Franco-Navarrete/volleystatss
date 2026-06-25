@@ -133,6 +133,10 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(match?.status === "live");
 
+  // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
+  const { hasAccess: coachOverride } = useCoachAccess();
+
+
   if (!match || !teamA || !teamB) {
     return (
       <CompactShell>
