@@ -108,7 +108,7 @@ export function computeSettingToAttack(
       Record<SettingAttackResult, number>
     >;
   for (const ev of events) {
-    out[ev.quality][ev.attackResult]++;
+    if (ev.attackResult) out[ev.quality][ev.attackResult]++;
   }
   return out;
 }
