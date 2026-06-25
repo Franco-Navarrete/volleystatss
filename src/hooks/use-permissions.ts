@@ -10,25 +10,26 @@ import { useCoachAccess } from "@/hooks/use-coach-access";
 export function useCanCreateMatches() {
   const { user, loading: userLoading } = useAuthUser();
   const { isAdmin, checking: adminChecking } = useIsAdmin();
+  const { hasAccess: isCoach, checking: coachChecking } = useCoachAccess();
   const [allowed, setAllowed] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    if (userLoading || adminChecking) return;
+    if (userLoading || adminChecking || coachChecking) return;
     if (!user) {
       setAllowed(false);
       setLoading(false);
       return;
     }
-    if (isAdmin) {
+    if (isAdmin || isCoach) {
       setAllowed(true);
       setLoading(false);
       return;
     }
     setLoading(true);
     // Si la consulta falla o tarda demasiado, asumimos NO permitido
-    // (sólo admins o usuarios con permiso explícito pueden crear).
+    // (sólo admins, entrenadores o usuarios con permiso explícito pueden crear).
     const timeout = setTimeout(() => {
       if (!cancelled) {
         setAllowed(false);
@@ -55,7 +56,7 @@ export function useCanCreateMatches() {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [user?.id, isAdmin, userLoading, adminChecking]);
+  }, [user?.id, isAdmin, isCoach, userLoading, adminChecking, coachChecking]);
 
   return { allowed, loading };
 }
