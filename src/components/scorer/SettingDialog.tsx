@@ -75,7 +75,7 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
     : [];
 
   const goBack = () => {
-    const order: Step[] = ["side", "reception", "setter", "quality", "attacker", "zone", "result"];
+    const order: Step[] = ["side", "reception", "setter", "zone", "quality", "attacker", "result"];
     const idx = order.indexOf(step);
     if (idx > 0) setStep(order[idx - 1]);
   };
