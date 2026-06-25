@@ -24,6 +24,7 @@ import {
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
+import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 
 
