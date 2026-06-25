@@ -176,9 +176,27 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
             players={players}
             onPick={(id) => {
               setSetterId(id);
-              setStep("quality");
+              setStep("zone");
             }}
           />
+        )}
+
+        {step === "zone" && (
+          <div className="grid grid-cols-3 gap-2">
+            {SETTING_ATTACK_ZONES.map((z) => (
+              <Button
+                key={z}
+                variant="outline"
+                className="h-14 font-semibold"
+                onClick={() => {
+                  setAttackZone(z);
+                  setStep("quality");
+                }}
+              >
+                {SETTING_ATTACK_ZONE_LABEL[z]}
+              </Button>
+            ))}
+          </div>
         )}
 
         {step === "quality" && (
@@ -196,27 +214,9 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
             highlightId={setterId}
             onPick={(id) => {
               setAttackerId(id);
-              setStep("zone");
+              setStep("result");
             }}
           />
-        )}
-
-        {step === "zone" && (
-          <div className="grid grid-cols-3 gap-2">
-            {SETTING_ATTACK_ZONES.map((z) => (
-              <Button
-                key={z}
-                variant="outline"
-                className="h-14 font-semibold"
-                onClick={() => {
-                  setAttackZone(z);
-                  setStep("result");
-                }}
-              >
-                {SETTING_ATTACK_ZONE_LABEL[z]}
-              </Button>
-            ))}
-          </div>
         )}
 
         {step === "result" && (
