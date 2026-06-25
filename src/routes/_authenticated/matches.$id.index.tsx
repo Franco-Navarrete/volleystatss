@@ -16,6 +16,7 @@ import {
   type PointType,
   type SanctionType,
   type ReceptionRating,
+  type SettingQuality,
   type Team,
   type Match,
   type AttackZone,
