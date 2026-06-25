@@ -38,7 +38,7 @@ interface Props {
   }) => void;
 }
 
-type Step = "side" | "reception" | "setter" | "quality" | "attacker" | "zone" | "result";
+type Step = "side" | "reception" | "setter" | "zone" | "quality" | "attacker" | "result";
 
 const RESULTS: SettingAttackResult[] = ["point", "continuity", "error", "blocked"];
 
@@ -75,7 +75,7 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
     : [];
 
   const goBack = () => {
-    const order: Step[] = ["side", "reception", "setter", "quality", "attacker", "zone", "result"];
+    const order: Step[] = ["side", "reception", "setter", "zone", "quality", "attacker", "result"];
     const idx = order.indexOf(step);
     if (idx > 0) setStep(order[idx - 1]);
   };
@@ -99,9 +99,9 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
       case "side": return "Equipo que armó";
       case "reception": return "Calidad de la recepción";
       case "setter": return "Jugadora que armó";
+      case "zone": return "Zona del armado";
       case "quality": return "Calidad del armado";
       case "attacker": return "Jugadora que atacó";
-      case "zone": return "Zona del ataque";
       case "result": return "Resultado del ataque";
     }
   })();
@@ -176,9 +176,27 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
             players={players}
             onPick={(id) => {
               setSetterId(id);
-              setStep("quality");
+              setStep("zone");
             }}
           />
+        )}
+
+        {step === "zone" && (
+          <div className="grid grid-cols-3 gap-2">
+            {SETTING_ATTACK_ZONES.map((z) => (
+              <Button
+                key={z}
+                variant="outline"
+                className="h-14 font-semibold"
+                onClick={() => {
+                  setAttackZone(z);
+                  setStep("quality");
+                }}
+              >
+                {SETTING_ATTACK_ZONE_LABEL[z]}
+              </Button>
+            ))}
+          </div>
         )}
 
         {step === "quality" && (
@@ -196,27 +214,9 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
             highlightId={setterId}
             onPick={(id) => {
               setAttackerId(id);
-              setStep("zone");
+              setStep("result");
             }}
           />
-        )}
-
-        {step === "zone" && (
-          <div className="grid grid-cols-3 gap-2">
-            {SETTING_ATTACK_ZONES.map((z) => (
-              <Button
-                key={z}
-                variant="outline"
-                className="h-14 font-semibold"
-                onClick={() => {
-                  setAttackZone(z);
-                  setStep("result");
-                }}
-              >
-                {SETTING_ATTACK_ZONE_LABEL[z]}
-              </Button>
-            ))}
-          </div>
         )}
 
         {step === "result" && (

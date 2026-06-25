@@ -251,13 +251,19 @@ export const SETTING_QUALITY_LABEL: Record<SettingQuality, string> = {
   "=": "Error",
 };
 
-export type SettingAttackZone = "z4" | "z3" | "z2" | "pipe" | "back";
-export const SETTING_ATTACK_ZONES: SettingAttackZone[] = ["z4", "z3", "z2", "pipe", "back"];
+/**
+ * `back` se mantiene por compatibilidad con eventos viejos cargados antes de
+ * separar zaguero 1 y zaguero 5. Para cargas nuevas usar `back1` o `back5`.
+ */
+export type SettingAttackZone = "z4" | "z3" | "z2" | "pipe" | "back1" | "back5" | "back";
+export const SETTING_ATTACK_ZONES: SettingAttackZone[] = ["z4", "z3", "z2", "pipe", "back1", "back5"];
 export const SETTING_ATTACK_ZONE_LABEL: Record<SettingAttackZone, string> = {
   z4: "Zona 4",
   z3: "Zona 3",
   z2: "Zona 2",
   pipe: "Pipe",
+  back1: "Zaguero 1",
+  back5: "Zaguero 5",
   back: "Zaguero",
 };
 
