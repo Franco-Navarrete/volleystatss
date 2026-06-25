@@ -288,12 +288,15 @@ export interface SettingEvent {
   setterId: string;
   /** Calidad del armado. */
   quality: SettingQuality;
-  /** Jugadora que atacó tras ese armado. */
-  attackerId: string;
   /** Zona desde la que se ejecutó el ataque. */
   attackZone: SettingAttackZone;
-  /** Resultado del ataque. */
-  attackResult: SettingAttackResult;
+  /**
+   * Jugadora que atacó tras ese armado. Opcional: en el flujo rápido para tablet
+   * sólo cargamos armadora + zona + calidad y se infiere desde la jugada normal.
+   */
+  attackerId?: string;
+  /** Resultado del ataque. Opcional (ver `attackerId`). */
+  attackResult?: SettingAttackResult;
   /** Calidad de la recepción que originó la jugada (opcional). */
   receptionQuality?: SettingQuality;
   setNumber: number;
@@ -429,9 +432,9 @@ interface VolleyState {
     payload: {
       setterId: string;
       quality: SettingQuality;
-      attackerId: string;
       attackZone: SettingAttackZone;
-      attackResult: SettingAttackResult;
+      attackerId?: string;
+      attackResult?: SettingAttackResult;
       receptionQuality?: SettingQuality;
     }
   ) => void;
@@ -957,9 +960,9 @@ export const useVolley = create<VolleyState>()(
               side,
               setterId: payload.setterId,
               quality: payload.quality,
-              attackerId: payload.attackerId,
               attackZone: payload.attackZone,
-              attackResult: payload.attackResult,
+              ...(payload.attackerId ? { attackerId: payload.attackerId } : {}),
+              ...(payload.attackResult ? { attackResult: payload.attackResult } : {}),
               ...(payload.receptionQuality ? { receptionQuality: payload.receptionQuality } : {}),
               setNumber: m.currentSet,
               timestamp: Date.now(),

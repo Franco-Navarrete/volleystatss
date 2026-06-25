@@ -70,7 +70,7 @@ export function computeSetterDistribution(
     s.total++;
     s.byZone[ev.attackZone]++;
     s.byQuality[ev.quality]++;
-    s.byResult[ev.attackResult]++;
+    if (ev.attackResult) s.byResult[ev.attackResult]++;
   }
   for (const s of out.values()) {
     const goodAttack = s.byResult.point;
@@ -108,7 +108,7 @@ export function computeSettingToAttack(
       Record<SettingAttackResult, number>
     >;
   for (const ev of events) {
-    out[ev.quality][ev.attackResult]++;
+    if (ev.attackResult) out[ev.quality][ev.attackResult]++;
   }
   return out;
 }

@@ -16,6 +16,7 @@ import {
   type PointType,
   type SanctionType,
   type ReceptionRating,
+  type SettingQuality,
   type Team,
   type Match,
   type AttackZone,
@@ -24,6 +25,7 @@ import {
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
+import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 
 
@@ -119,6 +121,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showSettingDialog, setShowSettingDialog] = useState(false);
+  const [quickSetting, setQuickSetting] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality } | null>(null);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const navigate = useNavigate();
@@ -246,8 +249,18 @@ function LiveMatch() {
 
   const submitReception = (rating: ReceptionRating) => {
     if (!pendingReception) return;
-    recordReception(match.id, pendingReception.side, pendingReception.playerId, rating);
+    const side = pendingReception.side;
+    recordReception(match.id, side, pendingReception.playerId, rating);
     setPendingReception(null);
+    if (isCoach) {
+      // Mapeo rating de recepción (3 niveles) → calidad de armado (5 niveles)
+      const map: Record<ReceptionRating, SettingQuality> = {
+        positive: "++",
+        neutral: "!",
+        negative: "-",
+      };
+      setQuickSetting({ side, receptionQuality: map[rating] });
+    }
   };
 
   const handleTimeout = (side: "A" | "B") => {
@@ -953,6 +966,24 @@ function LiveMatch() {
             recordSetting(match.id, side, rest);
           }}
         />
+      )}
+
+      {/* Scouting rápido inline (tablet · Modo Entrenador) — aparece auto tras la recepción */}
+      {isCoach && quickSetting && (
+        <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-2 md:px-4 md:pb-4 pointer-events-none">
+          <div className="mx-auto max-w-3xl pointer-events-auto">
+            <QuickSettingBar
+              team={quickSetting.side === "A" ? teamA : teamB}
+              onCourt={quickSetting.side === "A" ? match.onCourtA : match.onCourtB}
+              receptionQuality={quickSetting.receptionQuality}
+              onSubmit={(payload) => {
+                recordSetting(match.id, quickSetting.side, payload);
+                setQuickSetting(null);
+              }}
+              onSkip={() => setQuickSetting(null)}
+            />
+          </div>
+        </div>
       )}
     </CompactShell>
   );
