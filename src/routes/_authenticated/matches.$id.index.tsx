@@ -958,6 +958,17 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Formación 5-1 · Modo Entrenador */}
+      {isCoach && (
+        <FormationDialog
+          open={showFormationDialog}
+          onClose={() => setShowFormationDialog(false)}
+          match={match}
+          teamA={teamA}
+          teamB={teamB}
+        />
+      )}
+
       {/* Armado · Modo Entrenador */}
       {isCoach && (
         <SettingDialog
