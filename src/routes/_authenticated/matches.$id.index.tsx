@@ -1122,20 +1122,23 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationSide }: {
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationConfig }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
-  formationSide?: "A" | "B" | null;
+  formationConfig?: { side: "A" | "B"; phase: "reception" | "attack" } | null;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
   const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
-  const formationA = useFormation(match, teamA, "A");
-  const formationB = useFormation(match, teamB, "B");
+  const phaseFor = (s: "A" | "B"): "reception" | "attack" =>
+    formationConfig?.side === s ? formationConfig.phase : "attack";
+  const formationA = useFormation(match, teamA, "A", "5-1", phaseFor("A"));
+  const formationB = useFormation(match, teamB, "B", "5-1", phaseFor("B"));
   const formationFor = (s: "A" | "B") => (s === "A" ? formationA : formationB);
+  const formationSide = formationConfig?.side ?? null;
 
   // 4 columns left→right: left back, left front, right front, right back
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
