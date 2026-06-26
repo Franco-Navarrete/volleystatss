@@ -423,7 +423,7 @@ function LiveMatch() {
             receivingSide={receivingSide}
             needsReception={needsReception}
             receiverIds={receiverIds}
-            useFormationLayout={isCoach}
+            formationSide={isCoach && needsReception ? receivingSide : null}
           />
 
           <SideActions
