@@ -1,5 +1,6 @@
 import type { Player } from "@/lib/volley-store";
 import { FORMATIONS_5_1 } from "./5-1";
+import { FORMATIONS_5_1_RECEPTION } from "./5-1-reception";
 import type {
   FormationSlot,
   ReceptionFormation,
@@ -9,7 +10,14 @@ import type {
   TeamLineup,
 } from "./types";
 
-export function getFormation(system: TacticalSystem, rotation: Rotation): ReceptionFormation {
+export type FormationPhase = "reception" | "attack";
+
+export function getFormation(
+  system: TacticalSystem,
+  rotation: Rotation,
+  phase: FormationPhase = "attack",
+): ReceptionFormation {
+  if (phase === "reception") return FORMATIONS_5_1_RECEPTION[rotation];
   return FORMATIONS_5_1[rotation];
 }
 
@@ -73,12 +81,13 @@ export function resolveFormation(opts: {
   system: TacticalSystem;
   rotation: Rotation;
   lineup: TeamLineup;
+  phase?: FormationPhase;
   customs?: Partial<Record<Rotation, Partial<Record<TacticalRole, { x: number; y: number }>>>>;
   /** Si el líbero está en cancha reemplazando a una central, swap. */
   liberoOnCourt?: boolean;
 }): ResolvedFormation {
-  const { system, rotation, lineup, customs, liberoOnCourt = true } = opts;
-  const formation = getFormation(system, rotation);
+  const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack" } = opts;
+  const formation = getFormation(system, rotation, phase);
   const override = customs?.[rotation] ?? {};
 
   // Mapeo rol → playerId.
