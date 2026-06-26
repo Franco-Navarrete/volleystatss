@@ -1,116 +1,107 @@
 import type { ReceptionFormation, Rotation } from "./types";
 
-// Coordenadas de referencia (% sobre media cancha):
-//   y=0 = red, y=100 = fondo. x=0 izquierda, x=100 derecha.
-// Posiciones rotación base:
-//   pos 4 (z4): x=18 y=20
-//   pos 3 (z3): x=50 y=20
-//   pos 2 (z2): x=82 y=20
-//   pos 5 (z5): x=18 y=80
-//   pos 6 (z6): x=50 y=80
-//   pos 1 (z1): x=82 y=80
-
 /**
- * Plantillas de recepción 5-1 derivadas del sistema VOLEYCA.
- * En cada rotación la armadora "se esconde" y la opuesta cubre por ella
- * en la fase de saque, luego desplazándose al lugar indicado para recibir
- * el balón. Los slots representan la posición INICIAL de recepción
- * (formación en "W" con la armadora afuera del pase).
+ * Plantillas 5-1 de recepción derivadas de las láminas VOLEYCA.
+ * Sistema de coordenadas (por equipo): y=0 → red, y=100 → línea final;
+ * x=0 → lado izquierdo del equipo, x=100 → lado derecho del equipo.
+ * Las posiciones reflejan la formación EN W para recibir el saque.
  */
 export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
-  // Rot 1 — armadora en zaguero derecho (pos 1)
+  // Rot 1 — armadora zaguera derecha (z1). Penetra a z2-3 para armar.
+  // OPUESTA cubre delante saliendo hacia z4. CENTRAL queda en red para 1er tiempo.
+  // Reciben: punta z5, líbero z6, punta zaguera junto a armadora en z1.
   1: {
     system: "5-1",
     rotation: 1,
-    setterTarget: { x: 65, y: 18 },
+    setterTarget: { x: 70, y: 14 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      { role: "setter", x: 88, y: 55 }, // sale de 1 hacia 2-3 para armar
-      { role: "outside_front", x: 22, y: 30 }, // punta delantera abre a 4
-      { role: "middle_front", x: 50, y: 18 }, // central preparada 1er tiempo
-      { role: "opposite", x: 78, y: 38 }, // opuesta zaguera (pipe / cobertura)
-      { role: "outside_back", x: 32, y: 72 }, // punta zaguera recibe
-      { role: "libero", x: 62, y: 75 }, // líbero recibe centro-fondo
+      { role: "setter", x: 86, y: 78 }, // z1
+      { role: "outside_back", x: 72, y: 70 }, // back-right, izq de la armadora
+      { role: "libero", x: 50, y: 70 }, // z6
+      { role: "outside_front", x: 24, y: 68 }, // z5 (cae a recibir)
+      { role: "middle_front", x: 50, y: 15 }, // z3 frente
+      { role: "opposite", x: 10, y: 42 }, // sale a z4 a atacar
     ],
   },
 
-  // Rot 2 — armadora en frente derecho (pos 2)
+  // Rot 2 — armadora delantera derecha (z2). Se queda en z2 para armar.
   2: {
     system: "5-1",
     rotation: 2,
-    setterTarget: { x: 70, y: 15 },
-    attackers: ["outside_front", "middle_front", "outside_back", "opposite"],
+    setterTarget: { x: 75, y: 14 },
+    attackers: ["middle_front", "outside_front", "outside_back", "opposite"],
     slots: [
-      { role: "setter", x: 82, y: 22 },
-      { role: "middle_front", x: 45, y: 18 },
-      { role: "outside_front", x: 18, y: 25 },
-      { role: "outside_back", x: 35, y: 75 },
-      { role: "libero", x: 60, y: 75 },
-      { role: "opposite", x: 82, y: 72 }, // opuesta zaguera cubre 1
+      { role: "setter", x: 85, y: 18 }, // z2
+      { role: "middle_front", x: 22, y: 16 }, // z4 frente
+      { role: "outside_front", x: 22, y: 70 }, // z5 back-left
+      { role: "outside_back", x: 44, y: 72 }, // entre z5 y z6
+      { role: "libero", x: 66, y: 72 }, // z6/z1 cubriendo
+      { role: "opposite", x: 84, y: 90 }, // z1 fondo, atacará desde atrás
     ],
   },
 
-  // Rot 3 — armadora en frente centro (pos 3)
+  // Rot 3 — armadora delantera centro (z3). Se desplaza a z2.
   3: {
     system: "5-1",
     rotation: 3,
-    setterTarget: { x: 72, y: 15 },
-    attackers: ["outside_front", "middle_back", "outside_back", "opposite"],
+    setterTarget: { x: 75, y: 14 },
+    attackers: ["outside_front", "middle_front", "outside_back", "opposite"],
     slots: [
-      { role: "setter", x: 55, y: 22 }, // desplaza a 2 para armar
-      { role: "outside_front", x: 18, y: 25 }, // punta abre a 4
-      { role: "middle_back", x: 82, y: 38 }, // central zaguera (z2/atrás)
-      { role: "outside_back", x: 30, y: 72 },
-      { role: "libero", x: 55, y: 78 },
-      { role: "opposite", x: 78, y: 78 },
+      { role: "setter", x: 55, y: 20 }, // desplazada de z3 hacia z2
+      { role: "middle_front", x: 82, y: 18 }, // central queda en z2/z3 para 1er tiempo
+      { role: "outside_front", x: 22, y: 70 }, // z5 back-left
+      { role: "libero", x: 50, y: 70 }, // z6
+      { role: "outside_back", x: 78, y: 72 }, // z1 back-right
+      { role: "opposite", x: 80, y: 92 }, // sale por detrás de z1 para atacar
     ],
   },
 
-  // Rot 4 — armadora en frente izquierdo (pos 4)
+  // Rot 4 — armadora delantera izquierda (z4). Recorre todo para llegar a z2.
   4: {
     system: "5-1",
     rotation: 4,
-    setterTarget: { x: 70, y: 15 },
+    setterTarget: { x: 75, y: 14 },
     attackers: ["middle_front", "outside_back", "opposite", "outside_front"],
     slots: [
-      { role: "setter", x: 18, y: 22 }, // se desplaza fuerte a 2 al armar
-      { role: "middle_front", x: 45, y: 18 },
-      { role: "outside_front", x: 38, y: 55 }, // central transición / punta delantera baja
-      { role: "outside_back", x: 30, y: 75 },
-      { role: "libero", x: 62, y: 78 },
-      { role: "opposite", x: 85, y: 72 },
+      { role: "setter", x: 18, y: 18 }, // z4 (se desplaza fuerte a z2 al armar)
+      { role: "middle_front", x: 42, y: 38 }, // central en transición (1er tiempo)
+      { role: "outside_front", x: 22, y: 72 }, // z5
+      { role: "outside_back", x: 50, y: 72 }, // pipe / z6
+      { role: "libero", x: 74, y: 72 }, // z1
+      { role: "opposite", x: 88, y: 90 }, // fondo z1 atacando
     ],
   },
 
-  // Rot 5 — armadora en zaguero izquierdo (pos 5)
+  // Rot 5 — armadora zaguera izquierda (z5). Penetra a z2.
   5: {
     system: "5-1",
     rotation: 5,
-    setterTarget: { x: 65, y: 18 },
-    attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
+    setterTarget: { x: 72, y: 14 },
+    attackers: ["middle_front", "opposite", "outside_front", "outside_back"],
     slots: [
-      { role: "setter", x: 50, y: 45 }, // sube de 5 a 2-3 para armar
-      { role: "outside_front", x: 18, y: 22 },
-      { role: "middle_front", x: 48, y: 18 },
-      { role: "opposite", x: 82, y: 22 },
-      { role: "outside_back", x: 25, y: 75 },
-      { role: "libero", x: 70, y: 78 },
+      { role: "setter", x: 45, y: 30 }, // penetrando desde z5
+      { role: "middle_front", x: 22, y: 18 }, // z4
+      { role: "opposite", x: 84, y: 18 }, // z2
+      { role: "outside_front", x: 22, y: 72 }, // z5 (ataque pipe / back)
+      { role: "outside_back", x: 50, y: 72 }, // z6
+      { role: "libero", x: 78, y: 72 }, // z1
     ],
   },
 
-  // Rot 6 — armadora en zaguero centro (pos 6)
+  // Rot 6 — armadora zaguera centro (z6). Penetra entre z2-3.
   6: {
     system: "5-1",
     rotation: 6,
-    setterTarget: { x: 60, y: 18 },
+    setterTarget: { x: 70, y: 14 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      { role: "setter", x: 55, y: 45 }, // sube de 6 entre 2-3
-      { role: "opposite", x: 78, y: 22 }, // opuesta delantera en 2
-      { role: "middle_front", x: 50, y: 18 },
-      { role: "outside_front", x: 22, y: 30 },
-      { role: "outside_back", x: 82, y: 78 },
-      { role: "libero", x: 50, y: 80 },
+      { role: "setter", x: 62, y: 28 }, // penetra desde z6
+      { role: "middle_front", x: 50, y: 16 }, // z3
+      { role: "opposite", x: 84, y: 18 }, // z2
+      { role: "outside_front", x: 22, y: 32 }, // sale a z4 (atacante delantera)
+      { role: "libero", x: 50, y: 72 }, // z6
+      { role: "outside_back", x: 78, y: 72 }, // z1
     ],
   },
 };
