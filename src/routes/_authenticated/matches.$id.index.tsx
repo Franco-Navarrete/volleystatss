@@ -27,6 +27,8 @@ import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useFormation } from "@/hooks/use-formation";
+import { CourtFormation } from "@/components/court/CourtFormation";
 
 
 import { Button } from "@/components/ui/button";
@@ -124,6 +126,7 @@ function LiveMatch() {
   const [quickSetting, setQuickSetting] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality } | null>(null);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
+  const [showFormationDialog, setShowFormationDialog] = useState(false);
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
@@ -444,6 +447,11 @@ function LiveMatch() {
           {isCoach && (
             <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" disabled={!isLive || actionsDisabled} onClick={() => setShowSettingDialog(true)}>
               <Target className="size-3 md:size-4" /> Armado
+            </Button>
+          )}
+          {isCoach && (
+            <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
+              <Users className="size-3 md:size-4" /> Cancha 5-1
             </Button>
           )}
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
@@ -951,6 +959,17 @@ function LiveMatch() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Formación 5-1 · Modo Entrenador */}
+      {isCoach && (
+        <FormationDialog
+          open={showFormationDialog}
+          onClose={() => setShowFormationDialog(false)}
+          match={match}
+          teamA={teamA}
+          teamB={teamB}
+        />
+      )}
 
       {/* Armado · Modo Entrenador */}
       {isCoach && (
@@ -1914,3 +1933,45 @@ function FormatDialog({ match, onSave, onCancel }: {
     </>
   );
 }
+
+function FormationDialog({
+  open,
+  onClose,
+  match,
+  teamA,
+  teamB,
+}: {
+  open: boolean;
+  onClose: () => void;
+  match: Match;
+  teamA: Team;
+  teamB: Team;
+}) {
+  const formationA = useFormation(match, teamA, "A");
+  const formationB = useFormation(match, teamB, "B");
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-5xl w-[calc(100dvw-24px)] max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Formación de recepción · Sistema 5-1</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-sm font-bold text-foreground">{teamA.name}</div>
+            <CourtFormation team={teamA} formation={formationA} />
+          </div>
+          <div className="space-y-2">
+            <div className="text-sm font-bold text-foreground">{teamB.name}</div>
+            <CourtFormation team={teamB} formation={formationB} />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Las posiciones se recalculan automáticamente cuando el equipo rota. Los colores indican el rol
+          táctico de cada jugadora. Asigná la posición (armadora / central / punta / opuesta / líbero) en
+          la ficha de cada jugadora para que la formación se ajuste correctamente.
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
