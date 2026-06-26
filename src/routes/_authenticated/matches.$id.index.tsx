@@ -27,6 +27,7 @@ import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
+import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
