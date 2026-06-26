@@ -1,5 +1,6 @@
 import type { Player } from "@/lib/volley-store";
 import { FORMATIONS_5_1 } from "./5-1";
+import { FORMATIONS_5_1_RECEPTION } from "./5-1-reception";
 import type {
   FormationSlot,
   ReceptionFormation,
@@ -9,7 +10,14 @@ import type {
   TeamLineup,
 } from "./types";
 
-export function getFormation(system: TacticalSystem, rotation: Rotation): ReceptionFormation {
+export type FormationPhase = "reception" | "attack";
+
+export function getFormation(
+  system: TacticalSystem,
+  rotation: Rotation,
+  phase: FormationPhase = "attack",
+): ReceptionFormation {
+  if (phase === "reception") return FORMATIONS_5_1_RECEPTION[rotation];
   return FORMATIONS_5_1[rotation];
 }
 
