@@ -1107,12 +1107,12 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, useFormationLayout }: {
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationSide }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
-  useFormationLayout?: boolean;
+  formationSide?: "A" | "B" | null;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
