@@ -193,6 +193,15 @@ function LiveMatch() {
     })
   );
   const needsReception = isCoach && !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
+  // Validación estricta: la formación de ataque sólo se renderiza si en el rally
+  // actual existe una recepción registrada y proviene del lado que actualmente
+  // está recibiendo (servingSide opuesto). Si se registró un punto antes que
+  // la recepción, o la recepción es de un rally previo, no se muestra.
+  const lastReceptionSide = getCurrentRallyReceptionSide(match, match.currentSet);
+  const attackFormationSide: "A" | "B" | null =
+    isCoach && isLive && !actionsDisabled && !needsReception && lastReceptionSide === receivingSide
+      ? receivingSide
+      : null;
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
