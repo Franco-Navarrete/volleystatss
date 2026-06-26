@@ -1387,6 +1387,32 @@ export function needsReceptionForRally(match: Match, setNumber: number, receivin
   return true;
 }
 
+/**
+ * Devuelve el equipo (A|B) que registró una recepción válida en el rally
+ * actual del set indicado, o null si aún no se registró ninguna recepción
+ * desde el último punto (o desde el inicio del set).
+ *
+ * Se considera "rally actual" al tramo de eventos posterior al último
+ * PointEvent del set. Si en ese tramo existe una recepción, se devuelve
+ * el side de la jugadora que la ejecutó. Si dentro del mismo rally hay
+ * recepciones de ambos lados (raro, inconsistencia), se prioriza la
+ * última registrada para reflejar el estado más reciente.
+ */
+export function getCurrentRallyReceptionSide(match: Match, setNumber: number): "A" | "B" | null {
+  const setEvents = match.events.filter((e) => "setNumber" in e && e.setNumber === setNumber);
+  for (let i = setEvents.length - 1; i >= 0; i--) {
+    const ev = setEvents[i];
+    if ("kind" in ev) {
+      if (ev.kind === "reception") return ev.side;
+      continue;
+    }
+    // PointEvent — fin del rally anterior, no hay recepción para el actual.
+    return null;
+  }
+  return null;
+}
+
+
 
 export interface StandingRow {
   teamId: string;
