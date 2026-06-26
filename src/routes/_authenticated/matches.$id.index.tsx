@@ -442,7 +442,7 @@ function LiveMatch() {
             receivingSide={receivingSide}
             needsReception={needsReception}
             receiverIds={receiverIds}
-            formationConfig={formationConfig}
+            formationByTeam={formationByTeam}
           />
 
           <SideActions
