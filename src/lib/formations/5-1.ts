@@ -67,15 +67,16 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
     ],
   },
 
-  // Rot 3 — armadora delantera (z3). Opuesta cubre P1. Central abre a z2.
+  // Rot 3 — armadora delantera (oficial z3, se desplaza a z2 para armar).
+  //   Central abre a z3, punta z4, opuesta cubre P1.
   3: {
     system: "5-1",
     rotation: 3,
     setterTarget,
     attackers: ["middle_front", "outside_front", "outside_back", "opposite"],
     slots: [
-      { role: "setter", ...P.z3 },
-      { role: "middle_front", ...P.z2 },
+      { role: "setter", ...P.z2 },
+      { role: "middle_front", ...P.z3 },
       { role: "outside_front", ...P.z4 },
       { role: "opposite", ...P.p1 },
       { role: "outside_back", ...P.p6 },
@@ -83,16 +84,17 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
     ],
   },
 
-  // Rot 4 — armadora delantera (z4). Opuesta cubre P1. Punta abre a z2.
+  // Rot 4 — armadora delantera (oficial z4, se desplaza a z2 para armar).
+  //   Central z3, punta z4, opuesta cubre P1.
   4: {
     system: "5-1",
     rotation: 4,
     setterTarget,
     attackers: ["middle_front", "outside_front", "outside_back", "opposite"],
     slots: [
-      { role: "setter", ...P.z4 },
+      { role: "setter", ...P.z2 },
       { role: "middle_front", ...P.z3 },
-      { role: "outside_front", ...P.z2 },
+      { role: "outside_front", ...P.z4 },
       { role: "opposite", ...P.p1 },
       { role: "outside_back", ...P.p6 },
       { role: "libero", ...P.p5 },
