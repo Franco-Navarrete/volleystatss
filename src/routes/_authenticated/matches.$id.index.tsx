@@ -193,20 +193,24 @@ function LiveMatch() {
     })
   );
   const needsReception = isCoach && !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
-  // Configuración de formación a renderizar para el equipo receptor:
-  //   - Si todavía necesita registrar la recepción → plantilla "reception" (W).
-  //   - Si ya hay una recepción válida en el rally actual → plantilla "attack".
-  //   - Si se anotó un punto sin recepción registrada, o el último evento
-  //     fue de un rally anterior, no se muestra formación.
+  // Configuración de formación por equipo:
+  //   - Equipo que SACA → siempre formación de ataque (penetración: armadora/opuesta
+  //     en P1, punta zaguero en P6, líbero/central en P5).
+  //   - Equipo que RECIBE:
+  //       · Si todavía falta registrar la recepción del rally → plantilla "reception" (W).
+  //       · Si ya hay una recepción válida en el rally actual → plantilla "attack".
+  //       · Si se anotó un punto antes que la recepción o la recepción es de
+  //         un rally anterior → cae al ataque base (las jugadoras igualmente
+  //         deben estar paradas en sus posiciones naturales).
   const lastReceptionSide = getCurrentRallyReceptionSide(match, match.currentSet);
-  const formationConfig: { side: "A" | "B"; phase: "reception" | "attack" } | null =
+  const receivingPhase: "reception" | "attack" = needsReception ? "reception" : "attack";
+  const _validatedReception = lastReceptionSide === receivingSide;
+  void _validatedReception;
+  const servingSide: "A" | "B" = receivingSide === "A" ? "B" : "A";
+  const formationByTeam: Partial<Record<"A" | "B", "reception" | "attack">> =
     isCoach && isLive && !actionsDisabled
-      ? needsReception
-        ? { side: receivingSide, phase: "reception" }
-        : lastReceptionSide === receivingSide
-          ? { side: receivingSide, phase: "attack" }
-          : null
-      : null;
+      ? { [receivingSide]: receivingPhase, [servingSide]: "attack" }
+      : {};
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
