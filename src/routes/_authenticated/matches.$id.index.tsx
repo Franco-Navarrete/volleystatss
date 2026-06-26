@@ -268,8 +268,21 @@ function LiveMatch() {
 
   const submitZone = (zone: AttackZone) => {
     if (!pendingZone) return;
-    recordPoint(match.id, pendingZone.side, pendingZone.type, pendingZone.playerId, zone);
+    const { side, playerId, type } = pendingZone;
     setPendingZone(null);
+    if (isCoach) {
+      // Paso adicional: tipo de ataque (modo entrenador).
+      setPendingAttackType({ side, playerId, type, zone });
+      return;
+    }
+    recordPoint(match.id, side, type, playerId, zone);
+  };
+
+  const submitAttackType = (attackType: import("@/lib/formations/attack-types").AttackType | null) => {
+    if (!pendingAttackType) return;
+    const { side, playerId, type, zone } = pendingAttackType;
+    recordPoint(match.id, side, type, playerId, zone, attackType ?? undefined);
+    setPendingAttackType(null);
   };
 
   const submitReception = (rating: ReceptionRating) => {
