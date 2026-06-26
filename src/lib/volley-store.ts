@@ -301,6 +301,8 @@ export interface SettingEvent {
   attackResult?: SettingAttackResult;
   /** Calidad de la recepción que originó la jugada (opcional). */
   receptionQuality?: SettingQuality;
+  /** Tipo táctico del ataque (modo Entrenador). */
+  attackType?: import("@/lib/formations/attack-types").AttackType;
   setNumber: number;
   timestamp: number;
 }
