@@ -1931,3 +1931,45 @@ function FormatDialog({ match, onSave, onCancel }: {
     </>
   );
 }
+
+function FormationDialog({
+  open,
+  onClose,
+  match,
+  teamA,
+  teamB,
+}: {
+  open: boolean;
+  onClose: () => void;
+  match: Match;
+  teamA: Team;
+  teamB: Team;
+}) {
+  const formationA = useFormation(match, teamA, "A");
+  const formationB = useFormation(match, teamB, "B");
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-5xl w-[calc(100dvw-24px)] max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Formación de recepción · Sistema 5-1</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-sm font-bold text-foreground">{teamA.name}</div>
+            <CourtFormation team={teamA} formation={formationA} />
+          </div>
+          <div className="space-y-2">
+            <div className="text-sm font-bold text-foreground">{teamB.name}</div>
+            <CourtFormation team={teamB} formation={formationB} />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Las posiciones se recalculan automáticamente cuando el equipo rota. Los colores indican el rol
+          táctico de cada jugadora. Asigná la posición (armadora / central / punta / opuesta / líbero) en
+          la ficha de cada jugadora para que la formación se ajuste correctamente.
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
