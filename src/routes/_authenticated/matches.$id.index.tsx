@@ -423,6 +423,7 @@ function LiveMatch() {
             receivingSide={receivingSide}
             needsReception={needsReception}
             receiverIds={receiverIds}
+            useFormationLayout={isCoach}
           />
 
           <SideActions
