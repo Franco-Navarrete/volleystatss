@@ -165,6 +165,8 @@ export interface PointEvent {
   timestamp: number;
   /** Sólo para ataques (rotation_attack / counter_attack / attack). */
   attackZone?: AttackZone;
+  /** Modo entrenador: tipo táctico del ataque (1er tiempo, pipe, etc.). */
+  attackType?: import("@/lib/formations/attack-types").AttackType;
 }
 
 export interface SubstitutionEvent {
@@ -299,6 +301,8 @@ export interface SettingEvent {
   attackResult?: SettingAttackResult;
   /** Calidad de la recepción que originó la jugada (opcional). */
   receptionQuality?: SettingQuality;
+  /** Tipo táctico del ataque (modo Entrenador). */
+  attackType?: import("@/lib/formations/attack-types").AttackType;
   setNumber: number;
   timestamp: number;
 }
@@ -402,7 +406,8 @@ interface VolleyState {
     playerSide: "A" | "B",
     type: PointType,
     playerId: string | null,
-    attackZone?: AttackZone
+    attackZone?: AttackZone,
+    attackType?: import("@/lib/formations/attack-types").AttackType
   ) => void;
   recordSubstitution: (
     matchId: string,
@@ -715,7 +720,7 @@ export const useVolley = create<VolleyState>()(
           ),
         })),
 
-      recordPoint: (matchId, playerSide, type, playerId, attackZone) => {
+      recordPoint: (matchId, playerSide, type, playerId, attackZone, attackType) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId || m.status === "finished") return m;
@@ -729,6 +734,9 @@ export const useVolley = create<VolleyState>()(
               setNumber: m.currentSet,
               timestamp: Date.now(),
               ...(attackZone !== undefined && isAttackType(type) ? { attackZone } : {}),
+              ...(attackType !== undefined && (isAttackType(type) || type === "attack_error")
+                ? { attackType }
+                : {}),
             };
             const prevServing = m.servingSide;
             let next: Match = { ...m, events: [...m.events, ev] };

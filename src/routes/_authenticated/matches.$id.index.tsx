@@ -27,6 +27,7 @@ import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
+import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
@@ -117,6 +118,12 @@ function LiveMatch() {
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingZone, setPendingZone] = useState<{ side: "A" | "B"; playerId: string; type: PointType } | null>(null);
+  const [pendingAttackType, setPendingAttackType] = useState<{
+    side: "A" | "B";
+    playerId: string;
+    type: PointType;
+    zone: AttackZone;
+  } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
   const [showLineupEditor, setShowLineupEditor] = useState(false);
@@ -262,8 +269,21 @@ function LiveMatch() {
 
   const submitZone = (zone: AttackZone) => {
     if (!pendingZone) return;
-    recordPoint(match.id, pendingZone.side, pendingZone.type, pendingZone.playerId, zone);
+    const { side, playerId, type } = pendingZone;
     setPendingZone(null);
+    if (isCoach) {
+      // Paso adicional: tipo de ataque (modo entrenador).
+      setPendingAttackType({ side, playerId, type, zone });
+      return;
+    }
+    recordPoint(match.id, side, type, playerId, zone);
+  };
+
+  const submitAttackType = (attackType: import("@/lib/formations/attack-types").AttackType | null) => {
+    if (!pendingAttackType) return;
+    const { side, playerId, type, zone } = pendingAttackType;
+    recordPoint(match.id, side, type, playerId, zone, attackType ?? undefined);
+    setPendingAttackType(null);
   };
 
   const submitReception = (rating: ReceptionRating) => {
@@ -662,6 +682,31 @@ function LiveMatch() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Attack type picker (modo entrenador) — luego de la zona */}
+      <AttackTypeDialog
+        open={!!pendingAttackType}
+        team={pendingAttackType ? (pendingAttackType.side === "A" ? teamA : teamB) : null}
+        playerId={pendingAttackType?.playerId ?? null}
+        isBackRow={(() => {
+          if (!pendingAttackType) return false;
+          const onCourt = pendingAttackType.side === "A" ? match.onCourtA : match.onCourtB;
+          const idx = onCourt.indexOf(pendingAttackType.playerId);
+          // Posiciones zagueras: índices 0 (P1), 4 (P5), 5 (P6).
+          return idx === 0 || idx === 4 || idx === 5;
+        })()}
+        onSelect={submitAttackType}
+        onClose={() => {
+          // Sin tipo: igualmente guardamos el ataque con la zona seleccionada.
+          if (pendingAttackType) {
+            const { side, playerId, type, zone } = pendingAttackType;
+            recordPoint(match.id, side, type, playerId, zone);
+          }
+          setPendingAttackType(null);
+        }}
+      />
+
+
 
 
       {/* Reception rating dialog */}
