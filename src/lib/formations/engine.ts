@@ -61,32 +61,88 @@ export function getRotationFromCourt(onCourt: string[], setterId: string | undef
 }
 
 /**
+ * Posiciones oficiales de rotación de la cancha:
+ *   Red
+ *     4 | 3 | 2
+ *     5 | 6 | 1
+ *   Fondo
+ * Delanteras = {2, 3, 4}. Zagueras = {1, 5, 6}.
+ */
+export type RotationPosition = 1 | 2 | 3 | 4 | 5 | 6;
+
+const FRONT_ROW_POSITIONS: ReadonlySet<RotationPosition> = new Set([2, 3, 4]);
+
+export function isFrontRowPosition(pos: RotationPosition): boolean {
+  return FRONT_ROW_POSITIONS.has(pos);
+}
+
+/**
+ * Devuelve la posición oficial de rotación (1..6) de una jugadora en cancha.
+ * `onCourt` se indexa así: index 0 = pos 1 (zaguera derecha, sacadora actual).
+ */
+export function getRotationPosition(onCourt: string[], playerId: string): RotationPosition | null {
+  const idx = onCourt.indexOf(playerId);
+  if (idx < 0) return null;
+  return ((idx + 1) as RotationPosition);
+}
+
+export interface PlayerRotationInfo {
+  rotationPosition: RotationPosition;
+  isFrontRow: boolean;
+  isBackRow: boolean;
+}
+
+/**
+ * Devuelve `{ rotationPosition, isFrontRow, isBackRow }` de una jugadora dada
+ * la disposición actual en cancha.
+ */
+export function getPlayerRotationInfo(onCourt: string[], playerId: string): PlayerRotationInfo | null {
+  const pos = getRotationPosition(onCourt, playerId);
+  if (!pos) return null;
+  const front = isFrontRowPosition(pos);
+  return { rotationPosition: pos, isFrontRow: front, isBackRow: !front };
+}
+
+/**
  * Resuelve la formación para un equipo: combina la plantilla del sistema
- * con el lineup, devolviendo cada slot con la jugadora real asignada.
+ * con el lineup, devolviendo cada slot con la jugadora real asignada y los
+ * flags oficiales de rotación (`rotationPosition` / `isFrontRow` / `isBackRow`).
  *
  * `customs` permite overrides por (rotación → role → {x,y}).
  */
 export interface ResolvedSlot extends FormationSlot {
   role: TacticalRole;
   playerId: string | null;
+  /** Posición oficial de rotación (1..6) o null si la jugadora no está en cancha. */
+  rotationPosition: RotationPosition | null;
+  /** True si la jugadora está en zonas 2/3/4 (puede bloquear y atacar de cualquier punto). */
+  isFrontRow: boolean;
+  /** True si la jugadora está en zonas 1/5/6 (no puede bloquear ni atacar por delante de 3m). */
+  isBackRow: boolean;
 }
 
 export interface ResolvedFormation {
   formation: ReceptionFormation;
   rotation: Rotation;
   slots: ResolvedSlot[];
+  /** Jugadoras delanteras (en zonas 2/3/4) — pueden bloquear y atacar de cualquier punto. */
+  frontRow: ResolvedSlot[];
+  /** Jugadoras zagueras (en zonas 1/5/6) — sólo ataque desde detrás de 3m (pipe). */
+  backRow: ResolvedSlot[];
 }
 
 export function resolveFormation(opts: {
   system: TacticalSystem;
   rotation: Rotation;
   lineup: TeamLineup;
+  /** Necesario para calcular `rotationPosition` / `isFrontRow` / `isBackRow`. */
+  onCourt?: string[];
   phase?: FormationPhase;
   customs?: Partial<Record<Rotation, Partial<Record<TacticalRole, { x: number; y: number }>>>>;
   /** Si el líbero está en cancha reemplazando a una central, swap. */
   liberoOnCourt?: boolean;
 }): ResolvedFormation {
-  const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack" } = opts;
+  const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack", onCourt = [] } = opts;
   const formation = getFormation(system, rotation, phase);
   const override = customs?.[rotation] ?? {};
 
@@ -109,13 +165,22 @@ export function resolveFormation(opts: {
 
   const slots: ResolvedSlot[] = formation.slots.map((s) => {
     const o = override[s.role];
+    const playerId = roleToPlayer[s.role] ?? null;
+    const rotationPosition = playerId ? getRotationPosition(onCourt, playerId) : null;
+    const isFrontRow = rotationPosition ? isFrontRowPosition(rotationPosition) : false;
     return {
       ...s,
       x: o?.x ?? s.x,
       y: o?.y ?? s.y,
-      playerId: roleToPlayer[s.role] ?? null,
+      playerId,
+      rotationPosition,
+      isFrontRow,
+      isBackRow: rotationPosition ? !isFrontRow : false,
     };
   });
 
-  return { formation, rotation, slots };
+  const frontRow = slots.filter((s) => s.isFrontRow);
+  const backRow = slots.filter((s) => s.isBackRow);
+
+  return { formation, rotation, slots, frontRow, backRow };
 }

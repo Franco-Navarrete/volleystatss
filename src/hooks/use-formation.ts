@@ -30,6 +30,6 @@ export function useFormation(
     const lineup = inferLineupFromPlayers(team.players, onCourt);
     const rotation = getRotationFromCourt(onCourt, lineup.setter);
     if (!rotation) return null;
-    return resolveFormation({ system, rotation, lineup, phase });
+    return resolveFormation({ system, rotation, lineup, phase, onCourt });
   }, [match, team, side, system, phase]);
 }
