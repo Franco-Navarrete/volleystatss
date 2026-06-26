@@ -406,7 +406,8 @@ interface VolleyState {
     playerSide: "A" | "B",
     type: PointType,
     playerId: string | null,
-    attackZone?: AttackZone
+    attackZone?: AttackZone,
+    attackType?: import("@/lib/formations/attack-types").AttackType
   ) => void;
   recordSubstitution: (
     matchId: string,
