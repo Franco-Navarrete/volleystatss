@@ -682,6 +682,31 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Attack type picker (modo entrenador) — luego de la zona */}
+      <AttackTypeDialog
+        open={!!pendingAttackType}
+        team={pendingAttackType ? (pendingAttackType.side === "A" ? teamA : teamB) : null}
+        playerId={pendingAttackType?.playerId ?? null}
+        isBackRow={(() => {
+          if (!pendingAttackType) return false;
+          const onCourt = pendingAttackType.side === "A" ? match.onCourtA : match.onCourtB;
+          const idx = onCourt.indexOf(pendingAttackType.playerId);
+          // Posiciones zagueras: índices 0 (P1), 4 (P5), 5 (P6).
+          return idx === 0 || idx === 4 || idx === 5;
+        })()}
+        onSelect={submitAttackType}
+        onClose={() => {
+          // Sin tipo: igualmente guardamos el ataque con la zona seleccionada.
+          if (pendingAttackType) {
+            const { side, playerId, type, zone } = pendingAttackType;
+            recordPoint(match.id, side, type, playerId, zone);
+          }
+          setPendingAttackType(null);
+        }}
+      />
+
+
+
 
       {/* Reception rating dialog */}
       <Dialog open={!!pendingReception} onOpenChange={(o) => !o && setPendingReception(null)}>
