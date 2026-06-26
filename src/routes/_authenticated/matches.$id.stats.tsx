@@ -374,6 +374,14 @@ function StatsPage() {
         </section>
       )}
 
+      {/* Tipos de ataque · Modo Entrenador */}
+      {isCoach && (
+        <section className="mb-6">
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Tipos de ataque</h2>
+          <AttackTypesPanel match={match} teamA={teamA} teamB={teamB} />
+        </section>
+      )}
+
       {/* Player tables */}
       <div className="grid lg:grid-cols-2 gap-6">
         <PlayerStatsTable team={teamA} rows={playersA} />
