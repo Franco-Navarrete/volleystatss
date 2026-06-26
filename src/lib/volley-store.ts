@@ -165,6 +165,8 @@ export interface PointEvent {
   timestamp: number;
   /** Sólo para ataques (rotation_attack / counter_attack / attack). */
   attackZone?: AttackZone;
+  /** Modo entrenador: tipo táctico del ataque (1er tiempo, pipe, etc.). */
+  attackType?: import("@/lib/formations/attack-types").AttackType;
 }
 
 export interface SubstitutionEvent {
