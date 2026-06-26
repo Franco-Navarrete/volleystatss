@@ -193,23 +193,18 @@ function LiveMatch() {
     })
   );
   const needsReception = isCoach && !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
-  // Configuración de formación por equipo:
-  //   - Equipo que SACA → siempre formación de ataque (penetración: armadora/opuesta
-  //     en P1, punta zaguero en P6, líbero/central en P5).
-  //   - Equipo que RECIBE:
-  //       · Si todavía falta registrar la recepción del rally → plantilla "reception" (W).
-  //       · Si ya hay una recepción válida en el rally actual → plantilla "attack".
-  //       · Si se anotó un punto antes que la recepción o la recepción es de
-  //         un rally anterior → cae al ataque base (las jugadoras igualmente
-  //         deben estar paradas en sus posiciones naturales).
+  // Configuración de formación por equipo (modo entrenador):
+  //   - Equipo que RECIBE → SIEMPRE plantilla "reception" (W) según rotación 1..6
+  //     (láminas VOLEYCA). Se aplica para todos los roles independientemente de
+  //     si la recepción ya fue registrada en el rally actual.
+  //   - Equipo que SACA   → SIEMPRE formación de ataque
+  //     (P1=armadora/opuesta, P6=punta zaguero, P5=líbero/central; opp→z2, mid→z3, out→z4).
   const lastReceptionSide = getCurrentRallyReceptionSide(match, match.currentSet);
-  const receivingPhase: "reception" | "attack" = needsReception ? "reception" : "attack";
-  const _validatedReception = lastReceptionSide === receivingSide;
-  void _validatedReception;
+  void lastReceptionSide; // validación reservada para futuros chequeos
   const servingSide: "A" | "B" = receivingSide === "A" ? "B" : "A";
   const formationByTeam: Partial<Record<"A" | "B", "reception" | "attack">> =
     isCoach && isLive && !actionsDisabled
-      ? { [receivingSide]: receivingPhase, [servingSide]: "attack" }
+      ? { [receivingSide]: "reception", [servingSide]: "attack" }
       : {};
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
