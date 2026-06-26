@@ -423,7 +423,7 @@ function LiveMatch() {
             receivingSide={receivingSide}
             needsReception={needsReception}
             receiverIds={receiverIds}
-            useFormationLayout={isCoach}
+            formationSide={isCoach && needsReception ? receivingSide : null}
           />
 
           <SideActions
@@ -1107,12 +1107,12 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, useFormationLayout }: {
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationSide }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
-  useFormationLayout?: boolean;
+  formationSide?: "A" | "B" | null;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
@@ -1144,117 +1144,113 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
       <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
 
-      {useFormationLayout ? (
-        <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-2 z-20">
-          <FormationSide
-            side={leftSide}
-            team={teamFor(leftSide)}
-            onCourt={leftSide === "A" ? a : b}
-            formation={formationFor(leftSide)}
-            half="left"
-            match={match}
-            serverPlayerId={serverSide === leftSide ? serverPlayerId : null}
-            needsReception={needsReception}
-            receivingSide={receivingSide}
-            receiverIds={receiverIds}
-            onPlayerClick={onPlayerClick}
-          />
-          <FormationSide
-            side={rightSide}
-            team={teamFor(rightSide)}
-            onCourt={rightSide === "A" ? a : b}
-            formation={formationFor(rightSide)}
-            half="right"
-            match={match}
-            serverPlayerId={serverSide === rightSide ? serverPlayerId : null}
-            needsReception={needsReception}
-            receivingSide={receivingSide}
-            receiverIds={receiverIds}
-            onPlayerClick={onPlayerClick}
-          />
-        </div>
-      ) : (
-        <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
-          {columns.map((col, ci) => {
-            const onCourt = col.side === "A" ? a : b;
-            const serverPid = serverSide === col.side ? serverPlayerId : null;
-            const isFront = ci === 1 || ci === 2;
+      <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-2 z-20">
+        {(["left", "right"] as const).map((half) => {
+          const side = half === "left" ? leftSide : rightSide;
+          const halfColumns = half === "left" ? [columns[0], columns[1]] : [columns[2], columns[3]];
+          if (formationSide === side) {
             return (
-                <div
-                  key={ci}
-                  className={`grid grid-rows-3 items-center gap-1 [@media(max-width:360px)]:gap-0.5 sm:gap-3 h-full px-0.5 [@media(max-width:360px)]:px-0 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
-                >
-                  {col.idxs.map((idx) => {
-                    const pid = onCourt[idx];
-                    const p = col.team.players.find((x) => x.id === pid);
-                    const isServer = pid && pid === serverPid;
-                    const designated = (col.side === "A"
-                      ? [match.liberoA1Id, match.liberoA2Id]
-                      : [match.liberoB1Id, match.liberoB2Id]
-                    ).filter(Boolean) as string[];
-                    const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
-                    const pairColor = p && !isLibero
-                      ? (p.position === "armador" || p.position === "opuesto"
-                          ? "#22d3ee"
-                          : p.position === "punta"
-                          ? "#a3e635"
-                          : p.position === "central"
-                          ? "#f472b6"
-                          : null)
-                      : null;
-                    const roleLabel = p && !isLibero
-                      ? (p.position === "armador" ? "A"
-                          : p.position === "opuesto" ? "O"
-                          : p.position === "punta" ? "P"
-                          : p.position === "central" ? "C"
-                          : null)
-                      : null;
-                    let replacedName: string | null = null;
-                    if (isLibero && pid) {
-                      const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
-                      if (active && active.liberoId === pid) {
-                        const rp = col.team.players.find((x) => x.id === active.replacedId);
-                        replacedName = rp ? `#${rp.number} ${rp.name}` : null;
-                      }
-                    }
-                    const isReceptionTarget = needsReception && col.side === receivingSide && !!pid;
-                    const isReceiverHighlight = isReceptionTarget && receiverIds.has(pid);
-                    return (
-                      <button
-                        key={`${ci}-${idx}`}
-                        onClick={() => p && onPlayerClick(col.side, p.id)}
-                        disabled={!p}
-                        className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] [@media(max-width:360px)]:h-[48%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""}`}
-                        style={isLibero
-                          ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
-                          : { background: col.team.color, borderColor: pairColor ?? undefined }}
-                        title={p ? `#${p.number} ${p.name}` : ""}
-                      >
-                        <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
-                        {p && (
-                          <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
-                        )}
-                        {isLibero && replacedName && (
-                          <span className="max-w-[90%] truncate text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
-                        )}
-                        {isLibero && (
-                          <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
-                        )}
-                        {roleLabel && (
-                          <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 rounded-b text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[10px] font-black uppercase tracking-widest text-black shadow-md" style={{ background: pairColor ?? undefined }}>{roleLabel}</span>
-                        )}
-                        {isServer && (
-                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
-                        )}
-
-                      </button>
-                    );
-                  })}
-              </div>
+              <FormationSide
+                key={half}
+                side={side}
+                team={teamFor(side)}
+                onCourt={side === "A" ? a : b}
+                formation={formationFor(side)}
+                half={half}
+                match={match}
+                serverPlayerId={serverSide === side ? serverPlayerId : null}
+                needsReception={needsReception}
+                receivingSide={receivingSide}
+                receiverIds={receiverIds}
+                onPlayerClick={onPlayerClick}
+              />
             );
-          })}
-        </div>
-      )}
+          }
+          return (
+            <div key={half} className="grid grid-cols-2 h-full w-full">
+              {halfColumns.map((col, localCi) => {
+                const ci = half === "left" ? localCi : localCi + 2;
+                const onCourt = col.side === "A" ? a : b;
+                const serverPid = serverSide === col.side ? serverPlayerId : null;
+                const isFront = ci === 1 || ci === 2;
+                return (
+                  <div
+                    key={ci}
+                    className={`grid grid-rows-3 items-center gap-1 [@media(max-width:360px)]:gap-0.5 sm:gap-3 h-full px-0.5 [@media(max-width:360px)]:px-0 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+                  >
+                    {col.idxs.map((idx) => {
+                      const pid = onCourt[idx];
+                      const p = col.team.players.find((x) => x.id === pid);
+                      const isServer = pid && pid === serverPid;
+                      const designated = (col.side === "A"
+                        ? [match.liberoA1Id, match.liberoA2Id]
+                        : [match.liberoB1Id, match.liberoB2Id]
+                      ).filter(Boolean) as string[];
+                      const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
+                      const pairColor = p && !isLibero
+                        ? (p.position === "armador" || p.position === "opuesto"
+                            ? "#22d3ee"
+                            : p.position === "punta"
+                            ? "#a3e635"
+                            : p.position === "central"
+                            ? "#f472b6"
+                            : null)
+                        : null;
+                      const roleLabel = p && !isLibero
+                        ? (p.position === "armador" ? "A"
+                            : p.position === "opuesto" ? "O"
+                            : p.position === "punta" ? "P"
+                            : p.position === "central" ? "C"
+                            : null)
+                        : null;
+                      let replacedName: string | null = null;
+                      if (isLibero && pid) {
+                        const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
+                        if (active && active.liberoId === pid) {
+                          const rp = col.team.players.find((x) => x.id === active.replacedId);
+                          replacedName = rp ? `#${rp.number} ${rp.name}` : null;
+                        }
+                      }
+                      const isReceptionTarget = needsReception && col.side === receivingSide && !!pid;
+                      const isReceiverHighlight = isReceptionTarget && receiverIds.has(pid);
+                      return (
+                        <button
+                          key={`${ci}-${idx}`}
+                          onClick={() => p && onPlayerClick(col.side, p.id)}
+                          disabled={!p}
+                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] [@media(max-width:360px)]:h-[48%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""}`}
+                          style={isLibero
+                            ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
+                            : { background: col.team.color, borderColor: pairColor ?? undefined }}
+                          title={p ? `#${p.number} ${p.name}` : ""}
+                        >
+                          <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
+                          {p && (
+                            <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
+                          )}
+                          {isLibero && replacedName && (
+                            <span className="max-w-[90%] truncate text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
+                          )}
+                          {isLibero && (
+                            <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
+                          )}
+                          {roleLabel && (
+                            <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 rounded-b text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[10px] font-black uppercase tracking-widest text-black shadow-md" style={{ background: pairColor ?? undefined }}>{roleLabel}</span>
+                          )}
+                          {isServer && (
+                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
+                          )}
+
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
