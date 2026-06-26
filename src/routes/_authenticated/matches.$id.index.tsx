@@ -1299,9 +1299,27 @@ function FormationSide({
     ? [match.liberoA1Id, match.liberoA2Id]
     : [match.liberoB1Id, match.liberoB2Id]
   ).filter(Boolean) as string[];
+
+  // El saque siempre sale de P1 (zaguera derecha → coords {x:85, y:82}).
+  // Si la jugadora servidora no coincide con el slot que ya está en P1,
+  // intercambiamos sus coordenadas para que el server quede dibujado en P1
+  // y la jugadora desplazada ocupe la posición original del server.
+  let renderSlots = formation.slots;
+  if (serverPlayerId) {
+    const serverSlot = formation.slots.find((s) => s.playerId === serverPlayerId);
+    const p1Slot = formation.slots.find((s) => s.x === 85 && s.y === 82);
+    if (serverSlot && p1Slot && serverSlot !== p1Slot) {
+      renderSlots = formation.slots.map((s) => {
+        if (s === serverSlot) return { ...s, x: p1Slot.x, y: p1Slot.y };
+        if (s === p1Slot) return { ...s, x: serverSlot.x, y: serverSlot.y };
+        return s;
+      });
+    }
+  }
+
   return (
     <div className="relative h-full w-full">
-      {formation.slots.map((slot) => {
+      {renderSlots.map((slot) => {
         const pid = slot.playerId;
         const p = pid ? team.players.find((x) => x.id === pid) : null;
         // Si la jugadora del slot no está en cancha (sustituida) seguimos mostrándola
