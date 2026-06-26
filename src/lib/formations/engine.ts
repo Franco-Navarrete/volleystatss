@@ -81,12 +81,13 @@ export function resolveFormation(opts: {
   system: TacticalSystem;
   rotation: Rotation;
   lineup: TeamLineup;
+  phase?: FormationPhase;
   customs?: Partial<Record<Rotation, Partial<Record<TacticalRole, { x: number; y: number }>>>>;
   /** Si el líbero está en cancha reemplazando a una central, swap. */
   liberoOnCourt?: boolean;
 }): ResolvedFormation {
-  const { system, rotation, lineup, customs, liberoOnCourt = true } = opts;
-  const formation = getFormation(system, rotation);
+  const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack" } = opts;
+  const formation = getFormation(system, rotation, phase);
   const override = customs?.[rotation] ?? {};
 
   // Mapeo rol → playerId.
