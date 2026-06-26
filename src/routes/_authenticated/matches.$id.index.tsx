@@ -1169,7 +1169,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
         {(["left", "right"] as const).map((half) => {
           const side = half === "left" ? leftSide : rightSide;
           const halfColumns = half === "left" ? [columns[0], columns[1]] : [columns[2], columns[3]];
-          if (formationSide === side) {
+          if (hasFormationFor(side) && formationFor(side)) {
             return (
               <FormationSide
                 key={half}
