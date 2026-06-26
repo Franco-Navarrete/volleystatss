@@ -193,20 +193,24 @@ function LiveMatch() {
     })
   );
   const needsReception = isCoach && !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
-  // Configuración de formación a renderizar para el equipo receptor:
-  //   - Si todavía necesita registrar la recepción → plantilla "reception" (W).
-  //   - Si ya hay una recepción válida en el rally actual → plantilla "attack".
-  //   - Si se anotó un punto sin recepción registrada, o el último evento
-  //     fue de un rally anterior, no se muestra formación.
+  // Configuración de formación por equipo:
+  //   - Equipo que SACA → siempre formación de ataque (penetración: armadora/opuesta
+  //     en P1, punta zaguero en P6, líbero/central en P5).
+  //   - Equipo que RECIBE:
+  //       · Si todavía falta registrar la recepción del rally → plantilla "reception" (W).
+  //       · Si ya hay una recepción válida en el rally actual → plantilla "attack".
+  //       · Si se anotó un punto antes que la recepción o la recepción es de
+  //         un rally anterior → cae al ataque base (las jugadoras igualmente
+  //         deben estar paradas en sus posiciones naturales).
   const lastReceptionSide = getCurrentRallyReceptionSide(match, match.currentSet);
-  const formationConfig: { side: "A" | "B"; phase: "reception" | "attack" } | null =
+  const receivingPhase: "reception" | "attack" = needsReception ? "reception" : "attack";
+  const _validatedReception = lastReceptionSide === receivingSide;
+  void _validatedReception;
+  const servingSide: "A" | "B" = receivingSide === "A" ? "B" : "A";
+  const formationByTeam: Partial<Record<"A" | "B", "reception" | "attack">> =
     isCoach && isLive && !actionsDisabled
-      ? needsReception
-        ? { side: receivingSide, phase: "reception" }
-        : lastReceptionSide === receivingSide
-          ? { side: receivingSide, phase: "attack" }
-          : null
-      : null;
+      ? { [receivingSide]: receivingPhase, [servingSide]: "attack" }
+      : {};
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
@@ -438,7 +442,7 @@ function LiveMatch() {
             receivingSide={receivingSide}
             needsReception={needsReception}
             receiverIds={receiverIds}
-            formationConfig={formationConfig}
+            formationByTeam={formationByTeam}
           />
 
           <SideActions
@@ -1122,23 +1126,22 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationConfig }: {
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
-  formationConfig?: { side: "A" | "B"; phase: "reception" | "attack" } | null;
+  formationByTeam?: Partial<Record<"A" | "B", "reception" | "attack">>;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
   const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
-  const phaseFor = (s: "A" | "B"): "reception" | "attack" =>
-    formationConfig?.side === s ? formationConfig.phase : "attack";
+  const phaseFor = (s: "A" | "B"): "reception" | "attack" => formationByTeam?.[s] ?? "attack";
   const formationA = useFormation(match, teamA, "A", "5-1", phaseFor("A"));
   const formationB = useFormation(match, teamB, "B", "5-1", phaseFor("B"));
   const formationFor = (s: "A" | "B") => (s === "A" ? formationA : formationB);
-  const formationSide = formationConfig?.side ?? null;
+  const hasFormationFor = (s: "A" | "B") => !!formationByTeam?.[s];
 
   // 4 columns left→right: left back, left front, right front, right back
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
@@ -1166,7 +1169,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
         {(["left", "right"] as const).map((half) => {
           const side = half === "left" ? leftSide : rightSide;
           const halfColumns = half === "left" ? [columns[0], columns[1]] : [columns[2], columns[3]];
-          if (formationSide === side) {
+          if (hasFormationFor(side) && formationFor(side)) {
             return (
               <FormationSide
                 key={half}
