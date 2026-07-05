@@ -5,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import {
   type Team,
@@ -13,15 +12,9 @@ import {
   type Player,
   type SettingQuality,
   type SettingAttackZone,
-  type SettingAttackResult,
-  type PointType,
   type AttackDirection,
   type AttackZone,
-  SETTING_ATTACK_ZONES,
-  SETTING_ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
-import { useFormation } from "@/hooks/use-formation";
-import { pickAttackerByZone } from "@/lib/formations/pick-attacker";
 import { AttackDirectionGrid } from "@/components/court/AttackDirectionGrid";
 
 interface Props {
@@ -46,13 +39,15 @@ interface Props {
 
 export type RallyAction =
   | "rotation_attack"
+  | "attack_neutral"
   | "counter_attack"
   | "block" // rival tapó
   | "attack_error"
   | "unforced_error";
 
 const ACTION_LABEL: Record<RallyAction, string> = {
-  rotation_attack: "Ataque de rotación",
+  rotation_attack: "Ataque · Punto",
+  attack_neutral: "Ataque · Neutra",
   counter_attack: "Contraataque",
   block: "Bloqueo rival",
   attack_error: "Error de ataque",
@@ -60,14 +55,29 @@ const ACTION_LABEL: Record<RallyAction, string> = {
 };
 
 const ACTION_SHORT: Record<RallyAction, string> = {
-  rotation_attack: "Ataque",
+  rotation_attack: "Ataque +",
+  attack_neutral: "Ataque =",
   counter_attack: "Contra",
   block: "Bloqueo",
   attack_error: "Err. ataque",
   unforced_error: "Err. no forz.",
 };
 
-type Step = "zone" | "attacker" | "action" | "direction";
+type Step = "attacker" | "action" | "direction";
+
+/** Zona SettingAttackZone inferida a partir del índice on-court del atacante. */
+function inferSettingZone(onCourt: string[], playerId: string): SettingAttackZone {
+  const idx = onCourt.indexOf(playerId);
+  switch (idx) {
+    case 0: return "back1";
+    case 1: return "z2";
+    case 2: return "z3";
+    case 3: return "z4";
+    case 4: return "back5";
+    case 5: return "pipe";
+    default: return "z4";
+  }
+}
 
 /** Mapeo zona-armado → PointEvent.attackZone. */
 export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | undefined {
@@ -83,26 +93,24 @@ export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | unde
 }
 
 /**
- * Diálogo integrado del flujo Armado → Ataque → Dirección. Se abre después
- * de la recepción. Todo el flujo con la menor cantidad de toques posible:
- *   1. Zona armado
- *   2. Atacante (auto-preselecc. por rotación, editable)
- *   3. Calidad armado (+ / neutro / -)
- *   4. Acción del atacante
- *   5. Dirección 3×3 (sólo si ataque / contra)
+ * Diálogo integrado ultra-rápido para el modo entrenador. Se abre después de
+ * la recepción positiva/neutral. Flujo:
+ *   1. Elegir atacante (una jugadora en cancha)
+ *   2. Elegir acción (Ataque+, Ataque neutro, Contra, Bloqueo rival, Err ataque, Err no forzado)
+ *   3. Si acción = Contra → paso obligatorio de dirección 3×3 en cancha rival.
+ *
+ * El resto de las acciones cierra el diálogo automáticamente al elegirse.
  */
 export function IntegratedRallyDialog({
   open,
   onClose,
-  match,
+  match: _match,
   team,
-  side,
+  side: _side,
   onCourt,
   receptionQuality,
   onSubmit,
 }: Props) {
-  const formation = useFormation(match, team, side, "5-1", "attack");
-
   const playersOnCourt: Player[] = useMemo(
     () => onCourt.map((id) => team.players.find((p) => p.id === id)).filter((p): p is Player => !!p),
     [onCourt, team.players],
@@ -112,28 +120,17 @@ export function IntegratedRallyDialog({
     [playersOnCourt],
   );
 
-  const [step, setStep] = useState<Step>("zone");
-  const [zone, setZone] = useState<SettingAttackZone | null>(null);
+  const [step, setStep] = useState<Step>("attacker");
   const [attackerId, setAttackerId] = useState<string | null>(null);
   const [action, setAction] = useState<RallyAction | null>(null);
-  const [direction, setDirection] = useState<AttackDirection | null>(null);
 
   useEffect(() => {
     if (!open) {
-      setStep("zone");
-      setZone(null);
+      setStep("attacker");
       setAttackerId(null);
       setAction(null);
-      setDirection(null);
     }
   }, [open]);
-
-  const pickZone = (z: SettingAttackZone) => {
-    setZone(z);
-    const suggested = pickAttackerByZone(formation, onCourt, z);
-    setAttackerId(suggested);
-    setStep("attacker");
-  };
 
   const pickAttacker = (id: string) => {
     setAttackerId(id);
@@ -142,26 +139,25 @@ export function IntegratedRallyDialog({
 
   const pickAction = (a: RallyAction) => {
     setAction(a);
-    if (a === "rotation_attack" || a === "counter_attack") {
+    if (a === "counter_attack") {
+      // Contraataque exige zona de destino (dirección) obligatoria.
       setStep("direction");
     } else {
-      // Sin dirección → submit directo
       finalize(a, undefined);
     }
   };
 
   const pickDirection = (d: AttackDirection) => {
-    setDirection(d);
     if (action) finalize(action, d);
   };
 
   const finalize = (a: RallyAction, dir: AttackDirection | undefined) => {
-    if (!zone || !attackerId || !setter) return;
+    if (!attackerId || !setter) return;
+    const attackZone = inferSettingZone(onCourt, attackerId);
     onSubmit({
       setterId: setter.id,
-      // Calidad del armado desactivada en el flujo — se envía neutro por defecto.
       setterQuality: "!",
-      attackZone: zone,
+      attackZone,
       attackerId,
       action: a,
       attackDirection: dir,
@@ -171,17 +167,15 @@ export function IntegratedRallyDialog({
   };
 
   const goBack = () => {
-    const order: Step[] = ["zone", "attacker", "action", "direction"];
-    const i = order.indexOf(step);
-    if (i > 0) setStep(order[i - 1]);
+    if (step === "direction") setStep("action");
+    else if (step === "action") setStep("attacker");
   };
 
   const title = (() => {
     switch (step) {
-      case "zone": return "Zona del armado";
-      case "attacker": return "Atacante";
+      case "attacker": return "¿Quién atacó?";
       case "action": return "Acción del ataque";
-      case "direction": return "Dirección del ataque";
+      case "direction": return "Zona de destino (obligatoria)";
     }
   })();
 
@@ -190,7 +184,7 @@ export function IntegratedRallyDialog({
       <DialogContent className="w-[calc(100dvw-24px)] max-w-[440px] rounded-xl border-border/60 p-3 gap-2 max-h-[92dvh] overflow-y-auto">
         <DialogHeader className="pr-8 space-y-0 text-left">
           <DialogTitle className="flex items-center gap-2 min-w-0">
-            {step !== "zone" && (
+            {step !== "attacker" && (
               <button
                 type="button"
                 onClick={goBack}
@@ -209,67 +203,31 @@ export function IntegratedRallyDialog({
             <span className="min-w-0 truncate">
               <span className="block text-sm font-bold">{title}</span>
               <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                Armó #{setter?.number ?? "?"} · {team.shortName}
+                {team.shortName} · Armó #{setter?.number ?? "?"}
               </span>
             </span>
           </DialogTitle>
         </DialogHeader>
 
-        {step === "zone" && (
+        {step === "attacker" && (
           <div className="space-y-2 mt-2">
             <div className="grid grid-cols-3 gap-2">
-              {SETTING_ATTACK_ZONES.map((z) => (
+              {playersOnCourt.map((p) => (
                 <button
-                  key={z}
+                  key={p.id}
                   type="button"
-                  onClick={() => pickZone(z)}
-                  className="min-h-[64px] rounded-lg border-2 border-border bg-card hover:border-primary hover:bg-primary/10 font-bold text-sm active:scale-95 transition"
+                  onClick={() => pickAttacker(p.id)}
+                  className="min-h-[72px] rounded-lg border-2 border-border bg-card px-1 py-2 flex flex-col items-center justify-center transition active:scale-95 hover:border-primary hover:bg-primary/10"
                 >
-                  {SETTING_ATTACK_ZONE_LABEL[z]}
+                  <span className="scoreboard-digit text-xl font-black leading-none">#{p.number}</span>
+                  <span className="text-[10px] text-muted-foreground truncate max-w-full mt-0.5">
+                    {p.name}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
         )}
-
-        {step === "attacker" && (
-          <div className="space-y-2 mt-2">
-            <p className="text-[11px] text-muted-foreground">
-              Sugerido según rotación. Tocá otra jugadora para cambiar.
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {playersOnCourt.map((p) => {
-                const highlighted = p.id === attackerId;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => pickAttacker(p.id)}
-                    className={`min-h-[68px] rounded-lg border-2 px-1 py-2 flex flex-col items-center justify-center transition active:scale-95 ${
-                      highlighted
-                        ? "border-primary bg-primary/15 ring-2 ring-primary/40"
-                        : "border-border bg-card hover:border-primary/60"
-                    }`}
-                  >
-                    <span className="scoreboard-digit text-xl font-black leading-none">#{p.number}</span>
-                    <span className="text-[10px] text-muted-foreground truncate max-w-full mt-0.5">
-                      {p.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            {attackerId && (
-              <Button
-                className="w-full mt-2"
-                onClick={() => setStep("action")}
-              >
-                Confirmar #{playersOnCourt.find((p) => p.id === attackerId)?.number}
-              </Button>
-            )}
-          </div>
-        )}
-
 
         {step === "action" && (
           <div className="grid grid-cols-2 gap-2 mt-2">
@@ -277,6 +235,8 @@ export function IntegratedRallyDialog({
               const tone =
                 a === "rotation_attack" || a === "counter_attack"
                   ? "bg-primary text-primary-foreground"
+                  : a === "attack_neutral"
+                  ? "bg-secondary text-secondary-foreground"
                   : "bg-destructive/90 text-destructive-foreground";
               return (
                 <button
@@ -295,14 +255,10 @@ export function IntegratedRallyDialog({
 
         {step === "direction" && (
           <div className="mt-2">
-            <AttackDirectionGrid onPick={pickDirection} value={direction} />
-            <button
-              type="button"
-              onClick={() => action && finalize(action, undefined)}
-              className="mt-2 w-full text-[11px] text-muted-foreground hover:text-foreground underline"
-            >
-              Sin dirección
-            </button>
+            <AttackDirectionGrid onPick={pickDirection} value={null} />
+            <p className="mt-2 text-[11px] text-center text-muted-foreground">
+              Elegí una zona para cerrar el contraataque.
+            </p>
           </div>
         )}
       </DialogContent>

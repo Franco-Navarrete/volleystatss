@@ -1,4 +1,4 @@
-import type { Match, PointEvent, SettingEvent, SettingQuality } from "@/lib/volley-store";
+import type { Match, PointEvent, SettingEvent, SettingQuality, AttackAttemptEvent } from "@/lib/volley-store";
 import { isAttackType } from "@/lib/volley-store";
 import {
   type AttackType,
@@ -12,12 +12,22 @@ export interface AttackTypeEffectivenessRow {
   attempts: number;
   kills: number;
   errors: number;
-  effectiveness: number; // (kills - errors) / attempts
+  /** (kills − errors) / (kills + errors). Los ataques neutros no afectan. */
+  effectiveness: number;
   killPct: number; // kills / attempts
 }
 
 function isAttackPoint(ev: PointEvent): boolean {
   return isAttackType(ev.type) || ev.type === "attack_error";
+}
+
+function isAttackAttempt(ev: any): ev is AttackAttemptEvent {
+  return ev && "kind" in ev && ev.kind === "attackAttempt";
+}
+
+function eff(kills: number, errors: number): number {
+  const denom = kills + errors;
+  return denom ? (kills - errors) / denom : 0;
 }
 
 function getRows(match: Match, side?: "A" | "B"): AttackTypeEffectivenessRow[] {
@@ -27,6 +37,14 @@ function getRows(match: Match, side?: "A" | "B"): AttackTypeEffectivenessRow[] {
   >();
 
   for (const ev of match.events) {
+    if (isAttackAttempt(ev)) {
+      if (side && ev.side !== side) continue;
+      const key = (ev.attackType ?? "unclassified") as AttackType | "unclassified";
+      const b = buckets.get(key) ?? { attempts: 0, kills: 0, errors: 0 };
+      b.attempts++;
+      buckets.set(key, b);
+      continue;
+    }
     if ("kind" in ev) continue;
     if (!isAttackPoint(ev)) continue;
     if (side && ev.playerSide !== side) continue;
@@ -48,7 +66,7 @@ function getRows(match: Match, side?: "A" | "B"): AttackTypeEffectivenessRow[] {
       attempts: b.attempts,
       kills: b.kills,
       errors: b.errors,
-      effectiveness: b.attempts ? (b.kills - b.errors) / b.attempts : 0,
+      effectiveness: eff(b.kills, b.errors),
       killPct: b.attempts ? b.kills / b.attempts : 0,
     });
   }
@@ -60,7 +78,7 @@ function getRows(match: Match, side?: "A" | "B"): AttackTypeEffectivenessRow[] {
       attempts: unc.attempts,
       kills: unc.kills,
       errors: unc.errors,
-      effectiveness: unc.attempts ? (unc.kills - unc.errors) / unc.attempts : 0,
+      effectiveness: eff(unc.kills, unc.errors),
       killPct: unc.attempts ? unc.kills / unc.attempts : 0,
     });
   }
@@ -144,6 +162,14 @@ export function attackTypeByPlayer(match: Match, playerId: string): AttackTypeEf
     { attempts: number; kills: number; errors: number }
   >();
   for (const ev of match.events) {
+    if (isAttackAttempt(ev)) {
+      if (ev.playerId !== playerId) continue;
+      const key = (ev.attackType ?? "unclassified") as AttackType | "unclassified";
+      const b = buckets.get(key) ?? { attempts: 0, kills: 0, errors: 0 };
+      b.attempts++;
+      buckets.set(key, b);
+      continue;
+    }
     if ("kind" in ev) continue;
     if (!isAttackPoint(ev)) continue;
     if (ev.playerId !== playerId) continue;
@@ -162,7 +188,7 @@ export function attackTypeByPlayer(match: Match, playerId: string): AttackTypeEf
       attempts: b.attempts,
       kills: b.kills,
       errors: b.errors,
-      effectiveness: b.attempts ? (b.kills - b.errors) / b.attempts : 0,
+      effectiveness: eff(b.kills, b.errors),
       killPct: b.attempts ? b.kills / b.attempts : 0,
     });
   }

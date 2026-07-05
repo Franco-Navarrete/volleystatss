@@ -315,7 +315,29 @@ export interface SettingEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent;
+/**
+ * Ataque "neutro" (continuidad de rally): la jugadora efectuó un ataque pero
+ * no cerró el punto ni cometió error — la pelota siguió en juego. Se cuenta
+ * como intento de ataque para el total de la jugadora / equipo pero NO afecta
+ * el marcador ni la eficiencia clásica (kills − errors) / (kills + errors).
+ */
+export interface AttackAttemptEvent {
+  id: string;
+  kind: "attackAttempt";
+  side: "A" | "B";
+  playerId: string | null;
+  setNumber: number;
+  timestamp: number;
+  /** Zona desde la que atacó (2/3/4/1/5/6). */
+  attackZone?: AttackZone;
+  attackType?: import("@/lib/formations/attack-types").AttackType;
+  /** Dirección 1..9 en cancha rival. */
+  attackDirection?: AttackDirection;
+  /** true si es un contraataque neutro; por defecto false (ataque de rotación). */
+  isCounter?: boolean;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent | AttackAttemptEvent;
 
 export interface MatchSet {
   number: number;
@@ -430,6 +452,21 @@ interface VolleyState {
     side: "A" | "B",
     liberoId: string,
     replacedId: string
+  ) => void;
+  /**
+   * Registra un ataque "neutro" (continuidad del rally): cuenta como intento
+   * pero no cambia el marcador ni la eficiencia clásica.
+   */
+  recordAttackAttempt: (
+    matchId: string,
+    side: "A" | "B",
+    playerId: string | null,
+    opts?: {
+      attackZone?: AttackZone;
+      attackType?: import("@/lib/formations/attack-types").AttackType;
+      attackDirection?: AttackDirection;
+      isCounter?: boolean;
+    }
   ) => void;
   recordLiberoOut: (matchId: string, side: "A" | "B") => void;
   recordTimeout: (matchId: string, side: "A" | "B") => boolean;
@@ -1001,6 +1038,27 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
+      recordAttackAttempt: (matchId, side, playerId, opts) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId || m.status === "finished") return m;
+            const ev: AttackAttemptEvent = {
+              id: uid(),
+              kind: "attackAttempt",
+              side,
+              playerId,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+              ...(opts?.attackZone !== undefined ? { attackZone: opts.attackZone } : {}),
+              ...(opts?.attackType ? { attackType: opts.attackType } : {}),
+              ...(opts?.attackDirection !== undefined ? { attackDirection: opts.attackDirection } : {}),
+              ...(opts?.isCounter ? { isCounter: true } : {}),
+            };
+            return { ...m, events: [...m.events, ev] };
+          }),
+        }));
+      },
+
       updateMatchFormat: (matchId, setsToWin, pointsPerSet) => {
         set((s) => ({
           matches: s.matches.map((m) => {
@@ -1326,6 +1384,17 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     return p;
   };
   for (const ev of events) {
+    // Ataques neutros: cuentan como intento sin cambiar marcador.
+    if ("kind" in ev && ev.kind === "attackAttempt") {
+      const teamId = ev.side === "A" ? match.teamAId : match.teamBId;
+      const t = ensureTeam(teamId);
+      t.attack++;
+      if (ev.playerId) {
+        const p = ensurePlayer(ev.playerId);
+        p.attack++;
+      }
+      continue;
+    }
     if (!("type" in ev)) continue;
     const scoringTeamId = ev.scoringSide === "A" ? match.teamAId : match.teamBId;
     const scoringTeam = ensureTeam(scoringTeamId);
