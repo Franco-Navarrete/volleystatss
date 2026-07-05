@@ -451,8 +451,11 @@ interface VolleyState {
       attackerId?: string;
       attackResult?: SettingAttackResult;
       receptionQuality?: SettingQuality;
+      attackType?: import("@/lib/formations/attack-types").AttackType;
+      attackDirection?: AttackDirection;
     }
   ) => void;
+
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
