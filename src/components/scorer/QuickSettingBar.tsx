@@ -53,10 +53,12 @@ export function QuickSettingBar({ team, onCourt, receptionQuality, onSubmit, onS
 
   const setter = playersOnCourt.find((p) => p.id === setterId) ?? defaultSetter;
 
-  const handleQuality = (q: SettingQuality) => {
+  const handleConfirm = () => {
     if (!setterId || !zone) return;
-    onSubmit({ setterId, quality: q, attackZone: zone, receptionQuality });
+    // Calidad del armado desactivada — se envía neutro por defecto.
+    onSubmit({ setterId, quality: "!", attackZone: zone, receptionQuality });
   };
+
 
   return (
     <div className="rounded-xl border-2 border-primary/40 bg-card/95 backdrop-blur shadow-xl p-3 md:p-4 space-y-3">
