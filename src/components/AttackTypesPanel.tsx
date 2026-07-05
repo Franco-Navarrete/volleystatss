@@ -185,7 +185,8 @@ function SetterQualityCross({
                   {types.map((t) => {
                     const b = row.get(t);
                     if (!b) return <td key={t} className="px-2 py-1.5 text-right text-muted-foreground">—</td>;
-                    const eff = b.attempts ? (b.kills - b.errors) / b.attempts : 0;
+                    const denom = b.kills + b.errors;
+                    const eff = denom ? (b.kills - b.errors) / denom : 0;
                     return (
                       <td
                         key={t}
