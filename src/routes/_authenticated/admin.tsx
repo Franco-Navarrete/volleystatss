@@ -849,3 +849,100 @@ function LeaguesTab() {
     </div>
   );
 }
+
+// =========================================================================
+// PARTIDOS COMPARTIDOS
+// =========================================================================
+
+function SharedMatchesTab() {
+  const list = useServerFn(adminListPublicMatches);
+  const listUsers = useServerFn(adminListUsers);
+  const sharedQ = useQuery({
+    queryKey: ["admin", "shared-matches"],
+    queryFn: () => list(),
+    refetchInterval: 10_000,
+  });
+  const usersQ = useQuery({ queryKey: ["admin", "users"], queryFn: () => listUsers() });
+
+  const emailByUser = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of usersQ.data ?? []) map.set(u.id, u.email);
+    return map;
+  }, [usersQ.data]);
+
+  if (sharedQ.isLoading) {
+    return <p className="text-sm text-muted-foreground">Cargando partidos…</p>;
+  }
+  const rows = sharedQ.data ?? [];
+  if (rows.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-8">
+        Todavía no hay partidos compartidos por ningún usuario.
+      </p>
+    );
+  }
+
+  const live = rows.filter((r) => r.status === "live");
+  const other = rows.filter((r) => r.status !== "live");
+
+  const renderRow = (r: (typeof rows)[number]) => {
+    const owner = emailByUser.get(r.ownerId) ?? r.ownerId.slice(0, 8);
+    const href = `/m/${r.slug}`;
+    return (
+      <li
+        key={r.slug}
+        className="rounded-xl border border-border/60 bg-card/40 px-4 py-3 flex items-center gap-3"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-sm truncate flex items-center gap-2">
+            {r.teamAName ?? "—"} <span className="text-muted-foreground">vs</span>{" "}
+            {r.teamBName ?? "—"}
+            {r.status === "live" && (
+              <Badge variant="destructive" className="text-[10px] gap-1">
+                <Radio className="size-3 animate-pulse" /> En vivo
+              </Badge>
+            )}
+            {!r.isPublic && (
+              <Badge variant="outline" className="text-[10px]">Privado</Badge>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+            {r.leagueName ? `${r.leagueName} · ` : ""}
+            {owner} · {new Date(r.updatedAt).toLocaleString()}
+          </div>
+        </div>
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs font-semibold text-primary hover:underline shrink-0"
+        >
+          Ver
+        </a>
+      </li>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {live.length > 0 && (
+        <section>
+          <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">
+            En vivo · {live.length}
+          </h2>
+          <ul className="space-y-2">{live.map(renderRow)}</ul>
+        </section>
+      )}
+      <section>
+        <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">
+          Historial · {other.length}
+        </h2>
+        {other.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Sin partidos anteriores.</p>
+        ) : (
+          <ul className="space-y-2">{other.map(renderRow)}</ul>
+        )}
+      </section>
+    </div>
+  );
+}
