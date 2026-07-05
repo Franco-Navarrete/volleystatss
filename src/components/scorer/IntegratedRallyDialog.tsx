@@ -115,7 +115,6 @@ export function IntegratedRallyDialog({
   const [step, setStep] = useState<Step>("zone");
   const [zone, setZone] = useState<SettingAttackZone | null>(null);
   const [attackerId, setAttackerId] = useState<string | null>(null);
-  const [quality, setQuality] = useState<SettingQuality | null>(null);
   const [action, setAction] = useState<RallyAction | null>(null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
 
@@ -124,7 +123,6 @@ export function IntegratedRallyDialog({
       setStep("zone");
       setZone(null);
       setAttackerId(null);
-      setQuality(null);
       setAction(null);
       setDirection(null);
     }
@@ -139,11 +137,6 @@ export function IntegratedRallyDialog({
 
   const pickAttacker = (id: string) => {
     setAttackerId(id);
-    setStep("quality");
-  };
-
-  const pickQuality = (q: SettingQuality) => {
-    setQuality(q);
     setStep("action");
   };
 
@@ -163,10 +156,11 @@ export function IntegratedRallyDialog({
   };
 
   const finalize = (a: RallyAction, dir: AttackDirection | undefined) => {
-    if (!zone || !attackerId || !quality || !setter) return;
+    if (!zone || !attackerId || !setter) return;
     onSubmit({
       setterId: setter.id,
-      setterQuality: quality,
+      // Calidad del armado desactivada en el flujo — se envía neutro por defecto.
+      setterQuality: "!",
       attackZone: zone,
       attackerId,
       action: a,
@@ -177,7 +171,7 @@ export function IntegratedRallyDialog({
   };
 
   const goBack = () => {
-    const order: Step[] = ["zone", "attacker", "quality", "action", "direction"];
+    const order: Step[] = ["zone", "attacker", "action", "direction"];
     const i = order.indexOf(step);
     if (i > 0) setStep(order[i - 1]);
   };
@@ -186,7 +180,6 @@ export function IntegratedRallyDialog({
     switch (step) {
       case "zone": return "Zona del armado";
       case "attacker": return "Atacante";
-      case "quality": return "Calidad del armado";
       case "action": return "Acción del ataque";
       case "direction": return "Dirección del ataque";
     }
