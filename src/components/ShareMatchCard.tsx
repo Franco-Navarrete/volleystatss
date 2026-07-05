@@ -50,13 +50,15 @@ export function ShareMatchCard({ match }: { match: Match }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["own-public-match", match.id] }),
   });
 
-  // Auto-publish as soon as the match goes live (or finishes) if no share exists yet.
+  // Pre-genera un snapshot privado cuando el partido arranca, para que el
+  // dueño pueda activar "Público" con un toque cuando quiera compartirlo.
+  // Nunca se auto-publica: los partidos son privados hasta que el usuario lo decida.
   useEffect(() => {
     if (isLoading) return;
     if (own) return;
     if (match.status === "scheduled") return;
     if (!snapshot) return;
-    publishMut.mutate(true);
+    publishMut.mutate(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, own, match.status]);
 
