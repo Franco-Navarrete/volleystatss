@@ -129,6 +129,12 @@ button, a, [role="button"] {
   touch-action: manipulation;
 }
 
+.live-court-surface {
+  contain: layout paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 /* Force the live scoring screen to landscape without rotating <body>.
    Dialog portals stay attached to the unrotated body, so modals stay centered
    and readable against the real mobile viewport. */
