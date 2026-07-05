@@ -326,7 +326,7 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-4 h-full min-h-0 px-2 md:px-6 device-tablet:px-8 py-2 md:py-4 mx-auto w-full max-w-[1400px] device-tablet:max-w-[1900px] select-none">
+      <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-1.5 h-full min-h-0 px-2 md:px-6 device-tablet:px-2 py-2 md:py-4 device-tablet:py-1 mx-auto w-full max-w-[1400px] device-tablet:max-w-none select-none">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 device-tablet:gap-3 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 device-tablet:px-3 py-0.5 md:py-4 device-tablet:py-1 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
@@ -453,7 +453,7 @@ function LiveMatch() {
 
 
         {/* Court + side controls */}
-          <div className="grid grid-cols-[auto_1fr_auto] device-tablet:grid-cols-[140px_minmax(0,1fr)_140px] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 device-tablet:gap-5 items-stretch flex-1 min-h-0 overflow-hidden">
+          <div className="grid grid-cols-[auto_1fr_auto] device-tablet:grid-cols-[110px_minmax(0,1fr)_110px] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 device-tablet:gap-2 items-stretch flex-1 min-h-0 overflow-hidden">
           <SideActions
             side="left"
             disabled={actionsDisabled}
@@ -1151,7 +1151,7 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onLibero, onTiemp
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1 md:gap-2.5 w-[52px] [@media(max-width:360px)]:w-[44px] sm:w-[92px] md:w-[140px] device-tablet:w-[140px] shrink-0">
+    <div className="flex flex-col gap-1 md:gap-2.5 device-tablet:gap-1.5 w-[52px] [@media(max-width:360px)]:w-[44px] sm:w-[92px] md:w-[140px] device-tablet:w-[110px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton icon={<Shirt className="size-3 md:size-5" />} label="Líbero" onClick={onLibero} disabled={disabled} reverse={reverse} />
       <SideButton
@@ -1209,11 +1209,11 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="live-court-surface relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-0 bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7">
+    <div className="live-court-surface relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-0 bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7 device-tablet:p-3">
       {/* court inner (orange) with white perimeter line */}
-      <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
+      <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 device-tablet:inset-3 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — front-row band each side */}
-      <div className="absolute inset-y-2 [@media(max-width:360px)]:inset-y-1.5 sm:inset-y-5 md:inset-y-7 left-1/4 right-1/4 bg-[#ec7a3c]/70 pointer-events-none" />
+      <div className="absolute inset-y-2 [@media(max-width:360px)]:inset-y-1.5 sm:inset-y-5 md:inset-y-7 device-tablet:inset-y-3 left-1/4 right-1/4 bg-[#ec7a3c]/70 pointer-events-none" />
       {/* dashed center net line */}
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-0 border-l-2 border-dashed border-white pointer-events-none z-10" />
       {/* antenna dots top/bottom of net */}
@@ -1223,7 +1223,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
       <div className="absolute top-0 bottom-0 left-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
       <div className="absolute top-0 bottom-0 right-1/4 w-0 border-l-2 border-dashed border-white/90 pointer-events-none" />
 
-      <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-2 z-20">
+      <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 device-tablet:inset-4 grid grid-cols-2 z-20">
         {(["left", "right"] as const).map((half) => {
           const side = half === "left" ? leftSide : rightSide;
           const halfColumns = half === "left" ? [columns[0], columns[1]] : [columns[2], columns[3]];
