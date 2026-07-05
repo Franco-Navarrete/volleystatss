@@ -21,14 +21,12 @@ export function isTabletHardware(): boolean {
   const longSide = Math.max(screenW, screenH);
   const shortSide = Math.min(screenW, screenH);
   const physicalLongSide = Math.max(screenW * dpr, screenH * dpr, viewportW * dpr, viewportH * dpr);
-  const physicalShortSide = Math.min(
-    Math.max(screenW, screenH) * dpr,
-    Math.max(viewportW, viewportH) * dpr
-  );
+  const cssShortSide = Math.min(shortSide, viewportW, viewportH);
+  const physicalShortSide = cssShortSide * dpr;
   const iPadLike = /iPad/i.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1);
   const androidTablet = /Android/i.test(ua) && (!/Mobile/i.test(ua) || /Lenovo|TB-|Tab|Tablet/i.test(ua));
   const largeTouchScreen = touch && longSide >= 900 && shortSide >= 560;
-  const wuxgaTouchScreen = touch && noFinePointer && physicalLongSide >= 1600 && physicalShortSide >= 1000;
+  const wuxgaTouchScreen = touch && noFinePointer && cssShortSide >= 560 && physicalLongSide >= 1600 && physicalShortSide >= 1000;
 
   return iPadLike || androidTablet || largeTouchScreen || wuxgaTouchScreen;
 }
