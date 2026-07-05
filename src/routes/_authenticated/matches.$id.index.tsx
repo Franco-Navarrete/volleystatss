@@ -453,7 +453,7 @@ function LiveMatch() {
 
 
         {/* Court + side controls */}
-          <div className="grid grid-cols-[auto_1fr_auto] device-tablet:grid-cols-[140px_minmax(0,1fr)_140px] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 device-tablet:gap-5 items-stretch flex-1 min-h-0 overflow-hidden">
+          <div className="grid grid-cols-[auto_1fr_auto] device-tablet:grid-cols-[110px_minmax(0,1fr)_110px] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 device-tablet:gap-2 items-stretch flex-1 min-h-0 overflow-hidden">
           <SideActions
             side="left"
             disabled={actionsDisabled}
