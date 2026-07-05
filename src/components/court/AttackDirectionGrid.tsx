@@ -53,7 +53,7 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        1-2-3 pegado a la red · 7-8-9 al fondo · desde la perspectiva del atacante
+        4-3-2 pegado a la red · 5-6-1 al fondo · zonas oficiales de vóley
       </p>
     </div>
   );
