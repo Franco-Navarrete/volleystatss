@@ -136,6 +136,25 @@ button, a, [role="button"] {
   isolation: isolate;
 }
 
+/* Tablet browsers (especially iPad/Android WebView) can draw horizontal
+   artifacts while scrolling when backdrop-filter or GPU-promoted scroll layers
+   overlap the live court. Keep tablet rendering on a simpler paint path. */
+html.device-tablet .live-match-shell header,
+html.device-tablet header[class*="backdrop-blur"],
+html.device-tablet .live-match-shell [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html.device-tablet .live-match-shell header {
+  background-color: var(--color-card) !important;
+}
+
+html.device-tablet .live-stats-scroll {
+  transform: none !important;
+  will-change: auto !important;
+}
+
 /* Force the live scoring screen to landscape without rotating <body>.
    Dialog portals stay attached to the unrotated body, so modals stay centered
    and readable against the real mobile viewport. */
@@ -226,7 +245,7 @@ html.force-landscape .live-stats-dialog {
   touch-action: auto;
   overflow-y: scroll !important;
   scroll-behavior: auto;
-  transform: translateZ(0);
+  transform: none;
   will-change: auto;
 }
 html.force-landscape .live-stats-scroll {
