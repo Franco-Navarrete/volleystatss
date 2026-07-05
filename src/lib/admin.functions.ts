@@ -96,6 +96,9 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       email_confirm: true,
     });
     if (created.error || !created.data.user) {
+      if (created.error?.name === "AuthWeakPasswordError" || (created.error as { code?: string } | null)?.code === "weak_password") {
+        throw new Error("La contraseña es demasiado débil o conocida. Elegí una más segura (mezclá mayúsculas, números y símbolos).");
+      }
       throw new Error(created.error?.message ?? "No se pudo crear el usuario.");
     }
     const newUserId = created.data.user.id;
@@ -178,7 +181,12 @@ export const adminSetPassword = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.password,
     });
-    if (error) throw error;
+    if (error) {
+      if (error.name === "AuthWeakPasswordError" || (error as { code?: string }).code === "weak_password") {
+        throw new Error("La contraseña es demasiado débil o conocida. Elegí una más segura (mezclá mayúsculas, números y símbolos).");
+      }
+      throw error;
+    }
     const { error: storeErr } = await supabaseAdmin
       .from("admin_user_passwords")
       .upsert({
