@@ -1090,13 +1090,26 @@ function LiveMatch() {
               attackResult:
                 payload.action === "rotation_attack" || payload.action === "counter_attack"
                   ? "point"
+                  : payload.action === "attack_neutral"
+                  ? "continuity"
                   : payload.action === "block"
                   ? "blocked"
                   : "error",
               receptionQuality: payload.receptionQuality,
               attackDirection: payload.attackDirection,
             });
-            // 2) Guardar punto real que afecta marcador
+            // 2) Ataque neutro → NO afecta marcador, se registra como intento.
+            if (payload.action === "attack_neutral") {
+              useVolley.getState().recordAttackAttempt(
+                match.id,
+                integratedRally.side,
+                payload.attackerId,
+                { attackZone, attackDirection: payload.attackDirection },
+              );
+              setIntegratedRally(null);
+              return;
+            }
+            // 3) Punto real que afecta marcador.
             const type: PointType =
               payload.action === "block"
                 ? "attack_error"
