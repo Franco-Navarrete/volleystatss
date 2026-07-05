@@ -25,6 +25,7 @@ import {
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
+import { AttackHeatmap } from "@/components/AttackHeatmap";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
 import {
@@ -2046,6 +2047,14 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
             Zonas de ataque · Set {setNumber}
           </p>
           <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={setNumber} />
+        </div>
+      )}
+      {isCoach && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+            Mapas de calor de ataque
+          </p>
+          <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
         </div>
       )}
     </div>
