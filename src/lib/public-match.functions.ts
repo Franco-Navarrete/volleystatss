@@ -153,3 +153,66 @@ export const getOwnPublicMatch = createServerFn({ method: "GET" })
     if (error) throw error;
     return row;
   });
+
+/**
+ * Admin-only: read any shared match by slug, ignoring `is_public`.
+ * RLS policy `Admins can read all shared matches` gates access.
+ */
+export const adminGetPublicMatch = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { slug: string }) =>
+    z.object({ slug: slugSchema }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { data: row, error } = await supabase
+      .from("public_matches")
+      .select("id, data, is_public, updated_at")
+      .eq("id", data.slug)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row) return null;
+    return {
+      slug: row.id,
+      updatedAt: row.updated_at,
+      isPublic: row.is_public,
+      snapshot: row.data as unknown as PublicMatchSnapshot,
+    };
+  });
+
+/** Admin-only: list every shared match, newest first. */
+export const adminListPublicMatches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { data, error } = await supabase
+      .from("public_matches")
+      .select("id, match_id, owner_id, is_public, updated_at, data")
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((row) => {
+      const snap = row.data as unknown as PublicMatchSnapshot | null;
+      const match = snap?.match;
+      return {
+        slug: row.id,
+        matchId: row.match_id,
+        ownerId: row.owner_id,
+        isPublic: row.is_public,
+        updatedAt: row.updated_at,
+        status: match?.status ?? null,
+        teamAName: snap?.teamA?.name ?? null,
+        teamBName: snap?.teamB?.name ?? null,
+        leagueName: snap?.league?.name ?? null,
+      };
+    });
+  });

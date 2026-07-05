@@ -1,17 +1,27 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Volleyball } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 
-import { getPublicMatch } from "@/lib/public-match.functions";
+import { adminGetPublicMatch, getPublicMatch } from "@/lib/public-match.functions";
 import { PublicMatchView } from "@/components/PublicMatchView";
 import { setsWon } from "@/lib/volley-store";
+import { useIsAdmin } from "@/hooks/use-auth";
 
 const SITE_URL = "https://volleystatss.lovable.app";
 
 const publicMatchQuery = (slug: string) =>
   queryOptions({
     queryKey: ["public-match", slug],
-    queryFn: () => getPublicMatch({ data: { slug } }),
+    // Return null instead of throwing notFound so admins can fall back to
+    // the private admin fetch on the client. The component decides what to render.
+    queryFn: async () => {
+      try {
+        return await getPublicMatch({ data: { slug } });
+      } catch {
+        return null;
+      }
+    },
     refetchInterval: (q) => {
       const status = q.state.data?.snapshot?.match?.status;
       return status === "live" ? 8000 : false;
@@ -22,9 +32,7 @@ const publicMatchQuery = (slug: string) =>
 
 export const Route = createFileRoute("/m/$slug")({
   loader: async ({ params, context }) => {
-    const data = await context.queryClient.ensureQueryData(publicMatchQuery(params.slug));
-    if (!data) throw notFound();
-    return data;
+    return context.queryClient.ensureQueryData(publicMatchQuery(params.slug));
   },
   head: ({ params, loaderData }) => {
     const url = `${SITE_URL}/m/${params.slug}`;
@@ -80,15 +88,44 @@ export const Route = createFileRoute("/m/$slug")({
   },
   component: PublicMatchPage,
   errorComponent: PublicMatchError,
-  notFoundComponent: PublicMatchNotFound,
 });
 
 function PublicMatchPage() {
   const { slug } = Route.useParams();
   const { data } = useSuspenseQuery(publicMatchQuery(slug));
-  const { snapshot } = data;
+  const { isAdmin, checking } = useIsAdmin();
+  const adminFetch = useServerFn(adminGetPublicMatch);
+  const adminQ = useQuery({
+    queryKey: ["public-match-admin", slug],
+    queryFn: () => adminFetch({ data: { slug } }),
+    enabled: !data && !checking && isAdmin,
+    refetchInterval: (q) => {
+      const status = q.state.data?.snapshot?.match?.status;
+      return status === "live" ? 8000 : false;
+    },
+  });
+
+  const snapshot = data?.snapshot ?? adminQ.data?.snapshot ?? null;
+  const isPrivateAdminView = !data && !!adminQ.data;
+
+  if (!snapshot) {
+    if (isAdmin && adminQ.isLoading) {
+      return (
+        <PublicShell>
+          <div className="text-center py-20 text-muted-foreground">Cargando…</div>
+        </PublicShell>
+      );
+    }
+    return <PublicMatchNotFound />;
+  }
+
   return (
     <PublicShell>
+      {isPrivateAdminView && (
+        <div className="mb-4 rounded-lg border border-warning/40 bg-warning/10 px-4 py-2 text-xs text-warning-foreground">
+          Vista de administrador · este partido está marcado como privado por su dueño.
+        </div>
+      )}
       <PublicMatchView
         match={snapshot.match}
         teamA={snapshot.teamA}
@@ -98,6 +135,7 @@ function PublicMatchPage() {
     </PublicShell>
   );
 }
+
 
 function PublicMatchError() {
   return (
