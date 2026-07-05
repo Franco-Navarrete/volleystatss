@@ -313,14 +313,14 @@ function LiveMatch() {
     const side = pendingReception.side;
     recordReception(match.id, side, pendingReception.playerId, rating);
     setPendingReception(null);
-    if (isCoach) {
-      // Mapeo rating de recepción (3 niveles) → calidad de armado (5 niveles)
+    if (isCoach && rating !== "negative") {
+      // El balón llegó al armador → abrir flujo integrado (zona → atacante → calidad → acción → dirección)
       const map: Record<ReceptionRating, SettingQuality> = {
-        positive: "++",
+        positive: "+",
         neutral: "!",
         negative: "-",
       };
-      setQuickSetting({ side, receptionQuality: map[rating] });
+      setIntegratedRally({ side, receptionQuality: map[rating] });
     }
   };
 
