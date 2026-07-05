@@ -15,6 +15,7 @@ import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
 import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
+import { AttackHeatmap } from "@/components/AttackHeatmap";
 import { AttackTypesPanel } from "@/components/AttackTypesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
 import { SettingPanel } from "@/components/SettingPanel";
@@ -357,6 +358,14 @@ function StatsPage() {
           })}
         </Tabs>
       </section>
+
+      {/* Mapas de calor de ataque (origen + destino, con filtros) */}
+      {isCoach && (
+        <section className="mb-6">
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Mapas de calor de ataque</h2>
+          <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
+        </section>
+      )}
 
       {/* Zonas de ataque (total partido) */}
       {isCoach && (
