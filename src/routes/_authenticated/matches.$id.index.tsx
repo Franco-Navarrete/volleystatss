@@ -1117,23 +1117,6 @@ function LiveMatch() {
         />
       )}
 
-      {/* Scouting rápido legacy (deshabilitado — reemplazado por IntegratedRallyDialog) */}
-      {false && isCoach && quickSetting && (
-        <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-2 md:px-4 md:pb-4 pointer-events-none">
-          <div className="mx-auto max-w-3xl pointer-events-auto">
-            <QuickSettingBar
-              team={quickSetting.side === "A" ? teamA : teamB}
-              onCourt={quickSetting.side === "A" ? match.onCourtA : match.onCourtB}
-              receptionQuality={quickSetting.receptionQuality}
-              onSubmit={(payload) => {
-                recordSetting(match.id, quickSetting.side, payload);
-                setQuickSetting(null);
-              }}
-              onSkip={() => setQuickSetting(null)}
-            />
-          </div>
-        </div>
-      )}
     </CompactShell>
   );
 }
