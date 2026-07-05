@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
+import { LiveMatchesFeed } from "@/components/LiveMatchesFeed";
 import { TeamBadge } from "@/components/TeamBadge";
 import {
   computeStandings,
@@ -71,6 +72,10 @@ function LeaguePage() {
           </div>
         </div>
       </section>
+
+      <div className="mt-8">
+        <LiveMatchesFeed />
+      </div>
 
       <div className="grid lg:grid-cols-3 gap-6 mt-8">
         {/* Standings */}

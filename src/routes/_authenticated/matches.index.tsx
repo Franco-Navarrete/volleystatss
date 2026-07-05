@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
+import { LiveMatchesFeed } from "@/components/LiveMatchesFeed";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, setsWon } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,8 @@ function MatchesIndex() {
           </Button>
         )}
       </div>
+
+      <LiveMatchesFeed />
 
       <div className="space-y-8">
         {groups.map((g) => (

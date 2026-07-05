@@ -45,6 +45,40 @@ export const getPublicMatch = createServerFn({ method: "GET" })
     };
   });
 
+/**
+ * Public: lista todos los partidos EN VIVO compartidos (is_public = true).
+ * Usada para que todos los roles (incluso sin acceso al partido) puedan
+ * ver los partidos que se están jugando ahora mismo.
+ */
+export const listLivePublicMatches = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sb = createClient<Database>(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data, error } = await sb
+      .from("public_matches")
+      .select("id, data, updated_at")
+      .eq("is_public", true)
+      .contains("data", { match: { status: "live" } })
+      .order("updated_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return (data ?? []).map((row) => {
+      const snap = row.data as unknown as PublicMatchSnapshot | null;
+      return {
+        slug: row.id,
+        updatedAt: row.updated_at,
+        matchId: snap?.match?.id ?? null,
+        teamA: { name: snap?.teamA?.name ?? "—", shortName: snap?.teamA?.shortName ?? "", color: snap?.teamA?.color ?? null, logoUrl: snap?.teamA?.logoUrl ?? null },
+        teamB: { name: snap?.teamB?.name ?? "—", shortName: snap?.teamB?.shortName ?? "", color: snap?.teamB?.color ?? null, logoUrl: snap?.teamB?.logoUrl ?? null },
+        leagueName: snap?.league?.name ?? null,
+        sets: snap?.match?.sets ?? [],
+      };
+    });
+  });
+
 /** Upsert a snapshot for a match owned by the current user. */
 export const upsertPublicMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
