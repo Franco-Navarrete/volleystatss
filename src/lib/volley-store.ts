@@ -738,7 +738,6 @@ export const useVolley = create<VolleyState>()(
                 ? { attackType }
                 : {}),
             };
-            const prevServing = m.servingSide;
             let next: Match = { ...m, events: [...m.events, ev] };
             let r = replayMatch(next);
             next = { ...next, ...r };
