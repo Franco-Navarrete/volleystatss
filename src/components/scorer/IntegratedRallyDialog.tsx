@@ -262,7 +262,7 @@ export function IntegratedRallyDialog({
             {attackerId && (
               <Button
                 className="w-full mt-2"
-                onClick={() => setStep("quality")}
+                onClick={() => setStep("action")}
               >
                 Confirmar #{playersOnCourt.find((p) => p.id === attackerId)?.number}
               </Button>
@@ -270,34 +270,6 @@ export function IntegratedRallyDialog({
           </div>
         )}
 
-        {step === "quality" && (
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => pickQuality("+")}
-              className="min-h-[72px] rounded-lg bg-success text-success-foreground font-black text-3xl active:scale-95 transition flex flex-col items-center justify-center"
-            >
-              +
-              <span className="text-[10px] font-bold opacity-90 mt-1">Positivo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => pickQuality("!")}
-              className="min-h-[72px] rounded-lg bg-muted text-foreground font-black text-3xl active:scale-95 transition flex flex-col items-center justify-center"
-            >
-              /
-              <span className="text-[10px] font-bold opacity-90 mt-1">Neutro</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => pickQuality("-")}
-              className="min-h-[72px] rounded-lg bg-destructive text-destructive-foreground font-black text-3xl active:scale-95 transition flex flex-col items-center justify-center"
-            >
-              −
-              <span className="text-[10px] font-bold opacity-90 mt-1">Negativo</span>
-            </button>
-          </div>
-        )}
 
         {step === "action" && (
           <div className="grid grid-cols-2 gap-2 mt-2">
