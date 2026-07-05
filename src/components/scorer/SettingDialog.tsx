@@ -190,7 +190,7 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
                 className="h-14 font-semibold"
                 onClick={() => {
                   setAttackZone(z);
-                  setStep("quality");
+                  setStep("attacker");
                 }}
               >
                 {SETTING_ATTACK_ZONE_LABEL[z]}
@@ -199,14 +199,6 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
           </div>
         )}
 
-        {step === "quality" && (
-          <QualityRow
-            onPick={(q) => {
-              setQuality(q);
-              setStep("attacker");
-            }}
-          />
-        )}
 
         {step === "attacker" && (
           <PlayerGrid
