@@ -1038,7 +1038,26 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
-      updateMatchFormat: (matchId, setsToWin, pointsPerSet) => {
+      recordAttackAttempt: (matchId, side, playerId, opts) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId || m.status === "finished") return m;
+            const ev: AttackAttemptEvent = {
+              id: uid(),
+              kind: "attackAttempt",
+              side,
+              playerId,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+              ...(opts?.attackZone !== undefined ? { attackZone: opts.attackZone } : {}),
+              ...(opts?.attackType ? { attackType: opts.attackType } : {}),
+              ...(opts?.attackDirection !== undefined ? { attackDirection: opts.attackDirection } : {}),
+              ...(opts?.isCounter ? { isCounter: true } : {}),
+            };
+            return { ...m, events: [...m.events, ev] };
+          }),
+        }));
+      },
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
