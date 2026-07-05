@@ -1384,6 +1384,17 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     return p;
   };
   for (const ev of events) {
+    // Ataques neutros: cuentan como intento sin cambiar marcador.
+    if ("kind" in ev && ev.kind === "attackAttempt") {
+      const teamId = ev.side === "A" ? match.teamAId : match.teamBId;
+      const t = ensureTeam(teamId);
+      t.attack++;
+      if (ev.playerId) {
+        const p = ensurePlayer(ev.playerId);
+        p.attack++;
+      }
+      continue;
+    }
     if (!("type" in ev)) continue;
     const scoringTeamId = ev.scoringSide === "A" ? match.teamAId : match.teamBId;
     const scoringTeam = ensureTeam(scoringTeamId);
