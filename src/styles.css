@@ -172,6 +172,46 @@ html.device-tablet .live-stats-scroll {
   will-change: auto !important;
 }
 
+/* Tablet uses the real landscape viewport. Do not rotate dialog portals there:
+   rotated modal layers caused the duplicated/offset panels seen on Lenovo Tab. */
+html.device-tablet.force-landscape [data-slot="dialog-overlay"],
+html.device-tablet.force-landscape [data-slot="alert-dialog-overlay"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  transform: none !important;
+}
+
+html.device-tablet.force-landscape [data-slot="dialog-positioner"],
+html.device-tablet.force-landscape [data-slot="alert-dialog-positioner"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 14px !important;
+  transform: none !important;
+  transform-origin: center !important;
+  pointer-events: none;
+}
+
+html.device-tablet.force-landscape .live-action-dialog,
+html.device-tablet.force-landscape [data-slot="dialog-content"],
+html.device-tablet.force-landscape [data-slot="alert-dialog-content"],
+html.device-tablet.force-landscape [role="dialog"][data-state] {
+  width: min(720px, calc(100dvw - 28px)) !important;
+  max-width: calc(100dvw - 28px) !important;
+  max-height: calc(100dvh - 28px) !important;
+  transform: none !important;
+}
+
+html.device-tablet.force-landscape .live-stats-dialog {
+  width: min(900px, calc(100dvw - 28px)) !important;
+  height: min(760px, calc(100dvh - 28px)) !important;
+}
+
 /* Force the live scoring screen to landscape without rotating <body>.
    Dialog portals stay attached to the unrotated body, so modals stay centered
    and readable against the real mobile viewport. */
