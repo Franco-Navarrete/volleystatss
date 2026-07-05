@@ -332,18 +332,18 @@ function LiveMatch() {
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
           <div className="text-center px-1 md:px-4 flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0">
             <div className="flex flex-col items-center">
-              <div className="text-[8px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
+              <div className="text-[8px] md:text-xs device-tablet:text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
               {match.status === "live" ? (
-                <span className="md:mt-1 inline-flex items-center gap-1 text-[8px] md:text-xs font-bold uppercase tracking-widest text-destructive">
-                  <span className="size-1 md:size-2 rounded-full bg-destructive animate-pulse" /> Live
+                <span className="md:mt-1 device-tablet:mt-0 inline-flex items-center gap-1 text-[8px] md:text-xs device-tablet:text-[10px] font-bold uppercase tracking-widest text-destructive">
+                  <span className="size-1 md:size-2 device-tablet:size-1.5 rounded-full bg-destructive animate-pulse" /> Live
                 </span>
               ) : match.status === "finished" ? (
-                <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-success">Final</span>
+                <span className="md:mt-1 device-tablet:mt-0 inline-block text-[8px] md:text-xs device-tablet:text-[10px] font-bold uppercase tracking-widest text-success">Final</span>
               ) : (
-                <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
+                <span className="md:mt-1 device-tablet:mt-0 inline-block text-[8px] md:text-xs device-tablet:text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
               )}
               {setTimerLabel && (
-                <span className="md:mt-0.5 scoreboard-digit tabular-nums text-[10px] md:text-sm font-bold text-foreground">
+                <span className="md:mt-0.5 device-tablet:mt-0 scoreboard-digit tabular-nums text-[10px] md:text-sm device-tablet:text-[11px] font-bold text-foreground">
                   {setTimerLabel}
                 </span>
               )}
@@ -354,9 +354,9 @@ function LiveMatch() {
                 type="button"
                 onClick={() => toggleSidesFlipped(match.id)}
                 title="Invertir lados"
-                className="md:mt-2 inline-flex items-center justify-center size-6 md:size-9 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
+                className="md:mt-2 device-tablet:mt-0 inline-flex items-center justify-center size-6 md:size-9 device-tablet:size-7 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
               >
-                <ArrowLeftRight className="size-3.5 md:size-5" />
+                <ArrowLeftRight className="size-3.5 md:size-5 device-tablet:size-4" />
               </button>
             </div>
           </div>
