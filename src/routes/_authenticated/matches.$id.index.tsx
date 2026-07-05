@@ -1081,30 +1081,35 @@ function LiveMatch() {
           receptionQuality={integratedRally.receptionQuality}
           onSubmit={(payload) => {
             const attackZone = settingZoneToAttackZone(payload.attackZone);
+            const isNeutral =
+              payload.action === "attack_neutral" || payload.action === "counter_neutral";
+            const isKill =
+              payload.action === "rotation_attack" || payload.action === "counter_attack";
+            const isCounter =
+              payload.action === "counter_attack" || payload.action === "counter_neutral";
             // 1) Guardar evento analítico de armado
             recordSetting(match.id, integratedRally.side, {
               setterId: payload.setterId,
               quality: payload.setterQuality,
               attackZone: payload.attackZone,
               attackerId: payload.attackerId,
-              attackResult:
-                payload.action === "rotation_attack" || payload.action === "counter_attack"
-                  ? "point"
-                  : payload.action === "attack_neutral"
-                  ? "continuity"
-                  : payload.action === "block"
-                  ? "blocked"
-                  : "error",
+              attackResult: isKill
+                ? "point"
+                : isNeutral
+                ? "continuity"
+                : payload.action === "block"
+                ? "blocked"
+                : "error",
               receptionQuality: payload.receptionQuality,
               attackDirection: payload.attackDirection,
             });
-            // 2) Ataque neutro → NO afecta marcador, se registra como intento.
-            if (payload.action === "attack_neutral") {
+            // 2) Ataque/Contra neutro → NO afecta marcador, se registra como intento.
+            if (isNeutral) {
               useVolley.getState().recordAttackAttempt(
                 match.id,
                 integratedRally.side,
                 payload.attackerId,
-                { attackZone, attackDirection: payload.attackDirection },
+                { attackZone, attackDirection: payload.attackDirection, isCounter },
               );
               setIntegratedRally(null);
               return;
