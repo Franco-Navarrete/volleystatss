@@ -15,7 +15,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl sticky top-0 z-40">
-        <div className="mx-auto max-w-5xl [@media(min-width:1600px)_and_(pointer:coarse)]:max-w-7xl px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
+        <div className="mx-auto max-w-5xl device-tablet:max-w-7xl px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
           <Link to="/" className="flex items-center gap-2 group shrink-0">
             <div className="size-8 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow">
               <Volleyball className="size-4 text-primary-foreground" />
