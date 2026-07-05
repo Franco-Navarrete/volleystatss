@@ -162,6 +162,14 @@ export function attackTypeByPlayer(match: Match, playerId: string): AttackTypeEf
     { attempts: number; kills: number; errors: number }
   >();
   for (const ev of match.events) {
+    if (isAttackAttempt(ev)) {
+      if (ev.playerId !== playerId) continue;
+      const key = (ev.attackType ?? "unclassified") as AttackType | "unclassified";
+      const b = buckets.get(key) ?? { attempts: 0, kills: 0, errors: 0 };
+      b.attempts++;
+      buckets.set(key, b);
+      continue;
+    }
     if ("kind" in ev) continue;
     if (!isAttackPoint(ev)) continue;
     if (ev.playerId !== playerId) continue;
@@ -180,7 +188,7 @@ export function attackTypeByPlayer(match: Match, playerId: string): AttackTypeEf
       attempts: b.attempts,
       kills: b.kills,
       errors: b.errors,
-      effectiveness: b.attempts ? (b.kills - b.errors) / b.attempts : 0,
+      effectiveness: eff(b.kills, b.errors),
       killPct: b.attempts ? b.kills / b.attempts : 0,
     });
   }
