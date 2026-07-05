@@ -6,19 +6,20 @@ interface Props {
 }
 
 /**
- * Grilla 3×3 sobre la cancha rival. Numeración:
- *   7 8 9  (fondo rival)
- *   4 5 6  (centro)
- *   1 2 3  (cerca de la red)
- * El atacante mira hacia la red del rival ⇒ 1..3 = red, 7..9 = fondo.
+ * Grilla 3×3 sobre la cancha rival, siguiendo la convención estándar de vóley:
+ *   4 3 2  (cerca de la red)
+ *   7 8 9  (centro)
+ *   5 6 1  (fondo)
+ * Números vistos desde la perspectiva del atacante que mira la cancha rival.
  */
 export function AttackDirectionGrid({ onPick, value }: Props) {
-  // Renderizamos de arriba (fondo) hacia abajo (red) visualmente.
+  // De arriba (red) hacia abajo (fondo).
   const rows: AttackDirection[][] = [
+    [4, 3, 2],
     [7, 8, 9],
-    [4, 5, 6],
-    [1, 2, 3],
+    [5, 6, 1],
   ];
+
   return (
     <div className="space-y-2">
       <div
