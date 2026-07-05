@@ -1058,6 +1058,8 @@ export const useVolley = create<VolleyState>()(
           }),
         }));
       },
+
+      updateMatchFormat: (matchId, setsToWin, pointsPerSet) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
