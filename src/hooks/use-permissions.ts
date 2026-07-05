@@ -91,22 +91,28 @@ export function useCanManageTeams() {
         setLoading(false);
       }
     }, 4000);
-    supabase
-      .from("user_permissions")
-      .select("can_manage_teams")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        clearTimeout(timeout);
-        if (error) {
-          console.warn("[useCanManageTeams] error:", error.message);
-          setAllowed(false);
-        } else {
-          setAllowed(!!data?.can_manage_teams);
-        }
-        setLoading(false);
-      });
+    (async () => {
+      // Planilleros pueden gestionar equipos, o cualquier usuario con el permiso explícito.
+      const [rolesRes, permRes] = await Promise.all([
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "planillero"),
+        supabase
+          .from("user_permissions")
+          .select("can_manage_teams")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      clearTimeout(timeout);
+      if (rolesRes.error) console.warn("[useCanManageTeams] role error:", rolesRes.error.message);
+      if (permRes.error) console.warn("[useCanManageTeams] perm error:", permRes.error.message);
+      const isPlanillero = !!rolesRes.data && rolesRes.data.length > 0;
+      setAllowed(isPlanillero || !!permRes.data?.can_manage_teams);
+      setLoading(false);
+    })();
     return () => {
       cancelled = true;
       clearTimeout(timeout);
