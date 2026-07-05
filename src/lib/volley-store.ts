@@ -309,6 +309,8 @@ export interface SettingEvent {
   receptionQuality?: SettingQuality;
   /** Tipo táctico del ataque (modo Entrenador). */
   attackType?: import("@/lib/formations/attack-types").AttackType;
+  /** Dirección 1..9 en la cancha rival (modo Entrenador). */
+  attackDirection?: AttackDirection;
   setNumber: number;
   timestamp: number;
 }
