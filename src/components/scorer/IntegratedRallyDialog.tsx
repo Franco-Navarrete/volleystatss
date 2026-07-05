@@ -14,6 +14,8 @@ import {
   type SettingAttackZone,
   type AttackDirection,
   type AttackZone,
+  SETTING_ATTACK_ZONES,
+  SETTING_ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { AttackDirectionGrid } from "@/components/court/AttackDirectionGrid";
 
@@ -24,7 +26,6 @@ interface Props {
   team: Team;
   side: "A" | "B";
   onCourt: string[];
-  /** Calidad de recepción ya cargada afuera del diálogo. */
   receptionQuality?: SettingQuality;
   onSubmit: (payload: {
     setterId: string;
@@ -37,18 +38,14 @@ interface Props {
   }) => void;
 }
 
-/**
- * Acción del atacante. La valoración (+ / = / −) se elige en el paso siguiente
- * para Ataque y Contra; el resto de las acciones no tienen valoración.
- */
 export type RallyAction =
-  | "rotation_attack"   // Ataque de rotación · Punto
-  | "attack_neutral"    // Ataque · Neutra (continuidad, no puntúa)
-  | "counter_attack"    // Contraataque · Punto
-  | "counter_neutral"   // Contra · Neutra
-  | "attack_error"      // Error de ataque
-  | "block"             // Bloqueo rival (nos tapó)
-  | "unforced_error";   // Error no forzado
+  | "rotation_attack"
+  | "attack_neutral"
+  | "counter_attack"
+  | "counter_neutral"
+  | "attack_error"
+  | "block"
+  | "unforced_error";
 
 type ActionKind = "attack" | "counter" | "block" | "unforced";
 type Rating = "point" | "neutral" | "error";
@@ -60,29 +57,19 @@ const ACTION_KIND_LABEL: Record<ActionKind, string> = {
   unforced: "Error no forzado",
 };
 
-type Step = "quality" | "attacker" | "action" | "rating" | "direction";
+type Step = "zone" | "direction" | "action" | "rating";
 
-const SETTING_STEPS: { q: SettingQuality; label: string; tone: string }[] = [
-  { q: "+", label: "Bueno (+)", tone: "bg-primary text-primary-foreground" },
-  { q: "!", label: "Neutro (=)", tone: "bg-secondary text-secondary-foreground" },
-  { q: "-", label: "Malo (−)", tone: "bg-destructive/80 text-destructive-foreground" },
-];
+/** onCourt index para cada zona de armado. */
+const ZONE_TO_COURT_INDEX: Record<SettingAttackZone, number> = {
+  back1: 0,
+  z2: 1,
+  z3: 2,
+  z4: 3,
+  back5: 4,
+  pipe: 5,
+  back: 0,
+};
 
-/** Zona SettingAttackZone inferida a partir del índice on-court del atacante. */
-function inferSettingZone(onCourt: string[], playerId: string): SettingAttackZone {
-  const idx = onCourt.indexOf(playerId);
-  switch (idx) {
-    case 0: return "back1";
-    case 1: return "z2";
-    case 2: return "z3";
-    case 3: return "z4";
-    case 4: return "back5";
-    case 5: return "pipe";
-    default: return "z4";
-  }
-}
-
-/** Mapeo zona-armado → PointEvent.attackZone. */
 export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | undefined {
   switch (z) {
     case "z2": return 2;
@@ -103,7 +90,6 @@ function resolveAction(kind: ActionKind, rating: Rating | null): RallyAction {
     if (rating === "neutral") return "attack_neutral";
     return "attack_error";
   }
-  // counter
   if (rating === "point") return "counter_attack";
   if (rating === "neutral") return "counter_neutral";
   return "attack_error";
@@ -111,12 +97,10 @@ function resolveAction(kind: ActionKind, rating: Rating | null): RallyAction {
 
 /**
  * Diálogo integrado del rally (modo entrenador). Flujo:
- *   1. Armado — calidad del pase del armador (+ / = / −)
- *   2. Atacante — jugadora en cancha
+ *   1. Zona de armado (auto-selecciona al jugador de esa posición en cancha)
+ *   2. Dirección (grilla 3×3 en cancha rival)
  *   3. Acción — Ataque · Contra · Bloqueo rival · Error no forzado
- *   4. Valoración — Punto · Neutra · Error (sólo para Ataque / Contra)
- *   5. Zona — dirección 3×3 en cancha rival (obligatoria para Ataque/Contra si
- *      la valoración fue Punto o Neutra)
+ *   4. Valoración — Punto · Neutra · Error (solo Ataque / Contra)
  */
 export function IntegratedRallyDialog({
   open,
@@ -137,29 +121,32 @@ export function IntegratedRallyDialog({
     [playersOnCourt],
   );
 
-  const [step, setStep] = useState<Step>("quality");
-  const [setterQuality, setSetterQuality] = useState<SettingQuality>("!");
+  const [step, setStep] = useState<Step>("zone");
+  const [zone, setZone] = useState<SettingAttackZone | null>(null);
   const [attackerId, setAttackerId] = useState<string | null>(null);
+  const [direction, setDirection] = useState<AttackDirection | null>(null);
   const [actionKind, setActionKind] = useState<ActionKind | null>(null);
-  const [rating, setRating] = useState<Rating | null>(null);
 
   useEffect(() => {
     if (!open) {
-      setStep("quality");
-      setSetterQuality("!");
+      setStep("zone");
+      setZone(null);
       setAttackerId(null);
+      setDirection(null);
       setActionKind(null);
-      setRating(null);
     }
   }, [open]);
 
-  const pickQuality = (q: SettingQuality) => {
-    setSetterQuality(q);
-    setStep("attacker");
+  const pickZone = (z: SettingAttackZone) => {
+    const idx = ZONE_TO_COURT_INDEX[z] ?? 3;
+    const pid = onCourt[idx] ?? onCourt[0];
+    setZone(z);
+    setAttackerId(pid);
+    setStep("direction");
   };
 
-  const pickAttacker = (id: string) => {
-    setAttackerId(id);
+  const pickDirection = (d: AttackDirection) => {
+    setDirection(d);
     setStep("action");
   };
 
@@ -168,55 +155,41 @@ export function IntegratedRallyDialog({
     if (k === "attack" || k === "counter") {
       setStep("rating");
     } else {
-      // Bloqueo / Error no forzado → cierre directo, sin dirección.
-      finalize(resolveAction(k, null), undefined);
+      finalize(resolveAction(k, null));
     }
   };
 
   const pickRating = (r: Rating) => {
-    setRating(r);
     if (!actionKind) return;
-    if (r === "error") {
-      // Errores cierran sin pedir zona.
-      finalize(resolveAction(actionKind, "error"), undefined);
-    } else {
-      setStep("direction");
-    }
+    finalize(resolveAction(actionKind, r));
   };
 
-  const pickDirection = (d: AttackDirection) => {
-    if (actionKind && rating) finalize(resolveAction(actionKind, rating), d);
-  };
-
-  const finalize = (a: RallyAction, dir: AttackDirection | undefined) => {
-    if (!attackerId || !setter) return;
-    const attackZone = inferSettingZone(onCourt, attackerId);
+  const finalize = (a: RallyAction) => {
+    if (!attackerId || !setter || !zone) return;
     onSubmit({
       setterId: setter.id,
-      setterQuality,
-      attackZone,
+      setterQuality: "!",
+      attackZone: zone,
       attackerId,
       action: a,
-      attackDirection: dir,
+      attackDirection: direction ?? undefined,
       receptionQuality,
     });
     onClose();
   };
 
   const goBack = () => {
-    if (step === "direction") setStep("rating");
-    else if (step === "rating") setStep("action");
-    else if (step === "action") setStep("attacker");
-    else if (step === "attacker") setStep("quality");
+    if (step === "rating") setStep("action");
+    else if (step === "action") setStep("direction");
+    else if (step === "direction") setStep("zone");
   };
 
   const title = (() => {
     switch (step) {
-      case "quality": return "Calidad del armado";
-      case "attacker": return "¿Quién atacó?";
-      case "action": return "Acción";
-      case "rating": return "Valoración del ataque";
+      case "zone": return "Zona del armado";
       case "direction": return "Zona de destino";
+      case "action": return "Acción";
+      case "rating": return "Valoración";
     }
   })();
 
@@ -229,7 +202,7 @@ export function IntegratedRallyDialog({
       <DialogContent className="w-[calc(100dvw-24px)] max-w-[440px] rounded-xl border-border/60 p-3 gap-2 max-h-[92dvh] overflow-y-auto">
         <DialogHeader className="pr-8 space-y-0 text-left">
           <DialogTitle className="flex items-center gap-2 min-w-0">
-            {step !== "quality" && (
+            {step !== "zone" && (
               <button
                 type="button"
                 onClick={goBack}
@@ -249,48 +222,54 @@ export function IntegratedRallyDialog({
               <span className="block text-sm font-bold">{title}</span>
               <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
                 {team.shortName} · Armó #{setter?.number ?? "?"}
-                {attackerName && ` · Atacó #${attackerName.number}`}
+                {zone && ` · ${SETTING_ATTACK_ZONE_LABEL[zone]}`}
+                {attackerName && ` · #${attackerName.number}`}
                 {actionKind && ` · ${ACTION_KIND_LABEL[actionKind]}`}
               </span>
             </span>
           </DialogTitle>
         </DialogHeader>
 
-        {step === "quality" && (
+        {step === "zone" && (
           <div className="space-y-2 mt-2">
             <div className="grid grid-cols-3 gap-2">
-              {SETTING_STEPS.map((s) => (
-                <button
-                  key={s.q}
-                  type="button"
-                  onClick={() => pickQuality(s.q)}
-                  className={`min-h-[72px] rounded-lg font-bold text-sm active:scale-95 transition ${s.tone}`}
-                >
-                  {s.label}
-                </button>
-              ))}
+              {SETTING_ATTACK_ZONES.map((z) => {
+                const idx = ZONE_TO_COURT_INDEX[z] ?? 3;
+                const p = playersOnCourt[idx];
+                return (
+                  <button
+                    key={z}
+                    type="button"
+                    onClick={() => pickZone(z)}
+                    className="min-h-[72px] rounded-lg border-2 border-border bg-card px-1 py-2 flex flex-col items-center justify-center transition active:scale-95 hover:border-primary hover:bg-primary/10"
+                  >
+                    <span className="text-xs font-bold">{SETTING_ATTACK_ZONE_LABEL[z]}</span>
+                    {p && (
+                      <span className="scoreboard-digit text-lg font-black leading-none mt-1">
+                        #{p.number}
+                      </span>
+                    )}
+                    {p && (
+                      <span className="text-[9px] text-muted-foreground truncate max-w-full">
+                        {p.name}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <p className="text-[11px] text-center text-muted-foreground">
-              Cómo salió el pase del armador para el ataque.
+              Se auto-selecciona la jugadora en esa posición.
             </p>
           </div>
         )}
 
-        {step === "attacker" && (
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {playersOnCourt.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => pickAttacker(p.id)}
-                className="min-h-[72px] rounded-lg border-2 border-border bg-card px-1 py-2 flex flex-col items-center justify-center transition active:scale-95 hover:border-primary hover:bg-primary/10"
-              >
-                <span className="scoreboard-digit text-xl font-black leading-none">#{p.number}</span>
-                <span className="text-[10px] text-muted-foreground truncate max-w-full mt-0.5">
-                  {p.name}
-                </span>
-              </button>
-            ))}
+        {step === "direction" && (
+          <div className="mt-2">
+            <AttackDirectionGrid onPick={pickDirection} value={null} />
+            <p className="mt-2 text-[11px] text-center text-muted-foreground">
+              Elegí la zona donde cayó la pelota.
+            </p>
           </div>
         )}
 
@@ -345,15 +324,6 @@ export function IntegratedRallyDialog({
             </div>
             <p className="text-[11px] text-center text-muted-foreground">
               Neutra suma al total de ataques pero no cambia el marcador ni la eficiencia.
-            </p>
-          </div>
-        )}
-
-        {step === "direction" && (
-          <div className="mt-2">
-            <AttackDirectionGrid onPick={pickDirection} value={null} />
-            <p className="mt-2 text-[11px] text-center text-muted-foreground">
-              Elegí la zona donde cayó la pelota.
             </p>
           </div>
         )}
