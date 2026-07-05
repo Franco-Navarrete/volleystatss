@@ -28,6 +28,11 @@ import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
+import {
+  IntegratedRallyDialog,
+  settingZoneToAttackZone,
+  type RallyAction,
+} from "@/components/scorer/IntegratedRallyDialog";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
