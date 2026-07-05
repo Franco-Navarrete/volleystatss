@@ -991,6 +991,8 @@ export const useVolley = create<VolleyState>()(
               ...(payload.attackerId ? { attackerId: payload.attackerId } : {}),
               ...(payload.attackResult ? { attackResult: payload.attackResult } : {}),
               ...(payload.receptionQuality ? { receptionQuality: payload.receptionQuality } : {}),
+              ...(payload.attackType ? { attackType: payload.attackType } : {}),
+              ...(payload.attackDirection !== undefined ? { attackDirection: payload.attackDirection } : {}),
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
