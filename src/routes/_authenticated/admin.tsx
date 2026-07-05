@@ -45,6 +45,7 @@ import {
   adminSetRole,
   type ExtraRole,
 } from "@/lib/admin.functions";
+import { adminListPublicMatches } from "@/lib/public-match.functions";
 
 const EXTRA_ROLE_OPTIONS: { value: ExtraRole | null; label: string; hint: string }[] = [
   { value: null, label: "Sin rol", hint: "Solo permisos por liga" },
