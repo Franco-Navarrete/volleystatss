@@ -75,17 +75,18 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
     : [];
 
   const goBack = () => {
-    const order: Step[] = ["side", "reception", "setter", "zone", "quality", "attacker", "result"];
+    const order: Step[] = ["side", "reception", "setter", "zone", "attacker", "result"];
     const idx = order.indexOf(step);
     if (idx > 0) setStep(order[idx - 1]);
   };
 
   const submitResult = (result: SettingAttackResult) => {
-    if (!side || !setterId || !quality || !attackerId || !attackZone) return;
+    if (!side || !setterId || !attackerId || !attackZone) return;
     onSubmit({
       side,
       setterId,
-      quality,
+      // Calidad del armado desactivada — se envía neutro por defecto.
+      quality: "!",
       attackerId,
       attackZone,
       attackResult: result,
@@ -100,7 +101,6 @@ export function SettingDialog({ open, onClose, teamA, teamB, onCourtA, onCourtB,
       case "reception": return "Calidad de la recepción";
       case "setter": return "Jugadora que armó";
       case "zone": return "Zona del armado";
-      case "quality": return "Calidad del armado";
       case "attacker": return "Jugadora que atacó";
       case "result": return "Resultado del ataque";
     }
