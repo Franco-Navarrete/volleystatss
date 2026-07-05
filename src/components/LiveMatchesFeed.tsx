@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Radio } from "lucide-react";
 import { listLivePublicMatches } from "@/lib/public-match.functions";
+import type { MatchSet } from "@/lib/volley-store";
 
 /**
  * Feed de partidos EN VIVO compartidos públicamente.
@@ -32,19 +33,15 @@ export function LiveMatchesFeed() {
       </header>
       <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
         {items.map((m) => {
-          const setsA = m.sets.reduce(
-            (n, s: { pointsA: number; pointsB: number }) =>
-              n + (s.pointsA > s.pointsB && (s.pointsA >= 25 || s.pointsA >= 15) && Math.abs(s.pointsA - s.pointsB) >= 2 ? 1 : 0),
-            0,
-          );
-          const setsB = m.sets.reduce(
-            (n, s: { pointsA: number; pointsB: number }) =>
-              n + (s.pointsB > s.pointsA && (s.pointsB >= 25 || s.pointsB >= 15) && Math.abs(s.pointsB - s.pointsA) >= 2 ? 1 : 0),
-            0,
-          );
-          const current = m.sets[m.sets.length - 1] as
-            | { pointsA: number; pointsB: number }
-            | undefined;
+          const sets = (m.sets ?? []) as MatchSet[];
+          let setsA = 0;
+          let setsB = 0;
+          for (const s of sets) {
+            if (!s.finished) continue;
+            if (s.scoreA > s.scoreB) setsA++;
+            else if (s.scoreB > s.scoreA) setsB++;
+          }
+          const current = sets[sets.length - 1];
           return (
             <li key={m.slug}>
               <Link
@@ -76,7 +73,7 @@ export function LiveMatchesFeed() {
                     </div>
                     {current && (
                       <div className="text-[10px] uppercase tracking-widest text-muted-foreground tabular-nums">
-                        Set {m.sets.length} · {current.pointsA}-{current.pointsB}
+                        Set {sets.length} · {current.scoreA}-{current.scoreB}
                       </div>
                     )}
                   </div>
