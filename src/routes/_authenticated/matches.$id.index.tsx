@@ -26,8 +26,11 @@ import {
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
-import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
+import {
+  IntegratedRallyDialog,
+  settingZoneToAttackZone,
+} from "@/components/scorer/IntegratedRallyDialog";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
@@ -147,7 +150,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showSettingDialog, setShowSettingDialog] = useState(false);
-  const [quickSetting, setQuickSetting] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality } | null>(null);
+  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality } | null>(null);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [showFormationDialog, setShowFormationDialog] = useState(false);
@@ -307,14 +310,14 @@ function LiveMatch() {
     const side = pendingReception.side;
     recordReception(match.id, side, pendingReception.playerId, rating);
     setPendingReception(null);
-    if (isCoach) {
-      // Mapeo rating de recepción (3 niveles) → calidad de armado (5 niveles)
+    if (isCoach && rating !== "negative") {
+      // El balón llegó al armador → abrir flujo integrado (zona → atacante → calidad → acción → dirección)
       const map: Record<ReceptionRating, SettingQuality> = {
-        positive: "++",
+        positive: "+",
         neutral: "!",
         negative: "-",
       };
-      setQuickSetting({ side, receptionQuality: map[rating] });
+      setIntegratedRally({ side, receptionQuality: map[rating] });
     }
   };
 
@@ -1065,23 +1068,52 @@ function LiveMatch() {
         />
       )}
 
-      {/* Scouting rápido inline (tablet · Modo Entrenador) — aparece auto tras la recepción */}
-      {isCoach && quickSetting && (
-        <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-2 md:px-4 md:pb-4 pointer-events-none">
-          <div className="mx-auto max-w-3xl pointer-events-auto">
-            <QuickSettingBar
-              team={quickSetting.side === "A" ? teamA : teamB}
-              onCourt={quickSetting.side === "A" ? match.onCourtA : match.onCourtB}
-              receptionQuality={quickSetting.receptionQuality}
-              onSubmit={(payload) => {
-                recordSetting(match.id, quickSetting.side, payload);
-                setQuickSetting(null);
-              }}
-              onSkip={() => setQuickSetting(null)}
-            />
-          </div>
-        </div>
+      {/* Flujo integrado (tablet · Modo Entrenador) — aparece auto tras la recepción */}
+      {isCoach && integratedRally && (
+        <IntegratedRallyDialog
+          open={!!integratedRally}
+          onClose={() => setIntegratedRally(null)}
+          match={match}
+          team={integratedRally.side === "A" ? teamA : teamB}
+          side={integratedRally.side}
+          onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
+          receptionQuality={integratedRally.receptionQuality}
+          onSubmit={(payload) => {
+            const attackZone = settingZoneToAttackZone(payload.attackZone);
+            // 1) Guardar evento analítico de armado
+            recordSetting(match.id, integratedRally.side, {
+              setterId: payload.setterId,
+              quality: payload.setterQuality,
+              attackZone: payload.attackZone,
+              attackerId: payload.attackerId,
+              attackResult:
+                payload.action === "rotation_attack" || payload.action === "counter_attack"
+                  ? "point"
+                  : payload.action === "block"
+                  ? "blocked"
+                  : "error",
+              receptionQuality: payload.receptionQuality,
+              attackDirection: payload.attackDirection,
+            });
+            // 2) Guardar punto real que afecta marcador
+            const type: PointType =
+              payload.action === "block"
+                ? "attack_error"
+                : (payload.action as PointType);
+            recordPoint(
+              match.id,
+              integratedRally.side,
+              type,
+              payload.attackerId,
+              attackZone,
+              undefined,
+              payload.attackDirection,
+            );
+            setIntegratedRally(null);
+          }}
+        />
       )}
+
     </CompactShell>
   );
 }

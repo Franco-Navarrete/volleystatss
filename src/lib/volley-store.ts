@@ -153,6 +153,9 @@ export function isAttackType(t: PointType): boolean {
   return t === "attack" || t === "rotation_attack" || t === "counter_attack";
 }
 
+/** Sector 1..9 de la cancha rival (3×3): 1..3 cerca de la red, 7..9 fondo. */
+export type AttackDirection = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
 export interface PointEvent {
   id: string;
   /** Side that scored the point. */
@@ -167,7 +170,10 @@ export interface PointEvent {
   attackZone?: AttackZone;
   /** Modo entrenador: tipo táctico del ataque (1er tiempo, pipe, etc.). */
   attackType?: import("@/lib/formations/attack-types").AttackType;
+  /** Modo entrenador: dirección del ataque en la cancha rival (1..9). */
+  attackDirection?: AttackDirection;
 }
+
 
 export interface SubstitutionEvent {
   id: string;
@@ -303,6 +309,8 @@ export interface SettingEvent {
   receptionQuality?: SettingQuality;
   /** Tipo táctico del ataque (modo Entrenador). */
   attackType?: import("@/lib/formations/attack-types").AttackType;
+  /** Dirección 1..9 en la cancha rival (modo Entrenador). */
+  attackDirection?: AttackDirection;
   setNumber: number;
   timestamp: number;
 }
@@ -407,8 +415,10 @@ interface VolleyState {
     type: PointType,
     playerId: string | null,
     attackZone?: AttackZone,
-    attackType?: import("@/lib/formations/attack-types").AttackType
+    attackType?: import("@/lib/formations/attack-types").AttackType,
+    attackDirection?: AttackDirection
   ) => void;
+
   recordSubstitution: (
     matchId: string,
     side: "A" | "B",
@@ -441,8 +451,11 @@ interface VolleyState {
       attackerId?: string;
       attackResult?: SettingAttackResult;
       receptionQuality?: SettingQuality;
+      attackType?: import("@/lib/formations/attack-types").AttackType;
+      attackDirection?: AttackDirection;
     }
   ) => void;
+
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
@@ -720,7 +733,7 @@ export const useVolley = create<VolleyState>()(
           ),
         })),
 
-      recordPoint: (matchId, playerSide, type, playerId, attackZone, attackType) => {
+      recordPoint: (matchId, playerSide, type, playerId, attackZone, attackType, attackDirection) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId || m.status === "finished") return m;
@@ -737,7 +750,11 @@ export const useVolley = create<VolleyState>()(
               ...(attackType !== undefined && (isAttackType(type) || type === "attack_error")
                 ? { attackType }
                 : {}),
+              ...(attackDirection !== undefined && (isAttackType(type) || type === "attack_error")
+                ? { attackDirection }
+                : {}),
             };
+
             let next: Match = { ...m, events: [...m.events, ev] };
             let r = replayMatch(next);
             next = { ...next, ...r };
@@ -974,6 +991,8 @@ export const useVolley = create<VolleyState>()(
               ...(payload.attackerId ? { attackerId: payload.attackerId } : {}),
               ...(payload.attackResult ? { attackResult: payload.attackResult } : {}),
               ...(payload.receptionQuality ? { receptionQuality: payload.receptionQuality } : {}),
+              ...(payload.attackType ? { attackType: payload.attackType } : {}),
+              ...(payload.attackDirection !== undefined ? { attackDirection: payload.attackDirection } : {}),
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
