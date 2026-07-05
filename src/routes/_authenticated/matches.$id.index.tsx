@@ -72,7 +72,9 @@ function useForceLandscape(active: boolean) {
     // Solo forzamos landscape en teléfonos (no en tablets).
     const mq = window.matchMedia("(orientation: portrait) and (max-width: 640px)");
     const apply = () => {
-      document.documentElement.classList.toggle("force-landscape", mq.matches);
+      const html = document.documentElement;
+      const userSelectedTablet = html.dataset.deviceResolved === "tablet" || html.classList.contains("device-tablet");
+      html.classList.toggle("force-landscape", mq.matches && !userSelectedTablet);
     };
     apply();
     mq.addEventListener("change", apply);
