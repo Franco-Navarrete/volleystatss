@@ -328,22 +328,22 @@ function LiveMatch() {
     <CompactShell>
       <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-4 h-full min-h-0 px-2 md:px-6 device-tablet:px-8 py-2 md:py-4 mx-auto w-full max-w-[1400px] device-tablet:max-w-[1900px] select-none">
         {/* Scoreboard header */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-0.5 md:py-4 shrink-0">
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 device-tablet:gap-3 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 device-tablet:px-3 py-0.5 md:py-4 device-tablet:py-1 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
           <div className="text-center px-1 md:px-4 flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0">
             <div className="flex flex-col items-center">
-              <div className="text-[8px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
+              <div className="text-[8px] md:text-xs device-tablet:text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Set {match.currentSet}</div>
               {match.status === "live" ? (
-                <span className="md:mt-1 inline-flex items-center gap-1 text-[8px] md:text-xs font-bold uppercase tracking-widest text-destructive">
-                  <span className="size-1 md:size-2 rounded-full bg-destructive animate-pulse" /> Live
+                <span className="md:mt-1 device-tablet:mt-0 inline-flex items-center gap-1 text-[8px] md:text-xs device-tablet:text-[10px] font-bold uppercase tracking-widest text-destructive">
+                  <span className="size-1 md:size-2 device-tablet:size-1.5 rounded-full bg-destructive animate-pulse" /> Live
                 </span>
               ) : match.status === "finished" ? (
-                <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-success">Final</span>
+                <span className="md:mt-1 device-tablet:mt-0 inline-block text-[8px] md:text-xs device-tablet:text-[10px] font-bold uppercase tracking-widest text-success">Final</span>
               ) : (
-                <span className="md:mt-1 inline-block text-[8px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
+                <span className="md:mt-1 device-tablet:mt-0 inline-block text-[8px] md:text-xs device-tablet:text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Prog.</span>
               )}
               {setTimerLabel && (
-                <span className="md:mt-0.5 scoreboard-digit tabular-nums text-[10px] md:text-sm font-bold text-foreground">
+                <span className="md:mt-0.5 device-tablet:mt-0 scoreboard-digit tabular-nums text-[10px] md:text-sm device-tablet:text-[11px] font-bold text-foreground">
                   {setTimerLabel}
                 </span>
               )}
@@ -354,9 +354,9 @@ function LiveMatch() {
                 type="button"
                 onClick={() => toggleSidesFlipped(match.id)}
                 title="Invertir lados"
-                className="md:mt-2 inline-flex items-center justify-center size-6 md:size-9 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
+                className="md:mt-2 device-tablet:mt-0 inline-flex items-center justify-center size-6 md:size-9 device-tablet:size-7 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
               >
-                <ArrowLeftRight className="size-3.5 md:size-5" />
+                <ArrowLeftRight className="size-3.5 md:size-5 device-tablet:size-4" />
               </button>
             </div>
           </div>
@@ -1115,32 +1115,32 @@ function ScoreColumn({ team, score, sets, align, serving, onScoreClick }: {
       disabled={!onScoreClick}
       className={`inline-flex items-center gap-1 ${onScoreClick ? "cursor-pointer hover:opacity-80 active:scale-95 transition-all" : ""}`}
     >
-      <span className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl font-black leading-none text-primary">{score}</span>
+      <span className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl device-tablet:text-4xl font-black leading-none text-primary">{score}</span>
       {onScoreClick && <Edit3 className="size-3 md:size-4 text-muted-foreground opacity-60" />}
     </button>
   );
   return (
-    <div className={`flex items-center gap-1.5 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
+    <div className={`flex items-center gap-1.5 md:gap-4 device-tablet:gap-2 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
       {team.logoUrl ? (
-        <div className="size-7 md:size-14 rounded-md md:rounded-lg overflow-hidden bg-background border border-border/60 shrink-0">
+        <div className="size-7 md:size-14 device-tablet:size-9 rounded-md md:rounded-lg overflow-hidden bg-background border border-border/60 shrink-0">
           <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="size-7 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-[10px] md:text-base shrink-0" style={{ background: team.color }}>
+        <div className="size-7 md:size-14 device-tablet:size-9 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-[10px] md:text-base device-tablet:text-xs shrink-0" style={{ background: team.color }}>
           {team.shortName}
         </div>
       )}
       <div className="min-w-0">
-        <div className="text-[11px] md:text-lg font-bold truncate flex items-center gap-1 md:gap-1.5">
+        <div className="text-[11px] md:text-lg device-tablet:text-sm font-bold truncate flex items-center gap-1 md:gap-1.5">
           {team.name}
           {serving && <span className="text-[8px] md:text-[11px] uppercase tracking-widest text-primary">● Saque</span>}
         </div>
         <div className="text-[8px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="hidden md:block mt-1">{scoreEl}</div>
+        <div className="hidden md:block device-tablet:hidden mt-1">{scoreEl}</div>
       </div>
-      <div className="md:hidden shrink-0">{scoreEl}</div>
+      <div className="md:hidden device-tablet:block shrink-0">{scoreEl}</div>
     </div>
   );
 }
@@ -1297,15 +1297,15 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                           key={`${ci}-${idx}`}
                           onClick={() => p && onPlayerClick(col.side, p.id)}
                           disabled={!p}
-                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] [@media(max-width:360px)]:h-[48%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""}`}
+                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square mx-auto h-[58%] [@media(max-width:360px)]:h-[48%] sm:h-[72%] device-tablet:h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""}`}
                           style={isLibero
                             ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                             : { background: col.team.color, borderColor: pairColor ?? undefined }}
                           title={p ? `#${p.number} ${p.name}` : ""}
                         >
-                          <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
+                          <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl device-tablet:text-4xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
                           {p && (
-                            <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
+                            <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] device-tablet:text-[17px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
                           )}
                           {isLibero && replacedName && (
                             <span className="max-w-[90%] truncate text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] md:text-[9px] font-semibold leading-tight opacity-70">↔ {replacedName}</span>
