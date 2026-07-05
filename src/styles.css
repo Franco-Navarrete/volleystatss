@@ -3,6 +3,9 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant device-mobile (&:where(html.device-mobile, html.device-mobile *));
+@custom-variant device-tablet (&:where(html.device-tablet, html.device-tablet *));
+@custom-variant device-desktop (&:where(html.device-desktop, html.device-desktop *));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
