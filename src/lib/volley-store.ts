@@ -453,6 +453,21 @@ interface VolleyState {
     liberoId: string,
     replacedId: string
   ) => void;
+  /**
+   * Registra un ataque "neutro" (continuidad del rally): cuenta como intento
+   * pero no cambia el marcador ni la eficiencia clásica.
+   */
+  recordAttackAttempt: (
+    matchId: string,
+    side: "A" | "B",
+    playerId: string | null,
+    opts?: {
+      attackZone?: AttackZone;
+      attackType?: import("@/lib/formations/attack-types").AttackType;
+      attackDirection?: AttackDirection;
+      isCounter?: boolean;
+    }
+  ) => void;
   recordLiberoOut: (matchId: string, side: "A" | "B") => void;
   recordTimeout: (matchId: string, side: "A" | "B") => boolean;
   recordSanction: (
