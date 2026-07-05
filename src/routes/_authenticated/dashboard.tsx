@@ -73,6 +73,10 @@ function LeaguePage() {
         </div>
       </section>
 
+      <div className="mt-8">
+        <LiveMatchesFeed />
+      </div>
+
       <div className="grid lg:grid-cols-3 gap-6 mt-8">
         {/* Standings */}
         <section className="lg:col-span-2 rounded-2xl bg-card border border-border/60 overflow-hidden">
