@@ -25,6 +25,7 @@ import {
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
+import { AttackHeatmap } from "@/components/AttackHeatmap";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
 import {
