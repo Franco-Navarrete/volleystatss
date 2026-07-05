@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl sticky top-0 z-40">
-        <div className="mx-auto max-w-7xl xl:max-w-[1600px] 2xl:max-w-[1800px] px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+        <div className="mx-auto max-w-7xl [@media(min-width:1600px)_and_(pointer:coarse)]:max-w-[1800px] px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
           <Link to="/dashboard" className="flex items-center gap-2.5 group shrink-0">
             <div className="size-9 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
               <Volleyball className="size-5 text-primary-foreground" />
@@ -82,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="flex-1 mx-auto w-full max-w-7xl xl:max-w-[1600px] 2xl:max-w-[1800px] px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <main className="flex-1 mx-auto w-full max-w-7xl [@media(min-width:1600px)_and_(pointer:coarse)]:max-w-[1800px] px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         {children}
       </main>
       <footer className="border-t border-border/40 py-6 text-center text-xs text-muted-foreground">
