@@ -359,6 +359,14 @@ function StatsPage() {
         </Tabs>
       </section>
 
+      {/* Mapas de calor de ataque (origen + destino, con filtros) */}
+      {isCoach && (
+        <section className="mb-6">
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Mapas de calor de ataque</h2>
+          <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
+        </section>
+      )}
+
       {/* Zonas de ataque (total partido) */}
       {isCoach && (
         <section className="mb-6">
