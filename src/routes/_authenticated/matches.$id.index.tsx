@@ -1151,7 +1151,7 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onLibero, onTiemp
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1 md:gap-2.5 w-[52px] [@media(max-width:360px)]:w-[44px] sm:w-[92px] md:w-[140px] device-tablet:w-[140px] shrink-0">
+    <div className="flex flex-col gap-1 md:gap-2.5 device-tablet:gap-1.5 w-[52px] [@media(max-width:360px)]:w-[44px] sm:w-[92px] md:w-[140px] device-tablet:w-[110px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton icon={<Shirt className="size-3 md:size-5" />} label="Líbero" onClick={onLibero} disabled={disabled} reverse={reverse} />
       <SideButton
