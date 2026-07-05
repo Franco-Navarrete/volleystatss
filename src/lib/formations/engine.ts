@@ -32,9 +32,11 @@ export function inferLineupFromPlayers(players: Player[], onCourt: string[]): Te
   const opposite = inCourt.find((p) => p.position === "opuesto");
   const middles = inCourt.filter((p) => p.position === "central");
   const outsides = inCourt.filter((p) => p.position === "punta");
-  const libero = inCourt.find((p) => p.position === "libero") ?? players.find((p) => p.position === "libero");
+  const libero =
+    inCourt.find((p) => p.position === "libero") ??
+    players.find((p) => p.position === "libero");
 
-  return {
+  const lineup: TeamLineup = {
     setter: setter?.id,
     opposite: opposite?.id,
     middle1: middles[0]?.id,
@@ -44,6 +46,31 @@ export function inferLineupFromPlayers(players: Player[], onCourt: string[]): Te
     libero: libero?.id,
     liberoReplaces: "middle2",
   };
+
+  // Fallback: si el equipo no tiene todas las posiciones tácticas asignadas
+  // (o duplica algunas), rellenamos los roles vacíos con las jugadoras que
+  // están en cancha pero aún sin rol. Así siempre se dibujan las 6 en cancha.
+  const assigned = new Set(
+    [
+      lineup.setter,
+      lineup.opposite,
+      lineup.middle1,
+      lineup.middle2,
+      lineup.outside1,
+      lineup.outside2,
+    ].filter(Boolean) as string[],
+  );
+  const remaining = inCourt.filter((p) => !assigned.has(p.id));
+  const roleKeys: Array<
+    "setter" | "opposite" | "outside1" | "outside2" | "middle1" | "middle2"
+  > = ["setter", "opposite", "outside1", "outside2", "middle1", "middle2"];
+  for (const k of roleKeys) {
+    if (!lineup[k] && remaining.length > 0) {
+      lineup[k] = remaining.shift()!.id;
+    }
+  }
+
+  return lineup;
 }
 
 /**
