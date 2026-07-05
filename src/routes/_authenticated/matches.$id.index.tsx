@@ -69,7 +69,8 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 function useForceLandscape(active: boolean) {
   useEffect(() => {
     if (!active) return;
-    const mq = window.matchMedia("(orientation: portrait) and (max-width: 900px)");
+    // Solo forzamos landscape en teléfonos (no en tablets).
+    const mq = window.matchMedia("(orientation: portrait) and (max-width: 640px)");
     const apply = () => {
       document.documentElement.classList.toggle("force-landscape", mq.matches);
     };
