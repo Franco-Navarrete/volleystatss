@@ -178,7 +178,12 @@ export const adminSetPassword = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.password,
     });
-    if (error) throw error;
+    if (error) {
+      if (error.name === "AuthWeakPasswordError" || (error as { code?: string }).code === "weak_password") {
+        throw new Error("La contraseña es demasiado débil o conocida. Elegí una más segura (mezclá mayúsculas, números y símbolos).");
+      }
+      throw error;
+    }
     const { error: storeErr } = await supabaseAdmin
       .from("admin_user_passwords")
       .upsert({
