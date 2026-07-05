@@ -128,12 +128,18 @@ function AdminPage() {
           <TabsTrigger value="leagues">
             <Trophy className="size-4 mr-1.5" /> Ligas
           </TabsTrigger>
+          <TabsTrigger value="shared">
+            <Share2 className="size-4 mr-1.5" /> Partidos
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="users">
           <UsersTab />
         </TabsContent>
         <TabsContent value="leagues">
           <LeaguesTab />
+        </TabsContent>
+        <TabsContent value="shared">
+          <SharedMatchesTab />
         </TabsContent>
       </Tabs>
     </AppShell>
