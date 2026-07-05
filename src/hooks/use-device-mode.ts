@@ -5,10 +5,29 @@ export type DeviceMode = "auto" | "mobile" | "tablet" | "desktop";
 const STORAGE_KEY = "rally.device-mode";
 const DEVICE_CLASSES = ["device-mobile", "device-tablet", "device-desktop"] as const;
 
+export function isTabletHardware(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = window.navigator.userAgent;
+  const platform = window.navigator.platform;
+  const maxTouchPoints = window.navigator.maxTouchPoints ?? 0;
+  const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  const touch = coarse || maxTouchPoints > 0;
+  const screenW = window.screen?.width || window.innerWidth;
+  const screenH = window.screen?.height || window.innerHeight;
+  const longSide = Math.max(screenW, screenH);
+  const shortSide = Math.min(screenW, screenH);
+  const iPadLike = /iPad/i.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1);
+  const androidTablet = /Android/i.test(ua) && !/Mobile/i.test(ua);
+  const largeTouchScreen = touch && longSide >= 900 && shortSide >= 600;
+
+  return iPadLike || androidTablet || largeTouchScreen;
+}
+
 function detectAuto(): "mobile" | "tablet" | "desktop" {
   if (typeof window === "undefined") return "desktop";
   const w = window.innerWidth;
   const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  if (isTabletHardware()) return "tablet";
   if (w < 768) return "mobile";
   if (coarse && w < 1600) return "tablet";
   if (coarse && w >= 1600) return "tablet"; // tablet grande (ej. 1920x1200)
