@@ -67,7 +67,7 @@ const ACTION_SHORT: Record<RallyAction, string> = {
   unforced_error: "Err. no forz.",
 };
 
-type Step = "zone" | "attacker" | "quality" | "action" | "direction";
+type Step = "zone" | "attacker" | "action" | "direction";
 
 /** Mapeo zona-armado → PointEvent.attackZone. */
 export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | undefined {
@@ -115,7 +115,6 @@ export function IntegratedRallyDialog({
   const [step, setStep] = useState<Step>("zone");
   const [zone, setZone] = useState<SettingAttackZone | null>(null);
   const [attackerId, setAttackerId] = useState<string | null>(null);
-  const [quality, setQuality] = useState<SettingQuality | null>(null);
   const [action, setAction] = useState<RallyAction | null>(null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
 
@@ -124,7 +123,6 @@ export function IntegratedRallyDialog({
       setStep("zone");
       setZone(null);
       setAttackerId(null);
-      setQuality(null);
       setAction(null);
       setDirection(null);
     }
@@ -139,11 +137,6 @@ export function IntegratedRallyDialog({
 
   const pickAttacker = (id: string) => {
     setAttackerId(id);
-    setStep("quality");
-  };
-
-  const pickQuality = (q: SettingQuality) => {
-    setQuality(q);
     setStep("action");
   };
 
@@ -163,10 +156,11 @@ export function IntegratedRallyDialog({
   };
 
   const finalize = (a: RallyAction, dir: AttackDirection | undefined) => {
-    if (!zone || !attackerId || !quality || !setter) return;
+    if (!zone || !attackerId || !setter) return;
     onSubmit({
       setterId: setter.id,
-      setterQuality: quality,
+      // Calidad del armado desactivada en el flujo — se envía neutro por defecto.
+      setterQuality: "!",
       attackZone: zone,
       attackerId,
       action: a,
@@ -177,7 +171,7 @@ export function IntegratedRallyDialog({
   };
 
   const goBack = () => {
-    const order: Step[] = ["zone", "attacker", "quality", "action", "direction"];
+    const order: Step[] = ["zone", "attacker", "action", "direction"];
     const i = order.indexOf(step);
     if (i > 0) setStep(order[i - 1]);
   };
@@ -186,7 +180,6 @@ export function IntegratedRallyDialog({
     switch (step) {
       case "zone": return "Zona del armado";
       case "attacker": return "Atacante";
-      case "quality": return "Calidad del armado";
       case "action": return "Acción del ataque";
       case "direction": return "Dirección del ataque";
     }
@@ -269,7 +262,7 @@ export function IntegratedRallyDialog({
             {attackerId && (
               <Button
                 className="w-full mt-2"
-                onClick={() => setStep("quality")}
+                onClick={() => setStep("action")}
               >
                 Confirmar #{playersOnCourt.find((p) => p.id === attackerId)?.number}
               </Button>
@@ -277,34 +270,6 @@ export function IntegratedRallyDialog({
           </div>
         )}
 
-        {step === "quality" && (
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => pickQuality("+")}
-              className="min-h-[72px] rounded-lg bg-success text-success-foreground font-black text-3xl active:scale-95 transition flex flex-col items-center justify-center"
-            >
-              +
-              <span className="text-[10px] font-bold opacity-90 mt-1">Positivo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => pickQuality("!")}
-              className="min-h-[72px] rounded-lg bg-muted text-foreground font-black text-3xl active:scale-95 transition flex flex-col items-center justify-center"
-            >
-              /
-              <span className="text-[10px] font-bold opacity-90 mt-1">Neutro</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => pickQuality("-")}
-              className="min-h-[72px] rounded-lg bg-destructive text-destructive-foreground font-black text-3xl active:scale-95 transition flex flex-col items-center justify-center"
-            >
-              −
-              <span className="text-[10px] font-bold opacity-90 mt-1">Negativo</span>
-            </button>
-          </div>
-        )}
 
         {step === "action" && (
           <div className="grid grid-cols-2 gap-2 mt-2">

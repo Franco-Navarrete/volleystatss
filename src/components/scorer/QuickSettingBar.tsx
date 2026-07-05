@@ -53,10 +53,12 @@ export function QuickSettingBar({ team, onCourt, receptionQuality, onSubmit, onS
 
   const setter = playersOnCourt.find((p) => p.id === setterId) ?? defaultSetter;
 
-  const handleQuality = (q: SettingQuality) => {
+  const handleConfirm = () => {
     if (!setterId || !zone) return;
-    onSubmit({ setterId, quality: q, attackZone: zone, receptionQuality });
+    // Calidad del armado desactivada — se envía neutro por defecto.
+    onSubmit({ setterId, quality: "!", attackZone: zone, receptionQuality });
   };
+
 
   return (
     <div className="rounded-xl border-2 border-primary/40 bg-card/95 backdrop-blur shadow-xl p-3 md:p-4 space-y-3">
@@ -125,35 +127,16 @@ export function QuickSettingBar({ team, onCourt, receptionQuality, onSubmit, onS
         </div>
       </div>
 
-      {/* Calidad */}
-      <div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">
-          Calidad del armado {!zone && <span className="text-destructive">— elegí zona primero</span>}
-        </div>
-        <div className="grid grid-cols-5 gap-1.5">
-          {SETTING_QUALITIES.map((q) => {
-            const tone =
-              q === "++" || q === "+"
-                ? "border-success/60 hover:bg-success/10 text-success"
-                : q === "!"
-                ? "border-border hover:bg-muted"
-                : "border-destructive/60 hover:bg-destructive/10 text-destructive";
-            return (
-              <button
-                key={q}
-                onClick={() => handleQuality(q)}
-                disabled={!zone}
-                className={`h-14 md:h-16 rounded-lg border-2 bg-card transition-all flex flex-col items-center justify-center gap-0.5 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 ${tone}`}
-              >
-                <span className="scoreboard-digit text-2xl font-black leading-none">{q}</span>
-                <span className="text-[9px] font-semibold leading-none opacity-80">
-                  {SETTING_QUALITY_LABEL[q]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Confirmar armado */}
+      <button
+        type="button"
+        onClick={handleConfirm}
+        disabled={!zone}
+        className="w-full h-14 md:h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+      >
+        {zone ? "Confirmar armado" : "Elegí zona primero"}
+      </button>
+
     </div>
   );
 }
