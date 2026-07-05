@@ -12,6 +12,40 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
+const deviceModeInitScript = `(() => {
+  try {
+    const html = document.documentElement;
+    const mode = localStorage.getItem('rally.device-mode') || 'auto';
+    const validMode = ['auto', 'mobile', 'tablet', 'desktop'].includes(mode) ? mode : 'auto';
+    const ua = navigator.userAgent || '';
+    const platform = navigator.platform || '';
+    const maxTouchPoints = navigator.maxTouchPoints || 0;
+    const dpr = window.devicePixelRatio || 1;
+    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    const noFinePointer = window.matchMedia && window.matchMedia('(hover: none)').matches;
+    const touch = coarse || maxTouchPoints > 0;
+    const screenW = (window.screen && window.screen.width) || window.innerWidth;
+    const screenH = (window.screen && window.screen.height) || window.innerHeight;
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const longSide = Math.max(screenW, screenH);
+    const shortSide = Math.min(screenW, screenH);
+    const cssShortSide = Math.min(shortSide, viewportW, viewportH);
+    const physicalLongSide = Math.max(screenW * dpr, screenH * dpr, viewportW * dpr, viewportH * dpr);
+    const physicalShortSide = cssShortSide * dpr;
+    const iPadLike = /iPad/i.test(ua) || (platform === 'MacIntel' && maxTouchPoints > 1);
+    const androidTablet = /Android/i.test(ua) && (!/Mobile/i.test(ua) || /Lenovo|TB-|Tab|Tablet/i.test(ua));
+    const largeTouchScreen = touch && longSide >= 900 && shortSide >= 560;
+    const wuxgaTouchScreen = touch && noFinePointer && cssShortSide >= 560 && physicalLongSide >= 1600 && physicalShortSide >= 1000;
+    const isTablet = iPadLike || androidTablet || largeTouchScreen || wuxgaTouchScreen;
+    const resolved = validMode === 'auto' ? (isTablet ? 'tablet' : (window.innerWidth < 768 ? 'mobile' : (coarse ? 'tablet' : 'desktop'))) : validMode;
+    html.classList.remove('device-mobile', 'device-tablet', 'device-desktop', 'force-landscape');
+    html.classList.add('device-' + resolved);
+    html.dataset.deviceMode = validMode;
+    html.dataset.deviceResolved = resolved;
+  } catch (_) {}
+})();`;
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -107,6 +141,7 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: deviceModeInitScript }} />
         <HeadContent />
       </head>
       <body>
