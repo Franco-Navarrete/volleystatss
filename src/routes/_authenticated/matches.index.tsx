@@ -51,6 +51,8 @@ function MatchesIndex() {
         )}
       </div>
 
+      <LiveMatchesFeed />
+
       <div className="space-y-8">
         {groups.map((g) => (
           <section key={g.label}>
