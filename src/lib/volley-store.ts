@@ -315,7 +315,29 @@ export interface SettingEvent {
   timestamp: number;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent;
+/**
+ * Ataque "neutro" (continuidad de rally): la jugadora efectuó un ataque pero
+ * no cerró el punto ni cometió error — la pelota siguió en juego. Se cuenta
+ * como intento de ataque para el total de la jugadora / equipo pero NO afecta
+ * el marcador ni la eficiencia clásica (kills − errors) / (kills + errors).
+ */
+export interface AttackAttemptEvent {
+  id: string;
+  kind: "attackAttempt";
+  side: "A" | "B";
+  playerId: string | null;
+  setNumber: number;
+  timestamp: number;
+  /** Zona desde la que atacó (2/3/4/1/5/6). */
+  attackZone?: AttackZone;
+  attackType?: import("@/lib/formations/attack-types").AttackType;
+  /** Dirección 1..9 en cancha rival. */
+  attackDirection?: AttackDirection;
+  /** true si es un contraataque neutro; por defecto false (ataque de rotación). */
+  isCounter?: boolean;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent | AttackAttemptEvent;
 
 export interface MatchSet {
   number: number;
