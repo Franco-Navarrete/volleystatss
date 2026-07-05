@@ -10,17 +10,27 @@ export function isTabletHardware(): boolean {
   const ua = window.navigator.userAgent;
   const platform = window.navigator.platform;
   const maxTouchPoints = window.navigator.maxTouchPoints ?? 0;
+  const dpr = window.devicePixelRatio || 1;
   const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  const noFinePointer = window.matchMedia?.("(hover: none)").matches ?? false;
   const touch = coarse || maxTouchPoints > 0;
   const screenW = window.screen?.width || window.innerWidth;
   const screenH = window.screen?.height || window.innerHeight;
+  const viewportW = window.innerWidth;
+  const viewportH = window.innerHeight;
   const longSide = Math.max(screenW, screenH);
   const shortSide = Math.min(screenW, screenH);
+  const physicalLongSide = Math.max(screenW * dpr, screenH * dpr, viewportW * dpr, viewportH * dpr);
+  const physicalShortSide = Math.min(
+    Math.max(screenW, screenH) * dpr,
+    Math.max(viewportW, viewportH) * dpr
+  );
   const iPadLike = /iPad/i.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1);
-  const androidTablet = /Android/i.test(ua) && !/Mobile/i.test(ua);
-  const largeTouchScreen = touch && longSide >= 900 && shortSide >= 600;
+  const androidTablet = /Android/i.test(ua) && (!/Mobile/i.test(ua) || /Lenovo|TB-|Tab|Tablet/i.test(ua));
+  const largeTouchScreen = touch && longSide >= 900 && shortSide >= 560;
+  const wuxgaTouchScreen = touch && noFinePointer && physicalLongSide >= 1600 && physicalShortSide >= 1000;
 
-  return iPadLike || androidTablet || largeTouchScreen;
+  return iPadLike || androidTablet || largeTouchScreen || wuxgaTouchScreen;
 }
 
 function detectAuto(): "mobile" | "tablet" | "desktop" {
