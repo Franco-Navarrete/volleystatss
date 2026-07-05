@@ -39,13 +39,13 @@ export interface AttackTypeOption {
 }
 
 export const ATTACK_TYPE_LABEL: Record<AttackType, string> = {
-  first_tempo: "1er tiempo",
-  slide: "Corrida",
-  tense_middle: "Tensa central",
-  high_outside: "Bola alta z4",
-  tense_outside: "Tensa z4",
-  high_opposite: "Bola alta z2",
-  tense_opposite: "Tensa z2",
+  first_tempo: "1er tiempo Z3",
+  slide: "Corrida Z2",
+  tense_middle: "Tensa central Z3",
+  high_outside: "Bola alta Z4",
+  tense_outside: "Tensa Z4",
+  high_opposite: "Bola alta Z2",
+  tense_opposite: "Tensa Z2",
   second_tempo: "2do tiempo",
   combo: "Combinación",
   pipe: "Pipe",
@@ -55,9 +55,9 @@ export const ATTACK_TYPE_LABEL: Record<AttackType, string> = {
 };
 
 export const ATTACK_TYPE_SHORT: Record<AttackType, string> = {
-  first_tempo: "1er T",
-  slide: "Corrida",
-  tense_middle: "Tensa C",
+  first_tempo: "1er T Z3",
+  slide: "Corrida Z2",
+  tense_middle: "Tensa Z3",
   high_outside: "Alta Z4",
   tense_outside: "Tensa Z4",
   high_opposite: "Alta Z2",
