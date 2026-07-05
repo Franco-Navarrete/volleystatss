@@ -130,9 +130,7 @@ button, a, [role="button"] {
 }
 
 .live-court-surface {
-  contain: layout paint;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  isolation: isolate;
 }
 
 /* Force the live scoring screen to landscape without rotating <body>.
