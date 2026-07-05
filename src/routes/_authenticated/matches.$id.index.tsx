@@ -1115,32 +1115,32 @@ function ScoreColumn({ team, score, sets, align, serving, onScoreClick }: {
       disabled={!onScoreClick}
       className={`inline-flex items-center gap-1 ${onScoreClick ? "cursor-pointer hover:opacity-80 active:scale-95 transition-all" : ""}`}
     >
-      <span className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl font-black leading-none text-primary">{score}</span>
+      <span className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl device-tablet:text-4xl font-black leading-none text-primary">{score}</span>
       {onScoreClick && <Edit3 className="size-3 md:size-4 text-muted-foreground opacity-60" />}
     </button>
   );
   return (
-    <div className={`flex items-center gap-1.5 md:gap-4 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
+    <div className={`flex items-center gap-1.5 md:gap-4 device-tablet:gap-2 ${align === "right" ? "justify-end text-right flex-row-reverse" : "text-left"}`}>
       {team.logoUrl ? (
-        <div className="size-7 md:size-14 rounded-md md:rounded-lg overflow-hidden bg-background border border-border/60 shrink-0">
+        <div className="size-7 md:size-14 device-tablet:size-9 rounded-md md:rounded-lg overflow-hidden bg-background border border-border/60 shrink-0">
           <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="size-7 md:size-14 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-[10px] md:text-base shrink-0" style={{ background: team.color }}>
+        <div className="size-7 md:size-14 device-tablet:size-9 rounded-md md:rounded-lg flex items-center justify-center font-black text-white text-[10px] md:text-base device-tablet:text-xs shrink-0" style={{ background: team.color }}>
           {team.shortName}
         </div>
       )}
       <div className="min-w-0">
-        <div className="text-[11px] md:text-lg font-bold truncate flex items-center gap-1 md:gap-1.5">
+        <div className="text-[11px] md:text-lg device-tablet:text-sm font-bold truncate flex items-center gap-1 md:gap-1.5">
           {team.name}
           {serving && <span className="text-[8px] md:text-[11px] uppercase tracking-widest text-primary">● Saque</span>}
         </div>
         <div className="text-[8px] md:text-[11px] uppercase tracking-widest text-muted-foreground">
           Sets <span className="text-foreground font-bold">{sets}</span>
         </div>
-        <div className="hidden md:block mt-1">{scoreEl}</div>
+        <div className="hidden md:block device-tablet:hidden mt-1">{scoreEl}</div>
       </div>
-      <div className="md:hidden shrink-0">{scoreEl}</div>
+      <div className="md:hidden device-tablet:block shrink-0">{scoreEl}</div>
     </div>
   );
 }
