@@ -71,18 +71,32 @@ function useForceLandscape(active: boolean) {
     if (!active) return;
     // Solo forzamos landscape en teléfonos (no en tablets).
     const mq = window.matchMedia("(orientation: portrait) and (max-width: 640px)");
+    const so: any = (screen as any).orientation;
+    let orientationLocked = false;
     const apply = () => {
-      document.documentElement.classList.toggle("force-landscape", mq.matches);
+      const html = document.documentElement;
+      const userSelectedTablet = html.dataset.deviceResolved === "tablet" || html.classList.contains("device-tablet");
+      const shouldForce = mq.matches && !userSelectedTablet;
+      html.classList.toggle("force-landscape", shouldForce);
+      if (shouldForce && !orientationLocked) {
+        orientationLocked = true;
+        so?.lock?.("landscape").catch(() => {
+          orientationLocked = false;
+        });
+      } else if (!shouldForce && orientationLocked) {
+        orientationLocked = false;
+        so?.unlock?.();
+      }
     };
     apply();
     mq.addEventListener("change", apply);
-    // Best-effort native orientation lock (works in fullscreen on some Android browsers).
-    const so: any = (screen as any).orientation;
-    so?.lock?.("landscape").catch(() => {});
+    const observer = new MutationObserver(apply);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-device-resolved"] });
     return () => {
       mq.removeEventListener("change", apply);
+      observer.disconnect();
       document.documentElement.classList.remove("force-landscape");
-      so?.unlock?.();
+      if (orientationLocked) so?.unlock?.();
     };
   }, [active]);
 }
