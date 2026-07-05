@@ -67,7 +67,7 @@ const ACTION_SHORT: Record<RallyAction, string> = {
   unforced_error: "Err. no forz.",
 };
 
-type Step = "zone" | "attacker" | "quality" | "action" | "direction";
+type Step = "zone" | "attacker" | "action" | "direction";
 
 /** Mapeo zona-armado → PointEvent.attackZone. */
 export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | undefined {
