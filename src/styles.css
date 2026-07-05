@@ -142,8 +142,25 @@ button, a, [role="button"] {
 html.device-tablet .live-match-shell header,
 html.device-tablet header[class*="backdrop-blur"],
 html.device-tablet .live-match-shell [class*="backdrop-blur"] {
-  -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+
+html.device-tablet.force-landscape,
+html.device-tablet.force-landscape body,
+html.device-tablet .live-match-shell {
+  width: auto !important;
+  height: auto !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+
+html.device-tablet.force-landscape .live-match-shell {
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
 }
 
 html.device-tablet .live-match-shell header {
