@@ -153,6 +153,9 @@ export function isAttackType(t: PointType): boolean {
   return t === "attack" || t === "rotation_attack" || t === "counter_attack";
 }
 
+/** Sector 1..9 de la cancha rival (3×3): 1..3 cerca de la red, 7..9 fondo. */
+export type AttackDirection = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
 export interface PointEvent {
   id: string;
   /** Side that scored the point. */
@@ -167,7 +170,10 @@ export interface PointEvent {
   attackZone?: AttackZone;
   /** Modo entrenador: tipo táctico del ataque (1er tiempo, pipe, etc.). */
   attackType?: import("@/lib/formations/attack-types").AttackType;
+  /** Modo entrenador: dirección del ataque en la cancha rival (1..9). */
+  attackDirection?: AttackDirection;
 }
+
 
 export interface SubstitutionEvent {
   id: string;
