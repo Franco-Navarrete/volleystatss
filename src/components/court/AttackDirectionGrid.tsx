@@ -29,8 +29,8 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
             "repeating-linear-gradient(135deg, oklch(0.72 0.09 60) 0 12px, oklch(0.68 0.1 55) 12px 24px)",
         }}
       >
-        {/* Red del rival (abajo, la más cercana al atacante) */}
-        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white shadow" />
+        {/* Red del rival arriba (la fila 4-3-2 está pegada a la red) */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-white shadow" />
         <div className="grid grid-rows-3 h-full">
           {rows.map((row, r) => (
             <div key={r} className="grid grid-cols-3 gap-[2px] p-[2px]">
