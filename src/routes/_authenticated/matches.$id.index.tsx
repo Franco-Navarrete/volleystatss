@@ -29,6 +29,7 @@ import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { QuickSettingBar } from "@/components/scorer/QuickSettingBar";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
 
@@ -76,7 +77,7 @@ function useForceLandscape(active: boolean) {
     const apply = () => {
       const html = document.documentElement;
       const userSelectedTablet = html.dataset.deviceResolved === "tablet" || html.classList.contains("device-tablet");
-      const shouldForce = mq.matches && !userSelectedTablet;
+      const shouldForce = mq.matches && !userSelectedTablet && !isTabletHardware();
       html.classList.toggle("force-landscape", shouldForce);
       if (shouldForce && !orientationLocked) {
         orientationLocked = true;
@@ -325,7 +326,7 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <div className="relative flex flex-col gap-1.5 md:gap-3 h-full min-h-0 px-2 md:px-6 py-2 md:py-4 mx-auto w-full max-w-[1400px] device-tablet:max-w-[1900px] select-none">
+      <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-4 h-full min-h-0 px-2 md:px-6 device-tablet:px-8 py-2 md:py-4 mx-auto w-full max-w-[1400px] device-tablet:max-w-[1900px] select-none">
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 py-0.5 md:py-4 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
@@ -452,7 +453,7 @@ function LiveMatch() {
 
 
         {/* Court + side controls */}
-          <div className="grid grid-cols-[auto_1fr_auto] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 overflow-hidden">
+          <div className="grid grid-cols-[auto_1fr_auto] device-tablet:grid-cols-[140px_minmax(0,1fr)_140px] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 device-tablet:gap-5 items-stretch flex-1 min-h-0 overflow-hidden">
           <SideActions
             side="left"
             disabled={actionsDisabled}
@@ -1088,7 +1089,7 @@ function LiveMatch() {
 function CompactShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="live-match-shell h-[100dvh] max-h-[100dvh] overflow-hidden flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
-      <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-8 md:h-14 flex items-center justify-between shrink-0">
+      <header className="border-b border-border/60 bg-card px-3 md:px-8 h-8 md:h-14 flex items-center justify-between shrink-0">
         <Link to="/matches" className="flex items-center gap-2 md:gap-3 min-h-10">
           <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
             <Volleyball className="size-3.5 md:size-5 text-primary-foreground" />
@@ -1150,7 +1151,7 @@ function SideActions({ side, disabled, timeoutsUsed, onCambio, onLibero, onTiemp
 }) {
   const reverse = side === "right";
   return (
-    <div className="flex flex-col gap-1 md:gap-2.5 w-[52px] [@media(max-width:360px)]:w-[44px] sm:w-[92px] md:w-[140px] shrink-0">
+    <div className="flex flex-col gap-1 md:gap-2.5 w-[52px] [@media(max-width:360px)]:w-[44px] sm:w-[92px] md:w-[140px] device-tablet:w-[140px] shrink-0">
       <SideButton icon={<ArrowLeftRight className="size-3 md:size-5" />} label="Cambio" onClick={onCambio} disabled={disabled} reverse={reverse} />
       <SideButton icon={<Shirt className="size-3 md:size-5" />} label="Líbero" onClick={onLibero} disabled={disabled} reverse={reverse} />
       <SideButton
