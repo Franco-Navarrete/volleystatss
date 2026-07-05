@@ -27,9 +27,14 @@ export function useFormation(
     if (!match || !team) return null;
     const onCourt = side === "A" ? match.onCourtA : match.onCourtB;
     if (!onCourt || onCourt.length === 0) return null;
-    const lineup = inferLineupFromPlayers(team.players, onCourt);
+    const designatedLiberoIds = (side === "A"
+      ? [match.liberoA1Id, match.liberoA2Id]
+      : [match.liberoB1Id, match.liberoB2Id]
+    ).filter(Boolean) as string[];
+    const lineup = inferLineupFromPlayers(team.players, onCourt, designatedLiberoIds);
     const rotation = getRotationFromCourt(onCourt, lineup.setter);
     if (!rotation) return null;
-    return resolveFormation({ system, rotation, lineup, phase, onCourt });
+    const liberoOnCourt = !!lineup.libero && onCourt.includes(lineup.libero);
+    return resolveFormation({ system, rotation, lineup, phase, onCourt, liberoOnCourt });
   }, [match, team, side, system, phase]);
 }

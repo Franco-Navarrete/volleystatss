@@ -438,7 +438,7 @@ function LiveMatch() {
 
 
         {/* Court + side controls */}
-        <div className="grid grid-cols-[auto_1fr_auto] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 md:min-h-[420px]">
+          <div className="grid grid-cols-[auto_1fr_auto] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 items-stretch flex-1 min-h-0 overflow-hidden">
           <SideActions
             side="left"
             disabled={actionsDisabled}
@@ -1073,7 +1073,7 @@ function LiveMatch() {
 
 function CompactShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="live-match-shell min-h-[100dvh] flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
+    <div className="live-match-shell h-[100dvh] max-h-[100dvh] overflow-hidden flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
       <header className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-3 md:px-8 h-8 md:h-14 flex items-center justify-between shrink-0">
         <Link to="/matches" className="flex items-center gap-2 md:gap-3 min-h-10">
           <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
@@ -1085,7 +1085,7 @@ function CompactShell({ children }: { children: React.ReactNode }) {
           ← Partidos
         </Link>
       </header>
-      <main className="flex-1 min-h-0 overflow-hidden md:overflow-auto">{children}</main>
+      <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
     </div>
   );
 }
@@ -1194,7 +1194,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-[140px] [@media(max-width:360px)]:min-h-[100px] sm:min-h-[220px] md:min-h-[420px] bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7">
+    <div className="live-court-surface relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-0 bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7">
       {/* court inner (orange) with white perimeter line */}
       <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — front-row band each side */}

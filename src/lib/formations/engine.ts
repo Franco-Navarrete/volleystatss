@@ -25,16 +25,22 @@ export function getFormation(
  * Deriva el lineup automáticamente desde los `Player.position`.
  * Si el equipo no tiene roles definidos cae en fallback razonable.
  */
-export function inferLineupFromPlayers(players: Player[], onCourt: string[]): TeamLineup {
+export function inferLineupFromPlayers(
+  players: Player[],
+  onCourt: string[],
+  designatedLiberoIds: string[] = [],
+): TeamLineup {
   const inCourt = onCourt.map((id) => players.find((p) => p.id === id)).filter(Boolean) as Player[];
-
-  const setter = inCourt.find((p) => p.position === "armador");
-  const opposite = inCourt.find((p) => p.position === "opuesto");
-  const middles = inCourt.filter((p) => p.position === "central");
-  const outsides = inCourt.filter((p) => p.position === "punta");
+  const designated = new Set(designatedLiberoIds);
   const libero =
-    inCourt.find((p) => p.position === "libero") ??
-    players.find((p) => p.position === "libero");
+    inCourt.find((p) => designated.has(p.id)) ??
+    (designated.size === 0 ? inCourt.find((p) => p.position === "libero") : undefined);
+  const tacticalPlayers = libero ? inCourt.filter((p) => p.id !== libero.id) : inCourt;
+
+  const setter = tacticalPlayers.find((p) => p.position === "armador");
+  const opposite = tacticalPlayers.find((p) => p.position === "opuesto");
+  const middles = tacticalPlayers.filter((p) => p.position === "central");
+  const outsides = tacticalPlayers.filter((p) => p.position === "punta");
 
   const lineup: TeamLineup = {
     setter: setter?.id,
@@ -60,7 +66,7 @@ export function inferLineupFromPlayers(players: Player[], onCourt: string[]): Te
       lineup.outside2,
     ].filter(Boolean) as string[],
   );
-  const remaining = inCourt.filter((p) => !assigned.has(p.id));
+  const remaining = tacticalPlayers.filter((p) => !assigned.has(p.id));
   const roleKeys: Array<
     "setter" | "opposite" | "outside1" | "outside2" | "middle1" | "middle2"
   > = ["setter", "opposite", "outside1", "outside2", "middle1", "middle2"];
@@ -184,11 +190,11 @@ export function resolveFormation(opts: {
     libero: lineup.libero,
   };
 
-  // Si el líbero juega, reemplaza a la central correspondiente en el rol zaguero.
-  if (liberoOnCourt && lineup.libero) {
-    // Asumimos que el líbero reemplaza a middle_back en formación de recepción.
-    roleToPlayer.middle_back = lineup.libero;
-  }
+  // Si no hay líbero activo/asignado, el slot zaguero lo ocupa la central y se
+  // dibujan 6 jugadoras siguiendo la rotación normal.
+  const backMiddle = lineup.liberoReplaces === "middle1" ? lineup.middle1 : lineup.middle2;
+  roleToPlayer.libero = liberoOnCourt && lineup.libero ? lineup.libero : backMiddle;
+  if (liberoOnCourt && lineup.libero) roleToPlayer.middle_back = lineup.libero;
 
   const slots: ResolvedSlot[] = formation.slots.map((s) => {
     const o = override[s.role];
