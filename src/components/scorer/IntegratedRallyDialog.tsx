@@ -47,13 +47,14 @@ export type RallyAction =
   | "block"
   | "unforced_error";
 
-type ActionKind = "attack" | "counter" | "block" | "unforced";
-type Rating = "point" | "neutral" | "error";
+type ActionKind = "attack" | "counter" | "block" | "attack_error" | "unforced";
+type Rating = "point" | "neutral";
 
 const ACTION_KIND_LABEL: Record<ActionKind, string> = {
-  attack: "Ataque",
+  attack: "Ataque de rotación",
   counter: "Contraataque",
   block: "Bloqueo rival",
+  attack_error: "Error de ataque",
   unforced: "Error no forzado",
 };
 
@@ -85,14 +86,11 @@ export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | unde
 function resolveAction(kind: ActionKind, rating: Rating | null): RallyAction {
   if (kind === "block") return "block";
   if (kind === "unforced") return "unforced_error";
+  if (kind === "attack_error") return "attack_error";
   if (kind === "attack") {
-    if (rating === "point") return "rotation_attack";
-    if (rating === "neutral") return "attack_neutral";
-    return "attack_error";
+    return rating === "neutral" ? "attack_neutral" : "rotation_attack";
   }
-  if (rating === "point") return "counter_attack";
-  if (rating === "neutral") return "counter_neutral";
-  return "attack_error";
+  return rating === "neutral" ? "counter_neutral" : "counter_attack";
 }
 
 /**
@@ -296,7 +294,7 @@ export function IntegratedRallyDialog({
 
         {step === "rating" && (
           <div className="space-y-2 mt-2">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => pickRating("point")}
@@ -312,14 +310,6 @@ export function IntegratedRallyDialog({
               >
                 Neutra
                 <span className="block text-[10px] font-normal opacity-90 mt-1">Rally continuó</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => pickRating("error")}
-                className="min-h-[80px] rounded-lg bg-destructive text-destructive-foreground font-black text-lg active:scale-95 transition"
-              >
-                Error
-                <span className="block text-[10px] font-normal opacity-90 mt-1">Punto rival</span>
               </button>
             </div>
             <p className="text-[11px] text-center text-muted-foreground">
