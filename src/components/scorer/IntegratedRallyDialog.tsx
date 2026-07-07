@@ -294,7 +294,7 @@ export function IntegratedRallyDialog({
 
         {step === "rating" && (
           <div className="space-y-2 mt-2">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => pickRating("point")}
@@ -310,14 +310,6 @@ export function IntegratedRallyDialog({
               >
                 Neutra
                 <span className="block text-[10px] font-normal opacity-90 mt-1">Rally continuó</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => pickRating("error")}
-                className="min-h-[80px] rounded-lg bg-destructive text-destructive-foreground font-black text-lg active:scale-95 transition"
-              >
-                Error
-                <span className="block text-[10px] font-normal opacity-90 mt-1">Punto rival</span>
               </button>
             </div>
             <p className="text-[11px] text-center text-muted-foreground">
