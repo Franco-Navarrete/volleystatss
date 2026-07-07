@@ -272,7 +272,7 @@ export function IntegratedRallyDialog({
         {step === "zone" && (
           <div className="space-y-2 mt-2">
             <div className="grid grid-cols-3 gap-2">
-              {SETTING_ATTACK_ZONES.map((z) => {
+              {(["z4", "z3", "z2", "back5", "pipe", "back1"] as SettingAttackZone[]).map((z) => {
                 const pid = zoneAssignments[z];
                 const p = pid ? team.players.find((pl) => pl.id === pid) : undefined;
                 return (
