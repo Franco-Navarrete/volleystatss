@@ -47,13 +47,14 @@ export type RallyAction =
   | "block"
   | "unforced_error";
 
-type ActionKind = "attack" | "counter" | "block" | "unforced";
-type Rating = "point" | "neutral" | "error";
+type ActionKind = "attack" | "counter" | "block" | "attack_error" | "unforced";
+type Rating = "point" | "neutral";
 
 const ACTION_KIND_LABEL: Record<ActionKind, string> = {
-  attack: "Ataque",
+  attack: "Ataque de rotación",
   counter: "Contraataque",
   block: "Bloqueo rival",
+  attack_error: "Error de ataque",
   unforced: "Error no forzado",
 };
 
@@ -85,14 +86,11 @@ export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | unde
 function resolveAction(kind: ActionKind, rating: Rating | null): RallyAction {
   if (kind === "block") return "block";
   if (kind === "unforced") return "unforced_error";
+  if (kind === "attack_error") return "attack_error";
   if (kind === "attack") {
-    if (rating === "point") return "rotation_attack";
-    if (rating === "neutral") return "attack_neutral";
-    return "attack_error";
+    return rating === "neutral" ? "attack_neutral" : "rotation_attack";
   }
-  if (rating === "point") return "counter_attack";
-  if (rating === "neutral") return "counter_neutral";
-  return "attack_error";
+  return rating === "neutral" ? "counter_neutral" : "counter_attack";
 }
 
 /**
