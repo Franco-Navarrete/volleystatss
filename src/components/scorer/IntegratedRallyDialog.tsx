@@ -60,16 +60,52 @@ const ACTION_KIND_LABEL: Record<ActionKind, string> = {
 
 type Step = "zone" | "direction" | "action" | "rating";
 
-/** onCourt index para cada zona de armado. */
-const ZONE_TO_COURT_INDEX: Record<SettingAttackZone, number> = {
-  back1: 0,
-  z2: 1,
-  z3: 2,
-  z4: 3,
-  back5: 4,
-  pipe: 5,
-  back: 0,
-};
+/**
+ * Distribución de jugadores por rol (no por rotación) para el selector
+ * de "Zona del armado". Delanteros = onCourt[1..3], Zagueros = onCourt[0,4,5].
+ *
+ * Reglas:
+ *  - Punta delantero → Z4, Central delantero → Z3
+ *  - Opuesto delantero → Z2; en ese caso Armador → Z1 (back1)
+ *  - Si no hay opuesto delantero: Armador delantero → Z2; Opuesto zaguero → Z1
+ *  - Punta zaguero → pipe (Z6), Central zaguero / Líbero → back5 (Z5)
+ */
+function computeZoneAssignments(
+  onCourt: string[],
+  players: Player[],
+): Record<SettingAttackZone, string | undefined> {
+  const byId = (id: string | undefined) => players.find((p) => p.id === id);
+  const front = [onCourt[1], onCourt[2], onCourt[3]].map(byId).filter((p): p is Player => !!p);
+  const back = [onCourt[0], onCourt[4], onCourt[5]].map(byId).filter((p): p is Player => !!p);
+
+  const findOne = (arr: Player[], pos: Player["position"]) => arr.find((p) => p.position === pos);
+  const puntaFront = findOne(front, "punta");
+  const centralFront = findOne(front, "central");
+  const opFront = findOne(front, "opuesto");
+  const setterFront = findOne(front, "armador");
+  const puntaBack = findOne(back, "punta");
+  const centralBack = findOne(back, "central") ?? findOne(back, "libero");
+  const opBack = findOne(back, "opuesto");
+  const setterBack = findOne(back, "armador");
+
+  const z4 = puntaFront?.id ?? onCourt[3];
+  const z3 = centralFront?.id ?? onCourt[2];
+  const pipe = puntaBack?.id ?? onCourt[5];
+  const back5 = centralBack?.id ?? onCourt[4];
+
+  let z2: string | undefined;
+  let back1: string | undefined;
+  if (opFront) {
+    z2 = opFront.id;
+    back1 = setterFront?.id ?? setterBack?.id ?? opBack?.id ?? onCourt[0];
+  } else {
+    z2 = setterFront?.id ?? onCourt[1];
+    back1 = opBack?.id ?? setterBack?.id ?? onCourt[0];
+  }
+
+  return { back1, z2, z3, z4, back5, pipe, back: back1 };
+}
+
 
 export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | undefined {
   switch (z) {
@@ -135,13 +171,18 @@ export function IntegratedRallyDialog({
     }
   }, [open]);
 
+  const zoneAssignments = useMemo(
+    () => computeZoneAssignments(onCourt, team.players),
+    [onCourt, team.players],
+  );
+
   const pickZone = (z: SettingAttackZone) => {
-    const idx = ZONE_TO_COURT_INDEX[z] ?? 3;
-    const pid = onCourt[idx] ?? onCourt[0];
+    const pid = zoneAssignments[z] ?? onCourt[0];
     setZone(z);
     setAttackerId(pid);
     setStep("direction");
   };
+
 
   const pickDirection = (d: AttackDirection) => {
     setDirection(d);
