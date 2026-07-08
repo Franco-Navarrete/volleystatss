@@ -300,9 +300,9 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
 
     // Cambios y líberos del set
     const changes = match.events.filter(
-      (e): e is SubstitutionEvent | LiberoEvent =>
+      (e): e is SubstitutionEvent =>
         "kind" in e &&
-        (e.kind === "sub" || e.kind === "libero") &&
+        e.kind === "sub" &&
         e.setNumber === s.number,
     );
     if (changes.length) {
