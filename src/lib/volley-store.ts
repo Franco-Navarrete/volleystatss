@@ -799,10 +799,11 @@ export const useVolley = create<VolleyState>()(
             const lineupsBySet = { ...(m.lineupsBySet ?? {}) };
             lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: lineup };
             const next = { ...m, lineupsBySet };
-            const r = replayMatch(next);
-            return { ...next, ...r, status: m.status };
+            const withAuto = applyAutoLibero(next, s.teams);
+            return { ...withAuto, status: m.status };
           }),
         })),
+
 
       confirmSetLineup: (matchId) =>
         set((s) => ({
