@@ -5,7 +5,7 @@ import {
   type AttackTypeEffectivenessRow,
 } from "@/lib/attack-type-stats";
 import { SETTING_QUALITIES, SETTING_QUALITY_LABEL } from "@/lib/volley-store";
-import { ATTACK_TYPE_LABEL, ALL_ATTACK_TYPES } from "@/lib/formations/attack-types";
+import { getAttackTypeLabel, ALL_ATTACK_TYPES } from "@/lib/formations/attack-types";
 
 interface Props {
   match: Match;
