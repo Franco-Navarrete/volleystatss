@@ -326,31 +326,44 @@ function LiveMatch() {
       recordPoint(match.id, side, "attack_error", playerId, zone, attackType ?? undefined);
       return;
     }
-    let finalType: PointType;
-    if (result === "point") {
-      finalType = type; // rotation_attack o counter_attack
-    } else {
-      finalType = type === "counter_attack" ? "counter_neutral" : "attack_neutral";
-    }
+    const isCounter = type === "counter_attack";
     // Punto o Continúa → pedir zona destino (opcional).
-    setPendingAttackDirection({ side, playerId, type: finalType, zone, attackType });
+    setPendingAttackDirection({
+      side,
+      playerId,
+      type,
+      zone,
+      attackType,
+      kind: result,
+      isCounter,
+    });
   };
 
   const submitAttackDirection = (
     dir: import("@/lib/volley-store").AttackDirection | null,
   ) => {
     if (!pendingAttackDirection) return;
-    const { side, playerId, type, zone, attackType } = pendingAttackDirection;
+    const { side, playerId, type, zone, attackType, kind, isCounter } = pendingAttackDirection;
     setPendingAttackDirection(null);
-    recordPoint(
-      match.id,
-      side,
-      type,
-      playerId,
-      zone,
-      attackType ?? undefined,
-      dir ?? undefined,
-    );
+    if (kind === "point") {
+      recordPoint(
+        match.id,
+        side,
+        type,
+        playerId,
+        zone,
+        attackType ?? undefined,
+        dir ?? undefined,
+      );
+    } else {
+      // Continúa el rally → intento de ataque neutro (no afecta marcador ni eficiencia).
+      useVolley.getState().recordAttackAttempt(match.id, side, playerId, {
+        attackZone: zone,
+        attackType: attackType ?? undefined,
+        attackDirection: dir ?? undefined,
+        isCounter,
+      });
+    }
   };
 
   const submitReception = (rating: ReceptionRating) => {
