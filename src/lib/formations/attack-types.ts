@@ -99,8 +99,8 @@ export function getAttackTypeLabel(id: string): string {
 const PUNTA_FRONT: AttackType[] = ["jatu", "alta_z4", "media_z4", "emergencia"];
 const PUNTA_BACK: AttackType[] = ["pipe", "emergencia"];
 const CENTRAL_FRONT: AttackType[] = ["primer_tiempo", "corta_atras", "v", "emergencia"];
-const OPUESTO_FRONT: AttackType[] = ["alta_z2", "media_z2", "emergencia"];
-const OPUESTO_BACK: AttackType[] = ["zaguero_z1", "emergencia"];
+const OPUESTO_FRONT: AttackType[] = ["jatu", "alta_z4", "media_z4", "emergencia"];
+const OPUESTO_BACK: AttackType[] = ["pipe", "zaguero_z1", "emergencia"];
 const FALLBACK: AttackType[] = ["emergencia"];
 
 /**
