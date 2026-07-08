@@ -634,6 +634,66 @@ function replayMatch(m: Match): {
   return { sets, currentSet, status, onCourtA, onCourtB, servingSide, liberoActiveA: liberoA, liberoActiveB: liberoB };
 }
 
+/**
+ * Auto-libero: si algún central del equipo está parado en cualquier posición
+ * de zaguero (índices 0=P1, 4=P5, 5=P6) y no hay líbero activo, entra el
+ * líbero por esa central. La salida cuando el líbero rota a delantera está
+ * en `autoOutIfFront` dentro de `replayMatch`. El líbero siempre vuelve a
+ * salir por la misma central que reemplazó (se guarda `replacedId`).
+ */
+function applyAutoLibero(match: Match, teams: Team[]): Match {
+  let next = match;
+  let r = replayMatch(next);
+  next = { ...next, ...r };
+  if (r.status === "finished") return next;
+  let changed = true;
+  let safety = 6;
+  while (changed && safety-- > 0) {
+    changed = false;
+    for (const side of ["A", "B"] as const) {
+      const team = teams.find((t) => t.id === (side === "A" ? next.teamAId : next.teamBId));
+      if (!team) continue;
+      const libIds = (
+        side === "A"
+          ? [next.liberoA1Id, next.liberoA2Id]
+          : [next.liberoB1Id, next.liberoB2Id]
+      ).filter(Boolean) as string[];
+      if (libIds.length === 0) continue;
+      const libActive = side === "A" ? r.liberoActiveA : r.liberoActiveB;
+      if (libActive) continue;
+      const onCourt = side === "A" ? r.onCourtA : r.onCourtB;
+      const liberoId = libIds.find((id) => !onCourt.includes(id));
+      if (!liberoId) continue;
+      // Índices zagueros: 0 = P1, 4 = P5, 5 = P6.
+      const backIdxs = [0, 4, 5];
+      let replacedId: string | null = null;
+      for (const i of backIdxs) {
+        const p = team.players.find((pp) => pp.id === onCourt[i]);
+        if (p?.position === "central") {
+          replacedId = onCourt[i];
+          break;
+        }
+      }
+      if (!replacedId) continue;
+      const libEv: LiberoEvent = {
+        id: uid(),
+        kind: "libero",
+        side,
+        action: "in",
+        liberoId,
+        replacedId,
+        setNumber: next.currentSet,
+        timestamp: Date.now() + 1,
+      };
+      next = { ...next, events: [...next.events, libEv] };
+      r = replayMatch(next);
+      next = { ...next, ...r };
+      changed = true;
+    }
+  }
+  return next;
+}
+
 export const useVolley = create<VolleyState>()(
   persist(
     (set, get) => ({
