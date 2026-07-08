@@ -873,12 +873,12 @@ export const useVolley = create<VolleyState>()(
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
-            const next = { ...m, events: [...m.events, ev] };
-            const r = replayMatch(next);
-            return { ...next, ...r };
+            const withEvent = { ...m, events: [...m.events, ev] };
+            return applyAutoLibero(withEvent, s.teams);
           }),
         }));
       },
+
 
       recordLiberoIn: (matchId, side, liberoId, replacedId) => {
         set((s) => ({
