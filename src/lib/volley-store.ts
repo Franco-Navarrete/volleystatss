@@ -770,10 +770,13 @@ export const useVolley = create<VolleyState>()(
 
       startMatch: (id) =>
         set((s) => ({
-          matches: s.matches.map((m) =>
-            m.id === id ? { ...m, status: "live" } : m
-          ),
+          matches: s.matches.map((m) => {
+            if (m.id !== id) return m;
+            const live = { ...m, status: "live" as MatchStatus };
+            return applyAutoLibero(live, s.teams);
+          }),
         })),
+
 
 
 
