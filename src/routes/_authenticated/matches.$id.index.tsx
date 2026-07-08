@@ -153,9 +153,13 @@ function LiveMatch() {
   const [pendingAttackDirection, setPendingAttackDirection] = useState<{
     side: "A" | "B";
     playerId: string;
+    /** Cuando kind === "point": tipo original (rotation_attack | counter_attack). */
     type: PointType;
     zone: AttackZone;
     attackType: import("@/lib/formations/attack-types").AttackType | null;
+    /** point = suma al marcador; continue = intento neutro (no afecta). */
+    kind: "point" | "continue";
+    isCounter: boolean;
   } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
