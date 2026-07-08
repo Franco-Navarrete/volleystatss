@@ -182,7 +182,7 @@ export function attackTypeByPlayer(match: Match, playerId: string): AttackTypeEf
   for (const [key, b] of buckets.entries()) {
     rows.push({
       type: key,
-      label: key === "unclassified" ? "Sin clasificar" : ATTACK_TYPE_LABEL[key],
+      label: key === "unclassified" ? "Sin clasificar" : getAttackTypeLabel(key),
       attempts: b.attempts,
       kills: b.kills,
       errors: b.errors,
