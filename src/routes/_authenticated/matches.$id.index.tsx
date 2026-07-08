@@ -137,12 +137,25 @@ function LiveMatch() {
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
-  const [pendingZone, setPendingZone] = useState<{ side: "A" | "B"; playerId: string; type: PointType } | null>(null);
   const [pendingAttackType, setPendingAttackType] = useState<{
     side: "A" | "B";
     playerId: string;
     type: PointType;
     zone: AttackZone;
+  } | null>(null);
+  const [pendingAttackResult, setPendingAttackResult] = useState<{
+    side: "A" | "B";
+    playerId: string;
+    type: PointType;
+    zone: AttackZone;
+    attackType: import("@/lib/formations/attack-types").AttackType | null;
+  } | null>(null);
+  const [pendingAttackDirection, setPendingAttackDirection] = useState<{
+    side: "A" | "B";
+    playerId: string;
+    type: PointType;
+    zone: AttackZone;
+    attackType: import("@/lib/formations/attack-types").AttackType | null;
   } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
