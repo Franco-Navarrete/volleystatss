@@ -28,6 +28,8 @@ import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
+import { AttackResultDialog } from "@/components/scorer/AttackResultDialog";
+import { AttackDirectionDialog } from "@/components/scorer/AttackDirectionDialog";
 import {
   IntegratedRallyDialog,
   settingZoneToAttackZone,
@@ -137,12 +139,29 @@ function LiveMatch() {
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
-  const [pendingZone, setPendingZone] = useState<{ side: "A" | "B"; playerId: string; type: PointType } | null>(null);
   const [pendingAttackType, setPendingAttackType] = useState<{
     side: "A" | "B";
     playerId: string;
     type: PointType;
     zone: AttackZone;
+  } | null>(null);
+  const [pendingAttackResult, setPendingAttackResult] = useState<{
+    side: "A" | "B";
+    playerId: string;
+    type: PointType;
+    zone: AttackZone;
+    attackType: import("@/lib/formations/attack-types").AttackType | null;
+  } | null>(null);
+  const [pendingAttackDirection, setPendingAttackDirection] = useState<{
+    side: "A" | "B";
+    playerId: string;
+    /** Cuando kind === "point": tipo original (rotation_attack | counter_attack). */
+    type: PointType;
+    zone: AttackZone;
+    attackType: import("@/lib/formations/attack-types").AttackType | null;
+    /** point = suma al marcador; continue = intento neutro (no afecta). */
+    kind: "point" | "continue";
+    isCounter: boolean;
   } | null>(null);
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
@@ -279,7 +298,13 @@ function LiveMatch() {
   const submitAction = (type: PointType) => {
     if (!pendingPlayer) return;
     if (isCoach && (type === "rotation_attack" || type === "counter_attack")) {
-      setPendingZone({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type });
+      // La zona de origen se deduce de la posición del jugador en cancha:
+      // índices onCourt [P1, P2, P3, P4, P5, P6] → zonas [1, 2, 3, 4, 5, 6].
+      const onCourt = pendingPlayer.side === "A" ? match.onCourtA : match.onCourtB;
+      const idx = onCourt.indexOf(pendingPlayer.playerId);
+      const zoneFromIdx: Record<number, AttackZone> = { 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 };
+      const zone: AttackZone = zoneFromIdx[idx] ?? 3;
+      setPendingAttackType({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type, zone });
       setPendingPlayer(null);
       return;
     }
@@ -287,23 +312,60 @@ function LiveMatch() {
     setPendingPlayer(null);
   };
 
-  const submitZone = (zone: AttackZone) => {
-    if (!pendingZone) return;
-    const { side, playerId, type } = pendingZone;
-    setPendingZone(null);
-    if (isCoach) {
-      // Paso adicional: tipo de ataque (modo entrenador).
-      setPendingAttackType({ side, playerId, type, zone });
-      return;
-    }
-    recordPoint(match.id, side, type, playerId, zone);
-  };
-
   const submitAttackType = (attackType: import("@/lib/formations/attack-types").AttackType | null) => {
     if (!pendingAttackType) return;
     const { side, playerId, type, zone } = pendingAttackType;
-    recordPoint(match.id, side, type, playerId, zone, attackType ?? undefined);
     setPendingAttackType(null);
+    // Siguiente paso: resultado (Punto / Continúa / Error).
+    setPendingAttackResult({ side, playerId, type, zone, attackType });
+  };
+
+  const submitAttackResult = (result: import("@/components/scorer/AttackResultDialog").AttackResult) => {
+    if (!pendingAttackResult) return;
+    const { side, playerId, type, zone, attackType } = pendingAttackResult;
+    setPendingAttackResult(null);
+    if (result === "error") {
+      recordPoint(match.id, side, "attack_error", playerId, zone, attackType ?? undefined);
+      return;
+    }
+    const isCounter = type === "counter_attack";
+    // Punto o Continúa → pedir zona destino (opcional).
+    setPendingAttackDirection({
+      side,
+      playerId,
+      type,
+      zone,
+      attackType,
+      kind: result,
+      isCounter,
+    });
+  };
+
+  const submitAttackDirection = (
+    dir: import("@/lib/volley-store").AttackDirection | null,
+  ) => {
+    if (!pendingAttackDirection) return;
+    const { side, playerId, type, zone, attackType, kind, isCounter } = pendingAttackDirection;
+    setPendingAttackDirection(null);
+    if (kind === "point") {
+      recordPoint(
+        match.id,
+        side,
+        type,
+        playerId,
+        zone,
+        attackType ?? undefined,
+        dir ?? undefined,
+      );
+    } else {
+      // Continúa el rally → intento de ataque neutro (no afecta marcador ni eficiencia).
+      useVolley.getState().recordAttackAttempt(match.id, side, playerId, {
+        attackZone: zone,
+        attackType: attackType ?? undefined,
+        attackDirection: dir ?? undefined,
+        isCounter,
+      });
+    }
   };
 
   const submitReception = (rating: ReceptionRating) => {
@@ -622,88 +684,8 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
-      {/* Attack zone picker (after rotation/counter attack) */}
-      <Dialog open={!!pendingZone} onOpenChange={(o) => !o && setPendingZone(null)}>
-        <DialogContent className="w-[calc(100dvw-24px)] max-w-[340px] rounded-xl border-border/60 p-3 gap-2">
-          {pendingZone && (() => {
-            const t = pendingZone.side === "A" ? teamA : teamB;
-            const player = t.players.find((p) => p.id === pendingZone.playerId);
-            const actionLabel = pendingZone.type === "counter_attack" ? "Contraataque" : "Ataque de rotación";
-            return (
-              <>
-                <DialogHeader className="pr-8 space-y-0 text-left">
-                  <DialogTitle className="flex items-center gap-3 min-w-0">
-                    <span className="size-9 shrink-0 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-sm" style={{ background: t.color }}>
-                      {player?.number}
-                    </span>
-                    <span className="min-w-0 truncate">
-                      <span className="block text-sm font-bold">{player?.name}</span>
-                      <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                        {actionLabel} · ¿desde qué zona?
-                      </span>
-                    </span>
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  <button
-                    onClick={() => submitZone(4)}
-                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
-                  >
-                    <span className="text-lg leading-none">4</span>
-                    <span className="text-[10px] opacity-80 mt-1">Punta</span>
-                  </button>
-                  <button
-                    onClick={() => submitZone(3)}
-                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
-                  >
-                    <span className="text-lg leading-none">3</span>
-                    <span className="text-[10px] opacity-80 mt-1">Central</span>
-                  </button>
-                  <button
-                    onClick={() => submitZone(2)}
-                    className="min-h-16 rounded-lg bg-primary text-primary-foreground font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
-                  >
-                    <span className="text-lg leading-none">2</span>
-                    <span className="text-[10px] opacity-80 mt-1">Opuesto</span>
-                  </button>
-                  <button
-                    onClick={() => submitZone(5)}
-                    className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
-                  >
-                    <span className="text-lg leading-none">5</span>
-                    <span className="text-[10px] opacity-80 mt-1">Zag. 5</span>
-                  </button>
-                  <button
-                    onClick={() => submitZone(6)}
-                    className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
-                  >
-                    <span className="text-lg leading-none">6</span>
-                    <span className="text-[10px] opacity-80 mt-1">Zag. 6</span>
-                  </button>
-                  <button
-                    onClick={() => submitZone(1)}
-                    className="min-h-16 rounded-lg bg-secondary hover:bg-secondary/70 font-bold text-sm active:scale-[0.98] transition-all flex flex-col items-center justify-center"
-                  >
-                    <span className="text-lg leading-none">1</span>
-                    <span className="text-[10px] opacity-80 mt-1">Zag. 1</span>
-                  </button>
-
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setPendingZone(null)}
-                  className="mt-2 text-[11px] text-muted-foreground hover:text-foreground underline self-center"
-                >
-                  Sin zona / cancelar
-                </button>
-              </>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
-
-      {/* Attack type picker (modo entrenador) — luego de la zona */}
+      {/* Attack type picker (modo entrenador) — la zona de origen se deduce
+          del pin del jugador, así que se salta el paso "¿desde qué zona?". */}
       <AttackTypeDialog
         open={!!pendingAttackType}
         team={pendingAttackType ? (pendingAttackType.side === "A" ? teamA : teamB) : null}
@@ -717,14 +699,40 @@ function LiveMatch() {
         })()}
         onSelect={submitAttackType}
         onClose={() => {
-          // Sin tipo: igualmente guardamos el ataque con la zona seleccionada.
+          // Sin clasificar: sigue el flujo (resultado → dirección) con attackType nulo.
           if (pendingAttackType) {
             const { side, playerId, type, zone } = pendingAttackType;
-            recordPoint(match.id, side, type, playerId, zone);
+            setPendingAttackType(null);
+            setPendingAttackResult({ side, playerId, type, zone, attackType: null });
+          } else {
+            setPendingAttackType(null);
           }
-          setPendingAttackType(null);
         }}
       />
+
+      {/* Resultado del ataque: Punto / Continúa el rally / Error */}
+      <AttackResultDialog
+        open={!!pendingAttackResult}
+        team={pendingAttackResult ? (pendingAttackResult.side === "A" ? teamA : teamB) : null}
+        playerId={pendingAttackResult?.playerId ?? null}
+        onSelect={submitAttackResult}
+        onClose={() => setPendingAttackResult(null)}
+      />
+
+      {/* Zona de destino del ataque (opcional) */}
+      <AttackDirectionDialog
+        open={!!pendingAttackDirection}
+        team={pendingAttackDirection ? (pendingAttackDirection.side === "A" ? teamA : teamB) : null}
+        playerId={pendingAttackDirection?.playerId ?? null}
+        onSelect={submitAttackDirection}
+        onClose={() => {
+          // Cerrar sin elegir zona = guardar igual sin dirección.
+          submitAttackDirection(null);
+        }}
+      />
+
+
+
 
 
 

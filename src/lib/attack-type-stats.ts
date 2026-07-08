@@ -2,8 +2,7 @@ import type { Match, PointEvent, SettingEvent, SettingQuality, AttackAttemptEven
 import { isAttackType } from "@/lib/volley-store";
 import {
   type AttackType,
-  ALL_ATTACK_TYPES,
-  ATTACK_TYPE_LABEL,
+  getAttackTypeLabel,
 } from "@/lib/formations/attack-types";
 
 export interface AttackTypeEffectivenessRow {
@@ -57,12 +56,11 @@ function getRows(match: Match, side?: "A" | "B"): AttackTypeEffectivenessRow[] {
   }
 
   const rows: AttackTypeEffectivenessRow[] = [];
-  for (const t of ALL_ATTACK_TYPES) {
-    const b = buckets.get(t);
-    if (!b) continue;
+  for (const [key, b] of buckets.entries()) {
+    if (key === "unclassified") continue;
     rows.push({
-      type: t,
-      label: ATTACK_TYPE_LABEL[t],
+      type: key,
+      label: getAttackTypeLabel(key),
       attempts: b.attempts,
       kills: b.kills,
       errors: b.errors,
@@ -184,7 +182,7 @@ export function attackTypeByPlayer(match: Match, playerId: string): AttackTypeEf
   for (const [key, b] of buckets.entries()) {
     rows.push({
       type: key,
-      label: key === "unclassified" ? "Sin clasificar" : ATTACK_TYPE_LABEL[key],
+      label: key === "unclassified" ? "Sin clasificar" : getAttackTypeLabel(key),
       attempts: b.attempts,
       kills: b.kills,
       errors: b.errors,

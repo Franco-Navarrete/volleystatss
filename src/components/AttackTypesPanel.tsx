@@ -5,7 +5,7 @@ import {
   type AttackTypeEffectivenessRow,
 } from "@/lib/attack-type-stats";
 import { SETTING_QUALITIES, SETTING_QUALITY_LABEL } from "@/lib/volley-store";
-import { ATTACK_TYPE_LABEL, ALL_ATTACK_TYPES } from "@/lib/formations/attack-types";
+import { getAttackTypeLabel, ALL_ATTACK_TYPES } from "@/lib/formations/attack-types";
 
 interface Props {
   match: Match;
@@ -165,7 +165,7 @@ function SetterQualityCross({
               <th className="px-3 py-2">Calidad</th>
               {types.map((t) => (
                 <th key={t} className="px-2 py-2 text-right whitespace-nowrap">
-                  {ATTACK_TYPE_LABEL[t]}
+                  {getAttackTypeLabel(t)}
                 </th>
               ))}
             </tr>
