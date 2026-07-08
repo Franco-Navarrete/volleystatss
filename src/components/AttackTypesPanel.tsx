@@ -165,7 +165,7 @@ function SetterQualityCross({
               <th className="px-3 py-2">Calidad</th>
               {types.map((t) => (
                 <th key={t} className="px-2 py-2 text-right whitespace-nowrap">
-                  {ATTACK_TYPE_LABEL[t]}
+                  {getAttackTypeLabel(t)}
                 </th>
               ))}
             </tr>
