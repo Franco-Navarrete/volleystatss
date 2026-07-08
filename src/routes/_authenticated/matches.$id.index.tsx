@@ -28,6 +28,8 @@ import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
+import { AttackResultDialog } from "@/components/scorer/AttackResultDialog";
+import { AttackDirectionDialog } from "@/components/scorer/AttackDirectionDialog";
 import {
   IntegratedRallyDialog,
   settingZoneToAttackZone,
