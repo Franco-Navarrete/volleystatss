@@ -2,8 +2,7 @@ import type { Match, PointEvent, SettingEvent, SettingQuality, AttackAttemptEven
 import { isAttackType } from "@/lib/volley-store";
 import {
   type AttackType,
-  ALL_ATTACK_TYPES,
-  ATTACK_TYPE_LABEL,
+  getAttackTypeLabel,
 } from "@/lib/formations/attack-types";
 
 export interface AttackTypeEffectivenessRow {
