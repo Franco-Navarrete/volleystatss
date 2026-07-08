@@ -8,7 +8,7 @@ import {
   type PlayerStat,
   type Team,
   type SubstitutionEvent,
-  type LiberoEvent,
+  
   type PointEvent,
   type PointType,
   type ReceptionStat,
@@ -300,9 +300,9 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
 
     // Cambios y líberos del set
     const changes = match.events.filter(
-      (e): e is SubstitutionEvent | LiberoEvent =>
+      (e): e is SubstitutionEvent =>
         "kind" in e &&
-        (e.kind === "sub" || e.kind === "libero") &&
+        e.kind === "sub" &&
         e.setNumber === s.number,
     );
     if (changes.length) {
@@ -317,14 +317,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
         head: [["Equipo", "Tipo", "Entra", "Sale"]],
         body: changes.map((e) => {
           const team = e.side === "A" ? teamA : teamB;
-          if (e.kind === "sub") {
-            return [team.shortName, "Cambio", playerName(team, e.playerInId), playerName(team, e.playerOutId)];
-          }
-          // libero
-          const tipo = e.action === "in" ? "Líbero entra" : e.action === "out" ? "Líbero sale" : "Líbero sale (rotación)";
-          const entra = e.action === "in" ? playerName(team, e.liberoId) : playerName(team, e.replacedId);
-          const sale = e.action === "in" ? playerName(team, e.replacedId) : playerName(team, e.liberoId);
-          return [team.shortName, tipo, entra, sale];
+          return [team.shortName, "Cambio", playerName(team, e.playerInId), playerName(team, e.playerOutId)];
         }),
         headStyles: { fillColor: dark, fontSize: 8 },
         bodyStyles: { fontSize: 8 },
