@@ -292,7 +292,13 @@ function LiveMatch() {
   const submitAction = (type: PointType) => {
     if (!pendingPlayer) return;
     if (isCoach && (type === "rotation_attack" || type === "counter_attack")) {
-      setPendingZone({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type });
+      // La zona de origen se deduce de la posición del jugador en cancha:
+      // índices onCourt [P1, P2, P3, P4, P5, P6] → zonas [1, 2, 3, 4, 5, 6].
+      const onCourt = pendingPlayer.side === "A" ? match.onCourtA : match.onCourtB;
+      const idx = onCourt.indexOf(pendingPlayer.playerId);
+      const zoneFromIdx: Record<number, AttackZone> = { 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 };
+      const zone: AttackZone = zoneFromIdx[idx] ?? 3;
+      setPendingAttackType({ side: pendingPlayer.side, playerId: pendingPlayer.playerId, type, zone });
       setPendingPlayer(null);
       return;
     }
@@ -300,23 +306,47 @@ function LiveMatch() {
     setPendingPlayer(null);
   };
 
-  const submitZone = (zone: AttackZone) => {
-    if (!pendingZone) return;
-    const { side, playerId, type } = pendingZone;
-    setPendingZone(null);
-    if (isCoach) {
-      // Paso adicional: tipo de ataque (modo entrenador).
-      setPendingAttackType({ side, playerId, type, zone });
-      return;
-    }
-    recordPoint(match.id, side, type, playerId, zone);
-  };
-
   const submitAttackType = (attackType: import("@/lib/formations/attack-types").AttackType | null) => {
     if (!pendingAttackType) return;
     const { side, playerId, type, zone } = pendingAttackType;
-    recordPoint(match.id, side, type, playerId, zone, attackType ?? undefined);
     setPendingAttackType(null);
+    // Siguiente paso: resultado (Punto / Continúa / Error).
+    setPendingAttackResult({ side, playerId, type, zone, attackType });
+  };
+
+  const submitAttackResult = (result: import("@/components/scorer/AttackResultDialog").AttackResult) => {
+    if (!pendingAttackResult) return;
+    const { side, playerId, type, zone, attackType } = pendingAttackResult;
+    setPendingAttackResult(null);
+    if (result === "error") {
+      recordPoint(match.id, side, "attack_error", playerId, zone, attackType ?? undefined);
+      return;
+    }
+    let finalType: PointType;
+    if (result === "point") {
+      finalType = type; // rotation_attack o counter_attack
+    } else {
+      finalType = type === "counter_attack" ? "counter_neutral" : "attack_neutral";
+    }
+    // Punto o Continúa → pedir zona destino (opcional).
+    setPendingAttackDirection({ side, playerId, type: finalType, zone, attackType });
+  };
+
+  const submitAttackDirection = (
+    dir: import("@/lib/volley-store").AttackDirection | null,
+  ) => {
+    if (!pendingAttackDirection) return;
+    const { side, playerId, type, zone, attackType } = pendingAttackDirection;
+    setPendingAttackDirection(null);
+    recordPoint(
+      match.id,
+      side,
+      type,
+      playerId,
+      zone,
+      attackType ?? undefined,
+      dir ?? undefined,
+    );
   };
 
   const submitReception = (rating: ReceptionRating) => {
