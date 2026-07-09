@@ -1691,14 +1691,35 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
             </div>
           </div>
         </div>
-        <span className="text-xs scoreboard-digit font-bold shrink-0 flex items-center gap-2">
-          <span>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="icon"
+            variant="outline"
+            className="size-7"
+            title="Rotar en sentido contrario"
+            disabled={lineup.filter(Boolean).length !== 6}
+            onClick={() => setLineup([lineup[5], lineup[0], lineup[1], lineup[2], lineup[3], lineup[4]])}
+          >
+            <RotateCcw className="size-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            className="size-7"
+            title="Rotar en sentido del saque"
+            disabled={lineup.filter(Boolean).length !== 6}
+            onClick={() => setLineup([lineup[1], lineup[2], lineup[3], lineup[4], lineup[5], lineup[0]])}
+          >
+            <RotateCw className="size-3.5" />
+          </Button>
+          <span className="text-xs scoreboard-digit font-bold">
             <span className={stepValid ? "text-success" : "text-primary"}>{filled}</span>
             <span className="text-muted-foreground"> / 6</span>
           </span>
-        </span>
+        </div>
 
       </div>
+
 
 
       <div className="relative rounded-xl bg-gradient-to-b from-[#1e293b] to-[#0b1322] p-3 border border-court-line/40">
