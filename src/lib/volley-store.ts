@@ -515,8 +515,11 @@ interface VolleyState {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Índices oficiales en `onCourt`: 0=Z1, 1=Z2, 2=Z3, 3=Z4, 4=Z5, 5=Z6.
-const FRONT_ROW_INDEXES = new Set([1, 2, 3]);
-const BACK_ROW_REPLACE_PRIORITY = [4, 5, 0] as const;
+// Regla del líbero: entra por el central cuando éste rota a Z1 o Z6, y sale
+// cuando debe reingresar en Z5 (para luego subir a Z4). Nunca cubre Z5:
+// el central vuelve visible en Z5 antes de subir a la primera línea.
+const LIBERO_EXIT_INDEXES = new Set([1, 2, 3, 4]);
+const BACK_ROW_REPLACE_PRIORITY = [0, 5] as const;
 
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
@@ -563,14 +566,15 @@ function replayMatch(m: Match): {
     return setNum === decidingSet ? 15 : m.pointsPerSet;
   };
 
-  // Tras cualquier recálculo: si el líbero quedó en primera línea
-  // (índices 1,2,3 = Z2,Z3,Z4), sale automáticamente y vuelve el central original.
-  const autoOutIfFront = (side: "A" | "B") => {
+  // Tras cualquier recálculo: si el líbero quedó en Z5, Z4, Z3 o Z2, sale
+  // automáticamente y vuelve el central original al mismo slot. Así el central
+  // reingresa en Z5 y desde ahí sube naturalmente a la primera línea.
+  const autoOutIfExit = (side: "A" | "B") => {
     const lib = side === "A" ? liberoA : liberoB;
     if (!lib) return;
     const arr = side === "A" ? onCourtA : onCourtB;
     const idx = arr.indexOf(lib.liberoId);
-    if (FRONT_ROW_INDEXES.has(idx)) {
+    if (LIBERO_EXIT_INDEXES.has(idx)) {
       const next = arr.map((p, i) => (i === idx ? lib.replacedId : p));
       if (side === "A") { onCourtA = next; liberoA = null; }
       else { onCourtB = next; liberoB = null; }
@@ -605,7 +609,7 @@ function replayMatch(m: Match): {
         if (ev.side === "A") { onCourtA = [...ev.lineup]; liberoA = null; }
         else { onCourtB = [...ev.lineup]; liberoB = null; }
       }
-      autoOutIfFront(ev.side);
+      autoOutIfExit(ev.side);
       continue;
     }
     const cur = sets[sets.length - 1];
@@ -617,8 +621,8 @@ function replayMatch(m: Match): {
       else onCourtB = rotateClockwise(onCourtB);
       servingSide = ev.scoringSide;
     }
-    autoOutIfFront("A");
-    autoOutIfFront("B");
+    autoOutIfExit("A");
+    autoOutIfExit("B");
     const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
@@ -646,7 +650,7 @@ function replayMatch(m: Match): {
  * Auto-líbero: recalcula la cancha y, si no hay líbero activo, entra por la
  * central que corresponda en zaguero. Prioridad: Z5, Z6 y Z1 solo si ese equipo
  * ya no está sacando (así la central puede sacar y el líbero entra al perder el saque).
- * La salida al llegar a primera línea se resuelve en `autoOutIfFront` dentro de `replayMatch`.
+ * La salida al llegar a primera línea se resuelve en `autoOutIfExit` dentro de `replayMatch`.
  */
 function applyAutoLibero(match: Match, teams: Team[]): Match {
   let next = match;
