@@ -378,12 +378,13 @@ function LiveMatch() {
     const side = pendingReception.side;
     recordReception(match.id, side, pendingReception.playerId, rating);
     setPendingReception(null);
-    if (isCoach && rating !== "negative") {
-      // El balón llegó al armador → abrir flujo integrado (zona → atacante → calidad → acción → dirección)
-      const map: Record<ReceptionRating, SettingQuality> = {
+    // Solo continuar el flujo integrado si la recepción permite armar.
+    const canSet = rating === "double_positive" || rating === "positive" || rating === "neutral";
+    if (isCoach && canSet) {
+      const map: Record<"double_positive" | "positive" | "neutral", SettingQuality> = {
+        double_positive: "++",
         positive: "+",
         neutral: "!",
-        negative: "-",
       };
       setIntegratedRally({ side, receptionQuality: map[rating] });
     }
