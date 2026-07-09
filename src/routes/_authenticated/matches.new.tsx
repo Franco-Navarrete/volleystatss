@@ -20,9 +20,16 @@ const emptyLineup = (): Slot[] => Array(LINEUP_SIZE).fill(null);
 function NewMatch() {
   const navigate = useNavigate();
   const teams = useVolley((s) => s.teams);
+  const leagues = useVolley((s) => s.leagues);
   const createMatch = useVolley((s) => s.createMatch);
   const startMatch = useVolley((s) => s.startMatch);
   const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
+
+  const [leagueFilter, setLeagueFilter] = useState<string>("all");
+  const filteredTeams = useMemo(
+    () => (leagueFilter === "all" ? teams : teams.filter((t) => t.leagueId === leagueFilter)),
+    [teams, leagueFilter],
+  );
 
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
