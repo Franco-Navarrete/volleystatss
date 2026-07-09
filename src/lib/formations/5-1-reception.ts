@@ -1,128 +1,110 @@
 import type { ReceptionFormation, Rotation } from "./types";
 
 /**
- * Plantillas 5-1 de RECEPCIÓN (formación en "W") ajustadas a las láminas
- * VOLEYCA de referencia. Se aplican mientras el equipo está recibiendo el
- * saque. Después de la recepción, se usa la formación de ATAQUE de `5-1.ts`.
+ * Plantillas 5-1 de RECEPCIÓN (formación en "W") ajustadas a los diagramas
+ * de referencia enviados por el usuario. Se aplican mientras el equipo está
+ * recibiendo el saque. Después de la recepción, se usa la formación de
+ * ATAQUE de `5-1.ts`.
  *
  * Convención (por equipo):
  *   y=0 → red, y=100 → línea final
  *   x=0 → izquierda del equipo, x=100 → derecha del equipo
- *
- * Etiquetas de la lámina:
- *   YO = armadora, C = central, O = opuesta,
- *   P1/P2 = puntas (front/back), L = líbero.
  */
 export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
-  // Rot 1 — armadora zaguera derecha (P1). Se ubica detrás del punta 1
-  // y luego penetra a zona 2-3 para armar.
+  // Rot 1 — armadora en P1 (zaguera derecha). Penetra desde el fondo.
   1: {
     system: "5-1",
     rotation: 1,
     setterTarget: { x: 72, y: 16 },
     attackers: ["outside_back", "middle_front", "opposite", "outside_front"],
     slots: [
-      // P1 (outside_back) sube al frente por Z2 y ataca desde ahí hasta que termine el punto
-      { role: "outside_back", x: 45, y: 15 },
-      // O (opposite) ataca por Z4 (arriba a la derecha en esta vista)
-      { role: "opposite", x: 82, y: 15 },
-      // C2 (middle_front) escalonada a la derecha
-      { role: "middle_front", x: 80, y: 40 },
-      // L (libero) cubre zaga izquierda
-      { role: "libero", x: 22, y: 42 },
-      // P2 (outside_front) recibe en el centro
-      { role: "outside_front", x: 50, y: 58 },
-      // A (setter) penetra desde P1
-      { role: "setter", x: 15, y: 82 },
+      { role: "opposite", x: 78, y: 12 },
+      { role: "middle_front", x: 40, y: 20 },
+      { role: "setter", x: 38, y: 45 },
+      { role: "outside_front", x: 85, y: 48 },
+      { role: "outside_back", x: 55, y: 72 },
+      { role: "libero", x: 18, y: 85 },
     ],
   },
 
-  // Rot 2 — armadora delantera derecha (z2). Se queda en z2 para armar.
+  // Rot 2 — armadora en P2 (delantera derecha). Se ubica al fondo antes de
+  // subir a armar en Z2/3.
   2: {
     system: "5-1",
     rotation: 2,
     setterTarget: { x: 78, y: 16 },
     attackers: ["middle_front", "outside_front", "outside_back", "opposite"],
     slots: [
-      { role: "middle_front", x: 15, y: 20 },
-      { role: "setter", x: 80, y: 15 },
-      { role: "outside_front", x: 22, y: 52 },
-      { role: "libero", x: 78, y: 52 },
-      { role: "outside_back", x: 48, y: 62 },
-      { role: "opposite", x: 30, y: 90 },
+      { role: "outside_front", x: 12, y: 22 },
+      { role: "middle_front", x: 32, y: 25 },
+      { role: "opposite", x: 72, y: 22 },
+      { role: "outside_back", x: 22, y: 50 },
+      { role: "setter", x: 48, y: 85 },
+      { role: "libero", x: 88, y: 88 },
     ],
   },
 
-  // Rot 3 — armadora delantera centro (z3). Se desplaza a z2 para armar.
+  // Rot 3 — armadora en P3 (delantera centro). Se desplaza a z2 para armar.
   3: {
     system: "5-1",
     rotation: 3,
     setterTarget: { x: 78, y: 16 },
     attackers: ["outside_front", "middle_front", "outside_back", "opposite"],
     slots: [
-      { role: "setter", x: 62, y: 14 },
-      { role: "middle_front", x: 82, y: 20 },
-      { role: "outside_front", x: 22, y: 48 },
-      { role: "libero", x: 45, y: 58 },
-      { role: "outside_back", x: 72, y: 48 },
-      { role: "opposite", x: 60, y: 78 },
+      { role: "middle_front", x: 52, y: 22 },
+      { role: "setter", x: 38, y: 42 },
+      { role: "outside_front", x: 15, y: 48 },
+      { role: "outside_back", x: 85, y: 48 },
+      { role: "libero", x: 40, y: 72 },
+      { role: "opposite", x: 62, y: 85 },
     ],
   },
 
-  // Rot 4 — armadora delantera izquierda (z4). Se ubica en el borde
-  // izquierdo y luego recorre a z2-3 para armar.
+  // Rot 4 — armadora en P4 (delantera izquierda). Recorre a z2/3 para armar.
   4: {
     system: "5-1",
     rotation: 4,
     setterTarget: { x: 78, y: 16 },
     attackers: ["middle_front", "outside_back", "opposite", "outside_front"],
     slots: [
-      { role: "setter", x: 10, y: 12 },
-      { role: "middle_front", x: 25, y: 22 },
-      { role: "outside_front", x: 30, y: 48 },
-      { role: "libero", x: 68, y: 48 },
-      { role: "outside_back", x: 48, y: 58 },
-      { role: "opposite", x: 85, y: 90 },
+      { role: "middle_front", x: 42, y: 20 },
+      { role: "opposite", x: 75, y: 18 },
+      { role: "libero", x: 90, y: 20 },
+      { role: "outside_front", x: 28, y: 45 },
+      { role: "setter", x: 40, y: 72 },
+      { role: "outside_back", x: 12, y: 78 },
     ],
   },
 
-  // Rot 5 — armadora zaguera izquierda (P5). Se ubica debajo del central
-  // y a la izquierda del punta 1, luego penetra a z2-3.
+  // Rot 5 — armadora en P5 (zaguera izquierda). Penetra desde la zaga izquierda.
   5: {
     system: "5-1",
     rotation: 5,
     setterTarget: { x: 72, y: 16 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      // P2 (outside_front) al frente, ligeramente a la izquierda de la red
-      { role: "outside_front", x: 40, y: 15 },
-      // O (opposite) al frente derecha
-      { role: "opposite", x: 85, y: 18 },
-      // L (libero) cubriendo al central en zaga izquierda
-      { role: "libero", x: 22, y: 45 },
-      // C2 (middle_front) al costado derecho, escalonada hacia atrás
-      { role: "middle_front", x: 82, y: 42 },
-      // P1 (outside_back) en el centro-fondo
-      { role: "outside_back", x: 50, y: 60 },
-      // A (setter) penetrando desde zaga izquierda
-      { role: "setter", x: 15, y: 80 },
+      { role: "outside_front", x: 38, y: 22 },
+      { role: "opposite", x: 88, y: 22 },
+      { role: "libero", x: 55, y: 38 },
+      { role: "outside_back", x: 35, y: 52 },
+      { role: "setter", x: 40, y: 82 },
+      { role: "middle_front", x: 85, y: 82 },
     ],
   },
 
-  // Rot 6 — armadora zaguera centro (P6). Se ubica debajo del opuesto
-  // y a la izquierda del central, luego penetra a z2-3.
+  // Rot 6 — armadora en P6 (zaguera centro). Penetra desde el centro-fondo.
   6: {
     system: "5-1",
     rotation: 6,
     setterTarget: { x: 72, y: 16 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      { role: "opposite", x: 65, y: 15 },
-      { role: "middle_front", x: 82, y: 22 },
-      { role: "setter", x: 52, y: 30 },
-      { role: "outside_front", x: 18, y: 55 },
-      { role: "outside_back", x: 82, y: 60 },
-      { role: "libero", x: 50, y: 72 },
+      { role: "outside_front", x: 38, y: 22 },
+      { role: "setter", x: 30, y: 48 },
+      { role: "libero", x: 60, y: 48 },
+      { role: "middle_front", x: 80, y: 48 },
+      { role: "outside_back", x: 38, y: 78 },
+      { role: "opposite", x: 60, y: 78 },
     ],
   },
 };
