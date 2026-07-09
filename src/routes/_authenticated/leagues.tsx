@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, type StatsMode } from "@/lib/volley-store";
