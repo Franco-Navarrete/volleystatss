@@ -237,7 +237,13 @@ export interface LineupOverrideEvent {
   timestamp: number;
 }
 
-export type ReceptionRating = "positive" | "neutral" | "negative";
+export type ReceptionRating =
+  | "double_positive" // #
+  | "positive" // +
+  | "neutral" // 0
+  | "negative" // -
+  | "double_negative" // =
+  | "overpass"; // ≠ (punto directo de saque)
 
 export interface ReceptionEvent {
   id: string;
