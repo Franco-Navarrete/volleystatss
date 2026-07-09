@@ -102,11 +102,13 @@ function useForceLandscape(active: boolean) {
       }
     };
     apply();
-    mq.addEventListener("change", apply);
+    phoneMq.addEventListener("change", apply);
+    tabletPortraitMq.addEventListener("change", apply);
     const observer = new MutationObserver(apply);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-device-resolved"] });
     return () => {
-      mq.removeEventListener("change", apply);
+      phoneMq.removeEventListener("change", apply);
+      tabletPortraitMq.removeEventListener("change", apply);
       observer.disconnect();
       document.documentElement.classList.remove("force-landscape");
       if (orientationLocked) so?.unlock?.();
