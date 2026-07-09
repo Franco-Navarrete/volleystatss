@@ -735,6 +735,29 @@ export const useVolley = create<VolleyState>()(
       teams: [],
       matches: [],
       leagues: [],
+      customReceptionFormations: {},
+
+      setReceptionSlot: (rotation, role, pos) =>
+        set((s) => {
+          const current = s.customReceptionFormations ?? {};
+          const rot = current[rotation] ?? {};
+          return {
+            customReceptionFormations: {
+              ...current,
+              [rotation]: { ...rot, [role]: { x: pos.x, y: pos.y } },
+            },
+          };
+        }),
+      resetReceptionRotation: (rotation) =>
+        set((s) => {
+          const current = { ...(s.customReceptionFormations ?? {}) };
+          delete current[rotation];
+          return { customReceptionFormations: current };
+        }),
+      resetAllReceptionFormations: () =>
+        set(() => ({ customReceptionFormations: {} })),
+
+
 
       addLeague: (l) => {
         const id = uid();
