@@ -1080,8 +1080,8 @@ export const useVolley = create<VolleyState>()(
               timestamp: Date.now(),
             };
             let next = { ...m, events: [...m.events, ev] };
-            // Recepción negativa: punto y ace para el sacador (equipo contrario).
-            if (rating === "negative") {
+            // Punto directo de saque (≠): ace para el equipo sacador.
+            if (rating === "overpass") {
               const servingSide: "A" | "B" = side === "A" ? "B" : "A";
               const serverLineup = servingSide === "A" ? next.onCourtA : next.onCourtB;
               const serverId = serverLineup[0] ?? null;
