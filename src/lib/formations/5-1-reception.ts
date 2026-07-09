@@ -15,15 +15,21 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
   1: {
     system: "5-1",
     rotation: 1,
-    setterTarget: { x: 72, y: 16 },
+    setterTarget: { x: 75, y: 14 },
     attackers: ["outside_back", "middle_front", "opposite", "outside_front"],
     slots: [
-      { role: "opposite", x: 78, y: 12 },
-      { role: "middle_front", x: 40, y: 20 },
-      { role: "setter", x: 68, y: 10 },
-      { role: "outside_front", x: 85, y: 48 },
-      { role: "outside_back", x: 55, y: 72 },
-      { role: "libero", x: 18, y: 85 },
+      // Armadora penetra desde P1 (zaguera derecha) hacia la red.
+      { role: "setter", x: 88, y: 82 },
+      // Opuesto ataca por zona 4 (frente izquierda).
+      { role: "opposite", x: 15, y: 15 },
+      // Central delantera cubre zona 3.
+      { role: "middle_front", x: 40, y: 18 },
+      // P1 (punta zaguera) sube para atacar por zona 2.
+      { role: "outside_back", x: 48, y: 40 },
+      // P2 (punta delantera) recibe abierto por izquierda.
+      { role: "outside_front", x: 14, y: 48 },
+      // Líbero recibe junto a la punta.
+      { role: "libero", x: 30, y: 48 },
     ],
   },
 
