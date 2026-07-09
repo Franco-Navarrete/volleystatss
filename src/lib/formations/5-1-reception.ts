@@ -20,7 +20,7 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     slots: [
       { role: "opposite", x: 78, y: 12 },
       { role: "middle_front", x: 40, y: 20 },
-      { role: "setter", x: 38, y: 45 },
+      { role: "setter", x: 68, y: 10 },
       { role: "outside_front", x: 85, y: 48 },
       { role: "outside_back", x: 55, y: 72 },
       { role: "libero", x: 18, y: 85 },
