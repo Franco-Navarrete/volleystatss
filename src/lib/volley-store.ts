@@ -650,9 +650,10 @@ function replayMatch(m: Match): {
 
 /**
  * Auto-líbero: recalcula la cancha y, si no hay líbero activo, entra por la
- * central que corresponda en zaguero. Prioridad: Z5, Z6 y Z1 solo si ese equipo
- * ya no está sacando (así la central puede sacar y el líbero entra al perder el saque).
- * La salida al llegar a primera línea se resuelve en `autoOutIfExit` dentro de `replayMatch`.
+ * central que esté en cualquier posición zaguera (Z1, Z6 o Z5). Z1 se salta
+ * mientras el equipo está sacando (la central saca primero y el líbero entra
+ * al perder el saque). La salida al subir a la primera línea (Z4) se resuelve
+ * en `autoOutIfExit` dentro de `replayMatch`.
  */
 function applyAutoLibero(match: Match, teams: Team[]): Match {
   let next = match;
