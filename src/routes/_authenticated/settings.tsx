@@ -16,6 +16,8 @@ import { useIsAdmin } from "@/hooks/use-auth";
 import { forceReloadFromCloud } from "@/lib/cloud-sync";
 import { useDeviceMode, type DeviceMode } from "@/hooks/use-device-mode";
 import { cn } from "@/lib/utils";
+import { FormationEditor } from "@/components/court/FormationEditor";
+
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Ajustes · RALLY" }] }),
