@@ -60,6 +60,8 @@ import {
   Minus,
   Play,
   Plus,
+  RotateCcw,
+  RotateCw,
   Shirt,
   Target,
   Undo2,
