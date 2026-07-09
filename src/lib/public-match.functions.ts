@@ -57,11 +57,18 @@ export const listLivePublicMatches = createServerFn({ method: "GET" })
       process.env.SUPABASE_PUBLISHABLE_KEY!,
       { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
     );
+    // Sólo consideramos "en vivo" a los snapshots que se actualizaron
+    // recientemente. Si el dueño cerró la pestaña y el partido nunca terminó,
+    // la snapshot queda con status="live" para siempre; el filtro por
+    // updated_at evita mostrar partidos fantasma.
+    const FRESH_MINUTES = 15;
+    const sinceIso = new Date(Date.now() - FRESH_MINUTES * 60_000).toISOString();
     const { data, error } = await sb
       .from("public_matches")
       .select("id, data, updated_at")
       .eq("is_public", true)
       .contains("data", { match: { status: "live" } })
+      .gte("updated_at", sinceIso)
       .order("updated_at", { ascending: false })
       .limit(50);
     if (error) throw error;
