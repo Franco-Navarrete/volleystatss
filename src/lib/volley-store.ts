@@ -906,8 +906,7 @@ export const useVolley = create<VolleyState>()(
               timestamp: Date.now(),
             };
             const next = { ...m, events: [...m.events, ev] };
-            const r = replayMatch(next);
-            return { ...next, ...r };
+            return applyAutoLibero(next, s.teams);
           }),
         }));
       },
