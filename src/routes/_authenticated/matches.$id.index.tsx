@@ -915,7 +915,7 @@ function LiveMatch() {
           {(["A", "B"] as const).map((side) => {
             const team = side === "A" ? teamA : teamB;
             const current = side === "A" ? match.onCourtA : match.onCourtB;
-            const players = side === "A" ? match.rosterA : match.rosterB;
+            const players = side === "A" ? teamA.players : teamB.players;
             const setter = players.find((p) => p.position === "armador");
             const setterIdx = setter ? current.indexOf(setter.id) : -1;
             const setterPos = setterIdx >= 0 ? setterIdx + 1 : null;
