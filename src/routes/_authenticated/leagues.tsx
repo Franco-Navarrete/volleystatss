@@ -23,9 +23,18 @@ function LeaguesPage() {
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(() => {
+    if (typeof localStorage === "undefined") return null;
+    return localStorage.getItem("vstats:leagues:selected");
+  });
 
-  const active = leagues.find((l) => l.id === selected) ?? leagues[0];
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return;
+    if (selected) localStorage.setItem("vstats:leagues:selected", selected);
+  }, [selected]);
+
+  const active =
+    (selected && leagues.find((l) => l.id === selected)) || leagues[0];
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const standings = useMemo(
     () => (active ? computeStandings(teams, matches, active.id) : []),
