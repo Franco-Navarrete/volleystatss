@@ -1,31 +1,33 @@
 import type { ReceptionFormation, Rotation } from "./types";
 
 /**
- * Plantillas 5-1 de RECEPCIÓN (formación en "W") derivadas de las láminas VOLEYCA.
- * Se aplican mientras el equipo está recibiendo el saque (antes de que la jugadora
- * registre la recepción). Después de la recepción, se usa la formación de ATAQUE
- * de `5-1.ts`.
+ * Plantillas 5-1 de RECEPCIÓN (formación en "W") ajustadas a las láminas
+ * VOLEYCA de referencia. Se aplican mientras el equipo está recibiendo el
+ * saque. Después de la recepción, se usa la formación de ATAQUE de `5-1.ts`.
  *
- * Sistema de coordenadas (por equipo):
+ * Convención (por equipo):
  *   y=0 → red, y=100 → línea final
  *   x=0 → izquierda del equipo, x=100 → derecha del equipo
+ *
+ * Etiquetas de la lámina:
+ *   YO = armadora, C = central, O = opuesta,
+ *   P1/P2 = puntas (front/back), L = líbero.
  */
 export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
-  // Rot 1 — armadora zaguera derecha (z1). Penetra a z2-3 para armar.
-  // OPUESTA cubre delante saliendo hacia z4. CENTRAL queda en red para 1er tiempo.
-  // Reciben: punta z5, líbero z6, punta zaguera junto a armadora en z1.
+  // Rot 1 — armadora zaguera derecha (P1). Se ubica detrás del punta 1
+  // y luego penetra a zona 2-3 para armar.
   1: {
     system: "5-1",
     rotation: 1,
-    setterTarget: { x: 70, y: 14 },
+    setterTarget: { x: 72, y: 16 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      { role: "setter", x: 86, y: 78 },
-      { role: "outside_back", x: 72, y: 70 },
-      { role: "libero", x: 50, y: 70 },
-      { role: "outside_front", x: 24, y: 68 },
-      { role: "middle_front", x: 50, y: 15 },
-      { role: "opposite", x: 10, y: 42 },
+      { role: "opposite", x: 15, y: 15 },
+      { role: "middle_front", x: 48, y: 15 },
+      { role: "outside_front", x: 20, y: 55 },
+      { role: "libero", x: 45, y: 68 },
+      { role: "outside_back", x: 72, y: 55 },
+      { role: "setter", x: 90, y: 82 },
     ],
   },
 
@@ -33,79 +35,82 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
   2: {
     system: "5-1",
     rotation: 2,
-    setterTarget: { x: 75, y: 14 },
+    setterTarget: { x: 78, y: 16 },
     attackers: ["middle_front", "outside_front", "outside_back", "opposite"],
     slots: [
-      { role: "setter", x: 85, y: 18 },
-      { role: "middle_front", x: 22, y: 16 },
-      { role: "outside_front", x: 22, y: 70 },
-      { role: "outside_back", x: 44, y: 72 },
-      { role: "libero", x: 66, y: 72 },
-      { role: "opposite", x: 84, y: 90 },
+      { role: "middle_front", x: 15, y: 20 },
+      { role: "setter", x: 80, y: 15 },
+      { role: "outside_front", x: 22, y: 52 },
+      { role: "libero", x: 78, y: 52 },
+      { role: "outside_back", x: 48, y: 62 },
+      { role: "opposite", x: 30, y: 90 },
     ],
   },
 
-  // Rot 3 — armadora delantera centro (z3). Se desplaza a z2.
+  // Rot 3 — armadora delantera centro (z3). Se desplaza a z2 para armar.
   3: {
     system: "5-1",
     rotation: 3,
-    setterTarget: { x: 75, y: 14 },
+    setterTarget: { x: 78, y: 16 },
     attackers: ["outside_front", "middle_front", "outside_back", "opposite"],
     slots: [
-      { role: "setter", x: 55, y: 20 },
-      { role: "middle_front", x: 82, y: 18 },
-      { role: "outside_front", x: 22, y: 70 },
-      { role: "libero", x: 50, y: 70 },
-      { role: "outside_back", x: 78, y: 72 },
-      { role: "opposite", x: 80, y: 92 },
+      { role: "setter", x: 62, y: 14 },
+      { role: "middle_front", x: 82, y: 20 },
+      { role: "outside_front", x: 22, y: 48 },
+      { role: "libero", x: 45, y: 58 },
+      { role: "outside_back", x: 72, y: 48 },
+      { role: "opposite", x: 60, y: 78 },
     ],
   },
 
-  // Rot 4 — armadora delantera izquierda (z4). Recorre todo para llegar a z2.
+  // Rot 4 — armadora delantera izquierda (z4). Se ubica en el borde
+  // izquierdo y luego recorre a z2-3 para armar.
   4: {
     system: "5-1",
     rotation: 4,
-    setterTarget: { x: 75, y: 14 },
+    setterTarget: { x: 78, y: 16 },
     attackers: ["middle_front", "outside_back", "opposite", "outside_front"],
     slots: [
-      { role: "setter", x: 18, y: 18 },
-      { role: "middle_front", x: 42, y: 38 },
-      { role: "outside_front", x: 22, y: 72 },
-      { role: "outside_back", x: 50, y: 72 },
-      { role: "libero", x: 74, y: 72 },
-      { role: "opposite", x: 88, y: 90 },
+      { role: "setter", x: 10, y: 12 },
+      { role: "middle_front", x: 25, y: 22 },
+      { role: "outside_front", x: 30, y: 48 },
+      { role: "libero", x: 68, y: 48 },
+      { role: "outside_back", x: 48, y: 58 },
+      { role: "opposite", x: 85, y: 90 },
     ],
   },
 
-  // Rot 5 — armadora zaguera izquierda (z5). Penetra a z2.
+  // Rot 5 — armadora zaguera izquierda (P5). Se ubica debajo del central
+  // y a la izquierda del punta 1, luego penetra a z2-3.
   5: {
     system: "5-1",
     rotation: 5,
-    setterTarget: { x: 72, y: 14 },
+    setterTarget: { x: 72, y: 16 },
     attackers: ["middle_front", "opposite", "outside_front", "outside_back"],
     slots: [
-      { role: "setter", x: 45, y: 30 },
-      { role: "middle_front", x: 22, y: 18 },
-      { role: "opposite", x: 84, y: 18 },
-      { role: "outside_front", x: 22, y: 72 },
-      { role: "outside_back", x: 50, y: 72 },
-      { role: "libero", x: 78, y: 72 },
+      { role: "middle_front", x: 15, y: 15 },
+      { role: "opposite", x: 85, y: 22 },
+      { role: "setter", x: 32, y: 32 },
+      { role: "outside_front", x: 25, y: 55 },
+      { role: "libero", x: 75, y: 55 },
+      { role: "outside_back", x: 48, y: 68 },
     ],
   },
 
-  // Rot 6 — armadora zaguera centro (z6). Penetra entre z2-3.
+  // Rot 6 — armadora zaguera centro (P6). Se ubica debajo del opuesto
+  // y a la izquierda del central, luego penetra a z2-3.
   6: {
     system: "5-1",
     rotation: 6,
-    setterTarget: { x: 70, y: 14 },
+    setterTarget: { x: 72, y: 16 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      { role: "setter", x: 62, y: 28 },
-      { role: "middle_front", x: 50, y: 16 },
-      { role: "opposite", x: 84, y: 18 },
-      { role: "outside_front", x: 22, y: 32 },
+      { role: "opposite", x: 65, y: 15 },
+      { role: "middle_front", x: 82, y: 22 },
+      { role: "setter", x: 52, y: 30 },
+      { role: "outside_front", x: 18, y: 55 },
+      { role: "outside_back", x: 82, y: 60 },
       { role: "libero", x: 50, y: 72 },
-      { role: "outside_back", x: 78, y: 72 },
     ],
   },
 };
