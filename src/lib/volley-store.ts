@@ -566,14 +566,15 @@ function replayMatch(m: Match): {
     return setNum === decidingSet ? 15 : m.pointsPerSet;
   };
 
-  // Tras cualquier recálculo: si el líbero quedó en primera línea
-  // (índices 1,2,3 = Z2,Z3,Z4), sale automáticamente y vuelve el central original.
-  const autoOutIfFront = (side: "A" | "B") => {
+  // Tras cualquier recálculo: si el líbero quedó en Z5, Z4, Z3 o Z2, sale
+  // automáticamente y vuelve el central original al mismo slot. Así el central
+  // reingresa en Z5 y desde ahí sube naturalmente a la primera línea.
+  const autoOutIfExit = (side: "A" | "B") => {
     const lib = side === "A" ? liberoA : liberoB;
     if (!lib) return;
     const arr = side === "A" ? onCourtA : onCourtB;
     const idx = arr.indexOf(lib.liberoId);
-    if (FRONT_ROW_INDEXES.has(idx)) {
+    if (LIBERO_EXIT_INDEXES.has(idx)) {
       const next = arr.map((p, i) => (i === idx ? lib.replacedId : p));
       if (side === "A") { onCourtA = next; liberoA = null; }
       else { onCourtB = next; liberoB = null; }
