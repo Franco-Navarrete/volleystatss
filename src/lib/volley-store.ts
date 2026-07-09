@@ -616,8 +616,9 @@ function replayMatch(m: Match): {
       if (ev.scoringSide === "A") onCourtA = rotateClockwise(onCourtA);
       else onCourtB = rotateClockwise(onCourtB);
       servingSide = ev.scoringSide;
-      autoOutIfFront(ev.scoringSide);
     }
+    autoOutIfFront("A");
+    autoOutIfFront("B");
     const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
