@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Match, Team } from "@/lib/volley-store";
+import { useVolley } from "@/lib/volley-store";
 import {
   getRotationFromCourt,
   inferLineupFromPlayers,
@@ -23,6 +24,7 @@ export function useFormation(
   system: TacticalSystem = "5-1",
   phase: FormationPhase = "attack",
 ): ResolvedFormation | null {
+  const customs = useVolley((s) => s.customReceptionFormations);
   return useMemo(() => {
     if (!match || !team) return null;
     const onCourt = side === "A" ? match.onCourtA : match.onCourtB;
@@ -35,6 +37,14 @@ export function useFormation(
     const rotation = getRotationFromCourt(onCourt, lineup.setter);
     if (!rotation) return null;
     const liberoOnCourt = !!lineup.libero && onCourt.includes(lineup.libero);
-    return resolveFormation({ system, rotation, lineup, phase, onCourt, liberoOnCourt });
-  }, [match, team, side, system, phase]);
+    return resolveFormation({
+      system,
+      rotation,
+      lineup,
+      phase,
+      onCourt,
+      liberoOnCourt,
+      customs: phase === "reception" ? customs : undefined,
+    });
+  }, [match, team, side, system, phase, customs]);
 }
