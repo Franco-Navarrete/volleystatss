@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, type StatsMode } from "@/lib/volley-store";
+import { useTeamMutations } from "@/hooks/use-cloud-teams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Trophy } from "lucide-react";
@@ -20,6 +21,7 @@ function LeaguesPage() {
   const removeLeague = useVolley((s) => s.removeLeague);
   const updateTeam = useVolley((s) => s.updateTeam);
   const updateLeague = useVolley((s) => s.updateLeague);
+  const mutations = useTeamMutations();
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
@@ -86,9 +88,12 @@ function LeaguesPage() {
             <Input placeholder="Temporada (opcional)" value={season} onChange={(e) => setSeason(e.target.value.slice(0, 20))} />
             <Button
               className="w-full"
-              disabled={!name.trim()}
-              onClick={() => {
-                const id = addLeague({ name: name.trim(), season: season.trim() || undefined });
+              disabled={!name.trim() || mutations.createLeague.isPending}
+              onClick={async () => {
+                const nextName = name.trim();
+                const nextSeason = season.trim() || undefined;
+                const result = await mutations.createLeague.mutateAsync({ name: nextName, season: nextSeason ?? null });
+                const id = addLeague({ id: result.id, name: nextName, season: nextSeason });
                 setName(""); setSeason(""); setSelected(id);
               }}
             >
@@ -116,6 +121,7 @@ function LeaguesPage() {
                   onClick={() => {
                     if (confirm(`¿Eliminar ${active.name}? Los equipos quedarán sin liga.`)) {
                       removeLeague(active.id);
+                      mutations.deleteLeague.mutate({ id: active.id });
                       setSelected(null);
                     }
                   }}
@@ -136,7 +142,10 @@ function LeaguesPage() {
                       <button
                         key={m}
                         type="button"
-                        onClick={() => updateLeague(active.id, { statsMode: m })}
+                        onClick={() => {
+                          updateLeague(active.id, { statsMode: m });
+                          mutations.updateLeague.mutate({ id: active.id });
+                        }}
                         className={`text-left rounded-lg border p-2.5 transition-colors ${
                           isActive
                             ? "border-primary bg-primary/10"
@@ -162,7 +171,10 @@ function LeaguesPage() {
                         <TeamBadge team={t} size="sm" />
                         <span className="flex-1 truncate font-medium text-sm">{t.name}</span>
                         <button
-                          onClick={() => updateTeam(t.id, { leagueId: undefined })}
+                          onClick={() => {
+                            updateTeam(t.id, { leagueId: undefined });
+                            mutations.updateTeam.mutate({ id: t.id, leagueId: null });
+                          }}
                           className="text-xs text-muted-foreground hover:text-destructive"
                         >
                           Quitar
@@ -181,7 +193,14 @@ function LeaguesPage() {
                       <li key={t.id} className="flex items-center gap-2 bg-secondary/20 rounded-lg px-3 py-2">
                         <TeamBadge team={t} size="sm" />
                         <span className="flex-1 truncate font-medium text-sm">{t.name}</span>
-                        <Button size="sm" variant="secondary" onClick={() => updateTeam(t.id, { leagueId: active.id })}>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            updateTeam(t.id, { leagueId: active.id });
+                            mutations.updateTeam.mutate({ id: t.id, leagueId: active.id });
+                          }}
+                        >
                           Agregar
                         </Button>
                       </li>
