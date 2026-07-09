@@ -101,12 +101,11 @@ export function getRotationFromCourt(onCourt: string[], setterId: string | undef
   if (!setterId) return null;
   const idx = onCourt.indexOf(setterId);
   if (idx < 0) return null;
-  // Convención del proyecto: la rotación se numera según la posición de cancha
-  // desde la que la armadora VIENE de rotar. Es decir, armador en P2 → Rot 1,
-  // en P1 → Rot 2, en P6 → Rot 3, en P5 → Rot 4, en P4 → Rot 5, en P3 → Rot 6.
   // onCourt: idx 0 = P1, idx 1 = P2, ... idx 5 = P6.
-  const setterPos = idx + 1; // 1..6
-  const rotation = ((setterPos + 4) % 6) + 1; // P2→1, P1→2, P6→3, P5→4, P4→5, P3→6
+  // Convención: armador en P2 → Rot 1, P1 → Rot 2, P6 → Rot 3, P5 → Rot 4,
+  // P4 → Rot 5, P3 → Rot 6.
+  const setterPos = idx + 1;
+  const rotation = ((2 - setterPos + 6) % 6) + 1;
   return rotation as Rotation;
 }
 
