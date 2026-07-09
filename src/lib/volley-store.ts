@@ -515,11 +515,12 @@ interface VolleyState {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Índices oficiales en `onCourt`: 0=Z1, 1=Z2, 2=Z3, 3=Z4, 4=Z5, 5=Z6.
-// Regla del líbero: entra por el central cuando éste rota a Z1 o Z6, y sale
-// cuando debe reingresar en Z5 (para luego subir a Z4). Nunca cubre Z5:
-// el central vuelve visible en Z5 antes de subir a la primera línea.
-const LIBERO_EXIT_INDEXES = new Set([1, 2, 3, 4]);
-const BACK_ROW_REPLACE_PRIORITY = [0, 5] as const;
+// Regla del líbero: entra por el central mientras éste esté en zaga (Z1, Z6 o
+// Z5) y sale automáticamente cuando el central rota a la primera línea (Z4).
+// Prioridad de entrada: Z1 (sólo si el equipo no está sacando: el central
+// primero saca), Z6 y Z5 — cubrimos al central desde cualquier posición zaguera.
+const LIBERO_EXIT_INDEXES = new Set([1, 2, 3]);
+const BACK_ROW_REPLACE_PRIORITY = [0, 5, 4] as const;
 
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
@@ -566,9 +567,10 @@ function replayMatch(m: Match): {
     return setNum === decidingSet ? 15 : m.pointsPerSet;
   };
 
-  // Tras cualquier recálculo: si el líbero quedó en Z5, Z4, Z3 o Z2, sale
-  // automáticamente y vuelve el central original al mismo slot. Así el central
-  // reingresa en Z5 y desde ahí sube naturalmente a la primera línea.
+  // Tras cualquier recálculo: si el líbero quedó en primera línea (Z4/Z3/Z2),
+  // sale automáticamente y vuelve la jugadora reemplazada al mismo slot.
+  // El líbero cubre a la central en toda la zaga (Z1, Z6, Z5) y sólo sale al
+  // subir a Z4 para atacar/bloquear.
   const autoOutIfExit = (side: "A" | "B") => {
     const lib = side === "A" ? liberoA : liberoB;
     if (!lib) return;
@@ -648,9 +650,10 @@ function replayMatch(m: Match): {
 
 /**
  * Auto-líbero: recalcula la cancha y, si no hay líbero activo, entra por la
- * central que corresponda en zaguero. Prioridad: Z5, Z6 y Z1 solo si ese equipo
- * ya no está sacando (así la central puede sacar y el líbero entra al perder el saque).
- * La salida al llegar a primera línea se resuelve en `autoOutIfExit` dentro de `replayMatch`.
+ * central que esté en cualquier posición zaguera (Z1, Z6 o Z5). Z1 se salta
+ * mientras el equipo está sacando (la central saca primero y el líbero entra
+ * al perder el saque). La salida al subir a la primera línea (Z4) se resuelve
+ * en `autoOutIfExit` dentro de `replayMatch`.
  */
 function applyAutoLibero(match: Match, teams: Team[]): Match {
   let next = match;
