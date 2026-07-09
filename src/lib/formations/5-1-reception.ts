@@ -82,19 +82,25 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     ],
   },
 
-  // Rot 5 — armadora en P5 (zaguera izquierda). Penetra desde la zaga izquierda.
+  // Rot 5 — armadora en P5 (zaguera izquierda). Penetra al centro pegada a la red.
   5: {
     system: "5-1",
     rotation: 5,
-    setterTarget: { x: 72, y: 16 },
+    setterTarget: { x: 55, y: 14 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      { role: "outside_front", x: 38, y: 22 },
-      { role: "setter", x: 68, y: 10 },
-      { role: "opposite", x: 88, y: 22 },
-      { role: "libero", x: 55, y: 38 },
-      { role: "outside_back", x: 35, y: 52 },
-      { role: "middle_front", x: 85, y: 82 },
+      // Armadora penetra al centro, pegada a la red.
+      { role: "setter", x: 52, y: 10 },
+      // Opuesto pegado a la red, a la derecha de la armadora (Z2).
+      { role: "opposite", x: 66, y: 15 },
+      // Central delantera a la izquierda de la armadora (Z3).
+      { role: "middle_front", x: 35, y: 15 },
+      // P2 (punta delantera) recibe arriba a la izquierda.
+      { role: "outside_front", x: 15, y: 32 },
+      // P1 (punta zaguera) recibe al medio-izquierda.
+      { role: "outside_back", x: 22, y: 52 },
+      // Líbero recibe abajo a la izquierda.
+      { role: "libero", x: 28, y: 72 },
     ],
   },
 
