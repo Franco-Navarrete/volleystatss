@@ -98,11 +98,42 @@ function NewMatch() {
   return (
     <AppShell>
       <h1 className="text-3xl font-extrabold mb-1">Nuevo partido</h1>
-      <p className="text-muted-foreground text-sm mb-6">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
+      <p className="text-muted-foreground text-sm mb-4">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
+
+      {leagues.length > 0 && (
+        <div className="mb-6 flex items-center gap-2 flex-wrap">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Liga</span>
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
+            <button
+              type="button"
+              onClick={() => { setLeagueFilter("all"); }}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Todas
+            </button>
+            {leagues.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => {
+                  setLeagueFilter(l.id);
+                  const a = teams.find((t) => t.id === teamAId);
+                  const b = teams.find((t) => t.id === teamBId);
+                  if (a && a.leagueId !== l.id) { setTeamAId(""); setLineupA(emptyLineup()); }
+                  if (b && b.leagueId !== l.id) { setTeamBId(""); setLineupB(emptyLineup()); }
+                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === l.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {l.name}{l.season ? ` · ${l.season}` : ""}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <TeamPicker label="Equipo local" teams={teams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA(emptyLineup()); }} />
-        <TeamPicker label="Equipo visitante" teams={teams} excludeId={teamAId} selectedId={teamBId} onSelect={(id) => { setTeamBId(id); setLineupB(emptyLineup()); }} />
+        <TeamPicker label="Equipo local" teams={filteredTeams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA(emptyLineup()); }} />
+        <TeamPicker label="Equipo visitante" teams={filteredTeams} excludeId={teamAId} selectedId={teamBId} onSelect={(id) => { setTeamBId(id); setLineupB(emptyLineup()); }} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
