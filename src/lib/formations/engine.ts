@@ -12,13 +12,24 @@ import type {
 
 export type FormationPhase = "reception" | "attack";
 
+/**
+ * Las plantillas de recepción/ataque están indexadas internamente por la
+ * posición de cancha del armador (1..6). El label de "rotación" que ve el
+ * usuario sigue otra convención: armador en P2 → Rot 1, P1 → Rot 2,
+ * P6 → Rot 3, P5 → Rot 4, P4 → Rot 5, P3 → Rot 6.
+ */
+function rotationToSetterPos(rotation: Rotation): Rotation {
+  return (((8 - rotation) % 6) + 1) as Rotation;
+}
+
 export function getFormation(
   system: TacticalSystem,
   rotation: Rotation,
   phase: FormationPhase = "attack",
 ): ReceptionFormation {
-  if (phase === "reception") return FORMATIONS_5_1_RECEPTION[rotation];
-  return FORMATIONS_5_1[rotation];
+  const key = rotationToSetterPos(rotation);
+  if (phase === "reception") return FORMATIONS_5_1_RECEPTION[key];
+  return FORMATIONS_5_1[key];
 }
 
 /**
@@ -90,7 +101,12 @@ export function getRotationFromCourt(onCourt: string[], setterId: string | undef
   if (!setterId) return null;
   const idx = onCourt.indexOf(setterId);
   if (idx < 0) return null;
-  return ((idx + 1) as Rotation);
+  // onCourt: idx 0 = P1, idx 1 = P2, ... idx 5 = P6.
+  // Convención: armador en P2 → Rot 1, P1 → Rot 2, P6 → Rot 3, P5 → Rot 4,
+  // P4 → Rot 5, P3 → Rot 6.
+  const setterPos = idx + 1;
+  const rotation = ((2 - setterPos + 6) % 6) + 1;
+  return rotation as Rotation;
 }
 
 /**
