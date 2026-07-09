@@ -195,21 +195,36 @@ export function resolveFormation(opts: {
   const formation = getFormation(system, rotation, phase);
   const override = customs?.[rotation] ?? {};
 
-  // Mapeo rol → playerId.
+  // Mapeo rol → playerId. Los pares (middle1/middle2, outside1/outside2) están
+  // separados por 3 posiciones en rotación, por lo que uno siempre es delantero
+  // y el otro zaguero. Asignamos dinámicamente según la posición real en cancha
+  // para que la plantilla (middle_front / outside_front / outside_back) siempre
+  // reciba a la jugadora correcta y no se pierda ninguna en el dibujo.
+  const isFront = (id?: string): boolean => {
+    if (!id) return false;
+    const pos = getRotationPosition(onCourt, id);
+    return pos ? isFrontRowPosition(pos) : false;
+  };
+  const [middleFrontId, middleBackId] = isFront(lineup.middle1)
+    ? [lineup.middle1, lineup.middle2]
+    : [lineup.middle2, lineup.middle1];
+  const [outsideFrontId, outsideBackId] = isFront(lineup.outside1)
+    ? [lineup.outside1, lineup.outside2]
+    : [lineup.outside2, lineup.outside1];
+
   const roleToPlayer: Partial<Record<TacticalRole, string | undefined>> = {
     setter: lineup.setter,
     opposite: lineup.opposite,
-    middle_front: lineup.middle1,
-    middle_back: lineup.middle2,
-    outside_front: lineup.outside1,
-    outside_back: lineup.outside2,
+    middle_front: middleFrontId,
+    middle_back: middleBackId,
+    outside_front: outsideFrontId,
+    outside_back: outsideBackId,
     libero: lineup.libero,
   };
 
-  // Si no hay líbero activo/asignado, el slot zaguero lo ocupa la central y se
-  // dibujan 6 jugadoras siguiendo la rotación normal.
-  const backMiddle = lineup.liberoReplaces === "middle1" ? lineup.middle1 : lineup.middle2;
-  roleToPlayer.libero = liberoOnCourt && lineup.libero ? lineup.libero : backMiddle;
+  // Si no hay líbero activo/asignado, el slot zaguero lo ocupa la central
+  // zaguera y se dibujan 6 jugadoras siguiendo la rotación normal.
+  roleToPlayer.libero = liberoOnCourt && lineup.libero ? lineup.libero : middleBackId;
   if (liberoOnCourt && lineup.libero) roleToPlayer.middle_back = lineup.libero;
 
   const slots: ResolvedSlot[] = formation.slots.map((s) => {
