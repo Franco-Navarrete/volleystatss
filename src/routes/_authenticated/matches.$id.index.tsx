@@ -60,6 +60,8 @@ import {
   Minus,
   Play,
   Plus,
+  RotateCcw,
+  RotateCw,
   Shirt,
   Target,
   Undo2,
@@ -176,6 +178,7 @@ function LiveMatch() {
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [showFormationDialog, setShowFormationDialog] = useState(false);
+  const [showRotateDialog, setShowRotateDialog] = useState(false);
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
@@ -558,7 +561,7 @@ function LiveMatch() {
         </div>
 
         {/* Bottom action row */}
-        <div className={`grid grid-cols-3 ${isCoach ? "sm:grid-cols-7" : "sm:grid-cols-6"} gap-1 md:gap-3 shrink-0`}>
+        <div className={`grid grid-cols-3 ${isCoach ? "sm:grid-cols-8" : "sm:grid-cols-7"} gap-1 md:gap-3 shrink-0`}>
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "scheduled" || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-3 md:size-4" /> Deshacer
           </Button>
@@ -572,6 +575,9 @@ function LiveMatch() {
           )}
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
             <Users className="size-3 md:size-4" /> Cancha 5-1
+          </Button>
+          <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => setShowRotateDialog(true)}>
+            <RotateCw className="size-3 md:size-4" /> Rotar
           </Button>
 
           <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
@@ -869,6 +875,44 @@ function LiveMatch() {
             onSave={(stw, pps) => { updateMatchFormat(match.id, stw, pps); setShowFormatDialog(false); }}
             onCancel={() => setShowFormatDialog(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Rotación manual (corrección) */}
+      <Dialog open={showRotateDialog} onOpenChange={setShowRotateDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rotar manualmente</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Corregí la rotación de un equipo si quedó desfasada. Sentido del saque: P2→P1→P6→P5→P4→P3.
+          </p>
+          {(["A", "B"] as const).map((side) => {
+            const team = side === "A" ? teamA : teamB;
+            const current = side === "A" ? match.onCourtA : match.onCourtB;
+            const rotateCW = () => {
+              if (current.filter(Boolean).length !== 6) return;
+              overrideLineup(match.id, side, [current[1], current[2], current[3], current[4], current[5], current[0]]);
+            };
+            const rotateCCW = () => {
+              if (current.filter(Boolean).length !== 6) return;
+              overrideLineup(match.id, side, [current[5], current[0], current[1], current[2], current[3], current[4]]);
+            };
+            return (
+              <div key={side} className="rounded-lg border border-border/60 p-3 flex items-center gap-2">
+                <span className="size-7 rounded text-white text-[10px] font-black flex items-center justify-center shrink-0" style={{ background: team.color }}>
+                  {team.shortName}
+                </span>
+                <span className="flex-1 text-sm font-bold truncate">{team.name}</span>
+                <Button size="sm" variant="outline" onClick={rotateCCW} title="Rotar en sentido contrario">
+                  <RotateCcw className="size-4" />
+                </Button>
+                <Button size="sm" onClick={rotateCW} title="Rotar en sentido del saque">
+                  <RotateCw className="size-4" />
+                </Button>
+              </div>
+            );
+          })}
         </DialogContent>
       </Dialog>
 
