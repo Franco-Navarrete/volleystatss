@@ -609,7 +609,7 @@ function replayMatch(m: Match): {
         if (ev.side === "A") { onCourtA = [...ev.lineup]; liberoA = null; }
         else { onCourtB = [...ev.lineup]; liberoB = null; }
       }
-      autoOutIfFront(ev.side);
+      autoOutIfExit(ev.side);
       continue;
     }
     const cur = sets[sets.length - 1];
@@ -621,8 +621,8 @@ function replayMatch(m: Match): {
       else onCourtB = rotateClockwise(onCourtB);
       servingSide = ev.scoringSide;
     }
-    autoOutIfFront("A");
-    autoOutIfFront("B");
+    autoOutIfExit("A");
+    autoOutIfExit("B");
     const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
@@ -650,7 +650,7 @@ function replayMatch(m: Match): {
  * Auto-líbero: recalcula la cancha y, si no hay líbero activo, entra por la
  * central que corresponda en zaguero. Prioridad: Z5, Z6 y Z1 solo si ese equipo
  * ya no está sacando (así la central puede sacar y el líbero entra al perder el saque).
- * La salida al llegar a primera línea se resuelve en `autoOutIfFront` dentro de `replayMatch`.
+ * La salida al llegar a primera línea se resuelve en `autoOutIfExit` dentro de `replayMatch`.
  */
 function applyAutoLibero(match: Match, teams: Team[]): Match {
   let next = match;
