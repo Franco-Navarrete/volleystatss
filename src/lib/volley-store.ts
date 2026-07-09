@@ -567,9 +567,10 @@ function replayMatch(m: Match): {
     return setNum === decidingSet ? 15 : m.pointsPerSet;
   };
 
-  // Tras cualquier recálculo: si el líbero quedó en Z5, Z4, Z3 o Z2, sale
-  // automáticamente y vuelve el central original al mismo slot. Así el central
-  // reingresa en Z5 y desde ahí sube naturalmente a la primera línea.
+  // Tras cualquier recálculo: si el líbero quedó en primera línea (Z4/Z3/Z2),
+  // sale automáticamente y vuelve la jugadora reemplazada al mismo slot.
+  // El líbero cubre a la central en toda la zaga (Z1, Z6, Z5) y sólo sale al
+  // subir a Z4 para atacar/bloquear.
   const autoOutIfExit = (side: "A" | "B") => {
     const lib = side === "A" ? liberoA : liberoB;
     if (!lib) return;
