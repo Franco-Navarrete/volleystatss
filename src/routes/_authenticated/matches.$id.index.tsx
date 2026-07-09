@@ -80,14 +80,16 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 function useForceLandscape(active: boolean) {
   useEffect(() => {
     if (!active) return;
-    // Solo forzamos landscape en teléfonos (no en tablets).
-    const mq = window.matchMedia("(orientation: portrait) and (max-width: 640px)");
+    // Forzamos landscape en teléfonos y también en tablets en portrait
+    // (la vista en vivo se rompe si la tablet queda vertical).
+    const phoneMq = window.matchMedia("(orientation: portrait) and (max-width: 640px)");
+    const tabletPortraitMq = window.matchMedia("(orientation: portrait)");
     const so: any = (screen as any).orientation;
     let orientationLocked = false;
     const apply = () => {
       const html = document.documentElement;
-      const userSelectedTablet = html.dataset.deviceResolved === "tablet" || html.classList.contains("device-tablet");
-      const shouldForce = mq.matches && !userSelectedTablet && !isTabletHardware();
+      const isTablet = html.dataset.deviceResolved === "tablet" || html.classList.contains("device-tablet") || isTabletHardware();
+      const shouldForce = isTablet ? tabletPortraitMq.matches : phoneMq.matches;
       html.classList.toggle("force-landscape", shouldForce);
       if (shouldForce && !orientationLocked) {
         orientationLocked = true;
