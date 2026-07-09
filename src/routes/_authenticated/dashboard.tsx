@@ -27,9 +27,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function LeaguePage() {
   const teams = useVolley((s) => s.teams);
   const matches = useVolley((s) => s.matches);
+  const leagues = useVolley((s) => s.leagues);
   const seed = useVolley((s) => s.seedDemo);
   const seedMatch = useVolley((s) => s.seedDemoMatch);
   const { allowed: canCreate } = useCanCreateMatches();
+
+  const [genderFilter, setGenderFilter] = useState<GenderFilterValue>("all");
+  const [leagueFilter, setLeagueFilter] = useState<string>("all");
 
   useEffect(() => {
     if (teams.length === 0) seed();
