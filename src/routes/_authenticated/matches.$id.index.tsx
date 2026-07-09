@@ -1645,7 +1645,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           // Rol por slot en base a la posición del armador (sentido antihorario).
           // slotIdx 0..5 ↔ pos 1..6; secuencia CCW: 1→6→5→4→3→2.
           const ccwIndexByPos: Record<number, number> = { 1: 0, 6: 1, 5: 2, 4: 3, 3: 4, 2: 5 };
-          const roleOrder = ["A", "P1", "C1", "O", "P2", "C2"];
+          // Diagonales: A↔O (P1/P4), P1↔P2 (P2/P5), C2↔C1/L (P3/P6).
+          const roleOrder = ["A", "C1/L", "P2", "O", "C2", "P1"];
           const armadorSlot = lineup.findIndex((pid) => {
             const pl = team.players.find((x) => x.id === pid);
             return pl?.position === "armador";
