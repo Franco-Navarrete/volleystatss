@@ -178,6 +178,7 @@ function LiveMatch() {
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [showFormationDialog, setShowFormationDialog] = useState(false);
+  const [showRotateDialog, setShowRotateDialog] = useState(false);
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
