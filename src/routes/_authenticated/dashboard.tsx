@@ -94,9 +94,29 @@ function LeaguePage() {
       <div className="grid lg:grid-cols-3 gap-6 mt-8">
         {/* Standings */}
         <section className="lg:col-span-2 rounded-2xl bg-card border border-border/60 overflow-hidden">
-          <header className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
-            <h2 className="font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> Tabla de posiciones</h2>
-            <span className="text-xs text-muted-foreground">3 pts = victoria 3-0/3-1 · 2 pts = 3-2 · 1 pt = 2-3</span>
+          <header className="px-5 py-4 border-b border-border/60 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> Tabla de posiciones</h2>
+              <span className="text-xs text-muted-foreground">3 pts = 3-0/3-1 · 2 pts = 3-2 · 1 pt = 2-3</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <GenderFilter value={genderFilter} onChange={setGenderFilter} />
+              {leagues.length > 0 && (
+                <Select value={leagueFilter} onValueChange={setLeagueFilter}>
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                    <SelectValue placeholder="Liga" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las ligas</SelectItem>
+                    {leagues.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}{l.season ? ` · ${l.season}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </header>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
