@@ -23,6 +23,8 @@ let unsubscribe: (() => void) | null = null;
 /** Ignoramos el primer cambio del store que disparamos nosotros al hidratar desde la nube. */
 let suppressNextChange = false;
 let flushHandler: (() => void) | null = null;
+let saveInFlight = false;
+let saveAgain = false;
 
 function getLocalTs(): number {
   if (typeof localStorage === "undefined") return 0;
@@ -49,6 +51,24 @@ async function saveToCloud(userId: string) {
     updated_at: updatedAt,
   });
   if (!error) setLocalTs(Date.parse(updatedAt));
+}
+
+function requestImmediateSave(userId: string) {
+  if (saveInFlight) {
+    saveAgain = true;
+    return;
+  }
+  saveInFlight = true;
+  void (async () => {
+    try {
+      do {
+        saveAgain = false;
+        await saveToCloud(userId);
+      } while (saveAgain);
+    } finally {
+      saveInFlight = false;
+    }
+  })();
 }
 
 
@@ -107,11 +127,7 @@ export async function startCloudSync(userId: string, email: string | null) {
       return;
     }
     setLocalTs(Date.now());
-    if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      saveTimer = null;
-      void saveToCloud(userId);
-    }, 1200);
+    requestImmediateSave(userId);
   });
 
   // Flush pendiente antes de que la pestaña se oculte/cierre para que
@@ -120,8 +136,8 @@ export async function startCloudSync(userId: string, email: string | null) {
     if (saveTimer) {
       clearTimeout(saveTimer);
       saveTimer = null;
-      void saveToCloud(userId);
     }
+    requestImmediateSave(userId);
   };
   if (typeof window !== "undefined") {
     window.addEventListener("pagehide", flushHandler);
@@ -141,6 +157,8 @@ export function stopCloudSync() {
   saveTimer = null;
   startedFor = null;
   suppressNextChange = false;
+  saveInFlight = false;
+  saveAgain = false;
   if (typeof window !== "undefined" && flushHandler) {
     window.removeEventListener("pagehide", flushHandler);
     window.removeEventListener("beforeunload", flushHandler);
