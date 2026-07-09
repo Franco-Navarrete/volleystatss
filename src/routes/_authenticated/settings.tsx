@@ -16,6 +16,8 @@ import { useIsAdmin } from "@/hooks/use-auth";
 import { forceReloadFromCloud } from "@/lib/cloud-sync";
 import { useDeviceMode, type DeviceMode } from "@/hooks/use-device-mode";
 import { cn } from "@/lib/utils";
+import { FormationEditor } from "@/components/court/FormationEditor";
+
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Ajustes · RALLY" }] }),
@@ -149,6 +151,18 @@ function SettingsPage() {
             Forzar recarga desde la nube
           </Button>
         </section>
+
+        <section className="rounded-xl border border-border/60 bg-card/40 p-4 space-y-3">
+          <div>
+            <h2 className="font-semibold text-sm">Formación de recepción</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ajustá manualmente la posición de cada jugadora por rotación. Se
+              aplica a todos los equipos y partidos.
+            </p>
+          </div>
+          <FormationEditor />
+        </section>
+
 
         {user?.email && (
           <p className="text-xs text-muted-foreground">

@@ -38,6 +38,8 @@ import { useCoachAccess } from "@/hooks/use-coach-access";
 import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
+import { FormationEditor } from "@/components/court/FormationEditor";
+
 
 
 import { Button } from "@/components/ui/button";
@@ -2224,29 +2226,44 @@ function FormationDialog({
 }) {
   const formationA = useFormation(match, teamA, "A");
   const formationB = useFormation(match, teamB, "B");
+  const [editing, setEditing] = useState(false);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-5xl w-[calc(100dvw-24px)] max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Formación de recepción · Sistema 5-1</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <div className="text-sm font-bold text-foreground">{teamA.name}</div>
-            <CourtFormation team={teamA} formation={formationA} />
-          </div>
-          <div className="space-y-2">
-            <div className="text-sm font-bold text-foreground">{teamB.name}</div>
-            <CourtFormation team={teamB} formation={formationB} />
-          </div>
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant={editing ? "default" : "secondary"}
+            onClick={() => setEditing((v) => !v)}
+          >
+            {editing ? "Ver formación" : "Editar posiciones"}
+          </Button>
         </div>
+        {editing ? (
+          <FormationEditor previewTeam={teamA} />
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="text-sm font-bold text-foreground">{teamA.name}</div>
+              <CourtFormation team={teamA} formation={formationA} />
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm font-bold text-foreground">{teamB.name}</div>
+              <CourtFormation team={teamB} formation={formationB} />
+            </div>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground">
-          Las posiciones se recalculan automáticamente cuando el equipo rota. Los colores indican el rol
-          táctico de cada jugadora. Asigná la posición (armadora / central / punta / opuesta / líbero) en
-          la ficha de cada jugadora para que la formación se ajuste correctamente.
+          {editing
+            ? "Arrastrá cada jugadora a la zona que quieras. Los cambios se aplican a todos los equipos y rotaciones que muestren esta formación."
+            : "Las posiciones se recalculan automáticamente cuando el equipo rota. Los colores indican el rol táctico de cada jugadora. Asigná la posición (armadora / central / punta / opuesta / líbero) en la ficha de cada jugadora para que la formación se ajuste correctamente."}
         </p>
       </DialogContent>
     </Dialog>
   );
 }
+
 

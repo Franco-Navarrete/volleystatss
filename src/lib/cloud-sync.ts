@@ -1,11 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
-import { useVolley, type Match, type Team, type League } from "./volley-store";
+import {
+  useVolley,
+  type Match,
+  type Team,
+  type League,
+  type CustomReceptionFormations,
+} from "./volley-store";
 
 type CloudData = {
   teams?: Team[];
   matches?: Match[];
   leagues?: League[];
+  customReceptionFormations?: CustomReceptionFormations;
 };
+
 
 const LOCAL_TS_KEY = "vstats:lastLocalChange";
 
@@ -27,7 +35,12 @@ function setLocalTs(ts: number) {
 
 async function saveToCloud(userId: string) {
   const s = useVolley.getState();
-  const data = { teams: s.teams, matches: s.matches, leagues: s.leagues };
+  const data = {
+    teams: s.teams,
+    matches: s.matches,
+    leagues: s.leagues,
+    customReceptionFormations: s.customReceptionFormations,
+  };
   const updatedAt = new Date().toISOString();
   const { error } = await supabase.from("app_state").upsert({
     user_id: userId,
@@ -36,6 +49,7 @@ async function saveToCloud(userId: string) {
   });
   if (!error) setLocalTs(Date.parse(updatedAt));
 }
+
 
 /**
  * Carga la data del usuario y la sincroniza usando last-write-wins por timestamp.
@@ -74,6 +88,7 @@ export async function startCloudSync(userId: string, email: string | null) {
       teams: cloud.teams ?? [],
       matches: cloud.matches ?? [],
       leagues: cloud.leagues ?? [],
+      customReceptionFormations: cloud.customReceptionFormations ?? {},
     });
     setLocalTs(cloudTs);
   } else if (!cloud && hasLocal) {
@@ -83,6 +98,7 @@ export async function startCloudSync(userId: string, email: string | null) {
     // Local gana (incluye eliminaciones pendientes): pisamos la nube.
     await saveToCloud(userId);
   }
+
 
   unsubscribe = useVolley.subscribe(() => {
     if (suppressNextChange) {
@@ -132,7 +148,13 @@ export async function forceReloadFromCloud(userId: string): Promise<{
   const matches = cloud.matches ?? [];
   const leagues = cloud.leagues ?? [];
   suppressNextChange = true;
-  useVolley.setState({ teams, matches, leagues });
+  useVolley.setState({
+    teams,
+    matches,
+    leagues,
+    customReceptionFormations: cloud.customReceptionFormations ?? {},
+  });
+
   const cloudTs = row?.updated_at ? Date.parse(row.updated_at) : Date.now();
   setLocalTs(cloudTs);
   const totalEvents = matches.reduce(
