@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { LiveMatchesFeed } from "@/components/LiveMatchesFeed";
 import { TeamBadge } from "@/components/TeamBadge";
@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Plus, Trophy } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
+import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -25,9 +27,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function LeaguePage() {
   const teams = useVolley((s) => s.teams);
   const matches = useVolley((s) => s.matches);
+  const leagues = useVolley((s) => s.leagues);
   const seed = useVolley((s) => s.seedDemo);
   const seedMatch = useVolley((s) => s.seedDemoMatch);
   const { allowed: canCreate } = useCanCreateMatches();
+
+  const [genderFilter, setGenderFilter] = useState<GenderFilterValue>("all");
+  const [leagueFilter, setLeagueFilter] = useState<string>("all");
 
   useEffect(() => {
     if (teams.length === 0) seed();
@@ -37,7 +43,15 @@ function LeaguePage() {
     if (teams.length >= 2 && matches.length === 0) seedMatch();
   }, [teams.length, matches.length, seedMatch]);
 
-  const standings = useMemo(() => computeStandings(teams, matches), [teams, matches]);
+  const filteredTeams = useMemo(() => {
+    return teams.filter((t) => {
+      if (genderFilter !== "all" && t.gender !== genderFilter) return false;
+      if (leagueFilter !== "all" && t.leagueId !== leagueFilter) return false;
+      return true;
+    });
+  }, [teams, genderFilter, leagueFilter]);
+
+  const standings = useMemo(() => computeStandings(filteredTeams, matches), [filteredTeams, matches]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const finished = matches.filter((m) => m.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
@@ -80,9 +94,29 @@ function LeaguePage() {
       <div className="grid lg:grid-cols-3 gap-6 mt-8">
         {/* Standings */}
         <section className="lg:col-span-2 rounded-2xl bg-card border border-border/60 overflow-hidden">
-          <header className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
-            <h2 className="font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> Tabla de posiciones</h2>
-            <span className="text-xs text-muted-foreground">3 pts = victoria 3-0/3-1 · 2 pts = 3-2 · 1 pt = 2-3</span>
+          <header className="px-5 py-4 border-b border-border/60 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> Tabla de posiciones</h2>
+              <span className="text-xs text-muted-foreground">3 pts = 3-0/3-1 · 2 pts = 3-2 · 1 pt = 2-3</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <GenderFilter value={genderFilter} onChange={setGenderFilter} />
+              {leagues.length > 0 && (
+                <Select value={leagueFilter} onValueChange={setLeagueFilter}>
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                    <SelectValue placeholder="Liga" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las ligas</SelectItem>
+                    {leagues.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}{l.season ? ` · ${l.season}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </header>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
