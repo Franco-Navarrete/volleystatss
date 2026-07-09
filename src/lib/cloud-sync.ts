@@ -22,6 +22,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribe: (() => void) | null = null;
 /** Ignoramos el primer cambio del store que disparamos nosotros al hidratar desde la nube. */
 let suppressNextChange = false;
+let flushHandler: (() => void) | null = null;
 
 function getLocalTs(): number {
   if (typeof localStorage === "undefined") return 0;
@@ -108,9 +109,29 @@ export async function startCloudSync(userId: string, email: string | null) {
     setLocalTs(Date.now());
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
+      saveTimer = null;
       void saveToCloud(userId);
     }, 1200);
   });
+
+  // Flush pendiente antes de que la pestaña se oculte/cierre para que
+  // cambios rápidos (ej: agregar equipo a liga y refrescar) no se pierdan.
+  flushHandler = () => {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      void saveToCloud(userId);
+    }
+  };
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", flushHandler);
+    window.addEventListener("beforeunload", flushHandler);
+    document.addEventListener("visibilitychange", visibilityFlush);
+  }
+}
+
+function visibilityFlush() {
+  if (document.visibilityState === "hidden") flushHandler?.();
 }
 
 export function stopCloudSync() {
@@ -120,6 +141,12 @@ export function stopCloudSync() {
   saveTimer = null;
   startedFor = null;
   suppressNextChange = false;
+  if (typeof window !== "undefined" && flushHandler) {
+    window.removeEventListener("pagehide", flushHandler);
+    window.removeEventListener("beforeunload", flushHandler);
+    document.removeEventListener("visibilitychange", visibilityFlush);
+  }
+  flushHandler = null;
 }
 
 /**
