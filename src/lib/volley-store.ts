@@ -194,6 +194,8 @@ export interface LiberoEvent {
   liberoId: string;
   /** Jugador al que reemplaza (vuelve a cancha al salir el líbero). */
   replacedId: string;
+  /** Evento generado por la automatización de líbero, no por un cambio manual. */
+  source?: "auto";
   setNumber: number;
   timestamp: number;
 }
@@ -685,6 +687,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
         action: "in",
         liberoId,
         replacedId,
+        source: "auto",
         setNumber: next.currentSet,
         timestamp: Date.now() + 1,
       };
@@ -980,8 +983,7 @@ export const useVolley = create<VolleyState>()(
                 timestamp: Date.now() + 1,
               };
               next = { ...next, events: [...next.events, pev] };
-              const r = replayMatch(next);
-              next = { ...next, ...r };
+              next = applyAutoLibero(next, s.teams);
             }
             return next;
           }),
@@ -1036,8 +1038,7 @@ export const useVolley = create<VolleyState>()(
                 timestamp: Date.now() + 1,
               };
               next = { ...next, events: [...next.events, pev] };
-              const r = replayMatch(next);
-              return { ...next, ...r };
+              return applyAutoLibero(next, s.teams);
             }
             return next;
           }),
@@ -1139,8 +1140,7 @@ export const useVolley = create<VolleyState>()(
               }
             }
             const next = { ...m, events: [...preservedEvents, ...newPoints] };
-            const r = replayMatch(next);
-            return { ...next, ...r };
+            return applyAutoLibero(next, s.teams);
           }),
         }));
       },
@@ -1150,11 +1150,15 @@ export const useVolley = create<VolleyState>()(
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
             const events = [...m.events];
+            while (events.length > 0) {
+              const last = events[events.length - 1];
+              if (!("kind" in last) || last.kind !== "libero" || last.source !== "auto") break;
+              events.pop();
+            }
             events.pop();
             const next = { ...m, events };
-            const r = replayMatch(next);
-            // If still has events, stay live; if no events and was finished, revert
-            return { ...next, ...r };
+            // If still has events, stay live; if no events and was finished, revert.
+            return applyAutoLibero(next, s.teams);
           }),
         }));
       },
@@ -1168,7 +1172,7 @@ export const useVolley = create<VolleyState>()(
               const scoringSide = scoringSideFor(playerSide, newType);
               return { ...e, type: newType, playerSide, playerId, scoringSide };
             });
-            return { ...m, events };
+            return applyAutoLibero({ ...m, events }, s.teams);
           }),
         }));
       },
