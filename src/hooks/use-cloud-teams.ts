@@ -2,11 +2,14 @@ import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/
 import { useServerFn } from "@tanstack/react-start";
 import {
   createPlayer,
+  createLeague,
   createTeam,
+  deleteLeague,
   deletePlayer,
   deleteTeam,
   listLeagues,
   listTeams,
+  updateLeague,
   updatePlayer,
   updateTeam,
 } from "@/lib/teams.functions";
@@ -63,10 +66,18 @@ export function useCloudLeagues() {
 export function useTeamMutations() {
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: teamsKey });
+  const invalidateLeagues = () => qc.invalidateQueries({ queryKey: leaguesKey });
+  const invalidateAll = () => {
+    invalidate();
+    invalidateLeagues();
+  };
 
   const create = useServerFn(createTeam);
   const update = useServerFn(updateTeam);
   const remove = useServerFn(deleteTeam);
+  const createL = useServerFn(createLeague);
+  const updateL = useServerFn(updateLeague);
+  const removeL = useServerFn(deleteLeague);
   const addPlayer = useServerFn(createPlayer);
   const editPlayer = useServerFn(updatePlayer);
   const removePlayer = useServerFn(deletePlayer);
@@ -83,6 +94,18 @@ export function useTeamMutations() {
     deleteTeam: useMutation({
       mutationFn: (data: Parameters<typeof remove>[0]["data"]) => remove({ data }),
       onSuccess: invalidate,
+    }),
+    createLeague: useMutation({
+      mutationFn: (data: Parameters<typeof createL>[0]["data"]) => createL({ data }),
+      onSuccess: invalidateLeagues,
+    }),
+    updateLeague: useMutation({
+      mutationFn: (data: Parameters<typeof updateL>[0]["data"]) => updateL({ data }),
+      onSuccess: invalidateLeagues,
+    }),
+    deleteLeague: useMutation({
+      mutationFn: (data: Parameters<typeof removeL>[0]["data"]) => removeL({ data }),
+      onSuccess: invalidateAll,
     }),
     createPlayer: useMutation({
       mutationFn: (data: Parameters<typeof addPlayer>[0]["data"]) => addPlayer({ data }),

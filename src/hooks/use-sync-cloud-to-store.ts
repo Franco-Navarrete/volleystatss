@@ -13,12 +13,6 @@ export function useSyncCloudToStore() {
 
   useEffect(() => {
     if (!teamsQ.data && !leaguesQ.data) return;
-    const cloudLeagues: League[] = (leaguesQ.data ?? []).map((l) => ({
-      id: l.id,
-      name: l.name,
-      season: l.season,
-      color: l.color,
-    }));
     const cloudTeams: Team[] = (teamsQ.data ?? []).map((t) => ({
       id: t.id,
       name: t.name,
@@ -38,6 +32,16 @@ export function useSyncCloudToStore() {
       })),
     }));
     useVolley.setState((s) => {
+      const cloudLeagues: League[] = (leaguesQ.data ?? []).map((l) => {
+        const current = s.leagues.find((existing) => existing.id === l.id);
+        return {
+          ...current,
+          id: l.id,
+          name: l.name,
+          season: l.season,
+          color: l.color,
+        };
+      });
       // Merge: mantenemos cualquier equipo/liga local que NO esté en la nube
       // (por compatibilidad con datos viejos) y reemplazamos los que sí están.
       const cloudTeamIds = new Set(cloudTeams.map((t) => t.id));

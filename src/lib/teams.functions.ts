@@ -5,6 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type TeamUpdate = Database["public"]["Tables"]["teams"]["Update"];
 type PlayerUpdate = Database["public"]["Tables"]["players"]["Update"];
+type LeagueUpdate = Database["public"]["Tables"]["leagues"]["Update"];
 
 const uuidSchema = z.string().uuid();
 const nameSchema = z.string().trim().min(1).max(80);
@@ -254,4 +255,63 @@ export const listLeagues = createServerFn({ method: "GET" })
       season: l.season ?? undefined,
       color: l.color ?? undefined,
     }));
+  });
+
+export const createLeague = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { name: string; season?: string | null; color?: string | null }) =>
+    z
+      .object({
+        name: nameSchema,
+        season: z.string().trim().max(40).optional().nullable(),
+        color: colorSchema.optional().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("leagues")
+      .insert({
+        name: data.name,
+        season: data.season ?? null,
+        color: data.color ?? null,
+        created_by: context.userId,
+      } as LeagueUpdate & { name: string; created_by: string })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { id: row.id };
+  });
+
+export const updateLeague = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; name?: string; season?: string | null; color?: string | null }) =>
+    z
+      .object({
+        id: uuidSchema,
+        name: nameSchema.optional(),
+        season: z.string().trim().max(40).optional().nullable(),
+        color: colorSchema.optional().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: LeagueUpdate = {};
+    if (data.name !== undefined) patch.name = data.name;
+    if (data.season !== undefined) patch.season = data.season;
+    if (data.color !== undefined) patch.color = data.color;
+    const { error } = await context.supabase.from("leagues").update(patch).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const deleteLeague = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => z.object({ id: uuidSchema }).parse(input))
+  .handler(async ({ data, context }) => {
+    const clearTeams = await context.supabase.from("teams").update({ league_id: null }).eq("league_id", data.id);
+    if (clearTeams.error) throw clearTeams.error;
+    const { error } = await context.supabase.from("leagues").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
   });

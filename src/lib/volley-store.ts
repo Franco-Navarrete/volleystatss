@@ -428,7 +428,7 @@ interface VolleyState {
     rotation: import("@/lib/formations/types").Rotation,
   ) => void;
   resetAllReceptionFormations: () => void;
-  addLeague: (l: Omit<League, "id">) => string;
+  addLeague: (l: Omit<League, "id"> & { id?: string }) => string;
   updateLeague: (id: string, patch: Partial<League>) => void;
   removeLeague: (id: string) => void;
 
@@ -766,7 +766,7 @@ export const useVolley = create<VolleyState>()(
 
 
       addLeague: (l) => {
-        const id = uid();
+        const id = l.id ?? uid();
         set((s) => ({ leagues: [...s.leagues, { ...l, id }] }));
         return id;
       },
