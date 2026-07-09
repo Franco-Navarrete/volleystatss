@@ -378,12 +378,13 @@ function LiveMatch() {
     const side = pendingReception.side;
     recordReception(match.id, side, pendingReception.playerId, rating);
     setPendingReception(null);
-    if (isCoach && rating !== "negative") {
-      // El balón llegó al armador → abrir flujo integrado (zona → atacante → calidad → acción → dirección)
-      const map: Record<ReceptionRating, SettingQuality> = {
+    // Solo continuar el flujo integrado si la recepción permite armar.
+    const canSet = rating === "double_positive" || rating === "positive" || rating === "neutral";
+    if (isCoach && canSet) {
+      const map: Record<"double_positive" | "positive" | "neutral", SettingQuality> = {
+        double_positive: "++",
         positive: "+",
         neutral: "!",
-        negative: "-",
       };
       setIntegratedRally({ side, receptionQuality: map[rating] });
     }
@@ -767,26 +768,50 @@ function LiveMatch() {
                 </DialogHeader>
                 <div className="grid grid-cols-3 gap-2 mt-3">
                   <button
-                    onClick={() => submitReception("positive")}
+                    onClick={() => submitReception("double_positive")}
                     className="min-h-14 rounded-lg bg-success text-success-foreground font-black text-2xl active:scale-95 transition"
+                    title="Doble positiva"
+                  >
+                    #
+                  </button>
+                  <button
+                    onClick={() => submitReception("positive")}
+                    className="min-h-14 rounded-lg bg-success/80 text-success-foreground font-black text-2xl active:scale-95 transition"
+                    title="Positiva"
                   >
                     +
                   </button>
                   <button
                     onClick={() => submitReception("neutral")}
-                    className="min-h-14 rounded-lg bg-muted text-foreground font-black text-2xl active:scale-95 transition"
+                    className="min-h-14 rounded-lg bg-yellow-400 text-black font-black text-2xl active:scale-95 transition"
+                    title="Neutra"
                   >
                     0
                   </button>
                   <button
                     onClick={() => submitReception("negative")}
-                    className="min-h-14 rounded-lg bg-destructive text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                    className="min-h-14 rounded-lg bg-yellow-500 text-black font-black text-2xl active:scale-95 transition"
+                    title="Negativa"
                   >
                     −
                   </button>
+                  <button
+                    onClick={() => submitReception("double_negative")}
+                    className="min-h-14 rounded-lg bg-destructive text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                    title="Doble negativa"
+                  >
+                    =
+                  </button>
+                  <button
+                    onClick={() => submitReception("overpass")}
+                    className="min-h-14 rounded-lg bg-destructive/80 text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                    title="Punto directo de saque"
+                  >
+                    ≠
+                  </button>
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center mt-2">
-                  + Positiva · 0 Neutra · − Negativa
+                  # Doble+ · + Positiva · 0 Neutra · − Negativa · = Doble− · ≠ Punto saque
                 </p>
               </>
             );

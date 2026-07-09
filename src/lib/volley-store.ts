@@ -237,7 +237,13 @@ export interface LineupOverrideEvent {
   timestamp: number;
 }
 
-export type ReceptionRating = "positive" | "neutral" | "negative";
+export type ReceptionRating =
+  | "double_positive" // #
+  | "positive" // +
+  | "neutral" // 0
+  | "negative" // -
+  | "double_negative" // =
+  | "overpass"; // ≠ (punto directo de saque)
 
 export interface ReceptionEvent {
   id: string;
@@ -1074,8 +1080,8 @@ export const useVolley = create<VolleyState>()(
               timestamp: Date.now(),
             };
             let next = { ...m, events: [...m.events, ev] };
-            // Recepción negativa: punto y ace para el sacador (equipo contrario).
-            if (rating === "negative") {
+            // Punto directo de saque (≠): ace para el equipo sacador.
+            if (rating === "overpass") {
               const servingSide: "A" | "B" = side === "A" ? "B" : "A";
               const serverLineup = servingSide === "A" ? next.onCourtA : next.onCourtB;
               const serverId = serverLineup[0] ?? null;
@@ -1546,9 +1552,9 @@ export function computeReceptionStats(events: MatchEvent[], side?: "A" | "B"): M
       s = { playerId: ev.playerId, positive: 0, neutral: 0, negative: 0, total: 0, efficiency: 0 };
       m.set(ev.playerId, s);
     }
-    if (ev.rating === "positive") s.positive++;
+    if (ev.rating === "positive" || ev.rating === "double_positive") s.positive++;
     else if (ev.rating === "neutral") s.neutral++;
-    else s.negative++;
+    else s.negative++; // negative | double_negative | overpass
     s.total++;
     s.efficiency = s.total > 0 ? ((s.positive - s.negative) / s.total) * 100 : 0;
   }
