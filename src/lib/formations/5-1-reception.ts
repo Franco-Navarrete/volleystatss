@@ -24,8 +24,8 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "opposite", x: 15, y: 15 },
       // Central delantera cubre zona 3.
       { role: "middle_front", x: 40, y: 18 },
-      // P1 (punta zaguera) sube para atacar por zona 2.
-      { role: "outside_back", x: 48, y: 40 },
+      // P1 sube a atacar por zona 2 (frente derecha, pegada a la red).
+      { role: "outside_back", x: 72, y: 18 },
       // P2 (punta delantera) recibe abierto por izquierda.
       { role: "outside_front", x: 14, y: 48 },
       // Líbero recibe junto a la punta.
