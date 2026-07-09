@@ -144,7 +144,6 @@ function LeaguesPage() {
                         type="button"
                         onClick={() => {
                           updateLeague(active.id, { statsMode: m });
-                          mutations.updateLeague.mutate({ id: active.id });
                         }}
                         className={`text-left rounded-lg border p-2.5 transition-colors ${
                           isActive
