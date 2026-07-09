@@ -1,11 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
-import { useVolley, type Match, type Team, type League } from "./volley-store";
+import {
+  useVolley,
+  type Match,
+  type Team,
+  type League,
+  type CustomReceptionFormations,
+} from "./volley-store";
 
 type CloudData = {
   teams?: Team[];
   matches?: Match[];
   leagues?: League[];
+  customReceptionFormations?: CustomReceptionFormations;
 };
+
 
 const LOCAL_TS_KEY = "vstats:lastLocalChange";
 
