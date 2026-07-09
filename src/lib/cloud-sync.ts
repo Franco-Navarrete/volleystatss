@@ -148,7 +148,13 @@ export async function forceReloadFromCloud(userId: string): Promise<{
   const matches = cloud.matches ?? [];
   const leagues = cloud.leagues ?? [];
   suppressNextChange = true;
-  useVolley.setState({ teams, matches, leagues });
+  useVolley.setState({
+    teams,
+    matches,
+    leagues,
+    customReceptionFormations: cloud.customReceptionFormations ?? {},
+  });
+
   const cloudTs = row?.updated_at ? Date.parse(row.updated_at) : Date.now();
   setLocalTs(cloudTs);
   const totalEvents = matches.reduce(
