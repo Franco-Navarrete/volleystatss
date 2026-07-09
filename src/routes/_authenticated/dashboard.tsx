@@ -43,7 +43,15 @@ function LeaguePage() {
     if (teams.length >= 2 && matches.length === 0) seedMatch();
   }, [teams.length, matches.length, seedMatch]);
 
-  const standings = useMemo(() => computeStandings(teams, matches), [teams, matches]);
+  const filteredTeams = useMemo(() => {
+    return teams.filter((t) => {
+      if (genderFilter !== "all" && t.gender !== genderFilter) return false;
+      if (leagueFilter !== "all" && t.leagueId !== leagueFilter) return false;
+      return true;
+    });
+  }, [teams, genderFilter, leagueFilter]);
+
+  const standings = useMemo(() => computeStandings(filteredTeams, matches), [filteredTeams, matches]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const finished = matches.filter((m) => m.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
