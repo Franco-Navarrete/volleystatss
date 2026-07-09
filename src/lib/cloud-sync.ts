@@ -88,6 +88,7 @@ export async function startCloudSync(userId: string, email: string | null) {
       teams: cloud.teams ?? [],
       matches: cloud.matches ?? [],
       leagues: cloud.leagues ?? [],
+      customReceptionFormations: cloud.customReceptionFormations ?? {},
     });
     setLocalTs(cloudTs);
   } else if (!cloud && hasLocal) {
@@ -97,6 +98,7 @@ export async function startCloudSync(userId: string, email: string | null) {
     // Local gana (incluye eliminaciones pendientes): pisamos la nube.
     await saveToCloud(userId);
   }
+
 
   unsubscribe = useVolley.subscribe(() => {
     if (suppressNextChange) {
