@@ -398,13 +398,34 @@ export function matchGender(match: Match, teamById: Map<string, Team>): TeamGend
 }
 
 
+export type ReceptionOverride = Partial<
+  Record<
+    import("@/lib/formations/types").TacticalRole,
+    { x: number; y: number }
+  >
+>;
+export type CustomReceptionFormations = Partial<
+  Record<import("@/lib/formations/types").Rotation, ReceptionOverride>
+>;
+
 interface VolleyState {
   teams: Team[];
   matches: Match[];
   leagues: League[];
+  customReceptionFormations?: CustomReceptionFormations;
+  setReceptionSlot: (
+    rotation: import("@/lib/formations/types").Rotation,
+    role: import("@/lib/formations/types").TacticalRole,
+    pos: { x: number; y: number },
+  ) => void;
+  resetReceptionRotation: (
+    rotation: import("@/lib/formations/types").Rotation,
+  ) => void;
+  resetAllReceptionFormations: () => void;
   addLeague: (l: Omit<League, "id">) => string;
   updateLeague: (id: string, patch: Partial<League>) => void;
   removeLeague: (id: string) => void;
+
   addTeam: (t: Omit<Team, "id" | "players">) => string;
   updateTeam: (id: string, patch: Partial<Team>) => void;
   removeTeam: (id: string) => void;
