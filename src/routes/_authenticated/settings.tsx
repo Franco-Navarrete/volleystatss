@@ -152,6 +152,18 @@ function SettingsPage() {
           </Button>
         </section>
 
+        <section className="rounded-xl border border-border/60 bg-card/40 p-4 space-y-3">
+          <div>
+            <h2 className="font-semibold text-sm">Formación de recepción</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ajustá manualmente la posición de cada jugadora por rotación. Se
+              aplica a todos los equipos y partidos.
+            </p>
+          </div>
+          <FormationEditor />
+        </section>
+
+
         {user?.email && (
           <p className="text-xs text-muted-foreground">
             Sesión: <span className="text-foreground">{user.email}</span>
