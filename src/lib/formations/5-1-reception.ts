@@ -55,19 +55,25 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     ],
   },
 
-  // Rot 3 — armadora en P3 (delantera centro). Se desplaza a z2 para armar.
+  // Rot 3 — armadora en P3 (delantera centro). Se ubica pegada a la red en Z3.
   3: {
     system: "5-1",
     rotation: 3,
-    setterTarget: { x: 78, y: 16 },
+    setterTarget: { x: 50, y: 14 },
     attackers: ["outside_front", "middle_front", "outside_back", "opposite"],
     slots: [
-      { role: "middle_front", x: 52, y: 22 },
-      { role: "setter", x: 72, y: 10 },
-      { role: "outside_front", x: 15, y: 48 },
-      { role: "outside_back", x: 85, y: 48 },
-      { role: "libero", x: 40, y: 72 },
-      { role: "opposite", x: 62, y: 85 },
+      // Armadora pegada a la red, centro (levemente derecha).
+      { role: "setter", x: 45, y: 10 },
+      // Central delantera detrás/al lado de la armadora.
+      { role: "middle_front", x: 38, y: 24 },
+      // P1 (punta zaguera) recibe arriba a la izquierda.
+      { role: "outside_back", x: 15, y: 24 },
+      // Líbero recibe al medio-izquierda.
+      { role: "libero", x: 18, y: 42 },
+      // P2 (punta delantera) recibe abajo del líbero.
+      { role: "outside_front", x: 22, y: 60 },
+      // Opuesto atrás a la izquierda (zaguero).
+      { role: "opposite", x: 22, y: 80 },
     ],
   },
 
