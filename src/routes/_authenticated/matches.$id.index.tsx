@@ -878,6 +878,44 @@ function LiveMatch() {
         </DialogContent>
       </Dialog>
 
+      {/* Rotación manual (corrección) */}
+      <Dialog open={showRotateDialog} onOpenChange={setShowRotateDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rotar manualmente</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Corregí la rotación de un equipo si quedó desfasada. Sentido del saque: P2→P1→P6→P5→P4→P3.
+          </p>
+          {(["A", "B"] as const).map((side) => {
+            const team = side === "A" ? teamA : teamB;
+            const current = side === "A" ? match.onCourtA : match.onCourtB;
+            const rotateCW = () => {
+              if (current.filter(Boolean).length !== 6) return;
+              overrideLineup(match.id, side, [current[1], current[2], current[3], current[4], current[5], current[0]]);
+            };
+            const rotateCCW = () => {
+              if (current.filter(Boolean).length !== 6) return;
+              overrideLineup(match.id, side, [current[5], current[0], current[1], current[2], current[3], current[4]]);
+            };
+            return (
+              <div key={side} className="rounded-lg border border-border/60 p-3 flex items-center gap-2">
+                <span className="size-7 rounded text-white text-[10px] font-black flex items-center justify-center shrink-0" style={{ background: team.color }}>
+                  {team.shortName}
+                </span>
+                <span className="flex-1 text-sm font-bold truncate">{team.name}</span>
+                <Button size="sm" variant="outline" onClick={rotateCCW} title="Rotar en sentido contrario">
+                  <RotateCcw className="size-4" />
+                </Button>
+                <Button size="sm" onClick={rotateCW} title="Rotar en sentido del saque">
+                  <RotateCw className="size-4" />
+                </Button>
+              </div>
+            );
+          })}
+        </DialogContent>
+      </Dialog>
+
       {/* Sanction dialog */}
       <Dialog open={!!sanctionSide} onOpenChange={(o) => !o && setSanctionSide(null)}>
         <DialogContent className="max-w-md">
