@@ -1552,9 +1552,9 @@ export function computeReceptionStats(events: MatchEvent[], side?: "A" | "B"): M
       s = { playerId: ev.playerId, positive: 0, neutral: 0, negative: 0, total: 0, efficiency: 0 };
       m.set(ev.playerId, s);
     }
-    if (ev.rating === "positive") s.positive++;
+    if (ev.rating === "positive" || ev.rating === "double_positive") s.positive++;
     else if (ev.rating === "neutral") s.neutral++;
-    else s.negative++;
+    else s.negative++; // negative | double_negative | overpass
     s.total++;
     s.efficiency = s.total > 0 ? ((s.positive - s.negative) / s.total) * 100 : 0;
   }
