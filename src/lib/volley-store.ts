@@ -512,6 +512,10 @@ interface VolleyState {
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+// Índices oficiales en `onCourt`: 0=Z1, 1=Z2, 2=Z3, 3=Z4, 4=Z5, 5=Z6.
+const FRONT_ROW_INDEXES = new Set([1, 2, 3]);
+const BACK_ROW_REPLACE_PRIORITY = [4, 5, 0] as const;
+
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
   if (arr.length < 2) return [...arr];
@@ -557,14 +561,14 @@ function replayMatch(m: Match): {
     return setNum === decidingSet ? 15 : m.pointsPerSet;
   };
 
-  // Tras rotar: si el líbero quedó en posición de frente (índices 1,2,3 = pos 2,3,4),
-  // sale automáticamente y vuelve el jugador original al mismo slot.
+  // Tras cualquier recálculo: si el líbero quedó en primera línea
+  // (índices 1,2,3 = Z2,Z3,Z4), sale automáticamente y vuelve el central original.
   const autoOutIfFront = (side: "A" | "B") => {
     const lib = side === "A" ? liberoA : liberoB;
     if (!lib) return;
     const arr = side === "A" ? onCourtA : onCourtB;
     const idx = arr.indexOf(lib.liberoId);
-    if (idx === 1 || idx === 2 || idx === 3) {
+    if (FRONT_ROW_INDEXES.has(idx)) {
       const next = arr.map((p, i) => (i === idx ? lib.replacedId : p));
       if (side === "A") { onCourtA = next; liberoA = null; }
       else { onCourtB = next; liberoB = null; }
@@ -599,6 +603,7 @@ function replayMatch(m: Match): {
         if (ev.side === "A") { onCourtA = [...ev.lineup]; liberoA = null; }
         else { onCourtB = [...ev.lineup]; liberoB = null; }
       }
+      autoOutIfFront(ev.side);
       continue;
     }
     const cur = sets[sets.length - 1];
@@ -635,11 +640,10 @@ function replayMatch(m: Match): {
 }
 
 /**
- * Auto-libero: si algún central del equipo está parado en cualquier posición
- * de zaguero (índices 0=P1, 4=P5, 5=P6) y no hay líbero activo, entra el
- * líbero por esa central. La salida cuando el líbero rota a delantera está
- * en `autoOutIfFront` dentro de `replayMatch`. El líbero siempre vuelve a
- * salir por la misma central que reemplazó (se guarda `replacedId`).
+ * Auto-líbero: recalcula la cancha y, si no hay líbero activo, entra por la
+ * central que corresponda en zaguero. Prioridad: Z5, Z6 y Z1 solo si ese equipo
+ * ya no está sacando (así la central puede sacar y el líbero entra al perder el saque).
+ * La salida al llegar a primera línea se resuelve en `autoOutIfFront` dentro de `replayMatch`.
  */
 function applyAutoLibero(match: Match, teams: Team[]): Match {
   let next = match;
@@ -664,8 +668,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
       const onCourt = side === "A" ? r.onCourtA : r.onCourtB;
       const liberoId = libIds.find((id) => !onCourt.includes(id));
       if (!liberoId) continue;
-      // Índices zagueros: 0 = P1, 4 = P5, 5 = P6.
-      const backIdxs = [0, 4, 5];
+      const backIdxs = BACK_ROW_REPLACE_PRIORITY.filter((idx) => idx !== 0 || r.servingSide !== side);
       let replacedId: string | null = null;
       for (const i of backIdxs) {
         const p = team.players.find((pp) => pp.id === onCourt[i]);
