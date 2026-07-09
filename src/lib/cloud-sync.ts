@@ -35,7 +35,12 @@ function setLocalTs(ts: number) {
 
 async function saveToCloud(userId: string) {
   const s = useVolley.getState();
-  const data = { teams: s.teams, matches: s.matches, leagues: s.leagues };
+  const data = {
+    teams: s.teams,
+    matches: s.matches,
+    leagues: s.leagues,
+    customReceptionFormations: s.customReceptionFormations,
+  };
   const updatedAt = new Date().toISOString();
   const { error } = await supabase.from("app_state").upsert({
     user_id: userId,
@@ -44,6 +49,7 @@ async function saveToCloud(userId: string) {
   });
   if (!error) setLocalTs(Date.parse(updatedAt));
 }
+
 
 /**
  * Carga la data del usuario y la sincroniza usando last-write-wins por timestamp.
