@@ -22,6 +22,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribe: (() => void) | null = null;
 /** Ignoramos el primer cambio del store que disparamos nosotros al hidratar desde la nube. */
 let suppressNextChange = false;
+let flushHandler: (() => void) | null = null;
 
 function getLocalTs(): number {
   if (typeof localStorage === "undefined") return 0;
