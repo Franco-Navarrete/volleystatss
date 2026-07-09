@@ -515,11 +515,12 @@ interface VolleyState {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Índices oficiales en `onCourt`: 0=Z1, 1=Z2, 2=Z3, 3=Z4, 4=Z5, 5=Z6.
-// Regla del líbero: entra por el central cuando éste rota a Z1 o Z6, y sale
-// cuando debe reingresar en Z5 (para luego subir a Z4). Nunca cubre Z5:
-// el central vuelve visible en Z5 antes de subir a la primera línea.
-const LIBERO_EXIT_INDEXES = new Set([1, 2, 3, 4]);
-const BACK_ROW_REPLACE_PRIORITY = [0, 5] as const;
+// Regla del líbero: entra por el central mientras éste esté en zaga (Z1, Z6 o
+// Z5) y sale automáticamente cuando el central rota a la primera línea (Z4).
+// Prioridad de entrada: Z1 (sólo si el equipo no está sacando: el central
+// primero saca), Z6 y Z5 — cubrimos al central desde cualquier posición zaguera.
+const LIBERO_EXIT_INDEXES = new Set([1, 2, 3]);
+const BACK_ROW_REPLACE_PRIORITY = [0, 5, 4] as const;
 
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
