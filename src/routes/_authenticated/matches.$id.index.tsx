@@ -768,26 +768,50 @@ function LiveMatch() {
                 </DialogHeader>
                 <div className="grid grid-cols-3 gap-2 mt-3">
                   <button
-                    onClick={() => submitReception("positive")}
+                    onClick={() => submitReception("double_positive")}
                     className="min-h-14 rounded-lg bg-success text-success-foreground font-black text-2xl active:scale-95 transition"
+                    title="Doble positiva"
+                  >
+                    #
+                  </button>
+                  <button
+                    onClick={() => submitReception("positive")}
+                    className="min-h-14 rounded-lg bg-success/80 text-success-foreground font-black text-2xl active:scale-95 transition"
+                    title="Positiva"
                   >
                     +
                   </button>
                   <button
                     onClick={() => submitReception("neutral")}
-                    className="min-h-14 rounded-lg bg-muted text-foreground font-black text-2xl active:scale-95 transition"
+                    className="min-h-14 rounded-lg bg-yellow-400 text-black font-black text-2xl active:scale-95 transition"
+                    title="Neutra"
                   >
                     0
                   </button>
                   <button
                     onClick={() => submitReception("negative")}
-                    className="min-h-14 rounded-lg bg-destructive text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                    className="min-h-14 rounded-lg bg-yellow-500 text-black font-black text-2xl active:scale-95 transition"
+                    title="Negativa"
                   >
                     −
                   </button>
+                  <button
+                    onClick={() => submitReception("double_negative")}
+                    className="min-h-14 rounded-lg bg-destructive text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                    title="Doble negativa"
+                  >
+                    =
+                  </button>
+                  <button
+                    onClick={() => submitReception("overpass")}
+                    className="min-h-14 rounded-lg bg-destructive/80 text-destructive-foreground font-black text-2xl active:scale-95 transition"
+                    title="Punto directo de saque"
+                  >
+                    ≠
+                  </button>
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center mt-2">
-                  + Positiva · 0 Neutra · − Negativa
+                  # Doble+ · + Positiva · 0 Neutra · − Negativa · = Doble− · ≠ Punto saque
                 </p>
               </>
             );
