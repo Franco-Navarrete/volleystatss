@@ -915,26 +915,60 @@ function LiveMatch() {
           {(["A", "B"] as const).map((side) => {
             const team = side === "A" ? teamA : teamB;
             const current = side === "A" ? match.onCourtA : match.onCourtB;
-            const rotateCW = () => {
+            const players = side === "A" ? teamA.players : teamB.players;
+            const setter = players.find((p) => p.position === "armador");
+            const setterIdx = setter ? current.indexOf(setter.id) : -1;
+            const setterPos = setterIdx >= 0 ? setterIdx + 1 : null;
+            const rotateBy = (steps: number) => {
               if (current.filter(Boolean).length !== 6) return;
-              overrideLineup(match.id, side, [current[1], current[2], current[3], current[4], current[5], current[0]]);
+              const n = ((steps % 6) + 6) % 6;
+              const next = current.map((_, i) => current[(i + n) % 6]);
+              overrideLineup(match.id, side, next);
             };
-            const rotateCCW = () => {
-              if (current.filter(Boolean).length !== 6) return;
-              overrideLineup(match.id, side, [current[5], current[0], current[1], current[2], current[3], current[4]]);
+            const setSetterAt = (targetPos: number) => {
+              if (setterIdx < 0) return;
+              // rotateBy(n) hace newLineup[i] = current[(i+n)%6],
+              // por lo tanto el armador que estaba en setterIdx queda en (setterIdx - n).
+              // Para dejarlo en (targetPos-1): n = setterIdx - (targetPos-1).
+              rotateBy(setterIdx - (targetPos - 1));
             };
             return (
-              <div key={side} className="rounded-lg border border-border/60 p-3 flex items-center gap-2">
-                <span className="size-7 rounded text-white text-[10px] font-black flex items-center justify-center shrink-0" style={{ background: team.color }}>
-                  {team.shortName}
-                </span>
-                <span className="flex-1 text-sm font-bold truncate">{team.name}</span>
-                <Button size="sm" variant="outline" onClick={rotateCCW} title="Rotar en sentido contrario">
-                  <RotateCcw className="size-4" />
-                </Button>
-                <Button size="sm" onClick={rotateCW} title="Rotar en sentido del saque">
-                  <RotateCw className="size-4" />
-                </Button>
+              <div key={side} className="rounded-lg border border-border/60 p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="size-7 rounded text-white text-[10px] font-black flex items-center justify-center shrink-0" style={{ background: team.color }}>
+                    {team.shortName}
+                  </span>
+                  <span className="flex-1 text-sm font-bold truncate">{team.name}</span>
+                  <Button size="sm" variant="outline" onClick={() => rotateBy(-1)} title="Rotar en sentido contrario">
+                    <RotateCcw className="size-4" />
+                  </Button>
+                  <Button size="sm" onClick={() => rotateBy(1)} title="Rotar en sentido del saque">
+                    <RotateCw className="size-4" />
+                  </Button>
+                </div>
+                {setter ? (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                      Armador en {setterPos ? `P${setterPos}` : "—"}
+                    </p>
+                    <div className="grid grid-cols-6 gap-1">
+                      {[1, 2, 3, 4, 5, 6].map((p) => (
+                        <Button
+                          key={p}
+                          size="sm"
+                          variant={setterPos === p ? "default" : "outline"}
+                          className="h-8 px-0 text-xs font-bold"
+                          onClick={() => setSetterAt(p)}
+                          disabled={setterIdx < 0}
+                        >
+                          P{p}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">Definí un armador en el plantel para ubicarlo por P1–P6.</p>
+                )}
               </div>
             );
           })}
