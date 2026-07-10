@@ -194,6 +194,40 @@ function LeaguesPage() {
                 </div>
               </div>
 
+              <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
+                  Género de la liga
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { v: undefined, label: "Mixta" },
+                    { v: "F" as const, label: "Femenino" },
+                    { v: "M" as const, label: "Masculino" },
+                  ]).map((opt) => {
+                    const isActive = (active.gender ?? undefined) === opt.v;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          updateLeague(active.id, { gender: opt.v });
+                          if (UUID_RE.test(active.id)) {
+                            mutations.updateLeague.mutate({ id: active.id, gender: opt.v ?? null });
+                          }
+                        }}
+                        className={`px-2 py-2 rounded-md text-xs font-semibold border transition-colors ${isActive ? "border-primary bg-primary/10 text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Al seleccionar un género, solo podrás agregar equipos de ese género.
+                </p>
+              </div>
+
+
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
                   <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Equipos en la liga</h3>
