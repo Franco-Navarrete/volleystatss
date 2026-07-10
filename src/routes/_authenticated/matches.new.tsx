@@ -26,10 +26,13 @@ function NewMatch() {
   const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
 
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
-  const filteredTeams = useMemo(
-    () => (leagueFilter === "all" ? teams : teams.filter((t) => t.leagueId === leagueFilter)),
-    [teams, leagueFilter],
-  );
+  const [genderFilter, setGenderFilter] = useState<"all" | "M" | "F">("all");
+  const filteredTeams = useMemo(() => {
+    let list = teams;
+    if (leagueFilter !== "all") list = list.filter((t) => t.leagueId === leagueFilter);
+    if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
+    return list;
+  }, [teams, leagueFilter, genderFilter]);
 
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
