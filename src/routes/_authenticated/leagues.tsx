@@ -31,6 +31,7 @@ function LeaguesPage() {
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
+  const [newGender, setNewGender] = useState<"M" | "F" | "">("");
   const [selected, setSelected] = useState<string | null>(() => {
     if (typeof localStorage === "undefined") return null;
     return localStorage.getItem("vstats:leagues:selected");
@@ -49,7 +50,12 @@ function LeaguesPage() {
     [teams, matches, active]
   );
   const teamsInLeague = teams.filter((t) => t.leagueId === active?.id);
-  const teamsAvailable = teams.filter((t) => !t.leagueId || t.leagueId !== active?.id);
+  const teamsAvailable = teams.filter((t) => {
+    if (t.leagueId === active?.id) return false;
+    if (t.leagueId) return false;
+    if (active?.gender && t.gender && t.gender !== active.gender) return false;
+    return true;
+  });
 
   return (
     <AppShell>
