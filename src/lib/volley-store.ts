@@ -68,6 +68,8 @@ export interface League {
   name: string;
   season?: string;
   color?: string;
+  /** Género de los equipos que juegan esta liga (M/F). Si es undefined, admite ambos. */
+  gender?: "M" | "F";
   /** Define qué interfaz y estadísticas se muestran para los partidos de esta liga. */
   statsMode?: StatsMode;
 }
