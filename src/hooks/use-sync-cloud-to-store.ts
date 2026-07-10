@@ -44,10 +44,22 @@ export function useSyncCloudToStore() {
       });
       // Merge: mantenemos cualquier equipo/liga local que NO esté en la nube
       // (por compatibilidad con datos viejos) y reemplazamos los que sí están.
+      // Importante: muchas ligas históricas viven sólo en app_state y tienen
+      // IDs locales (no UUID). Si el servidor de equipos devuelve ese equipo
+      // con leagueId vacío, no debemos pisar la asignación local al cambiar de
+      // pestaña, porque se guarda automáticamente desde el store.
       const cloudTeamIds = new Set(cloudTeams.map((t) => t.id));
       const cloudLeagueIds = new Set(cloudLeagues.map((l) => l.id));
+      const mergedCloudTeams = cloudTeams.map((team) => {
+        const current = s.teams.find((existing) => existing.id === team.id);
+        const localOnlyLeagueId =
+          current?.leagueId && !cloudLeagueIds.has(current.leagueId)
+            ? current.leagueId
+            : undefined;
+        return localOnlyLeagueId ? { ...team, leagueId: localOnlyLeagueId } : team;
+      });
       const mergedTeams = [
-        ...cloudTeams,
+        ...mergedCloudTeams,
         ...s.teams.filter((t) => !cloudTeamIds.has(t.id)),
       ];
       const mergedLeagues = [
