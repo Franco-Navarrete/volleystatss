@@ -105,7 +105,21 @@ function TeamsPage() {
   const [editTeamShort, setEditTeamShort] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const activeTeam: CloudTeam | undefined = teams.find((t) => t.id === selected) ?? teams[0];
+  const [filterLeague, setFilterLeague] = useState<string>("all");
+  const [filterGender, setFilterGender] = useState<GenderFilterValue>("all");
+  const [filterCategory, setFilterCategory] = useState<"all" | TeamCategory>("all");
+
+  const filteredTeams = useMemo(() => {
+    return teams.filter((t) => {
+      if (filterLeague === "none" && t.leagueId) return false;
+      if (filterLeague !== "all" && filterLeague !== "none" && t.leagueId !== filterLeague) return false;
+      if (filterGender !== "all" && t.gender !== filterGender) return false;
+      if (filterCategory !== "all" && t.category !== filterCategory) return false;
+      return true;
+    });
+  }, [teams, filterLeague, filterGender, filterCategory]);
+
+  const activeTeam: CloudTeam | undefined = teams.find((t) => t.id === selected) ?? filteredTeams[0] ?? teams[0];
   const deletingTeam = teams.find((t) => t.id === deleteTarget) ?? null;
   const affectedLeague = deletingTeam
     ? leagues.find((l) => l.id === deletingTeam.leagueId) ?? null
