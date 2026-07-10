@@ -43,6 +43,7 @@ export type CloudLeague = {
   name: string;
   season?: string;
   color?: string;
+  gender?: "M" | "F";
 };
 
 export function useCloudTeams() {

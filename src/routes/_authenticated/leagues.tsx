@@ -31,6 +31,7 @@ function LeaguesPage() {
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
+  const [newGender, setNewGender] = useState<"M" | "F" | "">("");
   const [selected, setSelected] = useState<string | null>(() => {
     if (typeof localStorage === "undefined") return null;
     return localStorage.getItem("vstats:leagues:selected");
@@ -49,7 +50,12 @@ function LeaguesPage() {
     [teams, matches, active]
   );
   const teamsInLeague = teams.filter((t) => t.leagueId === active?.id);
-  const teamsAvailable = teams.filter((t) => !t.leagueId || t.leagueId !== active?.id);
+  const teamsAvailable = teams.filter((t) => {
+    if (t.leagueId === active?.id) return false;
+    if (t.leagueId) return false;
+    if (active?.gender && t.gender && t.gender !== active.gender) return false;
+    return true;
+  });
 
   return (
     <AppShell>
@@ -67,6 +73,7 @@ function LeaguesPage() {
             {leagues.map((l) => {
               const isActive = active?.id === l.id;
               const count = teams.filter((t) => t.leagueId === l.id).length;
+              const genderLabel = l.gender === "F" ? "Femenino" : l.gender === "M" ? "Masculino" : "Mixta";
               return (
                 <li key={l.id}>
                   <button
@@ -78,7 +85,7 @@ function LeaguesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{l.name}</div>
-                      <div className="text-xs text-muted-foreground">{l.season ? `${l.season} · ` : ""}{count} equipos</div>
+                      <div className="text-xs text-muted-foreground">{l.season ? `${l.season} · ` : ""}{genderLabel} · {count} equipos</div>
                     </div>
                   </button>
                 </li>
@@ -92,15 +99,35 @@ function LeaguesPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nueva liga</p>
             <Input placeholder="Nombre (ej: Liga Apertura)" value={name} onChange={(e) => setName(e.target.value.slice(0, 60))} />
             <Input placeholder="Temporada (opcional)" value={season} onChange={(e) => setSeason(e.target.value.slice(0, 20))} />
+            <div className="grid grid-cols-3 gap-1.5">
+              {([
+                { v: "", label: "Mixta" },
+                { v: "F", label: "Femenino" },
+                { v: "M", label: "Masculino" },
+              ] as const).map((opt) => {
+                const active = newGender === opt.v;
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setNewGender(opt.v)}
+                    className={`px-2 py-1.5 rounded-md text-xs font-semibold border transition-colors ${active ? "border-primary bg-primary/10 text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
             <Button
               className="w-full"
               disabled={!name.trim() || mutations.createLeague.isPending}
               onClick={async () => {
                 const nextName = name.trim();
                 const nextSeason = season.trim() || undefined;
-                const result = await mutations.createLeague.mutateAsync({ name: nextName, season: nextSeason ?? null });
-                const id = addLeague({ id: result.id, name: nextName, season: nextSeason });
-                setName(""); setSeason(""); setSelected(id);
+                const nextGender = newGender || undefined;
+                const result = await mutations.createLeague.mutateAsync({ name: nextName, season: nextSeason ?? null, gender: nextGender ?? null });
+                const id = addLeague({ id: result.id, name: nextName, season: nextSeason, gender: nextGender });
+                setName(""); setSeason(""); setNewGender(""); setSelected(id);
               }}
             >
               <Plus className="size-4" /> Crear liga
@@ -118,7 +145,7 @@ function LeaguesPage() {
                 <div className="flex-1">
                   <h2 className="font-bold text-xl">{active.name}</h2>
                   <p className="text-xs text-muted-foreground uppercase tracking-widest">
-                    {active.season ?? "Sin temporada"} · {teamsInLeague.length} equipos
+                    {active.season ?? "Sin temporada"} · {active.gender === "F" ? "Femenino" : active.gender === "M" ? "Masculino" : "Mixta"} · {teamsInLeague.length} equipos
                   </p>
                 </div>
                 <Button
@@ -166,6 +193,40 @@ function LeaguesPage() {
                   })}
                 </div>
               </div>
+
+              <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
+                  Género de la liga
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { v: undefined, label: "Mixta" },
+                    { v: "F" as const, label: "Femenino" },
+                    { v: "M" as const, label: "Masculino" },
+                  ]).map((opt) => {
+                    const isActive = (active.gender ?? undefined) === opt.v;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          updateLeague(active.id, { gender: opt.v });
+                          if (UUID_RE.test(active.id)) {
+                            mutations.updateLeague.mutate({ id: active.id, gender: opt.v ?? null });
+                          }
+                        }}
+                        className={`px-2 py-2 rounded-md text-xs font-semibold border transition-colors ${isActive ? "border-primary bg-primary/10 text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Al seleccionar un género, solo podrás agregar equipos de ese género.
+                </p>
+              </div>
+
 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>

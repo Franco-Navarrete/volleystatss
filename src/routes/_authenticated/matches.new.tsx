@@ -26,10 +26,13 @@ function NewMatch() {
   const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
 
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
-  const filteredTeams = useMemo(
-    () => (leagueFilter === "all" ? teams : teams.filter((t) => t.leagueId === leagueFilter)),
-    [teams, leagueFilter],
-  );
+  const [genderFilter, setGenderFilter] = useState<"all" | "M" | "F">("all");
+  const filteredTeams = useMemo(() => {
+    let list = teams;
+    if (leagueFilter !== "all") list = list.filter((t) => t.leagueId === leagueFilter);
+    if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
+    return list;
+  }, [teams, leagueFilter, genderFilter]);
 
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
@@ -117,6 +120,7 @@ function NewMatch() {
                 type="button"
                 onClick={() => {
                   setLeagueFilter(l.id);
+                  if (l.gender) setGenderFilter(l.gender);
                   const a = teams.find((t) => t.id === teamAId);
                   const b = teams.find((t) => t.id === teamBId);
                   if (a && a.leagueId !== l.id) { setTeamAId(""); setLineupA(emptyLineup()); }
@@ -130,6 +134,38 @@ function NewMatch() {
           </div>
         </div>
       )}
+
+      <div className="mb-6 flex items-center gap-2 flex-wrap">
+        <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Género</span>
+        <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
+          {([
+            { v: "all" as const, label: "Todos" },
+            { v: "F" as const, label: "Femenino" },
+            { v: "M" as const, label: "Masculino" },
+          ]).map((opt) => {
+            const active = genderFilter === opt.v;
+            return (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => {
+                  setGenderFilter(opt.v);
+                  const a = teams.find((t) => t.id === teamAId);
+                  const b = teams.find((t) => t.id === teamBId);
+                  if (opt.v !== "all") {
+                    if (a && a.gender !== opt.v) { setTeamAId(""); setLineupA(emptyLineup()); }
+                    if (b && b.gender !== opt.v) { setTeamBId(""); setLineupB(emptyLineup()); }
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
 
       <div className="grid lg:grid-cols-2 gap-6">
         <TeamPicker label="Equipo local" teams={filteredTeams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA(emptyLineup()); }} />

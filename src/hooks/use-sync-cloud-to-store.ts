@@ -40,6 +40,7 @@ export function useSyncCloudToStore() {
           name: l.name,
           season: l.season,
           color: l.color,
+          gender: l.gender,
         };
       });
       // Merge: mantenemos cualquier equipo/liga local que NO esté en la nube

@@ -246,7 +246,7 @@ export const listLeagues = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("leagues")
-      .select("id, name, season, color")
+      .select("id, name, season, color, gender")
       .order("name", { ascending: true });
     if (error) throw error;
     return (data ?? []).map((l) => ({
@@ -254,17 +254,21 @@ export const listLeagues = createServerFn({ method: "GET" })
       name: l.name,
       season: l.season ?? undefined,
       color: l.color ?? undefined,
+      gender: (l as { gender?: string | null }).gender === "M" || (l as { gender?: string | null }).gender === "F"
+        ? ((l as { gender: "M" | "F" }).gender)
+        : undefined,
     }));
   });
 
 export const createLeague = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { name: string; season?: string | null; color?: string | null }) =>
+  .inputValidator((input: { name: string; season?: string | null; color?: string | null; gender?: "M" | "F" | null }) =>
     z
       .object({
         name: nameSchema,
         season: z.string().trim().max(40).optional().nullable(),
         color: colorSchema.optional().nullable(),
+        gender: genderSchema,
       })
       .parse(input),
   )
@@ -275,6 +279,7 @@ export const createLeague = createServerFn({ method: "POST" })
         name: data.name,
         season: data.season ?? null,
         color: data.color ?? null,
+        gender: data.gender ?? null,
         created_by: context.userId,
       } as LeagueUpdate & { name: string; created_by: string })
       .select("id")
@@ -285,13 +290,14 @@ export const createLeague = createServerFn({ method: "POST" })
 
 export const updateLeague = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id: string; name?: string; season?: string | null; color?: string | null }) =>
+  .inputValidator((input: { id: string; name?: string; season?: string | null; color?: string | null; gender?: "M" | "F" | null }) =>
     z
       .object({
         id: uuidSchema,
         name: nameSchema.optional(),
         season: z.string().trim().max(40).optional().nullable(),
         color: colorSchema.optional().nullable(),
+        gender: genderSchema,
       })
       .parse(input),
   )
@@ -300,6 +306,7 @@ export const updateLeague = createServerFn({ method: "POST" })
     if (data.name !== undefined) patch.name = data.name;
     if (data.season !== undefined) patch.season = data.season;
     if (data.color !== undefined) patch.color = data.color;
+    if (data.gender !== undefined) (patch as LeagueUpdate & { gender?: string | null }).gender = data.gender;
     const { error } = await context.supabase.from("leagues").update(patch).eq("id", data.id);
     if (error) throw error;
     return { ok: true };
