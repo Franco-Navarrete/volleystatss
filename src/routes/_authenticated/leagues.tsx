@@ -145,7 +145,7 @@ function LeaguesPage() {
                 <div className="flex-1">
                   <h2 className="font-bold text-xl">{active.name}</h2>
                   <p className="text-xs text-muted-foreground uppercase tracking-widest">
-                    {active.season ?? "Sin temporada"} · {teamsInLeague.length} equipos
+                    {active.season ?? "Sin temporada"} · {active.gender === "F" ? "Femenino" : active.gender === "M" ? "Masculino" : "Mixta"} · {teamsInLeague.length} equipos
                   </p>
                 </div>
                 <Button
