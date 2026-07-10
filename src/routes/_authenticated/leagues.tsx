@@ -73,6 +73,7 @@ function LeaguesPage() {
             {leagues.map((l) => {
               const isActive = active?.id === l.id;
               const count = teams.filter((t) => t.leagueId === l.id).length;
+              const genderLabel = l.gender === "F" ? "Femenino" : l.gender === "M" ? "Masculino" : "Mixta";
               return (
                 <li key={l.id}>
                   <button
@@ -84,7 +85,7 @@ function LeaguesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{l.name}</div>
-                      <div className="text-xs text-muted-foreground">{l.season ? `${l.season} · ` : ""}{count} equipos</div>
+                      <div className="text-xs text-muted-foreground">{l.season ? `${l.season} · ` : ""}{genderLabel} · {count} equipos</div>
                     </div>
                   </button>
                 </li>
@@ -98,15 +99,35 @@ function LeaguesPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nueva liga</p>
             <Input placeholder="Nombre (ej: Liga Apertura)" value={name} onChange={(e) => setName(e.target.value.slice(0, 60))} />
             <Input placeholder="Temporada (opcional)" value={season} onChange={(e) => setSeason(e.target.value.slice(0, 20))} />
+            <div className="grid grid-cols-3 gap-1.5">
+              {([
+                { v: "", label: "Mixta" },
+                { v: "F", label: "Femenino" },
+                { v: "M", label: "Masculino" },
+              ] as const).map((opt) => {
+                const active = newGender === opt.v;
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setNewGender(opt.v)}
+                    className={`px-2 py-1.5 rounded-md text-xs font-semibold border transition-colors ${active ? "border-primary bg-primary/10 text-primary" : "border-border/60 text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
             <Button
               className="w-full"
               disabled={!name.trim() || mutations.createLeague.isPending}
               onClick={async () => {
                 const nextName = name.trim();
                 const nextSeason = season.trim() || undefined;
-                const result = await mutations.createLeague.mutateAsync({ name: nextName, season: nextSeason ?? null });
-                const id = addLeague({ id: result.id, name: nextName, season: nextSeason });
-                setName(""); setSeason(""); setSelected(id);
+                const nextGender = newGender || undefined;
+                const result = await mutations.createLeague.mutateAsync({ name: nextName, season: nextSeason ?? null, gender: nextGender ?? null });
+                const id = addLeague({ id: result.id, name: nextName, season: nextSeason, gender: nextGender });
+                setName(""); setSeason(""); setNewGender(""); setSelected(id);
               }}
             >
               <Plus className="size-4" /> Crear liga
