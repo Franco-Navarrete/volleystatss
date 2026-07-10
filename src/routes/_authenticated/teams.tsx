@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
-import { PLAYER_POSITIONS, PLAYER_POSITION_LABEL, TEAM_CATEGORIES, TEAM_CATEGORY_LABEL, type PlayerPosition, type TeamCategory } from "@/lib/volley-store";
+import { PLAYER_POSITIONS, PLAYER_POSITION_LABEL, TEAM_CATEGORIES, TEAM_CATEGORY_LABEL, TEAM_GENDER_LABEL, type PlayerPosition, type TeamCategory } from "@/lib/volley-store";
+import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
 import {
   useCloudLeagues,
   useCloudTeams,
@@ -104,7 +105,21 @@ function TeamsPage() {
   const [editTeamShort, setEditTeamShort] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const activeTeam: CloudTeam | undefined = teams.find((t) => t.id === selected) ?? teams[0];
+  const [filterLeague, setFilterLeague] = useState<string>("all");
+  const [filterGender, setFilterGender] = useState<GenderFilterValue>("all");
+  const [filterCategory, setFilterCategory] = useState<"all" | TeamCategory>("all");
+
+  const filteredTeams = useMemo(() => {
+    return teams.filter((t) => {
+      if (filterLeague === "none" && t.leagueId) return false;
+      if (filterLeague !== "all" && filterLeague !== "none" && t.leagueId !== filterLeague) return false;
+      if (filterGender !== "all" && t.gender !== filterGender) return false;
+      if (filterCategory !== "all" && t.category !== filterCategory) return false;
+      return true;
+    });
+  }, [teams, filterLeague, filterGender, filterCategory]);
+
+  const activeTeam: CloudTeam | undefined = teams.find((t) => t.id === selected) ?? filteredTeams[0] ?? teams[0];
   const deletingTeam = teams.find((t) => t.id === deleteTarget) ?? null;
   const affectedLeague = deletingTeam
     ? leagues.find((l) => l.id === deletingTeam.leagueId) ?? null
@@ -200,11 +215,39 @@ function TeamsPage() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <section className="rounded-2xl bg-card border border-border/60 p-5">
-          <h2 className="font-bold flex items-center gap-2 mb-4">
+          <h2 className="font-bold flex items-center gap-2 mb-3">
             <Users className="size-4" /> Equipos
           </h2>
+
+          <div className="space-y-2 mb-4">
+            <select
+              value={filterLeague}
+              onChange={(e) => setFilterLeague(e.target.value)}
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs"
+            >
+              <option value="all">Todas las ligas</option>
+              <option value="none">Sin liga</option>
+              {leagues.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}{l.season ? ` ${l.season}` : ""}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value as "all" | TeamCategory)}
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs"
+            >
+              <option value="all">Todas las categorías</option>
+              {TEAM_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{TEAM_CATEGORY_LABEL[c]}</option>
+              ))}
+            </select>
+            <GenderFilter value={filterGender} onChange={setFilterGender} />
+          </div>
+
           <ul className="space-y-1.5 mb-5">
-            {teams.map((t) => {
+            {filteredTeams.map((t) => {
               const isActive = activeTeam?.id === t.id;
               const league = leagues.find((l) => l.id === t.leagueId);
               return (
@@ -218,17 +261,19 @@ function TeamsPage() {
                     <TeamBadge team={t} size="sm" />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{t.name}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground truncate">
                         {t.players.length} jug · {league?.name ?? "sin liga"}
+                        {t.gender ? ` · ${TEAM_GENDER_LABEL[t.gender]}` : ""}
+                        {t.category ? ` · ${TEAM_CATEGORY_LABEL[t.category]}` : ""}
                       </div>
                     </div>
                   </button>
                 </li>
               );
             })}
-            {teams.length === 0 && (
+            {filteredTeams.length === 0 && (
               <li className="text-sm text-muted-foreground py-6 text-center">
-                Aún no hay equipos.
+                {teams.length === 0 ? "Aún no hay equipos." : "Ningún equipo coincide con los filtros."}
               </li>
             )}
           </ul>
