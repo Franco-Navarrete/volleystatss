@@ -28,6 +28,7 @@ export interface MatchPerformance {
   ace: number;
   serveError: number;
   attackError: number;
+  blockError: number;
   unforcedError: number;
   wasMvp: boolean;
 }
