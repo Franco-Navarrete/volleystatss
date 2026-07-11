@@ -411,7 +411,7 @@ function TeamsPage() {
                 className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Sin liga</option>
-                {assignableLeagues.map((l) => (
+                {leagues.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name}
                   </option>
@@ -582,7 +582,7 @@ function TeamsPage() {
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <select
                     value={activeTeam.leagueId ?? ""}
-                    disabled={!canEdit || assignableLeagues.length === 0}
+                    disabled={!canEdit || leagues.length === 0}
                     onChange={(e) => {
                       const newLeagueId = e.target.value || null;
                       mut.updateTeam.mutate({
@@ -597,10 +597,10 @@ function TeamsPage() {
                       }
                     }}
                     className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
-                    title={assignableLeagues.length === 0 ? "Creá una liga en la sección Ligas primero" : "Liga del equipo"}
+                    title={leagues.length === 0 ? "Creá una liga en la sección Ligas primero" : "Liga del equipo"}
                   >
                     <option value="">Sin liga</option>
-                    {assignableLeagues.map((l) => (
+                    {leagues.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
                       </option>
