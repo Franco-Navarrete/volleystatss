@@ -177,7 +177,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     y += 3;
     autoTable(doc, {
       startY: y,
-      head: [["#", "Receptor", "#", "+", "0", "−", "=", "≠", "Tot", "Pos%", "Efic%"]],
+      head: [["#", "Receptor", "#", "+", "0", "−", "=", "≠", "Tot", "Efect%", "Efic%"]],
       body: rows.length
         ? rows.map((r) => [r.number, r.name, r.doublePositive, r.positive, r.neutral, r.negative, r.doubleNegative, r.overpass, r.total, `${r.positivity.toFixed(0)}%`, `${r.efficiency.toFixed(0)}%`])
         : [["-", "Sin recepciones registradas", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
