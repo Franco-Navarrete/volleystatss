@@ -772,42 +772,42 @@ function LiveMatch() {
                   <button
                     onClick={() => submitReception("double_positive")}
                     className="min-h-14 rounded-lg bg-success text-success-foreground font-black text-2xl active:scale-95 transition"
-                    title="Doble positiva"
+                    title="# Doble+"
                   >
                     #
                   </button>
                   <button
                     onClick={() => submitReception("positive")}
                     className="min-h-14 rounded-lg bg-success/80 text-success-foreground font-black text-2xl active:scale-95 transition"
-                    title="Positiva"
+                    title="+ Positiva"
                   >
                     +
                   </button>
                   <button
                     onClick={() => submitReception("neutral")}
                     className="min-h-14 rounded-lg bg-yellow-400 text-black font-black text-2xl active:scale-95 transition"
-                    title="Neutra"
+                    title="0 Neutra"
                   >
                     0
                   </button>
                   <button
                     onClick={() => submitReception("negative")}
                     className="min-h-14 rounded-lg bg-yellow-500 text-black font-black text-2xl active:scale-95 transition"
-                    title="Negativa"
+                    title="- Negativa"
                   >
                     −
                   </button>
                   <button
                     onClick={() => submitReception("double_negative")}
                     className="min-h-14 rounded-lg bg-destructive text-destructive-foreground font-black text-2xl active:scale-95 transition"
-                    title="Doble negativa"
+                    title="= Doble-"
                   >
                     =
                   </button>
                   <button
                     onClick={() => submitReception("overpass")}
                     className="min-h-14 rounded-lg bg-destructive/80 text-destructive-foreground font-black text-2xl active:scale-95 transition"
-                    title="Punto directo de saque"
+                    title="≠ Punto saque"
                   >
                     ≠
                   </button>
