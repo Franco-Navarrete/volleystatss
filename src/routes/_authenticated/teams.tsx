@@ -103,33 +103,69 @@ function TeamsPage() {
 
   const mut = useTeamMutations();
 
-  // Auto-migrate local-only leagues (non-UUID ids) to the cloud so they become assignable.
+  // Auto-migrate local-only leagues to cloud AND sync team↔league assignments
+  // (fixes: "Ligas dice 9 equipos, Equipos muestra 1" — teams exist in cloud
+  // with league_id=null, while the local store knows the correct league).
+  const storeTeams = useVolley((s) => s.teams);
   const syncingRef = useRef(false);
   useEffect(() => {
     if (!canEdit || syncingRef.current) return;
-    const orphans = leagues.filter(
+    const cloudTeams = teams;
+
+    const missingLeagues = leagues.filter(
       (l) => !UUID_RE.test(l.id) && !cloudLeagues.find(
         (c) => c.name.trim().toLowerCase() === l.name.trim().toLowerCase(),
       ),
     );
-    if (orphans.length === 0) return;
+
+    const nameToCloudLeague = new Map<string, string>();
+    for (const c of cloudLeagues) nameToCloudLeague.set(c.name.trim().toLowerCase(), c.id);
+    for (const l of leagues) {
+      if (UUID_RE.test(l.id)) nameToCloudLeague.set(l.name.trim().toLowerCase(), l.id);
+    }
+    const localLeagueById = new Map(storeLeagues.map((l) => [l.id, l] as const));
+
+    const teamFixes: { id: string; leagueId: string }[] = [];
+    for (const ct of cloudTeams) {
+      if (ct.leagueId) continue;
+      // Find matching store team by id first, then by name+shortName
+      const st = storeTeams.find((s) => s.id === ct.id)
+        ?? storeTeams.find(
+          (s) => s.name.trim().toLowerCase() === ct.name.trim().toLowerCase()
+            && s.shortName.trim().toLowerCase() === ct.shortName.trim().toLowerCase(),
+        );
+      if (!st?.leagueId) continue;
+      const localLeague = localLeagueById.get(st.leagueId);
+      const targetName = localLeague?.name ?? st.leagueId;
+      const cloudLeagueId = nameToCloudLeague.get(targetName.trim().toLowerCase());
+      if (cloudLeagueId) teamFixes.push({ id: ct.id, leagueId: cloudLeagueId });
+    }
+
+    if (missingLeagues.length === 0 && teamFixes.length === 0) return;
     syncingRef.current = true;
     (async () => {
-      for (const l of orphans) {
-        try {
-          await mut.createLeague.mutateAsync({
-            name: l.name,
-            season: l.season ?? null,
-            color: l.color ?? null,
-            gender: l.gender ?? null,
-          });
-        } catch {
-          /* ignore, will retry on next mount */
+      try {
+        for (const l of missingLeagues) {
+          try {
+            await mut.createLeague.mutateAsync({
+              name: l.name,
+              season: l.season ?? null,
+              color: l.color ?? null,
+              gender: l.gender ?? null,
+            });
+          } catch { /* skip */ }
         }
+        for (const fix of teamFixes) {
+          try {
+            await mut.updateTeam.mutateAsync(fix);
+          } catch { /* skip */ }
+        }
+      } finally {
+        syncingRef.current = false;
       }
-      syncingRef.current = false;
     })();
-  }, [leagues, cloudLeagues, canEdit, mut.createLeague]);
+  }, [teams, leagues, cloudLeagues, storeTeams, storeLeagues, canEdit, mut.createLeague, mut.updateTeam]);
+
 
 
   const [name, setName] = useState("");
