@@ -177,13 +177,13 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
     y += 3;
     autoTable(doc, {
       startY: y,
-      head: [["#", "Receptor", "+", "0", "−", "Total", "Eficiencia"]],
+      head: [["#", "Receptor", "#", "+", "0", "−", "=", "≠", "Tot", "Pos%", "Efic%"]],
       body: rows.length
-        ? rows.map((r) => [r.number, r.name, r.positive, r.neutral, r.negative, r.total, `${r.efficiency.toFixed(1)}%`])
-        : [["-", "Sin recepciones registradas", "-", "-", "-", "-", "-"]],
+        ? rows.map((r) => [r.number, r.name, r.doublePositive, r.positive, r.neutral, r.negative, r.doubleNegative, r.overpass, r.total, `${r.positivity.toFixed(0)}%`, `${r.efficiency.toFixed(0)}%`])
+        : [["-", "Sin recepciones registradas", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
       headStyles: { fillColor: dark, fontSize: 7 },
       bodyStyles: { fontSize: 7 },
-      columnStyles: { 0: { cellWidth: 10 }, 6: { fontStyle: "bold" } },
+      columnStyles: { 0: { cellWidth: 10 }, 9: { fontStyle: "bold" }, 10: { fontStyle: "bold" } },
       margin: { left: margin, right: margin },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
