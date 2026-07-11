@@ -568,10 +568,14 @@ function ReceptionTable({
         playerId: tp.id,
         name: tp.name,
         number: tp.number,
+        doublePositive: r?.doublePositive ?? 0,
         positive: r?.positive ?? 0,
         neutral: r?.neutral ?? 0,
         negative: r?.negative ?? 0,
+        doubleNegative: r?.doubleNegative ?? 0,
+        overpass: r?.overpass ?? 0,
         total: r?.total ?? 0,
+        positivity: r?.positivity ?? 0,
         efficiency: r?.efficiency ?? 0,
       };
     })
@@ -580,15 +584,20 @@ function ReceptionTable({
 
   const totals = rows.reduce(
     (acc, r) => ({
+      dpos: acc.dpos + r.doublePositive,
       pos: acc.pos + r.positive,
       neu: acc.neu + r.neutral,
       neg: acc.neg + r.negative,
+      dneg: acc.dneg + r.doubleNegative,
+      over: acc.over + r.overpass,
       total: acc.total + r.total,
     }),
-    { pos: 0, neu: 0, neg: 0, total: 0 },
+    { dpos: 0, pos: 0, neu: 0, neg: 0, dneg: 0, over: 0, total: 0 },
   );
-  const teamEff = totals.total > 0 ? ((totals.pos - totals.neg) / totals.total) * 100 : 0;
+  const teamPositivity = totals.total > 0 ? ((totals.dpos + totals.pos) / totals.total) * 100 : 0;
+  const teamEff = totals.total > 0 ? ((totals.dpos - totals.dneg - totals.over) / totals.total) * 100 : 0;
   const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
+  const posClass = (p: number) => (p >= 50 ? "text-success" : p <= 30 ? "text-destructive" : "text-primary");
 
   return (
     <section className="rounded-2xl bg-card border border-border/60 overflow-hidden">
@@ -606,11 +615,15 @@ function ReceptionTable({
           <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
             <tr>
               <th className="text-left py-2 px-4">Receptor</th>
-              <th className="text-center py-2 px-2 text-success">+</th>
-              <th className="text-center py-2 px-2">0</th>
-              <th className="text-center py-2 px-2 text-destructive">−</th>
+              <th className="text-center py-2 px-2 text-success" title="Perfecta">#</th>
+              <th className="text-center py-2 px-2 text-success" title="Positiva">+</th>
+              <th className="text-center py-2 px-2" title="Neutra">0</th>
+              <th className="text-center py-2 px-2 text-destructive" title="Negativa">−</th>
+              <th className="text-center py-2 px-2 text-destructive" title="Doble negativa">=</th>
+              <th className="text-center py-2 px-2 text-destructive" title="Punto directo de saque">≠</th>
               <th className="text-center py-2 px-2">Total</th>
-              <th className="text-center py-2 px-4 text-primary">Eficiencia</th>
+              <th className="text-center py-2 px-2 text-primary" title="(# + +) / total">Pos%</th>
+              <th className="text-center py-2 px-4 text-primary" title="(# − = − ≠) / total">Efic%</th>
             </tr>
           </thead>
           <tbody>
@@ -622,25 +635,33 @@ function ReceptionTable({
                     <span className="font-medium truncate">{p.name}</span>
                   </div>
                 </td>
+                <td className="text-center tabular-nums text-success font-bold">{p.doublePositive}</td>
                 <td className="text-center tabular-nums text-success font-bold">{p.positive}</td>
                 <td className="text-center tabular-nums">{p.neutral}</td>
                 <td className="text-center tabular-nums text-destructive font-bold">{p.negative}</td>
+                <td className="text-center tabular-nums text-destructive font-bold">{p.doubleNegative}</td>
+                <td className="text-center tabular-nums text-destructive font-bold">{p.overpass}</td>
                 <td className="text-center tabular-nums">{p.total}</td>
+                <td className={`text-center tabular-nums font-bold ${posClass(p.positivity)}`}>{p.positivity.toFixed(0)}%</td>
                 <td className={`text-center tabular-nums font-bold px-4 ${effClass(p.efficiency)}`}>
                   {p.efficiency.toFixed(0)}%
                 </td>
               </tr>
             ))}
             {rows.length === 0 && (
-              <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">Sin recepciones registradas.</td></tr>
+              <tr><td colSpan={10} className="text-center py-8 text-sm text-muted-foreground">Sin recepciones registradas.</td></tr>
             )}
             {rows.length > 0 && (
               <tr className="border-t-2 border-border bg-secondary/30">
                 <td className="py-2 px-4 font-bold text-xs uppercase tracking-widest text-muted-foreground">Total equipo</td>
+                <td className="text-center tabular-nums text-success font-bold">{totals.dpos}</td>
                 <td className="text-center tabular-nums text-success font-bold">{totals.pos}</td>
                 <td className="text-center tabular-nums">{totals.neu}</td>
                 <td className="text-center tabular-nums text-destructive font-bold">{totals.neg}</td>
+                <td className="text-center tabular-nums text-destructive font-bold">{totals.dneg}</td>
+                <td className="text-center tabular-nums text-destructive font-bold">{totals.over}</td>
                 <td className="text-center tabular-nums font-bold">{totals.total}</td>
+                <td className={`text-center tabular-nums font-black ${posClass(teamPositivity)}`}>{teamPositivity.toFixed(0)}%</td>
                 <td className={`text-center tabular-nums font-black px-4 ${effClass(teamEff)}`}>{teamEff.toFixed(0)}%</td>
               </tr>
             )}

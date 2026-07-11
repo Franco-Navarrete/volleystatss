@@ -1542,11 +1542,22 @@ export function computeSetStats(match: Match, setNumber: number) {
 
 export interface ReceptionStat {
   playerId: string;
+  /** # perfectas */
+  doublePositive: number;
+  /** + positivas */
   positive: number;
+  /** 0 neutras */
   neutral: number;
+  /** - negativas */
   negative: number;
+  /** = doble negativa */
+  doubleNegative: number;
+  /** ≠ punto directo de saque (error) */
+  overpass: number;
   total: number;
-  /** (pos - neg) / total * 100 */
+  /** Positividad = (# + +) / total * 100 */
+  positivity: number;
+  /** Eficiencia estilo Data Volley = (# − = − ≠) / total * 100 */
   efficiency: number;
 }
 
@@ -1557,14 +1568,27 @@ export function computeReceptionStats(events: MatchEvent[], side?: "A" | "B"): M
     if (side && ev.side !== side) continue;
     let s = m.get(ev.playerId);
     if (!s) {
-      s = { playerId: ev.playerId, positive: 0, neutral: 0, negative: 0, total: 0, efficiency: 0 };
+      s = {
+        playerId: ev.playerId,
+        doublePositive: 0, positive: 0, neutral: 0,
+        negative: 0, doubleNegative: 0, overpass: 0,
+        total: 0, positivity: 0, efficiency: 0,
+      };
       m.set(ev.playerId, s);
     }
-    if (ev.rating === "positive" || ev.rating === "double_positive") s.positive++;
-    else if (ev.rating === "neutral") s.neutral++;
-    else s.negative++; // negative | double_negative | overpass
+    switch (ev.rating) {
+      case "double_positive": s.doublePositive++; break;
+      case "positive": s.positive++; break;
+      case "neutral": s.neutral++; break;
+      case "negative": s.negative++; break;
+      case "double_negative": s.doubleNegative++; break;
+      case "overpass": s.overpass++; break;
+    }
     s.total++;
-    s.efficiency = s.total > 0 ? ((s.positive - s.negative) / s.total) * 100 : 0;
+    if (s.total > 0) {
+      s.positivity = ((s.doublePositive + s.positive) / s.total) * 100;
+      s.efficiency = ((s.doublePositive - s.doubleNegative - s.overpass) / s.total) * 100;
+    }
   }
   return m;
 }

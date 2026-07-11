@@ -211,24 +211,29 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
     for (const rec of recMap.values()) {
       const agg = ensure(rec.playerId);
       if (!agg) continue;
-      agg.totals.receptionPositive += rec.positive;
+      // positive bucket = # + +   ; negative bucket = - + = + ≠
+      agg.totals.receptionPositive += rec.doublePositive + rec.positive;
       agg.totals.receptionNeutral += rec.neutral;
-      agg.totals.receptionNegative += rec.negative;
+      agg.totals.receptionNegative += rec.negative + rec.doubleNegative + rec.overpass;
       agg.totals.receptionTotal += rec.total;
+      // Data Volley: perfectas y errores (para eficiencia)
+      (agg.totals as any).receptionPerfect = ((agg.totals as any).receptionPerfect ?? 0) + rec.doublePositive;
+      (agg.totals as any).receptionError = ((agg.totals as any).receptionError ?? 0) + rec.doubleNegative + rec.overpass;
     }
   }
 
   for (const agg of aggs.values()) {
     const mp = agg.matchesPlayed || 1;
     const recTot = agg.totals.receptionTotal;
+    const perfect = (agg.totals as any).receptionPerfect ?? 0;
+    const errors = (agg.totals as any).receptionError ?? 0;
     agg.averages = {
       points: agg.totals.points / mp,
       attack: agg.totals.attack / mp,
       block: agg.totals.block / mp,
       ace: agg.totals.ace / mp,
-      receptionEfficiency: recTot > 0
-        ? ((agg.totals.receptionPositive - agg.totals.receptionNegative) / recTot) * 100
-        : 0,
+      // Eficiencia Data Volley: (# − = − ≠) / total * 100
+      receptionEfficiency: recTot > 0 ? ((perfect - errors) / recTot) * 100 : 0,
     };
     // Most recent first
     agg.allPerformances.reverse();
