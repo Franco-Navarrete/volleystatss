@@ -2105,25 +2105,46 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
   const renderTeam = (team: Team, recMap: Map<string, ReturnType<typeof computeReceptionStats> extends Map<string, infer V> ? V : never>) => {
     const tStat = stats.teams.get(team.id);
     const recTotals = [...recMap.values()].reduce(
-      (acc, r) => ({ pos: acc.pos + r.positive, neu: acc.neu + r.neutral, neg: acc.neg + r.negative, total: acc.total + r.total }),
-      { pos: 0, neu: 0, neg: 0, total: 0 },
+      (acc, r) => ({
+        dpos: acc.dpos + r.doublePositive,
+        pos: acc.pos + r.positive,
+        neu: acc.neu + r.neutral,
+        neg: acc.neg + r.negative,
+        dneg: acc.dneg + r.doubleNegative,
+        over: acc.over + r.overpass,
+        total: acc.total + r.total,
+      }),
+      { dpos: 0, pos: 0, neu: 0, neg: 0, dneg: 0, over: 0, total: 0 },
     );
-    const teamEff = recTotals.total > 0 ? ((recTotals.pos - recTotals.neg) / recTotals.total) * 100 : 0;
+    const teamPositivity = recTotals.total > 0 ? ((recTotals.dpos + recTotals.pos) / recTotals.total) * 100 : 0;
+    const teamEff = recTotals.total > 0 ? ((recTotals.dpos - recTotals.dneg - recTotals.over) / recTotals.total) * 100 : 0;
+    const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
+    const posClass = (p: number) => (p >= 50 ? "text-success" : p <= 30 ? "text-destructive" : "text-primary");
     const players = team.players
       .map((tp) => {
         const p = stats.players.get(tp.id);
         const r = recMap.get(tp.id);
+        const attackAttempts = (p?.attack ?? 0) + (p?.attackError ?? 0);
+        const kills = Math.max(0, (p?.total ?? 0) - (p?.block ?? 0) - (p?.ace ?? 0));
+        const effAtk = attackAttempts > 0 ? (kills / attackAttempts) * 100 : 0;
+        const blkAttempts = (p?.block ?? 0) + (p?.blockError ?? 0);
+        const effBlk = blkAttempts > 0 ? (((p?.block ?? 0) - (p?.blockError ?? 0)) / blkAttempts) * 100 : 0;
         return {
           playerId: tp.id,
           name: tp.name,
           number: tp.number,
-          attack: p?.attack ?? 0,
+          kills,
+          attackAttempts,
+          attackError: p?.attackError ?? 0,
+          effAtk,
           block: p?.block ?? 0,
+          blockError: p?.blockError ?? 0,
+          effBlk,
           ace: p?.ace ?? 0,
           serveError: p?.serveError ?? 0,
-          unforcedError: p?.unforcedError ?? 0,
           total: p?.total ?? 0,
           recTotal: r?.total ?? 0,
+          recPositivity: r?.positivity ?? 0,
           recEff: r?.efficiency ?? 0,
         };
       })
@@ -2146,54 +2167,75 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
           <div className="text-destructive">{tStat?.serveErrors ?? 0}</div>
           <div className="text-destructive">{tStat?.unforcedErrors ?? 0}</div>
         </div>
-        <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between gap-2 text-[11px] bg-secondary/20">
+        <div className="px-3 py-2 border-b border-border/40 flex flex-wrap items-center justify-between gap-2 text-[11px] bg-secondary/20">
           <span className="uppercase tracking-widest text-muted-foreground font-bold">Recepción</span>
-          <span className="flex items-center gap-2 tabular-nums">
-            <span className="text-success font-bold">+{recTotals.pos}</span>
-            <span className="text-muted-foreground">0:{recTotals.neu}</span>
-            <span className="text-destructive font-bold">−{recTotals.neg}</span>
+          <span className="flex items-center gap-1.5 tabular-nums">
+            <span className="text-success font-bold" title="Perfecta">#{recTotals.dpos}</span>
+            <span className="text-success font-bold" title="Positiva">+{recTotals.pos}</span>
+            <span className="text-muted-foreground" title="Neutra">0:{recTotals.neu}</span>
+            <span className="text-destructive font-bold" title="Negativa">−{recTotals.neg}</span>
+            <span className="text-destructive font-bold" title="Doble negativa">={recTotals.dneg}</span>
+            <span className="text-destructive font-bold" title="Punto directo">≠{recTotals.over}</span>
             <span className="text-muted-foreground">· {recTotals.total}</span>
-            <span className={`scoreboard-digit font-black ${teamEff >= 30 ? "text-success" : teamEff <= 0 ? "text-destructive" : "text-primary"}`}>
-              {recTotals.total > 0 ? `${teamEff.toFixed(0)}%` : "—"}
-            </span>
+            {recTotals.total > 0 && (
+              <>
+                <span className={`scoreboard-digit font-black ${posClass(teamPositivity)}`} title="Positividad">{teamPositivity.toFixed(0)}%</span>
+                <span className={`scoreboard-digit font-black ${effClass(teamEff)}`} title="Eficiencia">{teamEff.toFixed(0)}%</span>
+              </>
+            )}
           </span>
         </div>
-        <table className="w-full text-xs">
-          <thead className="text-[9px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
-            <tr>
-              <th className="text-left py-1.5 px-3">Jugador</th>
-              <th className="text-center">ATK</th><th className="text-center">BLK</th>
-              <th className="text-center">ACE</th>
-              <th className="text-center text-destructive">E.SAQ</th>
-              <th className="text-center">REC</th>
-              <th className="text-center px-3 text-primary">TOT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {players.map((p) => (
-              <tr key={p.playerId} className="border-t border-border/40">
-                <td className="py-1 px-3"><span className="scoreboard-digit font-bold mr-2">#{p.number}</span>{p.name}</td>
-                <td className="text-center tabular-nums">{p.attack}</td>
-                <td className="text-center tabular-nums">{p.block}</td>
-                <td className="text-center tabular-nums">{p.ace}</td>
-                <td className={`text-center tabular-nums ${p.serveError > 0 ? "text-destructive font-bold" : ""}`}>{p.serveError}</td>
-                <td className="text-center tabular-nums">
-                  {p.recTotal > 0 ? (
-                    <span className={`font-bold ${p.recEff >= 30 ? "text-success" : p.recEff <= 0 ? "text-destructive" : ""}`}>
-                      {p.recEff.toFixed(0)}%<span className="text-muted-foreground font-normal"> ({p.recTotal})</span>
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className="text-center tabular-nums font-bold text-primary px-3">{p.total}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs min-w-[560px]">
+            <thead className="text-[9px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
+              <tr>
+                <th className="text-left py-1.5 px-3">Jugador</th>
+                <th className="text-center" title="Kills">ATK</th>
+                <th className="text-center text-muted-foreground" title="Intentos totales">INT</th>
+                <th className="text-center text-muted-foreground" title="Errores de ataque">E.ATK</th>
+                <th className="text-center text-muted-foreground" title="Eficiencia ataque = kills / intentos">EF%</th>
+                <th className="text-center">BLK</th>
+                <th className="text-center text-muted-foreground" title="Errores de bloqueo">E.BLK</th>
+                <th className="text-center text-muted-foreground" title="Eficiencia bloqueo">EF%</th>
+                <th className="text-center">ACE</th>
+                <th className="text-center text-destructive" title="Errores de saque">E.SAQ</th>
+                <th className="text-center" title="Positividad recepción">REC+</th>
+                <th className="text-center" title="Eficiencia recepción">REC%</th>
+                <th className="text-center px-3 text-primary">TOT</th>
               </tr>
-            ))}
-            {players.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-3 text-muted-foreground">Sin puntos aún.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {players.map((p) => (
+                <tr key={p.playerId} className="border-t border-border/40">
+                  <td className="py-1 px-3 whitespace-nowrap"><span className="scoreboard-digit font-bold mr-2">#{p.number}</span>{p.name}</td>
+                  <td className="text-center tabular-nums">{p.kills}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{p.attackAttempts}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{p.attackError}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{p.attackAttempts > 0 ? `${p.effAtk.toFixed(0)}%` : "–"}</td>
+                  <td className="text-center tabular-nums">{p.block}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{p.blockError}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{(p.block + p.blockError) > 0 ? `${p.effBlk.toFixed(0)}%` : "–"}</td>
+                  <td className="text-center tabular-nums">{p.ace}</td>
+                  <td className={`text-center tabular-nums ${p.serveError > 0 ? "text-destructive font-bold" : ""}`}>{p.serveError}</td>
+                  <td className="text-center tabular-nums">
+                    {p.recTotal > 0 ? (
+                      <span className={`font-bold ${posClass(p.recPositivity)}`}>{p.recPositivity.toFixed(0)}%<span className="text-muted-foreground font-normal"> ({p.recTotal})</span></span>
+                    ) : (<span className="text-muted-foreground">—</span>)}
+                  </td>
+                  <td className="text-center tabular-nums">
+                    {p.recTotal > 0 ? (
+                      <span className={`font-bold ${effClass(p.recEff)}`}>{p.recEff.toFixed(0)}%</span>
+                    ) : (<span className="text-muted-foreground">—</span>)}
+                  </td>
+                  <td className="text-center tabular-nums font-bold text-primary px-3">{p.total}</td>
+                </tr>
+              ))}
+              {players.length === 0 && (
+                <tr><td colSpan={13} className="text-center py-3 text-muted-foreground">Sin puntos aún.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   };
