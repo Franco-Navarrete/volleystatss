@@ -12,7 +12,8 @@ export type PointType =
   | "serve_error"
   | "unforced_error"
   | "rotation_error"
-  | "attack_error";
+  | "attack_error"
+  | "block_error";
 
 export const POINT_TYPE_LABEL: Record<PointType, string> = {
   attack: "Ataque",
@@ -26,9 +27,10 @@ export const POINT_TYPE_LABEL: Record<PointType, string> = {
   unforced_error: "Error no forzado",
   rotation_error: "Error de rotación propio",
   attack_error: "Error de ataque",
+  block_error: "Error de bloqueo",
 };
 
-export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error", "attack_error"];
+export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error", "attack_error", "block_error"];
 
 export type PlayerPosition = "punta" | "central" | "opuesto" | "armador" | "libero";
 
@@ -564,7 +566,7 @@ export function timeoutsUsedInSet(match: Match, side: "A" | "B", setNumber: numb
 }
 
 function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
-  if (type === "serve_error" || type === "unforced_error" || type === "rotation_error" || type === "attack_error") {
+  if (type === "serve_error" || type === "unforced_error" || type === "rotation_error" || type === "attack_error" || type === "block_error") {
     return playerSide === "A" ? "B" : "A";
   }
   return playerSide;
@@ -1315,7 +1317,7 @@ export const useVolley = create<VolleyState>()(
           }
           for (const sc of seq) {
             const t = scoringTypes[Math.floor(rand() * scoringTypes.length)];
-            const isError = t === "serve_error" || t === "unforced_error" || t === "attack_error";
+            const isError = t === "serve_error" || t === "unforced_error" || t === "attack_error" || t === "block_error";
             const playerSide: "A" | "B" = isError || t === "opponent_error"
               ? (sc === "A" ? "B" : "A")
               : sc;
@@ -1437,6 +1439,7 @@ export interface PlayerStat {
   serveError: number;
   unforcedError: number;
   attackError: number;
+  blockError: number;
   total: number;
 }
 
@@ -1452,6 +1455,7 @@ export interface TeamStat {
   unforcedErrors: number;
   serveErrors: number;
   attackErrors: number;
+  blockErrors: number;
 }
 
 function aggregateEvents(events: MatchEvent[], match: Match) {
@@ -1462,7 +1466,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (!t) {
       t = {
         teamId: id, attack: 0, rotationAttack: 0, counterAttack: 0, block: 0, ace: 0,
-        opponentErrors: 0, total: 0, unforcedErrors: 0, serveErrors: 0, attackErrors: 0,
+        opponentErrors: 0, total: 0, unforcedErrors: 0, serveErrors: 0, attackErrors: 0, blockErrors: 0,
       };
       teams.set(id, t);
     }
@@ -1471,7 +1475,7 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
   const ensurePlayer = (pid: string): PlayerStat => {
     let p = players.get(pid);
     if (!p) {
-      p = { playerId: pid, name: "", number: 0, attack: 0, rotationAttack: 0, counterAttack: 0, block: 0, ace: 0, serveError: 0, unforcedError: 0, attackError: 0, total: 0 };
+      p = { playerId: pid, name: "", number: 0, attack: 0, rotationAttack: 0, counterAttack: 0, block: 0, ace: 0, serveError: 0, unforcedError: 0, attackError: 0, blockError: 0, total: 0 };
       players.set(pid, p);
     }
     return p;
@@ -1500,16 +1504,18 @@ function aggregateEvents(events: MatchEvent[], match: Match) {
     if (ev.type === "opponent_error") scoringTeam.opponentErrors++;
     if (ev.type === "opponent_rotation_error") scoringTeam.opponentErrors++;
 
-    if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error" || ev.type === "attack_error") {
+    if (ev.type === "serve_error" || ev.type === "unforced_error" || ev.type === "rotation_error" || ev.type === "attack_error" || ev.type === "block_error") {
       const errorTeamId = ev.playerSide === "A" ? match.teamAId : match.teamBId;
       const et = ensureTeam(errorTeamId);
       if (ev.type === "serve_error") et.serveErrors++;
       else if (ev.type === "attack_error") et.attackErrors++;
+      else if (ev.type === "block_error") et.blockErrors++;
       else et.unforcedErrors++;
       if (ev.playerId) {
         const pp = ensurePlayer(ev.playerId);
         if (ev.type === "serve_error") pp.serveError++;
         else if (ev.type === "attack_error") pp.attackError++;
+        else if (ev.type === "block_error") pp.blockError++;
         else pp.unforcedError++;
       }
     } else if (ev.playerId) {

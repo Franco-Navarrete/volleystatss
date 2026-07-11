@@ -26,6 +26,7 @@ const PDF_ABBR: Record<PointType, string> = {
   unforced_error: "ENF",
   rotation_error: "E.Rot",
   attack_error: "E.A",
+  block_error: "E.B",
 };
 
 const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };

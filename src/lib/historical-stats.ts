@@ -28,6 +28,7 @@ export interface MatchPerformance {
   ace: number;
   serveError: number;
   attackError: number;
+  blockError: number;
   unforcedError: number;
   wasMvp: boolean;
 }
@@ -52,6 +53,7 @@ export interface PlayerAggregate {
     ace: number;
     serveError: number;
     attackError: number;
+    blockError: number;
     unforcedError: number;
     mvp: number;
     receptionPositive: number;
@@ -86,7 +88,7 @@ function emptyAgg(player: Player, team: Team): PlayerAggregate {
     matchesPlayed: 0,
     totals: {
       points: 0, attack: 0, counterAttack: 0, rotationAttack: 0,
-      block: 0, ace: 0, serveError: 0, attackError: 0, unforcedError: 0, mvp: 0,
+      block: 0, ace: 0, serveError: 0, attackError: 0, blockError: 0, unforcedError: 0, mvp: 0,
       receptionPositive: 0, receptionNeutral: 0, receptionNegative: 0, receptionTotal: 0,
     },
     averages: { points: 0, attack: 0, block: 0, ace: 0, receptionEfficiency: 0 },
@@ -167,6 +169,7 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
         ace: ps.ace,
         serveError: ps.serveError,
         attackError: ps.attackError,
+        blockError: ps.blockError,
         unforcedError: ps.unforcedError,
         wasMvp,
       };
@@ -181,6 +184,7 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
       agg.totals.ace += ps.ace;
       agg.totals.serveError += ps.serveError;
       agg.totals.attackError += ps.attackError;
+      agg.totals.blockError += ps.blockError;
       agg.totals.unforcedError += ps.unforcedError;
       if (wasMvp) agg.totals.mvp++;
 

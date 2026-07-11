@@ -507,10 +507,12 @@ function PlayerStatsTable({
             <tr>
               <th className="text-left py-2 px-4">Jugador</th>
               <th className="text-center py-2 px-2" title="Ataques kill (puntos)">ATK</th>
-              <th className="text-center py-2 px-2 text-muted-foreground" title="Intentos totales de ataque (kills + neutros)">INT</th>
-              <th className="text-center py-2 px-2 text-muted-foreground" title="Errores de ataque">ERR</th>
-              <th className="text-center py-2 px-2 text-muted-foreground" title="Eficiencia: (kills − errores) / intentos totales">EFF%</th>
+              <th className="text-center py-2 px-2 text-muted-foreground" title="Intentos totales de ataque (kills + neutros + errores)">INT</th>
+              <th className="text-center py-2 px-2 text-muted-foreground" title="Errores de ataque">ERR ATK</th>
+              <th className="text-center py-2 px-2 text-muted-foreground" title="Eficiencia de ataque: kills / intentos totales">EFF ATK%</th>
               <th className="text-center py-2 px-2">BLK</th>
+              <th className="text-center py-2 px-2 text-muted-foreground" title="Errores de bloqueo">ERR BLK</th>
+              <th className="text-center py-2 px-2 text-muted-foreground" title="Eficiencia de bloqueo: (puntos − errores) / (puntos + errores)">EFF BLK%</th>
               <th className="text-center py-2 px-2">ACE</th>
               <th className="text-center py-2 px-4 text-primary">TOT</th>
             </tr>
@@ -519,7 +521,9 @@ function PlayerStatsTable({
             {rows.map((p) => {
               const kills = Math.max(0, p.total - p.block - p.ace);
               const intentosTotales = p.attack + p.attackError;
-              const eff = intentosTotales > 0 ? ((kills - p.attackError) / intentosTotales) * 100 : 0;
+              const effAtk = intentosTotales > 0 ? (kills / intentosTotales) * 100 : 0;
+              const intentosBloqueo = p.block + p.blockError;
+              const effBlk = intentosBloqueo > 0 ? ((p.block - p.blockError) / intentosBloqueo) * 100 : 0;
               return (
                 <tr key={p.playerId} className="border-t border-border/40">
                   <td className="py-2 px-4">
@@ -529,17 +533,19 @@ function PlayerStatsTable({
                     </div>
                   </td>
                   <td className="text-center tabular-nums">{kills}</td>
-                  <td className="text-center tabular-nums text-muted-foreground">{p.attack}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{intentosTotales}</td>
                   <td className="text-center tabular-nums text-muted-foreground">{p.attackError}</td>
-                  <td className="text-center tabular-nums text-muted-foreground">{intentosTotales > 0 ? `${eff.toFixed(0)}%` : "–"}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{intentosTotales > 0 ? `${effAtk.toFixed(0)}%` : "–"}</td>
                   <td className="text-center tabular-nums">{p.block}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{p.blockError}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{intentosBloqueo > 0 ? `${effBlk.toFixed(0)}%` : "–"}</td>
                   <td className="text-center tabular-nums">{p.ace}</td>
                   <td className="text-center tabular-nums font-bold text-primary px-4">{p.total}</td>
                 </tr>
               );
             })}
             {rows.length === 0 && (
-              <tr><td colSpan={8} className="text-center py-8 text-sm text-muted-foreground">Sin puntos registrados.</td></tr>
+              <tr><td colSpan={10} className="text-center py-8 text-sm text-muted-foreground">Sin puntos registrados.</td></tr>
             )}
 
           </tbody>
