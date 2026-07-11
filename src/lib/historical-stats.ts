@@ -53,6 +53,7 @@ export interface PlayerAggregate {
     ace: number;
     serveError: number;
     attackError: number;
+    blockError: number;
     unforcedError: number;
     mvp: number;
     receptionPositive: number;
