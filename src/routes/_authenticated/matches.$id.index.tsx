@@ -2179,8 +2179,8 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
             <span className="text-muted-foreground">· {recTotals.total}</span>
             {recTotals.total > 0 && (
               <>
-                <span className={`scoreboard-digit font-black ${posClass(teamPositivity)}`} title="Positividad">{teamPositivity.toFixed(0)}%</span>
-                <span className={`scoreboard-digit font-black ${effClass(teamEff)}`} title="Eficiencia">{teamEff.toFixed(0)}%</span>
+                <span className={`scoreboard-digit font-black ${posClass(teamPositivity)}`} title="Efectividad = (# + +) / total × 100">Efect {teamPositivity.toFixed(0)}%</span>
+                <span className={`scoreboard-digit font-black ${effClass(teamEff)}`} title="Eficiencia ponderada = (#×4 + +×3 + 0×2 + −×1 + =×0 + ≠×-1) / (total×4) × 100">Efic {teamEff.toFixed(0)}%</span>
               </>
             )}
           </span>
@@ -2199,8 +2199,8 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
                 <th className="text-center text-muted-foreground" title="Eficiencia bloqueo">EF%</th>
                 <th className="text-center">ACE</th>
                 <th className="text-center text-destructive" title="Errores de saque">E.SAQ</th>
-                <th className="text-center" title="Positividad recepción">REC+</th>
-                <th className="text-center" title="Eficiencia recepción">REC%</th>
+                <th className="text-center" title="Efectividad recepción = (# + +) / total">Efect%</th>
+                <th className="text-center" title="Eficiencia ponderada recepción">Efic%</th>
                 <th className="text-center px-3 text-primary">TOT</th>
               </tr>
             </thead>
