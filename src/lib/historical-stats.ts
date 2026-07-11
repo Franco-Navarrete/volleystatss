@@ -184,6 +184,7 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
       agg.totals.ace += ps.ace;
       agg.totals.serveError += ps.serveError;
       agg.totals.attackError += ps.attackError;
+      agg.totals.blockError += ps.blockError;
       agg.totals.unforcedError += ps.unforcedError;
       if (wasMvp) agg.totals.mvp++;
 
