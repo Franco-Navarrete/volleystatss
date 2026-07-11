@@ -595,7 +595,7 @@ function ReceptionTable({
     { dpos: 0, pos: 0, neu: 0, neg: 0, dneg: 0, over: 0, total: 0 },
   );
   const teamPositivity = totals.total > 0 ? ((totals.dpos + totals.pos) / totals.total) * 100 : 0;
-  const teamEff = totals.total > 0 ? ((totals.dpos - totals.dneg - totals.over) / totals.total) * 100 : 0;
+  const teamEff = totals.total > 0 ? ((totals.dpos * 4 + totals.pos * 3 + totals.neu * 2 + totals.neg - totals.over) / (totals.total * 4)) * 100 : 0;
   const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
   const posClass = (p: number) => (p >= 50 ? "text-success" : p <= 30 ? "text-destructive" : "text-primary");
 
@@ -623,7 +623,7 @@ function ReceptionTable({
               <th className="text-center py-2 px-2 text-destructive" title="Punto directo de saque">≠</th>
               <th className="text-center py-2 px-2">Total</th>
               <th className="text-center py-2 px-2 text-primary" title="(# + +) / total">Pos%</th>
-              <th className="text-center py-2 px-4 text-primary" title="(# − = − ≠) / total">Efic%</th>
+              <th className="text-center py-2 px-4 text-primary" title="Ponderada: #×4 + +×3 + 0×2 + −×1 + =×0 + ≠×(-1), sobre total×4">Efic%</th>
             </tr>
           </thead>
           <tbody>
