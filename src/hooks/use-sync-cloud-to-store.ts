@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useCloudLeagues, useCloudTeams } from "@/hooks/use-cloud-teams";
 import { useVolley, type Team, type League, type Player, type PlayerPosition } from "@/lib/volley-store";
-import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
+import { isDeletedLeagueCandidate, forgetDeletedLeague } from "@/lib/league-deletions";
 
 /**
  * Espeja los equipos y ligas del servidor (cloud) dentro del store local de zustand.
