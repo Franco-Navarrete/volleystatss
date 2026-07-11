@@ -560,17 +560,25 @@ function TeamsPage() {
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <select
                     value={activeTeam.leagueId ?? ""}
-                    disabled={!canEdit}
+                    disabled={!canEdit || assignableLeagues.length === 0}
                     onChange={(e) => {
+                      const newLeagueId = e.target.value || null;
                       mut.updateTeam.mutate({
                         id: activeTeam.id,
-                        leagueId: e.target.value || null,
+                        leagueId: newLeagueId,
                       });
+                      // Keep the team visible: sync sidebar filter with the new assignment
+                      if (newLeagueId && filterLeague !== "all" && filterLeague !== newLeagueId) {
+                        setFilterLeague(newLeagueId);
+                      } else if (!newLeagueId && filterLeague !== "all") {
+                        setFilterLeague("none");
+                      }
                     }}
                     className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
+                    title={assignableLeagues.length === 0 ? "Creá una liga en la sección Ligas primero" : "Liga del equipo"}
                   >
                     <option value="">Sin liga</option>
-                    {leagues.map((l) => (
+                    {assignableLeagues.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
                       </option>
