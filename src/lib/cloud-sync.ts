@@ -36,13 +36,36 @@ function setLocalTs(ts: number) {
   localStorage.setItem(LOCAL_TS_KEY, String(ts));
 }
 
+/** Union-merge dos arrays por id, priorizando `local` en conflicto y preservando los `remote` que no estén en local. */
+function mergeById<T extends { id: string }>(local: T[], remote: T[] | undefined): T[] {
+  if (!remote || remote.length === 0) return local;
+  const localIds = new Set(local.map((x) => x.id));
+  const extras = remote.filter((x) => x && !localIds.has(x.id));
+  return [...local, ...extras];
+}
+
 async function saveToCloud(userId: string) {
   const s = useVolley.getState();
+
+  // Read-modify-write: traemos lo que hay en la nube y hacemos union por id
+  // para que cambios hechos en otra pestaña/dispositivo no se pierdan cuando
+  // esta pestaña sube su estado. Bias a preservar datos: si un partido/equipo/
+  // liga existe en la nube y no localmente, se conserva.
+  const { data: row } = await supabase
+    .from("app_state")
+    .select("data")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const cloud = ((row?.data as CloudData | null) ?? null);
+
   const data = {
-    teams: s.teams,
-    matches: s.matches,
-    leagues: s.leagues,
-    customReceptionFormations: s.customReceptionFormations,
+    teams: mergeById(s.teams, cloud?.teams),
+    matches: mergeById(s.matches, cloud?.matches),
+    leagues: mergeById(s.leagues, cloud?.leagues),
+    customReceptionFormations: {
+      ...(cloud?.customReceptionFormations ?? {}),
+      ...s.customReceptionFormations,
+    },
   };
   const updatedAt = new Date().toISOString();
   const { error } = await supabase.from("app_state").upsert({
