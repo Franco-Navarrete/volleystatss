@@ -97,6 +97,14 @@ function TeamsPage() {
     }
     return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [cloudLeagues, storeLeagues]);
+  // Only leagues with valid UUIDs can be persisted server-side. Local-only leagues
+  // (non-UUID ids) would be coerced to null by the server validator, so we hide them
+  // from the assign selectors to avoid a silent no-op.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const assignableLeagues = useMemo(
+    () => leagues.filter((l) => UUID_RE.test(l.id)),
+    [leagues],
+  );
   const perms = useCanManageTeams();
   const canEdit = perms.allowed;
 
@@ -381,7 +389,7 @@ function TeamsPage() {
                 className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Sin liga</option>
-                {leagues.map((l) => (
+                {assignableLeagues.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name}
                   </option>
@@ -552,17 +560,25 @@ function TeamsPage() {
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <select
                     value={activeTeam.leagueId ?? ""}
-                    disabled={!canEdit}
+                    disabled={!canEdit || assignableLeagues.length === 0}
                     onChange={(e) => {
+                      const newLeagueId = e.target.value || null;
                       mut.updateTeam.mutate({
                         id: activeTeam.id,
-                        leagueId: e.target.value || null,
+                        leagueId: newLeagueId,
                       });
+                      // Keep the team visible: sync sidebar filter with the new assignment
+                      if (newLeagueId && filterLeague !== "all" && filterLeague !== newLeagueId) {
+                        setFilterLeague(newLeagueId);
+                      } else if (!newLeagueId && filterLeague !== "all") {
+                        setFilterLeague("none");
+                      }
                     }}
                     className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
+                    title={assignableLeagues.length === 0 ? "Creá una liga en la sección Ligas primero" : "Liga del equipo"}
                   >
                     <option value="">Sin liga</option>
-                    {leagues.map((l) => (
+                    {assignableLeagues.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
                       </option>
