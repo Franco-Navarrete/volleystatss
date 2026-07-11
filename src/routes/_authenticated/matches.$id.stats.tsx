@@ -623,7 +623,7 @@ function ReceptionTable({
               <th className="text-center py-2 px-2 text-destructive" title="Punto directo de saque">≠</th>
               <th className="text-center py-2 px-2">Total</th>
               <th className="text-center py-2 px-2 text-primary" title="(# + +) / total">Pos%</th>
-              <th className="text-center py-2 px-4 text-primary" title="(# − = − ≠) / total">Efic%</th>
+              <th className="text-center py-2 px-4 text-primary" title="Ponderada: #×4 + +×3 + 0×2 + −×1 + =×0 + ≠×(-1), sobre total×4">Efic%</th>
             </tr>
           </thead>
           <tbody>
