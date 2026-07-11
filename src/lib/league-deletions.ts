@@ -40,3 +40,20 @@ export function rememberDeletedLeague(league: LeagueLike) {
 export function isDeletedLeagueCandidate(league: LeagueLike): boolean {
   return readSet(DELETED_LEAGUE_IDS_KEY).has(league.id) || readSet(DELETED_LEAGUE_KEYS_KEY).has(leagueIdentityKey(league));
 }
+
+/**
+ * Olvida el tombstone para una liga que reapareció en la nube (restauración).
+ * Se llama al recibir ligas del servidor para permitir resurrección.
+ */
+export function forgetDeletedLeague(league: LeagueLike) {
+  const ids = readSet(DELETED_LEAGUE_IDS_KEY);
+  const keys = readSet(DELETED_LEAGUE_KEYS_KEY);
+  const key = leagueIdentityKey(league);
+  let changed = false;
+  if (ids.delete(league.id)) changed = true;
+  if (keys.delete(key)) changed = true;
+  if (changed) {
+    writeSet(DELETED_LEAGUE_IDS_KEY, ids);
+    writeSet(DELETED_LEAGUE_KEYS_KEY, keys);
+  }
+}
