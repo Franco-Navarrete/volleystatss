@@ -97,6 +97,14 @@ function TeamsPage() {
     }
     return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [cloudLeagues, storeLeagues]);
+  // Only leagues with valid UUIDs can be persisted server-side. Local-only leagues
+  // (non-UUID ids) would be coerced to null by the server validator, so we hide them
+  // from the assign selectors to avoid a silent no-op.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const assignableLeagues = useMemo(
+    () => leagues.filter((l) => UUID_RE.test(l.id)),
+    [leagues],
+  );
   const perms = useCanManageTeams();
   const canEdit = perms.allowed;
 
