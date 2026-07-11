@@ -32,6 +32,8 @@ export function useSyncCloudToStore() {
         position: p.position as PlayerPosition | undefined,
       })),
     }));
+    // Toda liga que aparezca en la nube resucita cualquier tombstone local.
+    for (const l of leaguesQ.data ?? []) forgetDeletedLeague(l);
     useVolley.setState((s) => {
       const cloudLeagues: League[] = (leaguesQ.data ?? []).filter((l) => !isDeletedLeagueCandidate(l)).map((l) => {
         const current = s.leagues.find((existing) => existing.id === l.id);
@@ -44,17 +46,14 @@ export function useSyncCloudToStore() {
           gender: l.gender,
         };
       });
-      // Merge: mantenemos cualquier equipo/liga local que NO esté en la nube
-      // (por compatibilidad con datos viejos) y reemplazamos los que sí están.
-      // Importante: la asignación equipo→liga es local-first y se persiste en
-      // app_state. Si al cambiar de pestaña llega un cache viejo de equipos del
-      // servidor, no debe pisar la liga que el usuario acaba de elegir.
       const cloudTeamIds = new Set(cloudTeams.map((t) => t.id));
       const cloudLeagueIds = new Set(cloudLeagues.map((l) => l.id));
       const mergedCloudTeams = cloudTeams.map((team) => {
         const current = s.teams.find((existing) => existing.id === team.id);
         if (!current) return team;
-        return { ...team, leagueId: current.leagueId };
+        // Preferimos la asignación de la nube cuando existe; si no, la local.
+        const leagueId = team.leagueId ?? current.leagueId;
+        return { ...team, leagueId };
       });
       const mergedTeams = [
         ...mergedCloudTeams,
