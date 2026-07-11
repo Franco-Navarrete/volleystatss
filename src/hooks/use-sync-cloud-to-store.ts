@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useCloudLeagues, useCloudTeams } from "@/hooks/use-cloud-teams";
 import { useVolley, type Team, type League, type Player, type PlayerPosition } from "@/lib/volley-store";
+import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
 
 /**
  * Espeja los equipos y ligas del servidor (cloud) dentro del store local de zustand.
@@ -32,7 +33,7 @@ export function useSyncCloudToStore() {
       })),
     }));
     useVolley.setState((s) => {
-      const cloudLeagues: League[] = (leaguesQ.data ?? []).map((l) => {
+      const cloudLeagues: League[] = (leaguesQ.data ?? []).filter((l) => !isDeletedLeagueCandidate(l)).map((l) => {
         const current = s.leagues.find((existing) => existing.id === l.id);
         return {
           ...current,
@@ -61,7 +62,7 @@ export function useSyncCloudToStore() {
       ];
       const mergedLeagues = [
         ...cloudLeagues,
-        ...s.leagues.filter((l) => !cloudLeagueIds.has(l.id)),
+        ...s.leagues.filter((l) => !cloudLeagueIds.has(l.id) && !isDeletedLeagueCandidate(l)),
       ];
       return { teams: mergedTeams, leagues: mergedLeagues };
     });

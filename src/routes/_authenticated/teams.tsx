@@ -14,6 +14,7 @@ import {
 import { useCanManageTeams } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
 import {
   Dialog,
   DialogContent,
@@ -83,9 +84,11 @@ function TeamsPage() {
   // even when RLS trims listLeagues to a subset for this user.
   const leagues = useMemo<CloudLeague[]>(() => {
     const byId = new Map<string, CloudLeague>();
-    for (const l of cloudLeagues) byId.set(l.id, l);
+    for (const l of cloudLeagues) {
+      if (!isDeletedLeagueCandidate(l)) byId.set(l.id, l);
+    }
     for (const l of storeLeagues) {
-      if (!byId.has(l.id)) {
+      if (!byId.has(l.id) && !isDeletedLeagueCandidate(l)) {
         byId.set(l.id, {
           id: l.id,
           name: l.name,
@@ -117,7 +120,7 @@ function TeamsPage() {
     );
     const missingLeagues: typeof leagues = [];
     for (const l of leagues) {
-      if (UUID_RE.test(l.id)) continue;
+      if (UUID_RE.test(l.id) || isDeletedLeagueCandidate(l)) continue;
       const key = l.name.trim().toLowerCase();
       if (seenNames.has(key)) continue;
       seenNames.add(key);
