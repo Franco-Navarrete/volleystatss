@@ -12,7 +12,8 @@ export type PointType =
   | "serve_error"
   | "unforced_error"
   | "rotation_error"
-  | "attack_error";
+  | "attack_error"
+  | "block_error";
 
 export const POINT_TYPE_LABEL: Record<PointType, string> = {
   attack: "Ataque",
@@ -26,9 +27,10 @@ export const POINT_TYPE_LABEL: Record<PointType, string> = {
   unforced_error: "Error no forzado",
   rotation_error: "Error de rotación propio",
   attack_error: "Error de ataque",
+  block_error: "Error de bloqueo",
 };
 
-export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error", "attack_error"];
+export const ERROR_TYPES: PointType[] = ["serve_error", "unforced_error", "rotation_error", "attack_error", "block_error"];
 
 export type PlayerPosition = "punta" | "central" | "opuesto" | "armador" | "libero";
 
