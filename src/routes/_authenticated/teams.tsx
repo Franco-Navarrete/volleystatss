@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { PLAYER_POSITIONS, PLAYER_POSITION_LABEL, TEAM_CATEGORIES, TEAM_CATEGORY_LABEL, TEAM_GENDER_LABEL, type PlayerPosition, type TeamCategory } from "@/lib/volley-store";
