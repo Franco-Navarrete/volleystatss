@@ -1566,11 +1566,11 @@ export function computeReceptionStats(
   events: MatchEvent[],
   side?: "A" | "B",
 ): Map<string, ReceptionStat> {
-  const map = new Map<string, ReceptionStat>();
+  const m = new Map<string, ReceptionStat>();
   for (const ev of events) {
-    if (ev.kind !== "reception") continue;
+    if (!("kind" in ev) || ev.kind !== "reception") continue;
     if (side && ev.side !== side) continue;
-    let s = map.get(ev.playerId);
+    let s = m.get(ev.playerId);
     if (!s) {
       s = {
         playerId: ev.playerId,
@@ -1578,7 +1578,7 @@ export function computeReceptionStats(
         negative: 0, doubleNegative: 0, overpass: 0,
         total: 0, positivity: 0, efficiency: 0,
       };
-      map.set(ev.playerId, s);
+      m.set(ev.playerId, s);
     }
     switch (ev.rating) {
       case "double_positive": s.doublePositive++; break;
