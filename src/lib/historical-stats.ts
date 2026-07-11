@@ -169,6 +169,7 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
         ace: ps.ace,
         serveError: ps.serveError,
         attackError: ps.attackError,
+        blockError: ps.blockError,
         unforcedError: ps.unforcedError,
         wasMvp,
       };
