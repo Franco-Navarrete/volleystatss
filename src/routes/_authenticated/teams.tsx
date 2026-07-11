@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { PLAYER_POSITIONS, PLAYER_POSITION_LABEL, TEAM_CATEGORIES, TEAM_CATEGORY_LABEL, TEAM_GENDER_LABEL, type PlayerPosition, type TeamCategory } from "@/lib/volley-store";
@@ -105,9 +105,39 @@ function TeamsPage() {
   const [editTeamShort, setEditTeamShort] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const [filterLeague, setFilterLeague] = useState<string>("all");
+  const [filterLeague, setFilterLeague] = useState<string>(() => {
+    if (typeof localStorage === "undefined") return "all";
+    return localStorage.getItem("vstats:leagues:selected") || "all";
+  });
   const [filterGender, setFilterGender] = useState<GenderFilterValue>("all");
   const [filterCategory, setFilterCategory] = useState<"all" | TeamCategory>("all");
+
+  // Sync selection with the Ligas page (shared localStorage key)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "vstats:leagues:selected" && e.newValue) {
+        setFilterLeague(e.newValue);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return;
+    if (filterLeague && filterLeague !== "all" && filterLeague !== "none") {
+      localStorage.setItem("vstats:leagues:selected", filterLeague);
+    }
+  }, [filterLeague]);
+
+  // If the saved league no longer exists, reset to "all"
+  useEffect(() => {
+    if (filterLeague === "all" || filterLeague === "none") return;
+    if (leagues.length && !leagues.find((l) => l.id === filterLeague)) {
+      setFilterLeague("all");
+    }
+  }, [leagues, filterLeague]);
 
   const filteredTeams = useMemo(() => {
     return teams.filter((t) => {
