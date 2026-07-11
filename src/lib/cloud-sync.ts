@@ -6,6 +6,7 @@ import {
   type League,
   type CustomReceptionFormations,
 } from "./volley-store";
+import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
 
 type CloudData = {
   teams?: Team[];
@@ -46,6 +47,13 @@ function mergeById<T extends { id: string }>(local: T[], remote: T[] | undefined
 
 async function saveToCloud(userId: string) {
   const s = useVolley.getState();
+  const leagues = s.leagues.filter((league) => !isDeletedLeagueCandidate(league));
+  const validLeagueIds = new Set(leagues.map((league) => league.id));
+  const cleanTeamLeague = (team: Team): Team =>
+    team.leagueId && !validLeagueIds.has(team.leagueId)
+      ? { ...team, leagueId: undefined }
+      : team;
+  const teams = mergeById(s.teams.map(cleanTeamLeague), cloud?.teams).map(cleanTeamLeague);
 
   // Read-modify-write: traemos lo que hay en la nube y hacemos union por id
   // para que cambios hechos en otra pestaña/dispositivo no se pierdan cuando
@@ -59,9 +67,9 @@ async function saveToCloud(userId: string) {
   const cloud = ((row?.data as CloudData | null) ?? null);
 
   const data = {
-    teams: mergeById(s.teams, cloud?.teams),
+    teams,
     matches: mergeById(s.matches, cloud?.matches),
-    leagues: mergeById(s.leagues, cloud?.leagues),
+    leagues,
     customReceptionFormations: {
       ...(cloud?.customReceptionFormations ?? {}),
       ...s.customReceptionFormations,
