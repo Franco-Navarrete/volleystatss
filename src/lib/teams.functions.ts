@@ -91,7 +91,7 @@ export const createTeam = createServerFn({ method: "POST" })
   }) =>
     z
       .object({
-        leagueId: uuidSchema.nullable().optional(),
+        leagueId: leagueIdSchema,
         name: nameSchema,
         shortName: shortSchema,
         color: colorSchema,
@@ -140,7 +140,7 @@ export const updateTeam = createServerFn({ method: "POST" })
         shortName: shortSchema.optional(),
         color: colorSchema.optional(),
         logoUrl: optionalUrl,
-        leagueId: uuidSchema.nullable().optional(),
+        leagueId: leagueIdSchema,
         gender: genderSchema,
         category: categorySchema,
       })
