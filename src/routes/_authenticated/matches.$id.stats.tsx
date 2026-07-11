@@ -595,7 +595,7 @@ function ReceptionTable({
     { dpos: 0, pos: 0, neu: 0, neg: 0, dneg: 0, over: 0, total: 0 },
   );
   const teamPositivity = totals.total > 0 ? ((totals.dpos + totals.pos) / totals.total) * 100 : 0;
-  const teamEff = totals.total > 0 ? ((totals.dpos - totals.dneg - totals.over) / totals.total) * 100 : 0;
+  const teamEff = totals.total > 0 ? ((totals.dpos * 4 + totals.pos * 3 + totals.neu * 2 + totals.neg - totals.over) / (totals.total * 4)) * 100 : 0;
   const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
   const posClass = (p: number) => (p >= 50 ? "text-success" : p <= 30 ? "text-destructive" : "text-primary");
 
