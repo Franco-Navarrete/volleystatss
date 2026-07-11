@@ -1439,6 +1439,7 @@ export interface PlayerStat {
   serveError: number;
   unforcedError: number;
   attackError: number;
+  blockError: number;
   total: number;
 }
 
@@ -1454,6 +1455,7 @@ export interface TeamStat {
   unforcedErrors: number;
   serveErrors: number;
   attackErrors: number;
+  blockErrors: number;
 }
 
 function aggregateEvents(events: MatchEvent[], match: Match) {
