@@ -613,14 +613,14 @@ function ReceptionTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
-            <tr>
+              <tr>
               <th className="text-left py-2 px-4">Receptor</th>
-              <th className="text-center py-2 px-2 text-success" title="Perfecta">#</th>
-              <th className="text-center py-2 px-2 text-success" title="Positiva">+</th>
-              <th className="text-center py-2 px-2" title="Neutra">0</th>
-              <th className="text-center py-2 px-2 text-destructive" title="Negativa">−</th>
-              <th className="text-center py-2 px-2 text-destructive" title="Doble negativa">=</th>
-              <th className="text-center py-2 px-2 text-destructive" title="Punto directo de saque">≠</th>
+              <th className="text-center py-2 px-2 text-success" title="# Doble+">#</th>
+              <th className="text-center py-2 px-2 text-success" title="+ Positiva">+</th>
+              <th className="text-center py-2 px-2" title="0 Neutra">0</th>
+              <th className="text-center py-2 px-2 text-destructive" title="- Negativa">−</th>
+              <th className="text-center py-2 px-2 text-destructive" title="= Doble-">=</th>
+              <th className="text-center py-2 px-2 text-destructive" title="≠ Punto saque">≠</th>
               <th className="text-center py-2 px-2">Total</th>
               <th className="text-center py-2 px-2 text-primary" title="(# + +) / total">Pos%</th>
               <th className="text-center py-2 px-4 text-primary" title="Ponderada: #×4 + +×3 + 0×2 + −×1 + =×0 + ≠×(-1), sobre total×4">Efic%</th>
