@@ -216,24 +216,25 @@ export function computeHistoricalStats(matches: Match[], teams: Team[]): PlayerA
       agg.totals.receptionNeutral += rec.neutral;
       agg.totals.receptionNegative += rec.negative + rec.doubleNegative + rec.overpass;
       agg.totals.receptionTotal += rec.total;
-      // Data Volley: perfectas y errores (para eficiencia)
       (agg.totals as any).receptionPerfect = ((agg.totals as any).receptionPerfect ?? 0) + rec.doublePositive;
       (agg.totals as any).receptionError = ((agg.totals as any).receptionError ?? 0) + rec.doubleNegative + rec.overpass;
+      (agg.totals as any).receptionWeighted = ((agg.totals as any).receptionWeighted ?? 0)
+        + rec.doublePositive * 4 + rec.positive * 3 + rec.neutral * 2 + rec.negative * 1 + rec.doubleNegative * 0 + rec.overpass * -1;
     }
   }
 
   for (const agg of aggs.values()) {
     const mp = agg.matchesPlayed || 1;
     const recTot = agg.totals.receptionTotal;
-    const perfect = (agg.totals as any).receptionPerfect ?? 0;
-    const errors = (agg.totals as any).receptionError ?? 0;
+    const weighted = (agg.totals as any).receptionWeighted ?? 0;
     agg.averages = {
       points: agg.totals.points / mp,
       attack: agg.totals.attack / mp,
       block: agg.totals.block / mp,
       ace: agg.totals.ace / mp,
-      // Eficiencia Data Volley: (# − = − ≠) / total * 100
-      receptionEfficiency: recTot > 0 ? ((perfect - errors) / recTot) * 100 : 0,
+      // Eficiencia ponderada (0-100%): Σ(rating*peso) / (total*4) * 100
+      // Pesos: # = 4, + = 3, 0 = 2, − = 1, = = 0, ≠ = -1
+      receptionEfficiency: recTot > 0 ? (weighted / (recTot * 4)) * 100 : 0,
     };
     // Most recent first
     agg.allPerformances.reverse();

@@ -2117,7 +2117,7 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
       { dpos: 0, pos: 0, neu: 0, neg: 0, dneg: 0, over: 0, total: 0 },
     );
     const teamPositivity = recTotals.total > 0 ? ((recTotals.dpos + recTotals.pos) / recTotals.total) * 100 : 0;
-    const teamEff = recTotals.total > 0 ? ((recTotals.dpos - recTotals.dneg - recTotals.over) / recTotals.total) * 100 : 0;
+    const teamEff = recTotals.total > 0 ? ((recTotals.dpos * 4 + recTotals.pos * 3 + recTotals.neu * 2 + recTotals.neg - recTotals.over) / (recTotals.total * 4)) * 100 : 0;
     const effClass = (eff: number) => (eff >= 30 ? "text-success" : eff <= 0 ? "text-destructive" : "text-primary");
     const posClass = (p: number) => (p >= 50 ? "text-success" : p <= 30 ? "text-destructive" : "text-primary");
     const players = team.players
