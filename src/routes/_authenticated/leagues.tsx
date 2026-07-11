@@ -6,6 +6,18 @@ import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, 
 import { useTeamMutations } from "@/hooks/use-cloud-teams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { Plus, Trash2, Trophy } from "lucide-react";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -148,20 +160,47 @@ function LeaguesPage() {
                     {active.season ?? "Sin temporada"} · {active.gender === "F" ? "Femenino" : active.gender === "M" ? "Masculino" : "Mixta"} · {teamsInLeague.length} equipos
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (confirm(`¿Eliminar ${active.name}? Los equipos quedarán sin liga.`)) {
-                      removeLeague(active.id);
-                      if (UUID_RE.test(active.id)) mutations.deleteLeague.mutate({ id: active.id });
-                      setSelected(null);
-                    }
-                  }}
-                >
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Eliminar liga">
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Eliminar {active.name}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Los equipos de esta liga quedarán sin liga asignada. Esta acción no se puede deshacer.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          const id = active.id;
+                          try {
+                            if (UUID_RE.test(id)) {
+                              await mutations.deleteLeague.mutateAsync({ id });
+                            }
+                            removeLeague(id);
+                            setSelected(null);
+                            if (typeof localStorage !== "undefined") {
+                              localStorage.removeItem("vstats:leagues:selected");
+                            }
+                            toast.success("Liga eliminada");
+                          } catch (e: unknown) {
+                            const msg = e instanceof Error ? e.message : "No se pudo eliminar la liga";
+                            toast.error(msg);
+                          }
+                        }}
+                      >
+                        Eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
+
 
               <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
