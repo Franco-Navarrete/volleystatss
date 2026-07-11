@@ -8,6 +8,13 @@ type PlayerUpdate = Database["public"]["Tables"]["players"]["Update"];
 type LeagueUpdate = Database["public"]["Tables"]["leagues"]["Update"];
 
 const uuidSchema = z.string().uuid();
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+// Coerce non-UUID / empty leagueId (e.g. legacy local IDs) to null instead of throwing.
+const leagueIdSchema = z
+  .union([z.string(), z.null(), z.undefined()])
+  .transform((v) => (typeof v === "string" && UUID_RE.test(v) ? v : null))
+  .nullable()
+  .optional();
 const nameSchema = z.string().trim().min(1).max(80);
 const shortSchema = z.string().trim().min(1).max(8);
 const colorSchema = z.string().trim().max(20);
@@ -84,7 +91,7 @@ export const createTeam = createServerFn({ method: "POST" })
   }) =>
     z
       .object({
-        leagueId: uuidSchema.nullable().optional(),
+        leagueId: leagueIdSchema,
         name: nameSchema,
         shortName: shortSchema,
         color: colorSchema,
@@ -133,7 +140,7 @@ export const updateTeam = createServerFn({ method: "POST" })
         shortName: shortSchema.optional(),
         color: colorSchema.optional(),
         logoUrl: optionalUrl,
-        leagueId: uuidSchema.nullable().optional(),
+        leagueId: leagueIdSchema,
         gender: genderSchema,
         category: categorySchema,
       })
