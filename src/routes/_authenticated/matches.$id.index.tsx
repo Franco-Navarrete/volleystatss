@@ -647,6 +647,7 @@ function LiveMatch() {
               { type: "counter_attack", label: "Contraataque", tone: "primary" },
               { type: "unforced_error", label: "Error no forzado", tone: "danger" },
               { type: "block", label: "Bloqueo", tone: "primary" },
+              { type: "block_error", label: "Error de bloqueo", tone: "danger" },
             ];
             return (
               <>
