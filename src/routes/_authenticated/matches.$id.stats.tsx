@@ -622,8 +622,8 @@ function ReceptionTable({
               <th className="text-center py-2 px-2 text-destructive" title="= Doble-">=</th>
               <th className="text-center py-2 px-2 text-destructive" title="≠ Punto saque">≠</th>
               <th className="text-center py-2 px-2">Total</th>
-              <th className="text-center py-2 px-2 text-primary" title="(# + +) / total">Pos%</th>
-              <th className="text-center py-2 px-4 text-primary" title="Ponderada: #×4 + +×3 + 0×2 + −×1 + =×0 + ≠×(-1), sobre total×4">Efic%</th>
+              <th className="text-center py-2 px-2 text-primary" title="Efectividad = (# + +) / total × 100">Efect%</th>
+              <th className="text-center py-2 px-4 text-primary" title="Eficiencia ponderada: (#×4 + +×3 + 0×2 + −×1 + =×0 + ≠×(-1)) / (total×4) × 100">Efic%</th>
             </tr>
           </thead>
           <tbody>
