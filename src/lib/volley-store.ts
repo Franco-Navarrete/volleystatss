@@ -1317,7 +1317,7 @@ export const useVolley = create<VolleyState>()(
           }
           for (const sc of seq) {
             const t = scoringTypes[Math.floor(rand() * scoringTypes.length)];
-            const isError = t === "serve_error" || t === "unforced_error" || t === "attack_error";
+            const isError = t === "serve_error" || t === "unforced_error" || t === "attack_error" || t === "block_error";
             const playerSide: "A" | "B" = isError || t === "opponent_error"
               ? (sc === "A" ? "B" : "A")
               : sc;
