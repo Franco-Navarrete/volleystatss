@@ -77,7 +77,26 @@ function TeamsPage() {
   const teamsQ = useCloudTeams();
   const leaguesQ = useCloudLeagues();
   const teams = teamsQ.data ?? [];
-  const leagues = leaguesQ.data ?? [];
+  const cloudLeagues = leaguesQ.data ?? [];
+  const storeLeagues = useVolley((s) => s.leagues);
+  // Union of server + store leagues so filter shows every league visible on the Ligas page,
+  // even when RLS trims listLeagues to a subset for this user.
+  const leagues = useMemo<CloudLeague[]>(() => {
+    const byId = new Map<string, CloudLeague>();
+    for (const l of cloudLeagues) byId.set(l.id, l);
+    for (const l of storeLeagues) {
+      if (!byId.has(l.id)) {
+        byId.set(l.id, {
+          id: l.id,
+          name: l.name,
+          season: l.season,
+          color: l.color,
+          gender: l.gender,
+        });
+      }
+    }
+    return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [cloudLeagues, storeLeagues]);
   const perms = useCanManageTeams();
   const canEdit = perms.allowed;
 
