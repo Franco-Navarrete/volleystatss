@@ -506,29 +506,34 @@ function PlayerStatsTable({
           <thead className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/30">
             <tr>
               <th className="text-left py-2 px-4">Jugador</th>
-              <th className="text-center py-2 px-2">ATK</th>
+              <th className="text-center py-2 px-2" title="Ataques kill (puntos)">ATK</th>
+              <th className="text-center py-2 px-2 text-muted-foreground" title="Intentos totales de ataque (kills + neutros)">INT</th>
               <th className="text-center py-2 px-2">BLK</th>
               <th className="text-center py-2 px-2">ACE</th>
               <th className="text-center py-2 px-4 text-primary">TOT</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((p) => (
-              <tr key={p.playerId} className="border-t border-border/40">
-                <td className="py-2 px-4">
-                  <div className="flex items-center gap-2">
-                    <span className="size-7 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-xs">{p.number}</span>
-                    <span className="font-medium truncate">{p.name}</span>
-                  </div>
-                </td>
-                <td className="text-center tabular-nums">{p.attack}</td>
-                <td className="text-center tabular-nums">{p.block}</td>
-                <td className="text-center tabular-nums">{p.ace}</td>
-                <td className="text-center tabular-nums font-bold text-primary px-4">{p.total}</td>
-              </tr>
-            ))}
+            {rows.map((p) => {
+              const kills = Math.max(0, p.total - p.block - p.ace);
+              return (
+                <tr key={p.playerId} className="border-t border-border/40">
+                  <td className="py-2 px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="size-7 rounded scoreboard-digit font-bold bg-background border border-border/60 flex items-center justify-center text-xs">{p.number}</span>
+                      <span className="font-medium truncate">{p.name}</span>
+                    </div>
+                  </td>
+                  <td className="text-center tabular-nums">{kills}</td>
+                  <td className="text-center tabular-nums text-muted-foreground">{p.attack}</td>
+                  <td className="text-center tabular-nums">{p.block}</td>
+                  <td className="text-center tabular-nums">{p.ace}</td>
+                  <td className="text-center tabular-nums font-bold text-primary px-4">{p.total}</td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
-              <tr><td colSpan={5} className="text-center py-8 text-sm text-muted-foreground">Sin puntos registrados.</td></tr>
+              <tr><td colSpan={6} className="text-center py-8 text-sm text-muted-foreground">Sin puntos registrados.</td></tr>
             )}
           </tbody>
         </table>
