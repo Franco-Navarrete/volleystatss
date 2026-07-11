@@ -97,18 +97,40 @@ function TeamsPage() {
     }
     return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [cloudLeagues, storeLeagues]);
-  // Only leagues with valid UUIDs can be persisted server-side. Local-only leagues
-  // (non-UUID ids) would be coerced to null by the server validator, so we hide them
-  // from the assign selectors to avoid a silent no-op.
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const assignableLeagues = useMemo(
-    () => leagues.filter((l) => UUID_RE.test(l.id)),
-    [leagues],
-  );
   const perms = useCanManageTeams();
   const canEdit = perms.allowed;
 
   const mut = useTeamMutations();
+
+  // Auto-migrate local-only leagues (non-UUID ids) to the cloud so they become assignable.
+  const syncingRef = useRef(false);
+  useEffect(() => {
+    if (!canEdit || syncingRef.current) return;
+    const orphans = leagues.filter(
+      (l) => !UUID_RE.test(l.id) && !cloudLeagues.find(
+        (c) => c.name.trim().toLowerCase() === l.name.trim().toLowerCase(),
+      ),
+    );
+    if (orphans.length === 0) return;
+    syncingRef.current = true;
+    (async () => {
+      for (const l of orphans) {
+        try {
+          await mut.createLeague.mutateAsync({
+            name: l.name,
+            season: l.season ?? null,
+            color: l.color ?? null,
+            gender: l.gender ?? null,
+          });
+        } catch {
+          /* ignore, will retry on next mount */
+        }
+      }
+      syncingRef.current = false;
+    })();
+  }, [leagues, cloudLeagues, canEdit, mut.createLeague]);
+
 
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
