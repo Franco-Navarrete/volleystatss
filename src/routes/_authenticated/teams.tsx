@@ -97,18 +97,40 @@ function TeamsPage() {
     }
     return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [cloudLeagues, storeLeagues]);
-  // Only leagues with valid UUIDs can be persisted server-side. Local-only leagues
-  // (non-UUID ids) would be coerced to null by the server validator, so we hide them
-  // from the assign selectors to avoid a silent no-op.
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const assignableLeagues = useMemo(
-    () => leagues.filter((l) => UUID_RE.test(l.id)),
-    [leagues],
-  );
   const perms = useCanManageTeams();
   const canEdit = perms.allowed;
 
   const mut = useTeamMutations();
+
+  // Auto-migrate local-only leagues (non-UUID ids) to the cloud so they become assignable.
+  const syncingRef = useRef(false);
+  useEffect(() => {
+    if (!canEdit || syncingRef.current) return;
+    const orphans = leagues.filter(
+      (l) => !UUID_RE.test(l.id) && !cloudLeagues.find(
+        (c) => c.name.trim().toLowerCase() === l.name.trim().toLowerCase(),
+      ),
+    );
+    if (orphans.length === 0) return;
+    syncingRef.current = true;
+    (async () => {
+      for (const l of orphans) {
+        try {
+          await mut.createLeague.mutateAsync({
+            name: l.name,
+            season: l.season ?? null,
+            color: l.color ?? null,
+            gender: l.gender ?? null,
+          });
+        } catch {
+          /* ignore, will retry on next mount */
+        }
+      }
+      syncingRef.current = false;
+    })();
+  }, [leagues, cloudLeagues, canEdit, mut.createLeague]);
+
 
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
@@ -389,7 +411,7 @@ function TeamsPage() {
                 className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Sin liga</option>
-                {assignableLeagues.map((l) => (
+                {leagues.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name}
                   </option>
@@ -560,7 +582,7 @@ function TeamsPage() {
                 <div className="flex items-center gap-2 sm:ml-auto">
                   <select
                     value={activeTeam.leagueId ?? ""}
-                    disabled={!canEdit || assignableLeagues.length === 0}
+                    disabled={!canEdit || leagues.length === 0}
                     onChange={(e) => {
                       const newLeagueId = e.target.value || null;
                       mut.updateTeam.mutate({
@@ -575,10 +597,10 @@ function TeamsPage() {
                       }
                     }}
                     className="flex-1 sm:flex-none bg-background border border-input rounded-md px-3 py-2 text-sm min-w-0"
-                    title={assignableLeagues.length === 0 ? "Creá una liga en la sección Ligas primero" : "Liga del equipo"}
+                    title={leagues.length === 0 ? "Creá una liga en la sección Ligas primero" : "Liga del equipo"}
                   >
                     <option value="">Sin liga</option>
-                    {assignableLeagues.map((l) => (
+                    {leagues.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
                       </option>
