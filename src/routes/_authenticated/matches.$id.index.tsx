@@ -2170,12 +2170,12 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
         <div className="px-3 py-2 border-b border-border/40 flex flex-wrap items-center justify-between gap-2 text-[11px] bg-secondary/20">
           <span className="uppercase tracking-widest text-muted-foreground font-bold">Recepción</span>
           <span className="flex items-center gap-1.5 tabular-nums">
-            <span className="text-success font-bold" title="Perfecta">#{recTotals.dpos}</span>
-            <span className="text-success font-bold" title="Positiva">+{recTotals.pos}</span>
-            <span className="text-muted-foreground" title="Neutra">0:{recTotals.neu}</span>
-            <span className="text-destructive font-bold" title="Negativa">−{recTotals.neg}</span>
-            <span className="text-destructive font-bold" title="Doble negativa">={recTotals.dneg}</span>
-            <span className="text-destructive font-bold" title="Punto directo">≠{recTotals.over}</span>
+            <span className="text-success font-bold" title="# Doble+">#{recTotals.dpos}</span>
+            <span className="text-success font-bold" title="+ Positiva">+{recTotals.pos}</span>
+            <span className="text-muted-foreground" title="0 Neutra">0:{recTotals.neu}</span>
+            <span className="text-destructive font-bold" title="- Negativa">−{recTotals.neg}</span>
+            <span className="text-destructive font-bold" title="= Doble-">={recTotals.dneg}</span>
+            <span className="text-destructive font-bold" title="≠ Punto saque">≠{recTotals.over}</span>
             <span className="text-muted-foreground">· {recTotals.total}</span>
             {recTotals.total > 0 && (
               <>
