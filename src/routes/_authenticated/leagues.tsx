@@ -160,20 +160,47 @@ function LeaguesPage() {
                     {active.season ?? "Sin temporada"} · {active.gender === "F" ? "Femenino" : active.gender === "M" ? "Masculino" : "Mixta"} · {teamsInLeague.length} equipos
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (confirm(`¿Eliminar ${active.name}? Los equipos quedarán sin liga.`)) {
-                      removeLeague(active.id);
-                      if (UUID_RE.test(active.id)) mutations.deleteLeague.mutate({ id: active.id });
-                      setSelected(null);
-                    }
-                  }}
-                >
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Eliminar liga">
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Eliminar {active.name}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Los equipos de esta liga quedarán sin liga asignada. Esta acción no se puede deshacer.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          const id = active.id;
+                          try {
+                            if (UUID_RE.test(id)) {
+                              await mutations.deleteLeague.mutateAsync({ id });
+                            }
+                            removeLeague(id);
+                            setSelected(null);
+                            if (typeof localStorage !== "undefined") {
+                              localStorage.removeItem("vstats:leagues:selected");
+                            }
+                            toast.success("Liga eliminada");
+                          } catch (e: unknown) {
+                            const msg = e instanceof Error ? e.message : "No se pudo eliminar la liga";
+                            toast.error(msg);
+                          }
+                        }}
+                      >
+                        Eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
+
 
               <div className="mb-5 rounded-xl border border-border/60 bg-secondary/30 p-3">
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
