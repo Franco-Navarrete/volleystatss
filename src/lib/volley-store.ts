@@ -1557,16 +1557,20 @@ export interface ReceptionStat {
   total: number;
   /** Positividad = (# + +) / total * 100 */
   positivity: number;
-  /** Eficiencia estilo Data Volley = (# − = − ≠) / total * 100 */
+  /** Eficiencia ponderada (0-100%) = Σ(rating*peso) / (total*4) * 100
+   *  Pesos: # = 4, + = 3, 0 = 2, − = 1, = = 0, ≠ = -1 */
   efficiency: number;
 }
 
-export function computeReceptionStats(events: MatchEvent[], side?: "A" | "B"): Map<string, ReceptionStat> {
-  const m = new Map<string, ReceptionStat>();
+export function computeReceptionStats(
+  events: MatchEvent[],
+  side?: "A" | "B",
+): Map<string, ReceptionStat> {
+  const map = new Map<string, ReceptionStat>();
   for (const ev of events) {
-    if (!("kind" in ev) || ev.kind !== "reception") continue;
+    if (ev.kind !== "reception") continue;
     if (side && ev.side !== side) continue;
-    let s = m.get(ev.playerId);
+    let s = map.get(ev.playerId);
     if (!s) {
       s = {
         playerId: ev.playerId,
@@ -1574,7 +1578,7 @@ export function computeReceptionStats(events: MatchEvent[], side?: "A" | "B"): M
         negative: 0, doubleNegative: 0, overpass: 0,
         total: 0, positivity: 0, efficiency: 0,
       };
-      m.set(ev.playerId, s);
+      map.set(ev.playerId, s);
     }
     switch (ev.rating) {
       case "double_positive": s.doublePositive++; break;
@@ -1587,7 +1591,8 @@ export function computeReceptionStats(events: MatchEvent[], side?: "A" | "B"): M
     s.total++;
     if (s.total > 0) {
       s.positivity = ((s.doublePositive + s.positive) / s.total) * 100;
-      s.efficiency = ((s.doublePositive - s.doubleNegative - s.overpass) / s.total) * 100;
+      const weighted = s.doublePositive * 4 + s.positive * 3 + s.neutral * 2 + s.negative * 1 + s.doubleNegative * 0 + s.overpass * -1;
+      s.efficiency = (weighted / (s.total * 4)) * 100;
     }
   }
   return m;
