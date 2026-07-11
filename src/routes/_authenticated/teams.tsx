@@ -112,11 +112,17 @@ function TeamsPage() {
     if (!canEdit || syncingRef.current) return;
     const cloudTeams = teams;
 
-    const missingLeagues = leagues.filter(
-      (l) => !UUID_RE.test(l.id) && !cloudLeagues.find(
-        (c) => c.name.trim().toLowerCase() === l.name.trim().toLowerCase(),
-      ),
+    const seenNames = new Set(
+      cloudLeagues.map((c) => c.name.trim().toLowerCase()),
     );
+    const missingLeagues: typeof leagues = [];
+    for (const l of leagues) {
+      if (UUID_RE.test(l.id)) continue;
+      const key = l.name.trim().toLowerCase();
+      if (seenNames.has(key)) continue;
+      seenNames.add(key);
+      missingLeagues.push(l);
+    }
 
     const nameToCloudLeague = new Map<string, string>();
     for (const c of cloudLeagues) nameToCloudLeague.set(c.name.trim().toLowerCase(), c.id);
