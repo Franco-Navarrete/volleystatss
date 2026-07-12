@@ -676,7 +676,34 @@ function replayMatch(m: Match): {
       }
     }
   }
+  validateOnCourt(m.id, "A", onCourtA);
+  validateOnCourt(m.id, "B", onCourtB);
   return { sets, currentSet, status, onCourtA, onCourtB, servingSide, liberoActiveA: liberoA, liberoActiveB: liberoB };
+}
+
+/**
+ * Valida que `onCourt` tenga exactamente 6 jugadoras únicas no nulas.
+ * Registra un warning en consola si el mapeo queda incompleto para
+ * facilitar el diagnóstico en producción sin interrumpir el flujo.
+ */
+const _onCourtWarnCache = new Set<string>();
+export function validateOnCourt(matchId: string, side: "A" | "B", onCourt: (string | null | undefined)[]): boolean {
+  const filled = onCourt.filter((x): x is string => !!x);
+  const unique = new Set(filled);
+  const ok = onCourt.length === 6 && filled.length === 6 && unique.size === 6;
+  if (!ok) {
+    const key = `${matchId}:${side}:${onCourt.join(",")}`;
+    if (!_onCourtWarnCache.has(key)) {
+      _onCourtWarnCache.add(key);
+      if (_onCourtWarnCache.size > 100) _onCourtWarnCache.clear();
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[volley] onCourt incompleto match=${matchId} lado=${side} slots=${onCourt.length} llenos=${filled.length} únicos=${unique.size}`,
+        onCourt,
+      );
+    }
+  }
+  return ok;
 }
 
 /**
