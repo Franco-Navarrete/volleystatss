@@ -1545,45 +1545,47 @@ function FormationSide({
     }
   }
 
-  // Defensa: la plantilla 5-1 sólo tiene 6 slots y NO incluye `middle_back`.
-  // Si la resolución deja algún slot sin jugadora (p.ej. cuando el líbero
-  // designado no está en cancha y `middleBackId` cae undefined), acabaríamos
-  // dibujando sólo 5. Aquí garantizamos que TODAS las 6 de `onCourt` se
-  // rendericen, agregando slots sintéticos en su posición oficial de rotación
-  // para las que no estén ya cubiertas.
-  const renderedIds = new Set(
-    renderSlots.map((s) => s.playerId).filter(Boolean) as string[],
-  );
-  const missing = onCourt.filter((id) => id && !renderedIds.has(id));
-  if (missing.length > 0) {
-    const POS_COORDS: Array<{ x: number; y: number }> = [
-      { x: 85, y: 82 }, // idx 0 → P1
-      { x: 85, y: 18 }, // idx 1 → P2
-      { x: 50, y: 15 }, // idx 2 → P3
-      { x: 15, y: 18 }, // idx 3 → P4
-      { x: 15, y: 82 }, // idx 4 → P5
-      { x: 50, y: 82 }, // idx 5 → P6
-    ];
-    // Quitamos slots sin jugadora para evitar huecos vacíos.
-    renderSlots = renderSlots.filter((s) => !!s.playerId);
-    for (const pid of missing) {
-      const idx = onCourt.indexOf(pid);
+  // Garantía: siempre se renderiza UN badge por cada jugadora de `onCourt`.
+  // Construimos la lista desde onCourt (no desde formation.slots) para evitar
+  // que una jugadora se pierda cuando la plantilla no le asigna slot (p.ej.
+  // middle_back sin líbero activo, o roles duplicados por lineup ambiguo).
+  const POS_COORDS: Array<{ x: number; y: number }> = [
+    { x: 85, y: 82 }, // idx 0 → P1
+    { x: 85, y: 18 }, // idx 1 → P2
+    { x: 50, y: 15 }, // idx 2 → P3
+    { x: 15, y: 18 }, // idx 3 → P4
+    { x: 15, y: 82 }, // idx 4 → P5
+    { x: 50, y: 82 }, // idx 5 → P6
+  ];
+  const usedSlotIdx = new Set<number>();
+  renderSlots = onCourt
+    .map((pid, idx) => {
+      if (!pid) return null;
+      // Buscar el primer slot no usado que apunte a esta jugadora.
+      let slotIdx = -1;
+      for (let i = 0; i < renderSlots.length; i++) {
+        if (!usedSlotIdx.has(i) && renderSlots[i].playerId === pid) {
+          slotIdx = i;
+          break;
+        }
+      }
+      if (slotIdx >= 0) {
+        usedSlotIdx.add(slotIdx);
+        return renderSlots[slotIdx];
+      }
       const coords = POS_COORDS[idx] ?? { x: 50, y: 50 };
-      renderSlots = [
-        ...renderSlots,
-        {
-          ...(renderSlots[0] ?? ({} as (typeof renderSlots)[number])),
-          role: `fallback_${pid}` as unknown as (typeof renderSlots)[number]["role"],
-          x: coords.x,
-          y: coords.y,
-          playerId: pid,
-          rotationPosition: null,
-          isFrontRow: false,
-          isBackRow: false,
-        },
-      ];
-    }
-  }
+      return {
+        ...(renderSlots[0] ?? ({} as (typeof renderSlots)[number])),
+        role: `fallback_${pid}` as unknown as (typeof renderSlots)[number]["role"],
+        x: coords.x,
+        y: coords.y,
+        playerId: pid,
+        rotationPosition: null,
+        isFrontRow: false,
+        isBackRow: false,
+      };
+    })
+    .filter(Boolean) as typeof renderSlots;
 
   return (
     <div className="relative h-full w-full">
