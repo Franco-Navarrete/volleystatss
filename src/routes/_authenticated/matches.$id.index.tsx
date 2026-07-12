@@ -1587,6 +1587,16 @@ function FormationSide({
     })
     .filter(Boolean) as typeof renderSlots;
 
+  // Validación: la cancha SIEMPRE debe tener 6 jugadoras únicas.
+  if (renderSlots.length !== 6) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[cancha] Se renderizaron ${renderSlots.length}/6 jugadoras (equipo=${team.shortName}). onCourt=`,
+      onCourt,
+    );
+  }
+
+
   return (
     <div className="relative h-full w-full">
       {renderSlots.map((slot) => {
