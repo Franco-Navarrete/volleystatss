@@ -676,34 +676,53 @@ function replayMatch(m: Match): {
       }
     }
   }
-  validateOnCourt(m.id, "A", onCourtA);
-  validateOnCourt(m.id, "B", onCourtB);
+  onCourtA = repairOnCourt(m.id, "A", onCourtA, lineupFor(currentSet, "A"));
+  onCourtB = repairOnCourt(m.id, "B", onCourtB, lineupFor(currentSet, "B"));
   return { sets, currentSet, status, onCourtA, onCourtB, servingSide, liberoActiveA: liberoA, liberoActiveB: liberoB };
 }
 
 /**
- * Valida que `onCourt` tenga exactamente 6 jugadoras únicas no nulas.
- * Registra un warning en consola si el mapeo queda incompleto para
- * facilitar el diagnóstico en producción sin interrumpir el flujo.
+ * Repara `onCourt` cuando quedan huecos o duplicados: completa desde el
+ * lineup válido de la rotación actual con jugadoras que aún no estén en
+ * cancha, y registra un aviso marcado como corrección automática.
  */
 const _onCourtWarnCache = new Set<string>();
-export function validateOnCourt(matchId: string, side: "A" | "B", onCourt: (string | null | undefined)[]): boolean {
-  const filled = onCourt.filter((x): x is string => !!x);
-  const unique = new Set(filled);
-  const ok = onCourt.length === 6 && filled.length === 6 && unique.size === 6;
-  if (!ok) {
+export function repairOnCourt(
+  matchId: string,
+  side: "A" | "B",
+  onCourt: (string | null | undefined)[],
+  lineup: string[],
+): string[] {
+  const fixed: (string | null)[] = Array.from({ length: 6 }, (_, i) => onCourt[i] ?? null);
+  const seen = new Set<string>();
+  for (let i = 0; i < 6; i++) {
+    const v = fixed[i];
+    if (v && !seen.has(v)) seen.add(v);
+    else fixed[i] = null; // duplicado o vacío
+  }
+  const needsFix = fixed.some((x) => x === null);
+  if (needsFix) {
+    const pool = lineup.filter((pid) => pid && !seen.has(pid));
+    for (let i = 0; i < 6 && pool.length > 0; i++) {
+      if (fixed[i] === null) {
+        const pid = pool.shift()!;
+        fixed[i] = pid;
+        seen.add(pid);
+      }
+    }
+    const filledCount = fixed.filter(Boolean).length;
     const key = `${matchId}:${side}:${onCourt.join(",")}`;
     if (!_onCourtWarnCache.has(key)) {
       _onCourtWarnCache.add(key);
       if (_onCourtWarnCache.size > 100) _onCourtWarnCache.clear();
       // eslint-disable-next-line no-console
       console.warn(
-        `[volley] onCourt incompleto match=${matchId} lado=${side} slots=${onCourt.length} llenos=${filled.length} únicos=${unique.size}`,
-        onCourt,
+        `[volley][auto-fix] onCourt incompleto → corregido automáticamente. match=${matchId} lado=${side} antes=${onCourt.length}(${onCourt.filter(Boolean).length} llenos) después=6(${filledCount} llenos)`,
+        { antes: onCourt, después: fixed },
       );
     }
   }
-  return ok;
+  return fixed.filter((x): x is string => !!x);
 }
 
 /**
