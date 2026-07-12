@@ -1587,14 +1587,17 @@ function FormationSide({
     })
     .filter(Boolean) as typeof renderSlots;
 
-  // Validación: la cancha SIEMPRE debe tener 6 jugadoras únicas.
+  // Validación final: la cancha SIEMPRE debe mostrar 6 jugadoras.
+  // Si algo se coló hasta acá con menos, el store ya intentó auto-corregir;
+  // avisamos que el badge faltante NO pudo repararse automáticamente.
   if (renderSlots.length !== 6) {
     // eslint-disable-next-line no-console
     console.warn(
-      `[cancha] Se renderizaron ${renderSlots.length}/6 jugadoras (equipo=${team.shortName}). onCourt=`,
+      `[cancha][auto-fix parcial] ${renderSlots.length}/6 jugadoras renderizadas (equipo=${team.shortName}). onCourt=`,
       onCourt,
     );
   }
+
 
 
   return (
