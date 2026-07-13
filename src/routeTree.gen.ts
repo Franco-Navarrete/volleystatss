@@ -22,6 +22,7 @@ import { Route as LigasIdRouteImport } from './routes/ligas.$id'
 import { Route as JugadoraIdRouteImport } from './routes/jugadora.$id'
 import { Route as EquiposIdRouteImport } from './routes/equipos.$id'
 import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
+import { Route as AuthenticatedStatsCombinadasRouteImport } from './routes/_authenticated/stats-combinadas'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedRankingsRouteImport } from './routes/_authenticated/rankings'
 import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
@@ -98,6 +99,12 @@ const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
   path: '/teams',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStatsCombinadasRoute =
+  AuthenticatedStatsCombinadasRouteImport.update({
+    id: '/stats-combinadas',
+    path: '/stats-combinadas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/leagues': typeof AuthenticatedLeaguesRoute
   '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
   '/teams': typeof AuthenticatedTeamsRoute
   '/equipos/$id': typeof EquiposIdRoute
   '/jugadora/$id': typeof JugadoraIdRoute
@@ -191,6 +199,7 @@ export interface FileRoutesByTo {
   '/leagues': typeof AuthenticatedLeaguesRoute
   '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
   '/teams': typeof AuthenticatedTeamsRoute
   '/equipos/$id': typeof EquiposIdRoute
   '/jugadora/$id': typeof JugadoraIdRoute
@@ -217,6 +226,7 @@ export interface FileRoutesById {
   '/_authenticated/leagues': typeof AuthenticatedLeaguesRoute
   '/_authenticated/rankings': typeof AuthenticatedRankingsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
   '/_authenticated/teams': typeof AuthenticatedTeamsRoute
   '/equipos/$id': typeof EquiposIdRoute
   '/jugadora/$id': typeof JugadoraIdRoute
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/leagues'
     | '/rankings'
     | '/settings'
+    | '/stats-combinadas'
     | '/teams'
     | '/equipos/$id'
     | '/jugadora/$id'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/leagues'
     | '/rankings'
     | '/settings'
+    | '/stats-combinadas'
     | '/teams'
     | '/equipos/$id'
     | '/jugadora/$id'
@@ -292,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leagues'
     | '/_authenticated/rankings'
     | '/_authenticated/settings'
+    | '/_authenticated/stats-combinadas'
     | '/_authenticated/teams'
     | '/equipos/$id'
     | '/jugadora/$id'
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/stats-combinadas': {
+      id: '/_authenticated/stats-combinadas'
+      path: '/stats-combinadas'
+      fullPath: '/stats-combinadas'
+      preLoaderRoute: typeof AuthenticatedStatsCombinadasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -514,6 +534,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaguesRoute: typeof AuthenticatedLeaguesRoute
   AuthenticatedRankingsRoute: typeof AuthenticatedRankingsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStatsCombinadasRoute: typeof AuthenticatedStatsCombinadasRoute
   AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
   AuthenticatedMatchesIdRoute: typeof AuthenticatedMatchesIdRouteWithChildren
   AuthenticatedMatchesNewRoute: typeof AuthenticatedMatchesNewRoute
@@ -527,6 +548,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaguesRoute: AuthenticatedLeaguesRoute,
   AuthenticatedRankingsRoute: AuthenticatedRankingsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStatsCombinadasRoute: AuthenticatedStatsCombinadasRoute,
   AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
   AuthenticatedMatchesIdRoute: AuthenticatedMatchesIdRouteWithChildren,
   AuthenticatedMatchesNewRoute: AuthenticatedMatchesNewRoute,
