@@ -38,6 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavLink to="/teams">Equipos</NavLink>
             <NavLink to="/matches">Partidos</NavLink>
             <NavLink to="/rankings">Rankings</NavLink>
+            <NavLink to="/stats-combinadas">Combinadas</NavLink>
             <NavLink to="/awards">Premios</NavLink>
             {isAdmin && (
               <Link
