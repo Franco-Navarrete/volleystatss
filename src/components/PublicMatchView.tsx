@@ -148,7 +148,7 @@ function PublicCourt({
 
           <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
             {columns.map((col, ci) => {
-              const onCourt = col.side === "A" ? match.onCourtA : match.onCourtB;
+              const onCourt = courtFor(col.side);
               const serverPid = serverSide === col.side ? serverPlayerId : null;
               const isFront = ci === 1 || ci === 2;
               return (
