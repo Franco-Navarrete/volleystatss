@@ -105,6 +105,16 @@ function PublicCourt({
   const leftSide: "A" | "B" = "A";
   const rightSide: "A" | "B" = "B";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
+  // Reparar onCourt si el snapshot llegó con huecos/duplicados: siempre 6.
+  const lineupFor = (side: "A" | "B"): string[] => {
+    const perSet = match.lineupsBySet?.[match.currentSet]?.[side];
+    const starting = side === "A" ? match.startingLineupA : match.startingLineupB;
+    const rosterFallback = teamFor(side).players.slice(0, 6).map((p) => p.id);
+    return (perSet && perSet.length ? perSet : starting?.length ? starting : rosterFallback);
+  };
+  const onCourtA = repairOnCourt(match.id, "A", match.onCourtA ?? [], lineupFor("A"));
+  const onCourtB = repairOnCourt(match.id, "B", match.onCourtB ?? [], lineupFor("B"));
+  const courtFor = (s: "A" | "B") => (s === "A" ? onCourtA : onCourtB);
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
     { side: leftSide, team: teamFor(leftSide), idxs: [4, 5, 0] },
     { side: leftSide, team: teamFor(leftSide), idxs: [3, 2, 1] },
