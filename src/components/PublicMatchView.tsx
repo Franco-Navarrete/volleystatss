@@ -154,7 +154,7 @@ function PublicCourt({
               return (
                 <div
                   key={ci}
-                  className={`grid grid-rows-3 items-center gap-1 [@media(max-width:360px)]:gap-0.5 sm:gap-3 h-full px-0.5 [@media(max-width:360px)]:px-0 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
+                  className={`grid grid-rows-3 place-items-center gap-1 [@media(max-width:360px)]:gap-0.5 sm:gap-3 h-full min-h-0 px-0.5 [@media(max-width:360px)]:px-0 sm:px-2 ${isFront ? "bg-[#ec7a3c]/70" : ""}`}
                 >
                   {col.idxs.map((idx) => {
                     const pid = onCourt[idx];
@@ -168,7 +168,7 @@ function PublicCourt({
                     return (
                       <div
                         key={`${ci}-${idx}`}
-                        className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md aspect-square mx-auto h-[58%] [@media(max-width:360px)]:h-[48%] sm:h-[72%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""}`}
+                        className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md aspect-square size-[clamp(2rem,8vw,4rem)] md:size-[clamp(3rem,5vw,5rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""}`}
                         style={isLibero
                           ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                           : { background: col.team.color }}
