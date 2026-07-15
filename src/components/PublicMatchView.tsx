@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { ListOrdered } from "lucide-react";
 import {
   currentServer,
+  repairOnCourt,
   setsWon,
   type Match,
   type MatchEvent,
@@ -104,6 +105,16 @@ function PublicCourt({
   const leftSide: "A" | "B" = "A";
   const rightSide: "A" | "B" = "B";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
+  // Reparar onCourt si el snapshot llegó con huecos/duplicados: siempre 6.
+  const lineupFor = (side: "A" | "B"): string[] => {
+    const perSet = match.lineupsBySet?.[match.currentSet]?.[side];
+    const starting = side === "A" ? match.startingLineupA : match.startingLineupB;
+    const rosterFallback = teamFor(side).players.slice(0, 6).map((p) => p.id);
+    return (perSet && perSet.length ? perSet : starting?.length ? starting : rosterFallback);
+  };
+  const onCourtA = repairOnCourt(match.id, "A", match.onCourtA ?? [], lineupFor("A"));
+  const onCourtB = repairOnCourt(match.id, "B", match.onCourtB ?? [], lineupFor("B"));
+  const courtFor = (s: "A" | "B") => (s === "A" ? onCourtA : onCourtB);
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
     { side: leftSide, team: teamFor(leftSide), idxs: [4, 5, 0] },
     { side: leftSide, team: teamFor(leftSide), idxs: [3, 2, 1] },
@@ -137,7 +148,7 @@ function PublicCourt({
 
           <div className="absolute inset-3 [@media(max-width:360px)]:inset-2 sm:inset-8 md:inset-10 grid grid-cols-4 z-20">
             {columns.map((col, ci) => {
-              const onCourt = col.side === "A" ? match.onCourtA : match.onCourtB;
+              const onCourt = courtFor(col.side);
               const serverPid = serverSide === col.side ? serverPlayerId : null;
               const isFront = ci === 1 || ci === 2;
               return (
