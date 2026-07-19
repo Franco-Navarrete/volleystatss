@@ -639,16 +639,19 @@ function LiveMatch() {
             const activeLibero = pendingPlayer.side === "A" ? match.liberoActiveA : match.liberoActiveB;
             const isActiveLibero = !!activeLibero && activeLibero.liberoId === pendingPlayer.playerId;
             const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedId) : null;
-            const actions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger" }[] = [
-              { type: "ace", label: "Saque (Ace)", tone: "primary" },
+            const allActions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger" }[] = [
+              { type: "ace", label: isCoach ? "Saque (Ace)" : "Saque", tone: "primary" },
               { type: "serve_error", label: "Error de saque", tone: "danger" },
-              { type: "rotation_attack", label: "Ataque de rotación", tone: "primary" },
+              { type: "rotation_attack", label: isCoach ? "Ataque de rotación" : "Ataque", tone: "primary" },
               { type: "attack_error", label: "Error de ataque", tone: "danger" },
               { type: "counter_attack", label: "Contraataque", tone: "primary" },
               { type: "unforced_error", label: "Error no forzado", tone: "danger" },
               { type: "block", label: "Bloqueo", tone: "primary" },
               { type: "block_error", label: "Error de bloqueo", tone: "danger" },
             ];
+            // Modo planillero (no entrenador): sólo 6 opciones básicas.
+            const planilleroTypes: PointType[] = ["ace", "serve_error", "rotation_attack", "attack_error", "block", "unforced_error"];
+            const actions = isCoach ? allActions : allActions.filter((a) => planilleroTypes.includes(a.type));
             return (
               <>
                 <DialogHeader className="pr-8 space-y-0 text-left">
