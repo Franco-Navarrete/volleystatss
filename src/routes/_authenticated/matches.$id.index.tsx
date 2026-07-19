@@ -649,9 +649,13 @@ function LiveMatch() {
               { type: "block", label: "Bloqueo", tone: "primary", positive: true },
               { type: "block_error", label: "Error de bloqueo", tone: "danger", positive: false },
             ];
+            // Sólo el sacador (P1) puede registrar Saque / Error de saque; el líbero nunca saca.
+            const isLiberoPlayer = player?.position === "libero" || isActiveLibero;
+            const canServe = isServer && !isLiberoPlayer;
             // Modo planillero (no entrenador): sólo 6 opciones básicas.
             const planilleroTypes: PointType[] = ["ace", "serve_error", "rotation_attack", "attack_error", "block", "unforced_error"];
-            const actions = isCoach ? allActions : allActions.filter((a) => planilleroTypes.includes(a.type));
+            const actions = (isCoach ? allActions : allActions.filter((a) => planilleroTypes.includes(a.type)))
+              .filter((a) => canServe || (a.type !== "ace" && a.type !== "serve_error"));
             const positiveActions = actions.filter((a) => a.positive);
             const negativeActions = actions.filter((a) => !a.positive);
             const ActionButton = ({ a }: { a: (typeof allActions)[number] }) => (
