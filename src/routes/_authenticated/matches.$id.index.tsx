@@ -639,19 +639,31 @@ function LiveMatch() {
             const activeLibero = pendingPlayer.side === "A" ? match.liberoActiveA : match.liberoActiveB;
             const isActiveLibero = !!activeLibero && activeLibero.liberoId === pendingPlayer.playerId;
             const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedId) : null;
-            const allActions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger" }[] = [
-              { type: "ace", label: isCoach ? "Saque (Ace)" : "Saque", tone: "primary" },
-              { type: "serve_error", label: "Error de saque", tone: "danger" },
-              { type: "rotation_attack", label: isCoach ? "Ataque de rotación" : "Ataque", tone: "primary" },
-              { type: "attack_error", label: "Error de ataque", tone: "danger" },
-              { type: "counter_attack", label: "Contraataque", tone: "primary" },
-              { type: "unforced_error", label: "Error no forzado", tone: "danger" },
-              { type: "block", label: "Bloqueo", tone: "primary" },
-              { type: "block_error", label: "Error de bloqueo", tone: "danger" },
+            const allActions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger"; positive: boolean }[] = [
+              { type: "ace", label: isCoach ? "Saque (Ace)" : "Saque", tone: "primary", positive: true },
+              { type: "serve_error", label: "Error de saque", tone: "danger", positive: false },
+              { type: "rotation_attack", label: isCoach ? "Ataque de rotación" : "Ataque", tone: "primary", positive: true },
+              { type: "attack_error", label: "Error de ataque", tone: "danger", positive: false },
+              { type: "counter_attack", label: "Contraataque", tone: "primary", positive: true },
+              { type: "unforced_error", label: "Error no forzado", tone: "danger", positive: false },
+              { type: "block", label: "Bloqueo", tone: "primary", positive: true },
+              { type: "block_error", label: "Error de bloqueo", tone: "danger", positive: false },
             ];
             // Modo planillero (no entrenador): sólo 6 opciones básicas.
             const planilleroTypes: PointType[] = ["ace", "serve_error", "rotation_attack", "attack_error", "block", "unforced_error"];
             const actions = isCoach ? allActions : allActions.filter((a) => planilleroTypes.includes(a.type));
+            const positiveActions = actions.filter((a) => a.positive);
+            const negativeActions = actions.filter((a) => !a.positive);
+            const ActionButton = ({ a }: { a: (typeof allActions)[number] }) => (
+              <button key={a.type} onClick={() => submitAction(a.type)}
+                className={`min-h-11 w-full text-center px-2 py-2 rounded-lg font-semibold text-[13px] leading-tight transition-all active:scale-[0.98] ${
+                  a.tone === "primary" ? "bg-primary text-primary-foreground hover:opacity-90"
+                    : a.tone === "danger" ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
+                    : "bg-secondary hover:bg-secondary/70"
+                }`}>
+                {a.label}
+              </button>
+            );
             return (
               <>
                 <DialogHeader className="pr-8 space-y-0 text-left">
@@ -667,17 +679,13 @@ function LiveMatch() {
                     </span>
                   </DialogTitle>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-2 mt-5">
-                  {actions.map((a) => (
-                    <button key={a.type} onClick={() => submitAction(a.type)}
-                      className={`min-h-11 w-full text-center px-2 py-2 rounded-lg font-semibold text-[13px] leading-tight transition-all active:scale-[0.98] ${
-                        a.tone === "primary" ? "bg-primary text-primary-foreground hover:opacity-90"
-                          : a.tone === "danger" ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
-                          : "bg-secondary hover:bg-secondary/70"
-                      }`}>
-                      {a.label}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-3 mt-5">
+                  <div className="flex flex-col gap-2">
+                    {positiveActions.map((a) => <ActionButton a={a} />)}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {negativeActions.map((a) => <ActionButton a={a} />)}
+                  </div>
                 </div>
                 {isActiveLibero && replacedPlayer && (
                   <button
