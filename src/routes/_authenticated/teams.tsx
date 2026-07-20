@@ -20,6 +20,8 @@ import {
   type CloudTeam,
 } from "@/hooks/use-cloud-teams";
 import { useCanManageTeams } from "@/hooks/use-permissions";
+import { useCanCreateTeam } from "@/hooks/use-team-permissions";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
