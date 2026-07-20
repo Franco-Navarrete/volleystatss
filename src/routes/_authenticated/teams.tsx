@@ -35,6 +35,7 @@ import {
   ArrowUpDown,
   BarChart3,
   Camera,
+  Check,
   CloudOff,
   LayoutGrid,
   List,
@@ -44,6 +45,7 @@ import {
   Pencil,
   Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
   Trophy,
   UserPlus,
@@ -52,6 +54,14 @@ import {
   Volleyball,
   X,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({ meta: [{ title: "Equipos · RALLY" }] }),
