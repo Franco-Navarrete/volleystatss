@@ -295,17 +295,31 @@ function TeamsPage() {
   // Reset pagination when filters change
   useEffect(() => {
     setPage(1);
-  }, [query, filterLeague, filterGender, filterCategory, sortBy]);
+  }, [query, filterLeague, filterGender, filterCategory, filterStatus, sortBy]);
 
   const leagueById = useMemo(() => new Map(leagues.map((l) => [l.id, l])), [leagues]);
 
+  // Team counts per league (for the filter panel)
+  const teamsPerLeague = useMemo(() => {
+    const m = new Map<string, number>();
+    let noLeague = 0;
+    for (const t of teams) {
+      if (t.leagueId) m.set(t.leagueId, (m.get(t.leagueId) ?? 0) + 1);
+      else noLeague++;
+    }
+    return { byId: m, noLeague };
+  }, [teams]);
+
   const filteredTeams = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     let list = teams.filter((t) => {
       if (filterLeague === "none" && t.leagueId) return false;
       if (filterLeague !== "all" && filterLeague !== "none" && t.leagueId !== filterLeague) return false;
       if (filterGender !== "all" && t.gender !== filterGender) return false;
       if (filterCategory !== "all" && t.category !== filterCategory) return false;
+      if (filterStatus === "no_league" && t.leagueId) return false;
+      if (filterStatus === "active" && stat(t.id).count === 0) return false;
       if (q) {
         const league = t.leagueId ? leagueById.get(t.leagueId)?.name ?? "" : "";
         const hay = [t.name, t.shortName, league].join(" ").toLowerCase();
@@ -313,11 +327,14 @@ function TeamsPage() {
       }
       return true;
     });
-    const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     list = [...list].sort((a, b) => {
       switch (sortBy) {
+        case "name_desc":
+          return b.name.localeCompare(a.name);
         case "matches":
           return stat(b.id).count - stat(a.id).count;
+        case "matches_asc":
+          return stat(a.id).count - stat(b.id).count;
         case "league": {
           const la = a.leagueId ? leagueById.get(a.leagueId)?.name ?? "zzz" : "zzz";
           const lb = b.leagueId ? leagueById.get(b.leagueId)?.name ?? "zzz" : "zzz";
@@ -333,7 +350,7 @@ function TeamsPage() {
       }
     });
     return list;
-  }, [teams, filterLeague, filterGender, filterCategory, query, sortBy, leagueById, teamStats]);
+  }, [teams, filterLeague, filterGender, filterCategory, filterStatus, query, sortBy, leagueById, teamStats]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTeams.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
