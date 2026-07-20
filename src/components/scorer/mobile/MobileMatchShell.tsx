@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Undo2,
@@ -111,7 +111,30 @@ export function MobileMatchShell(p: Props) {
   } = p;
 
   const [moreOpen, setMoreOpen] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const [chipVisible, setChipVisible] = useState(true);
   const swipeStart = useRef<{ x: number; y: number; t: number } | null>(null);
+  const chipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-hide "última acción" chip después de 4s
+  useEffect(() => {
+    if (!rallyCtx.lastActionLabel) return;
+    setChipVisible(true);
+    if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+    chipTimerRef.current = setTimeout(() => setChipVisible(false), 4000);
+    return () => {
+      if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+    };
+  }, [rallyCtx.lastActionLabel, rallyCtx.lastActionDetail, rallyCtx.lastActionSide]);
+
+  // Al abrir el menú → volver a mostrar la nav
+  useEffect(() => {
+    if (moreOpen) setNavVisible(true);
+  }, [moreOpen]);
+
+  const onCourtTap = () => {
+    setNavVisible((v) => !v);
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse") return;
@@ -120,15 +143,22 @@ export function MobileMatchShell(p: Props) {
   const onPointerUp = (e: React.PointerEvent) => {
     const s = swipeStart.current;
     swipeStart.current = null;
-    if (!s || !canUndo) return;
+    if (!s) return;
     const dx = e.clientX - s.x;
     const dy = e.clientY - s.y;
-    if (dx < -80 && Math.abs(dy) < 60 && Date.now() - s.t < 600) {
-      // Swipe izquierda → deshacer
+    const dt = Date.now() - s.t;
+    // Swipe hacia arriba desde el borde inferior → mostrar nav
+    if (dy < -60 && Math.abs(dx) < 60 && dt < 600) {
+      setNavVisible(true);
+      return;
+    }
+    // Swipe izquierda → deshacer
+    if (canUndo && dx < -80 && Math.abs(dy) < 60 && dt < 600) {
       onUndo();
       if ("vibrate" in navigator) navigator.vibrate?.(15);
     }
   };
+
 
   const short = (s: "A" | "B") => (s === "A" ? teamA.shortName : teamB.shortName);
   const phaseLabel = rallyCtx.finished
@@ -246,19 +276,52 @@ export function MobileMatchShell(p: Props) {
 
       {/* Cancha ocupa el resto */}
       <div
-        className="relative flex-1 min-h-0 px-1 pt-1 pb-[calc(56px+env(safe-area-inset-bottom))]"
+        className={`relative flex-1 min-h-0 px-1 pt-1 transition-[padding] duration-200 ${
+          navVisible ? "pb-[calc(56px+env(safe-area-inset-bottom))]" : "pb-[env(safe-area-inset-bottom)]"
+        }`}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onClick={onCourtTap}
       >
-        <div className="w-full h-full">{courtSlot}</div>
+        <div className="w-full h-full" onClick={(e) => e.stopPropagation()}>
+          {courtSlot}
+        </div>
 
-        {/* Chip flotante "última acción" */}
-        {rallyCtx.lastActionLabel && (
-          <div className="absolute left-2 bottom-[calc(60px+env(safe-area-inset-bottom))] max-w-[70%] pointer-events-none animate-fade-in">
-            <div className="rounded-md bg-card/90 backdrop-blur border border-border/60 shadow-md px-2 py-1 text-[10.5px] font-semibold">
-              <span className="text-muted-foreground mr-1">Última:</span>
+        {/* Botón flotante Deshacer (siempre visible) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!canUndo) return;
+            onUndo();
+            if ("vibrate" in navigator) navigator.vibrate?.(10);
+          }}
+          disabled={!canUndo}
+          aria-label="Deshacer"
+          className={`absolute left-3 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 grid place-items-center size-12 rounded-full shadow-xl border border-border/60 bg-card/95 backdrop-blur text-foreground active:scale-95 transition-all ${
+            !navVisible ? "bottom-[calc(16px+env(safe-area-inset-bottom))]" : ""
+          } ${!canUndo ? "opacity-40" : "hover:bg-secondary"}`}
+        >
+          <Undo2 className="size-5" />
+        </button>
+
+        {/* Chip flotante "última acción" (auto-hide) */}
+        {rallyCtx.lastActionLabel && chipVisible && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenLiveStats();
+            }}
+            className={`absolute right-2 max-w-[65%] animate-fade-in z-20 ${
+              navVisible
+                ? "bottom-[calc(72px+env(safe-area-inset-bottom))]"
+                : "bottom-[calc(16px+env(safe-area-inset-bottom))]"
+            }`}
+          >
+            <div className="rounded-full bg-card/95 backdrop-blur border border-border/60 shadow-md px-2.5 py-1 text-[10.5px] font-semibold flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
               <span
-                className="scoreboard-digit tabular-nums font-bold mr-1"
+                className="scoreboard-digit tabular-nums font-black shrink-0"
                 style={{
                   color:
                     (rallyCtx.lastActionSide === "A" ? teamA.color : teamB.color) ??
@@ -267,26 +330,36 @@ export function MobileMatchShell(p: Props) {
               >
                 {rallyCtx.lastActionSide === "A" ? short("A") : short("B")}
               </span>
-              {rallyCtx.lastActionLabel}
+              <span className="truncate">{rallyCtx.lastActionLabel}</span>
               {rallyCtx.lastActionDetail && (
-                <span className="text-muted-foreground ml-1">
+                <span className="text-muted-foreground truncate">
                   · {rallyCtx.lastActionDetail}
                 </span>
               )}
             </div>
-          </div>
+          </button>
         )}
       </div>
 
-      {/* BottomNav fijo */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur px-1 pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 gap-0.5 h-14">
-          <NavBtn
-            icon={<Undo2 className="size-5" />}
-            label="Deshacer"
-            onClick={onUndo}
-            disabled={!canUndo}
-          />
+      {/* Zona sensible para hacer swipe-up desde el borde y traer la nav */}
+      {!navVisible && (
+        <div
+          className="fixed bottom-0 inset-x-0 h-6 z-30"
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onClick={() => setNavVisible(true)}
+        >
+          <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-foreground/25" />
+        </div>
+      )}
+
+      {/* BottomNav fijo (auto-hide) */}
+      <nav
+        className={`fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur px-1 pb-[env(safe-area-inset-bottom)] transition-transform duration-200 ${
+          navVisible ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="grid grid-cols-4 gap-0.5 h-14">
           <NavBtn
             icon={<Target className="size-5" />}
             label="Armado"
@@ -311,6 +384,7 @@ export function MobileMatchShell(p: Props) {
           />
         </div>
       </nav>
+
 
       {/* Sheet inferior con acciones menos frecuentes */}
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>

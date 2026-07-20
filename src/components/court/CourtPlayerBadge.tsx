@@ -414,8 +414,10 @@ export function CourtPlayerBadge({
             className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
             style={{
               background: isLibero ? "#ffffff" : team.color,
-              border: `3px solid ${isLibero ? team.color : "rgba(255,255,255,0.9)"}`,
-              boxShadow: `0 0 0 2px ${borderColor}`,
+              border: `${isLibero ? 4 : 3}px solid ${isLibero ? team.color : "rgba(255,255,255,0.9)"}`,
+              boxShadow: isLibero
+                ? `0 0 0 2px #ffffff, 0 0 0 5px ${borderColor}`
+                : `0 0 0 2px ${borderColor}`,
             }}
           >
             {player.photoUrl && imgOk ? (
@@ -429,7 +431,7 @@ export function CourtPlayerBadge({
               />
             ) : (
               <span
-                className="scoreboard-digit font-black leading-none text-[clamp(0.75rem,2.6vw,1.5rem)]"
+                className="scoreboard-digit font-black leading-none text-[clamp(0.85rem,3vw,1.7rem)]"
                 style={{
                   color: isLibero ? team.color : "#ffffff",
                   textShadow: isLibero
@@ -443,7 +445,7 @@ export function CourtPlayerBadge({
           </span>
 
           <span
-            className="absolute -bottom-1 -right-1 min-w-[42%] h-[42%] px-1 rounded-full flex items-center justify-center scoreboard-digit font-black text-[clamp(0.55rem,1.6vw,0.95rem)] leading-none tabular-nums shadow-md"
+            className="absolute -bottom-1 -right-1 min-w-[42%] h-[42%] px-1 rounded-full flex items-center justify-center scoreboard-digit font-black text-[clamp(0.6rem,1.8vw,1rem)] leading-none tabular-nums shadow-md"
             style={{
               background: "#111827",
               color: "#ffffff",
@@ -462,8 +464,9 @@ export function CourtPlayerBadge({
 
           {isLibero && (
             <span
-              className="absolute -top-1 -left-1 z-10 px-1 rounded-sm text-[8px] font-black uppercase tracking-widest text-white shadow"
+              className="absolute -top-1.5 -left-1.5 z-10 grid place-items-center size-5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-md ring-2 ring-white"
               style={{ background: team.color }}
+              aria-label="Líbero"
             >
               L
             </span>
@@ -472,6 +475,7 @@ export function CourtPlayerBadge({
           {isReceiverHighlight && (
             <span className="absolute -inset-1 rounded-full ring-2 ring-yellow-300 animate-pulse pointer-events-none" />
           )}
+
 
           {hl && (
             <>
