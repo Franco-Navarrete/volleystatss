@@ -150,12 +150,36 @@ export function CourtPlayerBadge({
     return null;
   }, [match.events, player.id]);
 
+  // ID of the newest event of the whole match (any player). Used to auto-clear
+  // stale highlights the moment any other action is registered.
+  const newestEventId = match.events[match.events.length - 1]?.id ?? null;
+
   const [highlight, setHighlight] = useState<Highlight>(null);
   const lastIdRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    if (!lastRelevant) return;
-    // On mount just remember, don't flash historic highlights.
+    const clear = () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      setHighlight(null);
+    };
+
+    // Sin acción reciente de este jugador → limpio.
+    if (!lastRelevant) {
+      clear();
+      return;
+    }
+    // La acción de este jugador ya no es la última del partido:
+    // el rally avanzó (saque/recepción/etc.), limpiar de inmediato.
+    if (newestEventId && newestEventId !== lastRelevant.id) {
+      clear();
+      lastIdRef.current = lastRelevant.id;
+      return;
+    }
+    // Primer render: memorizar sin flashear histórico.
     if (lastIdRef.current === null) {
       lastIdRef.current = lastRelevant.id;
       return;
@@ -164,8 +188,12 @@ export function CourtPlayerBadge({
     lastIdRef.current = lastRelevant.id;
     setHighlight(lastRelevant.kind);
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setHighlight(null), 1200);
-  }, [lastRelevant]);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      setHighlight(null);
+    }, 1000);
+  }, [lastRelevant, newestEventId]);
+
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
