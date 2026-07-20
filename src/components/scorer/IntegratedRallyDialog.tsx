@@ -206,6 +206,7 @@ export function IntegratedRallyDialog({
   onCourt,
   receptionQuality,
   receptionStep,
+  defenseStep,
   onSubmit,
 }: Props) {
   const playersOnCourt: Player[] = useMemo(
@@ -220,14 +221,20 @@ export function IntegratedRallyDialog({
     () => (receptionStep ? team.players.find((p) => p.id === receptionStep.playerId) : null),
     [receptionStep, team.players],
   );
+  const defensePlayer = useMemo(
+    () => (defenseStep ? team.players.find((p) => p.id === defenseStep.playerId) : null),
+    [defenseStep, team.players],
+  );
 
-  const initialStep: Step = receptionStep ? "reception" : "zone";
+  const initialStep: Step = defenseStep ? "defense" : receptionStep ? "reception" : "zone";
+  const isCounterFlow = !!defenseStep;
   const [step, setStep] = useState<Step>(initialStep);
   const [zone, setZone] = useState<SettingAttackZone | null>(null);
   const [attackerId, setAttackerId] = useState<string | null>(null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
   const [actionKind, setActionKind] = useState<ActionKind | null>(null);
   const [receptionValue, setReceptionValue] = useState<ReceptionRating | null>(null);
+  const [defenseValue, setDefenseValue] = useState<DefenseRating | null>(null);
   const [effectiveQuality, setEffectiveQuality] = useState<SettingQuality | undefined>(receptionQuality);
   const [fadeKey, setFadeKey] = useState(0);
 
@@ -241,6 +248,7 @@ export function IntegratedRallyDialog({
       setDirection(null);
       setActionKind(null);
       setReceptionValue(null);
+      setDefenseValue(null);
       setEffectiveQuality(receptionQuality);
     }
   }, [open, initialStep, receptionQuality]);
