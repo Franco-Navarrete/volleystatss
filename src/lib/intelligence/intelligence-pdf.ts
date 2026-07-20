@@ -1,11 +1,16 @@
 // Rally Intelligence — Exportación editorial a PDF.
 // Diseño A4 tipo publicación técnica (VolleyMetrics / Wyscout).
-// Cada página tiene un propósito narrativo. Reemplaza tablas por gráficos
-// vectoriales donde aportan más valor. Preflight de validación antes del save.
+// Cada página tiene un propósito narrativo y responde 4 preguntas:
+// ¿Qué pasó? ¿Por qué? ¿Qué consecuencia tuvo? ¿Qué entrenar?
+// Preflight de validación antes del save.
 
 import type {
   MatchAnalysis, RallyIndexItem, WeaknessCard, StrengthCard, Importance,
 } from "./analysis";
+import {
+  CHAPTER_QUESTION, beatFundamental, beatRotation, beatPlayer,
+  buildMatchStory, mapBlocksToWeek, interpretRally,
+} from "./pdf/narrative";
 
 type Format = "executive" | "full";
 type RGB = [number, number, number];
