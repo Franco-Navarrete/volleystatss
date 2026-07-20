@@ -72,9 +72,23 @@ function TeamsIndex() {
   const { data, isLoading } = usePublicData();
   const isMobile = useIsMobile();
 
-  const teams = data?.teams ?? [];
+  const teams = useMemo(() => {
+    const seen = new Set<string>();
+    return (data?.teams ?? []).filter((t) => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+  }, [data?.teams]);
   const matches = data?.matches ?? [];
-  const leagues = data?.leagues ?? [];
+  const leagues = useMemo(() => {
+    const seen = new Set<string>();
+    return (data?.leagues ?? []).filter((l) => {
+      if (seen.has(l.id)) return false;
+      seen.add(l.id);
+      return true;
+    });
+  }, [data?.leagues]);
 
   const [query, setQuery] = useState("");
   const [gender, setGender] = useState<GenderFilter>("all");
