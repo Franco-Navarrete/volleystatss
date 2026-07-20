@@ -774,6 +774,8 @@ function LiveMatch() {
         )}
 
       </div>
+      )}
+
 
 
       {/* Action menu when a player is tapped */}
