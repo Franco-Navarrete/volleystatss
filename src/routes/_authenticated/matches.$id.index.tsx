@@ -193,7 +193,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showSettingDialog, setShowSettingDialog] = useState(false);
-  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality } | null>(null);
+  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string } | null>(null);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [showFormationDialog, setShowFormationDialog] = useState(false);
@@ -313,7 +313,12 @@ function LiveMatch() {
     }
     if (needsSetStart) return;
     if (needsReception && side === receivingSide) {
-      setPendingReception({ side, playerId });
+      if (isCoach) {
+        // Flujo continuo: abrimos el panel único directamente en el paso "Recepción".
+        setIntegratedRally({ side, receiverId: playerId });
+      } else {
+        setPendingReception({ side, playerId });
+      }
       return;
     }
     setPendingPlayer({ side, playerId });
@@ -1274,6 +1279,20 @@ function LiveMatch() {
           side={integratedRally.side}
           onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
           receptionQuality={integratedRally.receptionQuality}
+          receptionStep={integratedRally.receiverId ? {
+            playerId: integratedRally.receiverId,
+            onRegister: (rating) => {
+              const side = integratedRally.side;
+              recordReception(match.id, side, integratedRally.receiverId!, rating);
+              const map: Partial<Record<ReceptionRating, SettingQuality>> = {
+                double_positive: "++",
+                positive: "+",
+                neutral: "!",
+              };
+              const quality = map[rating];
+              return { proceed: !!quality, quality };
+            },
+          } : undefined}
           onSubmit={(payload) => {
             const attackZone = settingZoneToAttackZone(payload.attackZone);
             const isNeutral =
@@ -1282,7 +1301,6 @@ function LiveMatch() {
               payload.action === "rotation_attack" || payload.action === "counter_attack";
             const isCounter =
               payload.action === "counter_attack" || payload.action === "counter_neutral";
-            // 1) Guardar evento analítico de armado
             recordSetting(match.id, integratedRally.side, {
               setterId: payload.setterId,
               quality: payload.setterQuality,
@@ -1298,7 +1316,6 @@ function LiveMatch() {
               receptionQuality: payload.receptionQuality,
               attackDirection: payload.attackDirection,
             });
-            // 2) Ataque/Contra neutro → NO afecta marcador, se registra como intento.
             if (isNeutral) {
               useVolley.getState().recordAttackAttempt(
                 match.id,
@@ -1309,7 +1326,6 @@ function LiveMatch() {
               setIntegratedRally(null);
               return;
             }
-            // 3) Punto real que afecta marcador.
             const type: PointType =
               payload.action === "block"
                 ? "attack_error"
