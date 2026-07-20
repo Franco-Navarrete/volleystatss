@@ -20,7 +20,7 @@ const shortSchema = z.string().trim().min(1).max(8);
 const colorSchema = z.string().trim().max(20);
 const optionalUrl = z.string().max(1_000_000).optional().nullable();
 const positionSchema = z
-  .enum(["punta", "central", "opuesto", "armador", "libero"])
+  .enum(["punta", "central", "opuesto", "armador", "libero", "universal"])
   .optional()
   .nullable();
 const genderSchema = z.enum(["M", "F", "X"]).optional().nullable();
