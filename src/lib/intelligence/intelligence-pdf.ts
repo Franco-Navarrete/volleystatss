@@ -1346,54 +1346,64 @@ function renderRecommendations(ctx: RenderCtx, a: MatchAnalysis) {
 function renderTrainingPlan(ctx: RenderCtx, a: MatchAnalysis) {
   drawH1(ctx, "Plan de entrenamiento", CHAPTER_QUESTION.plan);
   const plan = a.trainingPlan;
-  drawParagraph(ctx, `Duración total sugerida: ${isNum(plan.totalMinutes) ? plan.totalMinutes : NA} minutos.`, { color: C.slate });
+  const doc = ctx.doc;
+  drawParagraph(ctx,
+    `Semana estructurada en cuatro sesiones (Lunes · Martes · Jueves · Viernes) derivadas del diagnóstico del partido.`,
+    { color: C.slate, size: 9.5 });
   if (!plan.blocks.length) { drawParagraph(ctx, "Sin bloques definidos.", { color: C.slate, italic: true }); return; }
 
-  const total = plan.totalMinutes || plan.blocks.reduce((a, b) => a + (isNum(b.minutes) ? b.minutes : 0), 0) || 1;
-  // Barra horizontal proporcional
-  drawCard(ctx, 22, (x, y, w) => {
-    setFont(ctx.doc, "bold", 8.5, C.slate);
-    ctx.doc.text("CRONOGRAMA (proporcional a la duración)", x + 4, y + 7);
+  const week = mapBlocksToWeek(plan.blocks);
+
+  // Cronograma visual proporcional (4 barras)
+  drawCard(ctx, 26, (x, y, w) => {
+    setFont(doc, "bold", 8.5, C.slate);
+    doc.text("CRONOGRAMA SEMANAL (proporcional a la duración)", x + 4, y + 7);
+    const total = week.reduce((s, d) => s + (d.minutes || 0), 0) || 1;
     let bx = x + 4;
     const bw = w - 8;
-    const palette: RGB[] = [C.navy, C.info, C.good, C.warn, C.bad, [147, 51, 234]];
-    for (let i = 0; i < plan.blocks.length; i++) {
-      const b = plan.blocks[i];
-      const frac = Math.max(0, (isNum(b.minutes) ? b.minutes : 0) / total);
+    const palette: RGB[] = [C.navy, C.info, C.good, C.warn];
+    for (let i = 0; i < week.length; i++) {
+      const d = week[i];
+      const frac = Math.max(0.06, d.minutes / total);
       const seg = frac * bw;
       const col = palette[i % palette.length];
-      fillRect(ctx.doc, bx, y + 11, seg, 6, col, 2);
-      if (seg > 12) {
-        setFont(ctx.doc, "bold", 7, C.white);
-        ctx.doc.text(`${fmtInt(b.minutes)}'`, bx + 2, y + 15);
-      }
+      fillRect(doc, bx, y + 11, seg - 1.5, 8, col, 2);
+      setFont(doc, "bold", 7, C.white);
+      if (seg > 20) doc.text(`${d.day.slice(0, 3).toUpperCase()} ${fmtInt(d.minutes)}'`, bx + 2, y + 16.5);
       bx += seg;
     }
   });
 
-  // Bloques como tarjetas
-  for (let i = 0; i < plan.blocks.length; i++) {
-    const b = plan.blocks[i];
-    const palette: RGB[] = [C.navy, C.info, C.good, C.warn, C.bad, [147, 51, 234]];
+  // Tarjetas por día
+  const palette: RGB[] = [C.navy, C.info, C.good, C.warn];
+  for (let i = 0; i < week.length; i++) {
+    const d = week[i];
     const col = palette[i % palette.length];
-    const drills = (b.drills || []).map(fmtText);
-    const drillLines: string[] = ctx.doc.splitTextToSize(drills.join(" · "), contentW(ctx) - 30);
-    const reasonLines: string[] = ctx.doc.splitTextToSize(fmtText(b.reason), contentW(ctx) - 30);
-    const h = 14 + drillLines.length * 4.2 + reasonLines.length * 4.2 + 4;
+    const drills = (d.drills || []).map(fmtText);
+    const drillLines: string[] = doc.splitTextToSize(drills.join(" · ") || NA, contentW(ctx) - 30);
+    const reasonLines: string[] = doc.splitTextToSize(fmtText(d.reason), contentW(ctx) - 30);
+    const h = 22 + drillLines.length * 4.2 + reasonLines.length * 4.2 + 6;
     drawCard(ctx, h, (x, y, w) => {
-      fillRect(ctx.doc, x, y, 1.6, h, col);
-      setFont(ctx.doc, "bold", 10.5, C.ink);
-      ctx.doc.text(`Bloque ${i + 1} · ${fmtText(b.focus)}`, x + 6, y + 7);
-      drawPill(ctx.doc, x + w - 22, y + 7, `${fmtInt(b.minutes)}'`, col);
-      let ly = y + 13;
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      ctx.doc.text("EJERCICIOS", x + 6, ly); ly += 4;
-      setFont(ctx.doc, "normal", 9, C.ink);
-      for (const l of drillLines) { ctx.doc.text(l, x + 6, ly); ly += 4.2; }
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      ctx.doc.text("RAZÓN", x + 6, ly); ly += 4;
-      setFont(ctx.doc, "italic", 9, C.slate);
-      for (const l of reasonLines) { ctx.doc.text(l, x + 6, ly); ly += 4.2; }
+      fillRect(doc, x, y, 2, h, col);
+      // Header
+      setFont(doc, "bold", 12, C.ink);
+      doc.text(d.day, x + 6, y + 8);
+      setFont(doc, "bold", 9.5, col);
+      doc.text(fmtText(d.focus), x + 6, y + 15);
+      drawPill(doc, x + w - 22, y + 8, `${fmtInt(d.minutes)}'`, col);
+      // Prioridad chip
+      const priority = i === 0 ? "Prioridad alta" : i === 1 ? "Consolidación" : i === 2 ? "Refinamiento" : "Aplicación";
+      drawPill(doc, x + w - 62, y + 8, priority, C.slate);
+
+      let ly = y + 22;
+      setFont(doc, "bold", 7.5, C.mute);
+      doc.text("EJERCICIOS Y REPETICIONES", x + 6, ly); ly += 4;
+      setFont(doc, "normal", 9, C.ink);
+      for (const l of drillLines) { doc.text(l, x + 6, ly); ly += 4.2; }
+      setFont(doc, "bold", 7.5, C.mute);
+      doc.text("OBJETIVO", x + 6, ly); ly += 4;
+      setFont(doc, "italic", 9, C.slate);
+      for (const l of reasonLines) { doc.text(l, x + 6, ly); ly += 4.2; }
     }, 3);
   }
 }
