@@ -35,13 +35,27 @@ export const listTeams = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const [teamsRes, playersRes] = await Promise.all([
+    const [teamsRes, playersRes, clubsRes] = await Promise.all([
       supabase
         .from("teams")
         .select("id, league_id, name, short_name, color, logo_url, gender, category, created_at")
         .order("created_at", { ascending: true }),
       supabase
         .from("players")
+        .select("id, team_id, name, number, position, photo_url, created_at")
+        .order("number", { ascending: true }),
+      supabase.from("clubs").select("id, name, logo_url"),
+    ]);
+    if (teamsRes.error) throw teamsRes.error;
+    if (playersRes.error) throw playersRes.error;
+    if (clubsRes.error) throw clubsRes.error;
+    const clubById = new Map<string, { name: string; logoUrl: string | null }>();
+    for (const c of clubsRes.data ?? []) {
+      clubById.set(c.id as string, {
+        name: (c as { name: string }).name,
+        logoUrl: ((c as { logo_url: string | null }).logo_url) ?? null,
+      });
+    }
         .select("id, team_id, name, number, position, photo_url, created_at")
         .order("number", { ascending: true }),
     ]);
