@@ -77,12 +77,14 @@ import {
   Plus,
   RotateCcw,
   RotateCw,
+  Search,
   Shirt,
   Target,
   Undo2,
   Users,
   X,
 } from "lucide-react";
+import { PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
