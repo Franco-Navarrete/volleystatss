@@ -38,7 +38,7 @@ export const listTeams = createServerFn({ method: "GET" })
     const [teamsRes, playersRes, clubsRes] = await Promise.all([
       supabase
         .from("teams")
-        .select("id, league_id, name, short_name, color, logo_url, gender, category, created_at")
+        .select("id, league_id, club_id, name, short_name, color, logo_url, gender, category, owner_id, secondary_color, club, created_at")
         .order("created_at", { ascending: true }),
       supabase
         .from("players")
@@ -56,11 +56,7 @@ export const listTeams = createServerFn({ method: "GET" })
         logoUrl: ((c as { logo_url: string | null }).logo_url) ?? null,
       });
     }
-        .select("id, team_id, name, number, position, photo_url, created_at")
-        .order("number", { ascending: true }),
-    ]);
-    if (teamsRes.error) throw teamsRes.error;
-    if (playersRes.error) throw playersRes.error;
+
 
     const playersByTeam = new Map<string, typeof playersRes.data>();
     for (const p of playersRes.data ?? []) {
