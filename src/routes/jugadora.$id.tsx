@@ -833,7 +833,7 @@ function HistoryTable({
                 <td className="px-2 py-2 text-right tabular-nums hidden md:table-cell">{p.block}</td>
                 <td className="px-2 py-2 text-right tabular-nums hidden lg:table-cell">{atk + p.attackError > 0 ? `${eff}%` : "—"}</td>
                 <td className="px-2 py-2 print:hidden">
-                  <Link to="/partidos/$id" params={{ id: p.matchId }} className="text-primary text-[10px] font-semibold hover:underline">Ver detalle</Link>
+                  <Link to="/partidos/$id" params={{ id: p.matchId }} search={{ from: "jugadora", fromId: playerId }} className="text-primary text-[10px] font-semibold hover:underline">Ver detalle</Link>
                 </td>
               </tr>
             );
