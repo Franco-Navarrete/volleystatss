@@ -44,6 +44,14 @@ export const PLAYER_POSITION_LABEL: Record<PlayerPosition, string> = {
   libero: "Líbero",
 };
 
+export type DominantHand = "right" | "left" | "ambi";
+
+export const DOMINANT_HAND_LABEL: Record<DominantHand, string> = {
+  right: "Diestra",
+  left: "Zurda",
+  ambi: "Ambidiestra",
+};
+
 export interface Player {
   id: string;
   name: string;
@@ -51,6 +59,14 @@ export interface Player {
   /** Optional player photo as data URL (uploaded from device). */
   photoUrl?: string;
   position?: PlayerPosition;
+  /** ISO date (yyyy-mm-dd). */
+  birthDate?: string;
+  /** Height in cm. */
+  height?: number;
+  /** Weight in kg. */
+  weight?: number;
+  dominantHand?: DominantHand;
+  nationality?: string;
 }
 
 export type StatsMode = "liga" | "entrenador";

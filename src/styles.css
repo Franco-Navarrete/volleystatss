@@ -327,3 +327,10 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Print styles for /jugadora profile export */
+@media print {
+  body { background: white !important; color: black !important; }
+  .print\:hidden { display: none !important; }
+  #player-profile-root section { break-inside: avoid; }
+}
