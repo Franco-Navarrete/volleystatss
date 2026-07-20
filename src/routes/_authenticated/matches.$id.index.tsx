@@ -212,12 +212,15 @@ function LiveMatch() {
     }
   }, [match?.status, match?.id, navigate]);
 
-  // Auto-rotate to landscape on portrait phones during live scoring.
-  useForceLandscape(match?.status === "live");
-
   // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
   const isMobile = useIsMobileLayout();
+
+  // Auto-rotate to landscape only when we are NOT using the dedicated mobile
+  // shell. The mobile shell is portrait-native — rotating the shell there
+  // makes portalled Sheets / HoverCards misalign with the rotated court.
+  useForceLandscape(match?.status === "live" && !isMobile);
+
 
 
 
