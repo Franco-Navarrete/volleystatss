@@ -151,6 +151,7 @@ function LiveMatch() {
   const recordSanction = useVolley((s) => s.recordSanction);
   const overrideLineup = useVolley((s) => s.overrideLineup);
   const recordReception = useVolley((s) => s.recordReception);
+  const recordDefense = useVolley((s) => s.recordDefense);
   const recordSetting = useVolley((s) => s.recordSetting);
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
   const overrideScore = useVolley((s) => s.overrideScore);
