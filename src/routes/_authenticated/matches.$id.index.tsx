@@ -1725,6 +1725,7 @@ function FormationSide({
               isServer={isServer}
               isLibero={isLibero}
               isReceiverHighlight={isReceiverHighlight}
+              active={!!activePlayerId && activePlayerId === p.id}
               dimmed={!onCourtActive}
               onClick={() => onPlayerClick(side, p.id)}
               className="w-full h-full"
