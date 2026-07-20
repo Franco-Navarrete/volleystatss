@@ -13,8 +13,10 @@ import {
   generateIntelligenceReport,
   listIntelligenceReports,
 } from "@/lib/intelligence/reports.functions";
-import { Brain, Loader2, Sparkles, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Brain, Loader2, Sparkles, Trash2, ChevronDown, ChevronRight, ShieldAlert, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
   head: () => ({
@@ -32,12 +34,27 @@ function IntelligencePage() {
   const players = useMemo(() => teams.flatMap((t) => t.players ?? []), [teams]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
-  const finishedMatches = useMemo(
-    () => matches.filter((m) => m.status === "finished").sort((a, b) => b.scheduledAt - a.scheduledAt),
-    [matches],
-  );
+  const { user } = useAuthUser();
+  const { isAdmin, checking: adminChecking } = useIsAdmin();
 
-  const [matchId, setMatchId] = useState<string>(finishedMatches[0]?.id ?? "");
+  // Equipos propios: los que tienen ownerId === userId. Admin ve todos.
+  const myTeamIds = useMemo(() => {
+    if (!user) return new Set<string>();
+    return new Set(teams.filter((t) => t.ownerId === user.id).map((t) => t.id));
+  }, [teams, user]);
+
+  const restricted = !adminChecking && !isAdmin;
+  const hasNoTeam = restricted && myTeamIds.size === 0;
+
+  const finishedMatches = useMemo(() => {
+    const base = matches
+      .filter((m) => m.status === "finished")
+      .sort((a, b) => b.scheduledAt - a.scheduledAt);
+    if (!restricted) return base;
+    return base.filter((m) => myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId));
+  }, [matches, restricted, myTeamIds]);
+
+  const [matchId, setMatchId] = useState<string>("");
   const [side, setSide] = useState<"A" | "B">("A");
   const [reports, setReports] = useState<IntelligenceReport[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -58,7 +75,22 @@ function IntelligencePage() {
     return () => { cancel = true; };
   }, [listFn]);
 
+  // Seleccionar automáticamente el primer partido disponible.
+  useEffect(() => {
+    if (!matchId && finishedMatches[0]) setMatchId(finishedMatches[0].id);
+    else if (matchId && !finishedMatches.some((m) => m.id === matchId)) {
+      setMatchId(finishedMatches[0]?.id ?? "");
+    }
+  }, [finishedMatches, matchId]);
+
   const match = useMemo(() => finishedMatches.find((m) => m.id === matchId), [finishedMatches, matchId]);
+
+  // Para entrenadores: forzar side al lado del equipo propio.
+  useEffect(() => {
+    if (!restricted || !match) return;
+    if (myTeamIds.has(match.teamAId)) setSide("A");
+    else if (myTeamIds.has(match.teamBId)) setSide("B");
+  }, [restricted, match, myTeamIds]);
 
   const analysis = useMemo(() => {
     if (!match) return null;
@@ -66,9 +98,15 @@ function IntelligencePage() {
   }, [match, side, teams, players, matches]);
 
   const teamName = (id?: string) => (id ? teamById.get(id)?.name ?? "Equipo" : "—");
+  const analyzedTeamId = match ? (side === "A" ? match.teamAId : match.teamBId) : undefined;
 
   async function handleGenerate() {
     if (!match || !analysis) return;
+    // Guardia cliente: entrenador solo puede analizar su equipo.
+    if (restricted && analyzedTeamId && !myTeamIds.has(analyzedTeamId)) {
+      setError("Permisos insuficientes: solo podés analizar tu propio equipo.");
+      return;
+    }
     setGenerating(true);
     setError(null);
     try {
@@ -79,6 +117,7 @@ function IntelligencePage() {
           scopeRef: match.id,
           title,
           analysis: analysis as unknown as never,
+          teamId: analyzedTeamId,
         },
       });
       setReports((prev) => [report, ...prev]);
@@ -89,6 +128,7 @@ function IntelligencePage() {
       setGenerating(false);
     }
   }
+
 
   async function handleDelete(id?: string) {
     if (!id) return;
