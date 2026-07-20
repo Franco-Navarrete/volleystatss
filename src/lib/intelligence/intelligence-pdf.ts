@@ -1835,6 +1835,7 @@ export async function downloadIntelligencePdf(
 
   if (format === "executive") {
     pageBreak(ctx);
+    renderExecutiveSummary(ctx, analysis, summaryMd);
     renderDashboardBlock(ctx, analysis, extras?.coachName, extras?.venue);
     renderRallyIndexSection(ctx, analysis, { full: false });
     renderStrengthsWeaknesses(ctx, analysis, true);
@@ -1844,23 +1845,26 @@ export async function downloadIntelligencePdf(
     doc.addPage();
     const tocPageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
 
-    // Cuerpo
+    // Cuerpo — 15 capítulos narrativos
     pageBreak(ctx);
-    renderDashboardBlock(ctx, analysis, extras?.coachName, extras?.venue);
-    renderRallyIndexSection(ctx, analysis, { full: true });
+    renderExecutiveSummary(ctx, analysis, summaryMd);          // 2
+    renderDashboardBlock(ctx, analysis, extras?.coachName, extras?.venue); // 3
+    renderRallyIndexSection(ctx, analysis, { full: true });    // 4
+    renderHowWonLost(ctx, analysis);                           // 5
     renderRadar(ctx, analysis);
-    renderFundamentalChapters(ctx, analysis);
-    renderCourtAnalytics(ctx, analysis);
-    renderRotationBlock(ctx, analysis);
-    renderPlayerAnalysis(ctx, analysis);
+    renderFundamentalChapters(ctx, analysis);                  // 6
+    renderRotationBlock(ctx, analysis);                        // 7
+    renderPlayerAnalysis(ctx, analysis);                       // 8
+    renderTendencies(ctx, analysis);                           // 9
+    renderCourtAnalytics(ctx, analysis);                       // 10
     renderTimeline(ctx, analysis);
     renderStrengthsWeaknesses(ctx, analysis, false);
-    renderSeasonComparison(ctx, analysis);
-    renderRisksPredictions(ctx, analysis);
+    renderSeasonComparison(ctx, analysis);                     // 11
+    renderRisksPredictions(ctx, analysis);                     // 12
     renderRecommendations(ctx, analysis);
-    renderTrainingPlan(ctx, analysis);
-    renderCoachInsights(ctx, analysis);
-    renderCoachExecutiveSummary(ctx, analysis);
+    renderTrainingPlan(ctx, analysis);                         // 13
+    renderCoachInsights(ctx, analysis);                        // 14
+    renderCoachExecutiveSummary(ctx, analysis);                // 15
 
     // TOC
     renderToc(ctx, tocPageNo);
