@@ -918,7 +918,7 @@ function TeamsPage() {
               league={t.leagueId ? leagueById.get(t.leagueId) : undefined}
               stats={teamStats.get(t.id) ?? { count: 0, lastAt: 0, nextAt: null }}
               onOpen={() => setSelected(t.id)}
-              canEdit={canEdit}
+              canEdit={canManage(t)}
               isActive={activeTeam?.id === t.id}
             />
           ))}
