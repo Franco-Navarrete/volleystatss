@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { ListOrdered } from "lucide-react";
+import { CourtPlayerBadge } from "@/components/court/CourtPlayerBadge";
 import {
   currentServer,
   repairOnCourt,
