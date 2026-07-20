@@ -61,7 +61,7 @@ function PublicMatchPage() {
   let backLink: React.ReactNode = null;
   if (from === "jugadora" && fromId) {
     const player = (data?.teams ?? [])
-      .flatMap((t) => t.roster ?? [])
+      .flatMap((t) => t.players ?? [])
       .find((p) => p.id === fromId);
     if (player) {
       backLabel = player.name;
