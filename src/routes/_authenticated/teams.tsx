@@ -70,7 +70,10 @@ export const Route = createFileRoute("/_authenticated/teams")({
   component: TeamsPage,
 });
 
-const COLORS = ["#ff7a3d", "#3ec1d3", "#ffd23f", "#9b5de5", "#43d27a", "#ff5d8f", "#5d9cec", "#f48c06"];
+import { TEAM_COLORS_HEX } from "@/lib/team-colors";
+import { useMyClub } from "@/hooks/use-my-club";
+import { MyClubDialog } from "@/components/MyClubDialog";
+const COLORS = TEAM_COLORS_HEX;
 const MAX_PHOTO_BYTES = 800 * 1024;
 const PAGE_SIZE = 20;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
