@@ -45,6 +45,8 @@ import { SideActionsRail } from "@/components/scorer/SideActionsRail";
 import { RallyProgressBar } from "@/components/scorer/RallyProgressBar";
 import { RallyContextCards } from "@/components/scorer/RallyContextCards";
 import { computeRallyContext } from "@/lib/rally-phase";
+import { useIsMobileLayout } from "@/hooks/use-is-mobile-layout";
+import { MobileMatchShell } from "@/components/scorer/mobile/MobileMatchShell";
 
 
 
