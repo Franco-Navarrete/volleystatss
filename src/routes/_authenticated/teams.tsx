@@ -954,13 +954,13 @@ function TeamsPage() {
             <div className="flex items-center gap-3 sm:gap-4">
               <button
                 type="button"
-                onClick={() => canEdit && teamLogoFileRef.current?.click()}
+                onClick={() => canManageActive && teamLogoFileRef.current?.click()}
                 className="relative group rounded-lg overflow-hidden shrink-0"
-                title={canEdit ? "Cambiar escudo" : ""}
-                disabled={!canEdit}
+                title={canManageActive ? "Cambiar escudo" : ""}
+                disabled={!canManageActive}
               >
                 <TeamBadge team={activeTeam} size="lg" />
-                {canEdit && (
+                {canManageActive && (
                   <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                     <Camera className="size-4 text-white" />
                   </span>
@@ -1008,7 +1008,7 @@ function TeamsPage() {
                     </p>
                   </>
                 )}
-                {activeTeam.logoUrl && !editingTeam && canEdit && (
+                {activeTeam.logoUrl && !editingTeam && canManageActive && (
                   <button
                     onClick={() => mut.updateTeam.mutate({ id: activeTeam.id, logoUrl: null })}
                     className="text-[10px] text-muted-foreground hover:text-destructive mt-1"
@@ -1040,7 +1040,7 @@ function TeamsPage() {
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               <select
                 value={activeTeam.leagueId ?? ""}
-                disabled={!canEdit || leagues.length === 0}
+                disabled={!canManageActive || leagues.length === 0}
                 onChange={(e) => {
                   const newLeagueId = e.target.value || null;
                   mut.updateTeam.mutate({ id: activeTeam.id, leagueId: newLeagueId });
@@ -1062,7 +1062,7 @@ function TeamsPage() {
               </select>
               <select
                 value={activeTeam.gender ?? ""}
-                disabled={!canEdit}
+                disabled={!canManageActive}
                 onChange={(e) => {
                   const v = e.target.value;
                   mut.updateTeam.mutate({
@@ -1079,7 +1079,7 @@ function TeamsPage() {
               </select>
               <select
                 value={activeTeam.category ?? ""}
-                disabled={!canEdit}
+                disabled={!canManageActive}
                 onChange={(e) => {
                   const v = e.target.value as "" | TeamCategory;
                   mut.updateTeam.mutate({ id: activeTeam.id, category: v || null });
@@ -1095,7 +1095,7 @@ function TeamsPage() {
                 ))}
               </select>
 
-              {canEdit && (
+              {canManageActive && (
                 editingTeam ? (
                   <>
                     <Button
@@ -1147,7 +1147,7 @@ function TeamsPage() {
             </div>
           </div>
 
-          {canEdit && (
+          {canManageActive && (
             <div className="grid sm:grid-cols-[auto_1fr_90px_130px_auto] gap-2 mb-4 items-center">
               <button
                 type="button"
@@ -1257,8 +1257,8 @@ function TeamsPage() {
                 <li key={p.id} className="flex items-center gap-3 bg-secondary/40 rounded-lg px-3 py-2">
                   <button
                     type="button"
-                    title={canEdit ? "Cambiar foto" : ""}
-                    disabled={!canEdit}
+                    title={canManageActive ? "Cambiar foto" : ""}
+                    disabled={!canManageActive}
                     onClick={() => {
                       setEditingPlayerId(p.id);
                       editFileRef.current?.click();
@@ -1272,7 +1272,7 @@ function TeamsPage() {
                     )}
                   </button>
 
-                  {isEditing && canEdit ? (
+                  {isEditing && canManageActive ? (
                     <>
                       <Input
                         type="number"
@@ -1335,7 +1335,7 @@ function TeamsPage() {
                         {p.number}
                       </div>
                       <button
-                        onClick={() => canEdit && setEditingPlayerId(p.id)}
+                        onClick={() => canManageActive && setEditingPlayerId(p.id)}
                         className="flex-1 min-w-0 text-left"
                       >
                         <div className="truncate font-medium flex items-center gap-1">
@@ -1353,7 +1353,7 @@ function TeamsPage() {
                     </>
                   )}
 
-                  {p.photoUrl && !isEditing && canEdit && (
+                  {p.photoUrl && !isEditing && canManageActive && (
                     <button
                       onClick={() => mut.updatePlayer.mutate({ id: p.id, photoUrl: null })}
                       className="text-[10px] text-muted-foreground hover:text-destructive"
@@ -1361,7 +1361,7 @@ function TeamsPage() {
                       Quitar foto
                     </button>
                   )}
-                  {!isEditing && canEdit && (
+                  {!isEditing && canManageActive && (
                     <button
                       onClick={() => mut.deletePlayer.mutate({ id: p.id })}
                       className="text-muted-foreground hover:text-destructive"
