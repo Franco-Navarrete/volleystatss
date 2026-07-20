@@ -331,18 +331,25 @@ export function buildMatchAnalysis(ctx: AnalysisContext): MatchAnalysis {
   const transitionScore = clamp((k2Score + defenseScore) / 2);
   const regularity = clamp(100 - stddev(setScores.map((s) => s.attackEff)) * 2);
 
-  const breakdown = [
-    { key: "attack", label: "Ataque", score: round(attackEff * 1.2), detail: `${round(attackEff, 1)}% eficacia (${teamStat.attack}/${attackAttempts})` },
-    { key: "reception", label: "Recepción", score: round(recEff), detail: `${round(recEff, 1)}% eficiencia · ${round(recPositivity, 1)}% #+` },
-    { key: "serve", label: "Saque", score: round(serveScore), detail: `${serveAces} aces / ${serveErrors} errores` },
-    { key: "block", label: "Bloqueo", score: round(blockScore), detail: `${teamStat.block} bloqueos / ${teamStat.blockErrors} errores` },
-    { key: "defense", label: "Defensa", score: round(defenseScore), detail: `${counterAttack} contraataques` },
-    { key: "transition", label: "Transición", score: round(transitionScore), detail: "Promedio defensa+K2" },
-    { key: "k1", label: "K1 (side-out)", score: round(k1Score), detail: `${round(recPositivity, 1)}% #+ y ${rotationAttack} puntos de rotación` },
-    { key: "k2", label: "K2 (contraataque)", score: round(k2Score), detail: `${counterAttack} contraataques + ${teamStat.block} bloqueos` },
-    { key: "regularity", label: "Regularidad", score: round(regularity), detail: "Estabilidad de ataque set a set" },
-    { key: "discipline", label: "Disciplina", score: round(disciplineScore), detail: `${unforced} errores no forzados totales` },
-  ].map((r) => ({ ...r, score: clamp(round(r.score)) }));
+  const rawBreakdown: Array<Omit<RallyIndexItem, "impact" | "status">> = [
+    { key: "attack", label: "Ataque", score: round(attackEff * 1.2), detail: `${round(attackEff, 1)}% eficacia (${teamStat.attack}/${attackAttempts})`, confidence: clamp(40 + attackAttempts * 2) },
+    { key: "reception", label: "Recepción", score: round(recEff), detail: `${round(recEff, 1)}% eficiencia · ${round(recPositivity, 1)}% #+`, confidence: clamp(40 + recTotal * 2) },
+    { key: "serve", label: "Saque", score: round(serveScore), detail: `${serveAces} aces / ${serveErrors} errores`, confidence: 85 },
+    { key: "block", label: "Bloqueo", score: round(blockScore), detail: `${teamStat.block} bloqueos / ${teamStat.blockErrors} errores`, confidence: 80 },
+    { key: "defense", label: "Defensa", score: round(defenseScore), detail: `${counterAttack} contraataques`, confidence: 70 },
+    { key: "transition", label: "Transición", score: round(transitionScore), detail: "Promedio defensa+K2", confidence: 70 },
+    { key: "k1", label: "K1 (side-out)", score: round(k1Score), detail: `${round(recPositivity, 1)}% #+ y ${rotationAttack} puntos de rotación`, confidence: clamp(50 + recTotal) },
+    { key: "k2", label: "K2 (contraataque)", score: round(k2Score), detail: `${counterAttack} contraataques + ${teamStat.block} bloqueos`, confidence: 70 },
+    { key: "regularity", label: "Regularidad", score: round(regularity), detail: "Estabilidad de ataque set a set", confidence: 60 },
+    { key: "discipline", label: "Disciplina", score: round(disciplineScore), detail: `${unforced} errores no forzados totales`, confidence: 90 },
+  ];
+  const IMPACT_WEIGHTS: Record<string, number> = {
+    attack: 25, reception: 22, k1: 12, k2: 8, serve: 8, block: 7, defense: 8, transition: 5, regularity: 3, discipline: 2,
+  };
+  const breakdown: RallyIndexItem[] = rawBreakdown.map((r) => {
+    const score = clamp(round(r.score));
+    return { ...r, score, impact: IMPACT_WEIGHTS[r.key] ?? 5, status: statusFromScore(score) };
+  });
   const overall = round(breakdown.reduce((a, b) => a + b.score, 0) / breakdown.length);
   const rallyIndex: RallyIndex = { overall, breakdown };
 
