@@ -49,14 +49,49 @@ export interface WeaknessCard extends StrengthCard {
   consequence: string;
 }
 
+export type IndexStatus = "excellent" | "good" | "regular" | "low" | "critical";
+
+export interface RallyIndexItem {
+  key: string;
+  label: string;
+  score: number;
+  detail: string;
+  /** 0–100 — cuánto pesa este fundamento en el resultado (aprox.). */
+  impact?: number;
+  /** 0–100 — confianza según volumen de muestras. */
+  confidence?: number;
+  /** Delta vs promedio de la temporada (puntos). */
+  seasonDelta?: number;
+  trend?: Trend;
+  status?: IndexStatus;
+}
+
 export interface RallyIndex {
   overall: number;
-  breakdown: Array<{
-    key: string;
-    label: string;
-    score: number;
-    detail: string;
-  }>;
+  breakdown: RallyIndexItem[];
+}
+
+export interface TimelineEvent {
+  setNumber: number;
+  scoreFor: number;
+  scoreAgainst: number;
+  kind: "run" | "opp_run" | "timeout" | "lead_change" | "peak" | "drop";
+  title: string;
+  detail: string;
+}
+
+export interface ImpactSlice {
+  key: string;
+  label: string;
+  impact: number; // porcentaje 0–100
+  color: string;
+}
+
+export interface CoachInsights {
+  whyResult: string;
+  keyDecisionThatWorked: string;
+  decisionToReconsider: string;
+  fundamentalDrivingResult: string;
 }
 
 export interface DashboardData {
@@ -139,6 +174,8 @@ export interface MatchAnalysis {
   teamName: string;
   opponentName: string;
   dashboard: DashboardData;
+  /** Resumen breve (3–5 líneas) generado programáticamente como fallback previo al IA. */
+  analystSummary: string;
   rallyIndex: RallyIndex;
   strengths: StrengthCard[];
   weaknesses: WeaknessCard[];
@@ -155,6 +192,19 @@ export interface MatchAnalysis {
     label: string;
     rows: Array<{ metric: string; current: number; reference: number; delta: number; trend: Trend }>;
   };
+  /** Distribución del impacto de cada fundamento en el resultado (%). */
+  impactBreakdown: ImpactSlice[];
+  /** Radar comparativo team vs rival vs promedio temporada. */
+  radarCompare: Array<{
+    axis: string;
+    equipo: number;
+    rival: number;
+    temporada: number;
+  }>;
+  /** Eventos destacados del partido en orden cronológico. */
+  timeline: TimelineEvent[];
+  /** Insights sintetizados para el cuerpo técnico. */
+  coachInsights: CoachInsights;
 }
 
 // ---------------- Utilidades ----------------
