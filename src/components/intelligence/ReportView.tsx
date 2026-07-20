@@ -775,32 +775,60 @@ function SharePanel({ analysis, summaryMd }: { analysis: MatchAnalysis; summaryM
     `Debilidad: ${d.topWeakness}\n` +
     (summaryMd ? `\n${summaryMd}` : `\n${analysis.analystSummary}`);
 
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(summaryText); } catch { /* ignore */ }
-  };
-  const copyUrl = async () => {
-    try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
-  };
+  const copy = async () => { try { await navigator.clipboard.writeText(summaryText); } catch { /* ignore */ } };
+  const copyUrl = async () => { try { await navigator.clipboard.writeText(url); } catch { /* ignore */ } };
   const wa = `https://wa.me/?text=${encodeURIComponent(summaryText + (url ? `\n${url}` : ""))}`;
-  const print = () => window.print();
+
+  const exportPdf = async (format: "executive" | "full") => {
+    const { downloadIntelligencePdf } = await import("@/lib/intelligence/intelligence-pdf");
+    await downloadIntelligencePdf(analysis, format, summaryMd);
+  };
 
   return (
-    <Card className="p-4 bg-card/60 space-y-3">
+    <Card className="p-4 bg-card/60 space-y-4">
       <div className="flex items-center gap-2">
         <Share2 className="size-4 text-primary" />
         <span className="font-semibold">Compartir informe</span>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={copy} className="gap-2"><Copy className="size-4" /> Copiar resumen</Button>
-        <Button variant="outline" onClick={copyUrl} className="gap-2"><Copy className="size-4" /> Copiar enlace</Button>
-        <Button asChild variant="outline" className="gap-2">
-          <a href={wa} target="_blank" rel="noreferrer"><MessageCircle className="size-4" /> WhatsApp</a>
-        </Button>
-        <Button variant="outline" onClick={print} className="gap-2"><FileText className="size-4" /> Exportar PDF</Button>
+
+      <div className="space-y-2">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Exportar a PDF</div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button
+            onClick={() => exportPdf("executive")}
+            className="text-left rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 p-3 transition"
+          >
+            <div className="flex items-center gap-2 font-semibold">
+              <FileText className="size-4 text-primary" /> Informe ejecutivo
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              2–3 páginas · resumen, índice, fortalezas, MVP, prioridades y conclusión.
+            </div>
+          </button>
+          <button
+            onClick={() => exportPdf("full")}
+            className="text-left rounded-lg border border-border hover:bg-secondary/40 p-3 transition"
+          >
+            <div className="flex items-center gap-2 font-semibold">
+              <FileText className="size-4" /> Informe técnico completo
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              10–20 páginas · portada, índice, capítulos por fundamento, radar, rotaciones, riesgos y plan.
+            </div>
+          </button>
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground">
-        La exportación a PDF usa el diálogo de impresión del navegador; elegí "Guardar como PDF".
-      </p>
+
+      <div className="space-y-2">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Compartir resumen</div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={copy} className="gap-2"><Copy className="size-4" /> Copiar resumen</Button>
+          <Button variant="outline" onClick={copyUrl} className="gap-2"><Copy className="size-4" /> Copiar enlace</Button>
+          <Button asChild variant="outline" className="gap-2">
+            <a href={wa} target="_blank" rel="noreferrer"><MessageCircle className="size-4" /> WhatsApp</a>
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 }

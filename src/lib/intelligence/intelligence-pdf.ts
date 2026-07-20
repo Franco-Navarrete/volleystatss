@@ -117,7 +117,7 @@ function drawCard(ctx: RenderCtx, height: number, render: (x: number, y: number,
 
 // --- headers & footers ---
 function addHeaderFooter(ctx: RenderCtx) {
-  const total = ctx.doc.internal.getNumberOfPages();
+  const total = (ctx.doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= total; i++) {
     ctx.doc.setPage(i);
     if (i === 1) continue; // portada limpia
