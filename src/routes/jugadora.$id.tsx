@@ -317,8 +317,9 @@ function PlayerProfile() {
 
             {/* Historial */}
             <Section title="Historial" icon={<Calendar className="size-4" />}>
-              <HistoryTable agg={agg!} matches={allMatches} teamById={teamById} leagueById={leagueById} />
+              <HistoryTable agg={agg!} matches={allMatches} teamById={teamById} leagueById={leagueById} playerId={id} />
             </Section>
+
 
             {/* Comparación visual */}
             <Section title="Comparación" icon={<Award className="size-4" />}>
