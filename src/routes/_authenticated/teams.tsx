@@ -144,7 +144,15 @@ function TeamsPage() {
   }, [cloudLeagues, storeLeagues]);
 
   const perms = useCanManageTeams();
-  const canEdit = perms.allowed;
+  const legacyCanEdit = perms.allowed;
+  const { isAdmin } = useIsAdmin();
+  const { allowed: canCreate } = useCanCreateTeam();
+  const { user: authUser } = useAuthUser();
+  const currentUserId = authUser?.id;
+  const canManage = (t?: { ownerId?: string } | null) =>
+    isAdmin || (!!t && !!currentUserId && t.ownerId === currentUserId);
+  // Retained for global admin-only operations (e.g. auto-migration of legacy leagues).
+  const canEdit = isAdmin || legacyCanEdit;
   const mut = useTeamMutations();
 
   // Per-team activity index derived from local store matches (fallback source)
