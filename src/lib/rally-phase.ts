@@ -5,41 +5,50 @@ import type {
   ReceptionEvent,
   SettingEvent,
   AttackAttemptEvent,
+  DefenseEvent,
   Team,
 } from "./volley-store";
-import { POINT_TYPE_LABEL } from "./volley-store";
+import { POINT_TYPE_LABEL, DEFENSE_RATING_LABEL } from "./volley-store";
 
 export type RallyPhase =
   | "serve"
   | "reception"
   | "setting"
   | "attack"
-  | "block"
-  | "defense";
-
-export const RALLY_PHASES: RallyPhase[] = [
-  "serve",
-  "reception",
-  "setting",
-  "attack",
-  "block",
-  "defense",
-];
+  | "defense"
+  | "counter_attack";
 
 export const RALLY_PHASE_LABEL: Record<RallyPhase, string> = {
   serve: "Saque",
   reception: "Recepción",
   setting: "Armado",
   attack: "Ataque",
-  block: "Bloqueo",
   defense: "Defensa",
+  counter_attack: "Contraataque",
 };
+
+/** Fase base (K1). Se conserva por compatibilidad con importadores viejos. */
+export const RALLY_PHASES: RallyPhase[] = [
+  "serve",
+  "reception",
+  "setting",
+  "attack",
+];
+
+export interface RallyStep {
+  phase: RallyPhase;
+  side: "A" | "B" | null;
+  playerId: string | null;
+  detail: string | null;
+  done: boolean;
+  current: boolean;
+}
 
 export interface RallyContext {
   /** Fase actual esperada (siguiente acción a registrar). */
   currentPhase: RallyPhase;
-  /** Fases ya cumplidas en el rally en curso. */
-  done: Set<RallyPhase>;
+  /** Lado al que le toca actuar. */
+  currentPhaseSide: "A" | "B" | null;
   /** true si el rally acaba de terminar (último evento = punto). */
   finished: boolean;
   /** Equipo que actualmente “tiene” el balón (ataca). */
@@ -53,6 +62,10 @@ export interface RallyContext {
   currentActionText: string;
   currentActionPlayerId: string | null;
   currentActionSide: "A" | "B" | null;
+  /** Línea temporal del rally en curso (para barra + historial). */
+  steps: RallyStep[];
+  /** Compat: fases K1 marcadas como "hechas" para la vieja barra. */
+  done: Set<RallyPhase>;
 }
 
 function isPointEvent(ev: MatchEvent): ev is PointEvent {
@@ -67,10 +80,25 @@ function isSetting(ev: MatchEvent): ev is SettingEvent {
 function isAttackAttempt(ev: MatchEvent): ev is AttackAttemptEvent {
   return "kind" in ev && ev.kind === "attackAttempt";
 }
+function isDefense(ev: MatchEvent): ev is DefenseEvent {
+  return "kind" in ev && ev.kind === "defense";
+}
+
+function receptionLabel(rating: ReceptionEvent["rating"]): string {
+  switch (rating) {
+    case "double_positive": return "#";
+    case "positive": return "+";
+    case "neutral": return "0";
+    case "negative": return "−";
+    case "double_negative": return "=";
+    case "overpass": return "≠";
+  }
+}
 
 /**
- * Devuelve el estado del rally en curso a partir de los eventos del set.
- * No muta nada. Todo se deriva; se usa solo para UI de guía.
+ * Camino real del voleibol:
+ * K1: Saque → Recepción → Armado → Ataque.
+ * Continuidad: Defensa → Armado → Contraataque, repetido hasta cerrar el rally.
  */
 export function computeRallyContext(
   match: Match,
@@ -80,74 +108,110 @@ export function computeRallyContext(
     (e) => "setNumber" in e && e.setNumber === match.currentSet,
   );
 
-  // Encontrar índice del último PointEvent → todo lo posterior pertenece al rally actual.
   let lastPointIdx = -1;
   for (let i = setEvents.length - 1; i >= 0; i--) {
-    if (isPointEvent(setEvents[i])) {
-      lastPointIdx = i;
-      break;
-    }
+    if (isPointEvent(setEvents[i])) { lastPointIdx = i; break; }
   }
   const finished = lastPointIdx === setEvents.length - 1 && lastPointIdx >= 0;
-  const rallyEvents = finished
-    ? []
-    : setEvents.slice(lastPointIdx + 1);
+  const rallyEvents = finished ? [] : setEvents.slice(lastPointIdx + 1);
 
-  const done = new Set<RallyPhase>();
-  // El saque siempre está “en curso” cuando hay un rally abierto.
   const servingSide = match.servingSide;
+  const shortA = teams.A.shortName ?? teams.A.name;
+  const shortB = teams.B.shortName ?? teams.B.name;
+  const short = (s: "A" | "B") => (s === "A" ? shortA : shortB);
 
-  let currentPhase: RallyPhase = "serve";
+  const steps: RallyStep[] = [];
+  // Paso 1 siempre: saque del equipo sacador.
+  steps.push({
+    phase: "serve", side: servingSide, playerId: null,
+    detail: null, done: false, current: false,
+  });
+
   let possession: "A" | "B" | null = servingSide;
-  let currentActionText = `Espera saque de ${teams[servingSide].shortName ?? teams[servingSide].name}`;
+  let hasFirstAttack = false;
+
+  for (const ev of rallyEvents) {
+    if (isReception(ev)) {
+      // Marca saque como hecho, agrega la recepción.
+      steps.push({
+        phase: "reception", side: ev.side, playerId: ev.playerId,
+        detail: receptionLabel(ev.rating), done: true, current: false,
+      });
+      possession = ev.side;
+    } else if (isSetting(ev)) {
+      steps.push({
+        phase: "setting", side: ev.side, playerId: ev.setterId,
+        detail: ev.attackZone.toUpperCase(), done: true, current: false,
+      });
+      possession = ev.side;
+    } else if (isAttackAttempt(ev)) {
+      steps.push({
+        phase: hasFirstAttack ? "counter_attack" : "attack",
+        side: ev.side, playerId: ev.playerId,
+        detail: ev.attackZone ? `Z${ev.attackZone}` : null,
+        done: true, current: false,
+      });
+      possession = ev.side === "A" ? "B" : "A";
+      hasFirstAttack = true;
+    } else if (isDefense(ev)) {
+      steps.push({
+        phase: "defense", side: ev.side, playerId: ev.playerId,
+        detail: DEFENSE_RATING_LABEL[ev.rating], done: true, current: false,
+      });
+      possession = ev.side;
+    }
+  }
+
+  // Marcar el saque como hecho si hubo alguna acción posterior.
+  if (steps.length > 1) steps[0].done = true;
+
+  // Determinar próxima fase esperada (si el rally sigue abierto).
+  let currentPhase: RallyPhase = "reception";
+  let currentPhaseSide: "A" | "B" | null = servingSide === "A" ? "B" : "A";
+  let currentActionText = `Esperando recepción · ${short(currentPhaseSide)}`;
   let currentActionPlayerId: string | null = null;
-  let currentActionSide: "A" | "B" | null = servingSide;
+  let currentActionSide: "A" | "B" | null = currentPhaseSide;
 
-  const hasReception = rallyEvents.some(isReception);
-  const hasSetting = rallyEvents.some(isSetting);
-  const hasAttack = rallyEvents.some((e) => isAttackAttempt(e));
+  if (!finished) {
+    const last = rallyEvents[rallyEvents.length - 1];
+    if (!last) {
+      // Sólo el saque.
+      currentPhase = "reception";
+      currentPhaseSide = servingSide === "A" ? "B" : "A";
+      currentActionText = `Esperando recepción · ${short(currentPhaseSide)}`;
+    } else if (isReception(last)) {
+      currentPhase = "setting";
+      currentPhaseSide = last.side;
+      currentActionText = `Recepción ${receptionLabel(last.rating)} · esperando armado de ${short(last.side)}`;
+    } else if (isSetting(last)) {
+      currentPhase = hasFirstAttack ? "counter_attack" : "attack";
+      currentPhaseSide = last.side;
+      currentActionText = hasFirstAttack
+        ? `Armado ${last.attackZone.toUpperCase()} · esperando contraataque de ${short(last.side)}`
+        : `Armado ${last.attackZone.toUpperCase()} · esperando ataque de ${short(last.side)}`;
+    } else if (isAttackAttempt(last)) {
+      // Continuidad: rival defiende.
+      const defSide: "A" | "B" = last.side === "A" ? "B" : "A";
+      currentPhase = "defense";
+      currentPhaseSide = defSide;
+      currentActionText = `Ataque continúa · esperando defensa de ${short(defSide)}`;
+    } else if (isDefense(last)) {
+      currentPhase = "setting";
+      currentPhaseSide = last.side;
+      currentActionText = `Defensa ${DEFENSE_RATING_LABEL[last.rating]} · esperando armado de ${short(last.side)}`;
+    }
 
-  if (rallyEvents.length > 0 || !finished) {
-    done.add("serve");
+    steps.push({
+      phase: currentPhase,
+      side: currentPhaseSide,
+      playerId: null,
+      detail: null,
+      done: false,
+      current: true,
+    });
   }
 
-  if (hasReception) {
-    done.add("reception");
-    const rec = [...rallyEvents].reverse().find(isReception)!;
-    // La posesión pasa al equipo receptor.
-    possession = rec.side;
-    currentPhase = "setting";
-    currentActionText = `Recepción ${receptionLabel(rec.rating)} · esperando armado`;
-    currentActionPlayerId = rec.playerId;
-    currentActionSide = rec.side;
-  } else if (!finished) {
-    currentPhase = "reception";
-    const recvSide: "A" | "B" = servingSide === "A" ? "B" : "A";
-    currentActionText = `Esperando recepción · ${teams[recvSide].shortName ?? teams[recvSide].name}`;
-    currentActionSide = recvSide;
-  }
-
-  if (hasSetting) {
-    done.add("setting");
-    const set = [...rallyEvents].reverse().find(isSetting)!;
-    possession = set.side;
-    currentPhase = "attack";
-    currentActionText = `Armado ${set.quality} → ${set.attackZone.toUpperCase()} · esperando ataque`;
-    currentActionPlayerId = set.setterId;
-    currentActionSide = set.side;
-  }
-
-  if (hasAttack) {
-    done.add("attack");
-    const at = [...rallyEvents].reverse().find(isAttackAttempt)!;
-    possession = at.side === "A" ? "B" : "A"; // pelota pasa al rival
-    currentPhase = "block";
-    currentActionText = `Ataque neutral · esperando bloqueo/defensa rival`;
-    currentActionPlayerId = at.playerId;
-    currentActionSide = at.side;
-  }
-
-  // Última acción (incluye el punto que cerró el rally previo si el rally está finalizado).
+  // Última acción (para el card "Última").
   const lastEv = setEvents[setEvents.length - 1] ?? null;
   let lastActionPlayerId: string | null = null;
   let lastActionSide: "A" | "B" | null = null;
@@ -175,8 +239,15 @@ export function computeRallyContext(
     } else if (isAttackAttempt(lastEv)) {
       lastActionPlayerId = lastEv.playerId;
       lastActionSide = lastEv.side;
-      lastActionLabel = "Ataque (continuidad)";
+      lastActionLabel = hasFirstAttack && rallyEvents.filter(isAttackAttempt).length > 1
+        ? "Contraataque (continuidad)"
+        : "Ataque (continuidad)";
       lastActionDetail = lastEv.attackZone ? `Z${lastEv.attackZone}` : null;
+    } else if (isDefense(lastEv)) {
+      lastActionPlayerId = lastEv.playerId;
+      lastActionSide = lastEv.side;
+      lastActionLabel = "Defensa";
+      lastActionDetail = DEFENSE_RATING_LABEL[lastEv.rating];
     }
   }
 
@@ -184,24 +255,18 @@ export function computeRallyContext(
     currentActionText = "Rally finalizado";
     currentActionPlayerId = lastActionPlayerId;
     currentActionSide = lastActionSide;
-    // Mark visual "todos los pasos hasta ataque" done → mostrar barra completa.
-    done.add("serve");
-    if (hasReception || (lastEv && isPointEvent(lastEv) && lastEv.type !== "ace" && lastEv.type !== "serve_error")) {
-      done.add("reception");
-    }
-    if (hasSetting) done.add("setting");
-    if (lastEv && isPointEvent(lastEv)) {
-      const t = lastEv.type;
-      if (t === "attack" || t === "counter_attack" || t === "rotation_attack" || t === "attack_error") {
-        done.add("attack");
-      }
-      if (t === "block" || t === "block_error") done.add("block");
-    }
+  } else {
+    currentActionPlayerId = null;
+    currentActionSide = currentPhaseSide;
   }
+
+  // Compat: build `done` set con fases K1 completas.
+  const done = new Set<RallyPhase>();
+  for (const s of steps) if (s.done) done.add(s.phase);
 
   return {
     currentPhase,
-    done,
+    currentPhaseSide,
     finished,
     possession,
     lastActionPlayerId,
@@ -211,16 +276,7 @@ export function computeRallyContext(
     currentActionText,
     currentActionPlayerId,
     currentActionSide,
+    steps,
+    done,
   };
-}
-
-function receptionLabel(rating: ReceptionEvent["rating"]): string {
-  switch (rating) {
-    case "double_positive": return "#";
-    case "positive": return "+";
-    case "neutral": return "0";
-    case "negative": return "−";
-    case "double_negative": return "=";
-    case "overpass": return "≠";
-  }
 }
