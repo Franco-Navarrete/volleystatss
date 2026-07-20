@@ -691,7 +691,7 @@ export async function downloadIntelligencePdf(
 
   const ctx: RenderCtx = {
     doc, pageW, pageH, margin: 15, y: 0,
-    autoTable,
+    autoTable: (opts: any) => autoTable(doc, opts),
     meta: {
       teamName: analysis.teamName,
       opponentName: analysis.opponentName,
