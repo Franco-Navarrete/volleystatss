@@ -1,11 +1,16 @@
 // Rally Intelligence — Exportación editorial a PDF.
 // Diseño A4 tipo publicación técnica (VolleyMetrics / Wyscout).
-// Cada página tiene un propósito narrativo. Reemplaza tablas por gráficos
-// vectoriales donde aportan más valor. Preflight de validación antes del save.
+// Cada página tiene un propósito narrativo y responde 4 preguntas:
+// ¿Qué pasó? ¿Por qué? ¿Qué consecuencia tuvo? ¿Qué entrenar?
+// Preflight de validación antes del save.
 
 import type {
   MatchAnalysis, RallyIndexItem, WeaknessCard, StrengthCard, Importance,
 } from "./analysis";
+import {
+  CHAPTER_QUESTION, beatFundamental, beatRotation, beatPlayer,
+  buildMatchStory, mapBlocksToWeek, interpretRally,
+} from "./pdf/narrative";
 
 type Format = "executive" | "full";
 type RGB = [number, number, number];
@@ -485,14 +490,26 @@ function drawRiskMatrix(
 }
 
 // ---------------- Bloques tipográficos ----------------
-function drawH1(ctx: RenderCtx, title: string) {
-  ensureSpace(ctx, 40);
+function drawH1(ctx: RenderCtx, title: string, question?: string) {
+  // Cada capítulo abre en una página nueva
+  if (ctx.y > ctx.contentTop + 1) pageBreak(ctx);
   ctx.toc.push({ title, page: (ctx.doc as any).internal.getCurrentPageInfo().pageNumber, level: 1 });
-  setFont(ctx.doc, "bold", 16, C.navy);
+  setFont(ctx.doc, "bold", 8.5, C.mute);
+  ctx.doc.text("CAPÍTULO", ctx.margin, ctx.y);
+  ctx.y += 5;
+  setFont(ctx.doc, "bold", 22, C.navy);
   ctx.doc.text(title, ctx.margin, ctx.y);
-  ctx.y += 2.5;
-  hairline(ctx.doc, ctx.margin, ctx.y, ctx.margin + 40, ctx.y, C.navy, 0.7);
-  ctx.y += 8;
+  ctx.y += 4;
+  hairline(ctx.doc, ctx.margin, ctx.y, ctx.margin + 50, ctx.y, C.navy, 0.9);
+  ctx.y += 6;
+  if (question) {
+    setFont(ctx.doc, "italic", 10.5, C.slate);
+    const lines: string[] = ctx.doc.splitTextToSize(question, contentW(ctx));
+    for (const l of lines) { ctx.doc.text(l, ctx.margin, ctx.y); ctx.y += 5; }
+    ctx.y += 2;
+  } else {
+    ctx.y += 4;
+  }
 }
 function drawH2(ctx: RenderCtx, title: string) {
   ensureSpace(ctx, 14);
@@ -567,78 +584,113 @@ function paintChrome(ctx: RenderCtx, totalPages: number) {
 // ================================================================
 function renderCover(ctx: RenderCtx, a: MatchAnalysis, coachName?: string, venue?: string) {
   const { doc, pageW, pageH, margin } = ctx;
-  fillRect(doc, 0, 0, pageW, 78, C.ink);
-  fillRect(doc, 0, 78, pageW, 2.2, C.navy);
 
-  setFont(doc, "bold", 11, C.white);
-  doc.text("RALLY", margin, 20);
-  setFont(doc, "normal", 11, [200, 210, 225]);
-  doc.text("  INTELLIGENCE", margin + doc.getTextWidth("RALLY"), 20);
-  setFont(doc, "normal", 9, [190, 200, 220]);
-  doc.text(ctx.meta.format === "executive" ? "INFORME EJECUTIVO" : "INFORME TÉCNICO COMPLETO", margin, 27);
+  // Fondo hero superior editorial
+  fillRect(doc, 0, 0, pageW, 96, C.ink);
+  // Franja de acento
+  fillRect(doc, 0, 96, pageW, 3, C.navy);
 
-  setFont(doc, "bold", 26, C.white);
-  const titleLines: string[] = doc.splitTextToSize(`${a.teamName}  vs  ${a.opponentName}`, pageW - margin * 2);
-  let ty = 50;
-  for (const line of titleLines.slice(0, 2)) { doc.text(line, margin, ty); ty += 10; }
+  // Marca
+  setFont(doc, "bold", 10, C.white);
+  doc.text("RALLY", margin, 18);
+  setFont(doc, "normal", 10, [200, 210, 225]);
+  doc.text("  INTELLIGENCE", margin + doc.getTextWidth("RALLY"), 18);
 
+  // Subtítulo formato
+  setFont(doc, "normal", 8.5, [180, 195, 220]);
+  doc.text(ctx.meta.format === "executive" ? "INFORME EJECUTIVO" : "INFORME TÉCNICO COMPLETO", margin, 25);
+
+  // Título editorial: equipo vs rival
+  setFont(doc, "bold", 30, C.white);
+  const titleLines: string[] = doc.splitTextToSize(fmtText(a.teamName), pageW - margin * 2);
+  doc.text(titleLines[0], margin, 52);
+  setFont(doc, "normal", 14, [200, 210, 225]);
+  doc.text("vs", margin, 63);
+  setFont(doc, "bold", 22, C.white);
+  const oppLines: string[] = doc.splitTextToSize(fmtText(a.opponentName), pageW - margin * 2 - 12);
+  doc.text(oppLines[0], margin + 10, 63);
+
+  // Fecha + competencia en línea de subtítulo
   const d = a.dashboard;
+  setFont(doc, "normal", 10, [190, 205, 225]);
+  const meta1 = [fmtText(d.date), fmtText(d.competition)].filter((s) => s !== NA).join("  ·  ");
+  if (meta1) doc.text(meta1, margin, 78);
+  if (venue) {
+    setFont(doc, "italic", 9, [170, 190, 215]);
+    doc.text(fmtText(venue), margin, 86);
+  }
+
+  // ---- Bloque central: Resultado + Índice Rally ----
   const scoreLine = fmtScoreline(d.scoreline);
   const setsOnly = scoreLine !== NA ? scoreLine.split(" ")[0] : NA;
-
-  const centerX = pageW / 2;
-  const blockY = 108;
-
-  setFont(doc, "normal", 10, C.mute);
-  textCenter(doc, "RESULTADO", centerX, blockY);
-  setFont(doc, "bold", 44, C.ink);
-  textCenter(doc, setsOnly, centerX, blockY + 18);
-  setFont(doc, "bold", 11, d.result === "victoria" ? C.good : d.result === "derrota" ? C.bad : C.slate);
-  textCenter(doc, (d.result || NA).toUpperCase(), centerX, blockY + 25);
-  if (scoreLine !== NA && scoreLine.includes("(")) {
-    setFont(doc, "normal", 9, C.slate);
-    const detail = scoreLine.substring(scoreLine.indexOf("("));
-    textCenter(doc, detail, centerX, blockY + 31);
-  }
-
-  // Gauge Rally central
   const idx = isNum(d.rallyIndex) ? Math.round(d.rallyIndex) : null;
-  drawGauge(doc, centerX, blockY + 78, 26, idx, "ÍNDICE RALLY");
 
-  const metaTop = 218;
-  hairline(doc, margin, metaTop - 6, pageW - margin, metaTop - 6);
-  const rows: [string, string][] = [
-    ["Equipo", fmtText(a.teamName)],
-    ["Rival", fmtText(a.opponentName)],
-    ["Fecha", fmtText(d.date)],
-    ["Competencia", fmtText(d.competition)],
-    ["Lugar", fmtText(venue)],
-    ["Duración", fmtDuration(d.durationMin)],
-    ["Entrenador", fmtText(coachName)],
-    ["MVP", fmtText(d.awards.mvp?.name)],
+  // Columna izquierda: resultado
+  setFont(doc, "normal", 9, C.mute);
+  doc.text("RESULTADO FINAL", margin, 122);
+  setFont(doc, "bold", 60, C.ink);
+  doc.text(setsOnly, margin, 158);
+  setFont(doc, "bold", 12, d.result === "victoria" ? C.good : d.result === "derrota" ? C.bad : C.slate);
+  doc.text((d.result || NA).toUpperCase(), margin, 168);
+  if (scoreLine !== NA && scoreLine.includes("(")) {
+    setFont(doc, "normal", 9.5, C.slate);
+    const detail = scoreLine.substring(scoreLine.indexOf("("));
+    doc.text(detail, margin, 176);
+  }
+  setFont(doc, "italic", 9, C.mute);
+  doc.text(fmtDuration(d.durationMin), margin, 184);
+
+  // Columna derecha: Gauge Rally
+  const gaugeCX = pageW - margin - 40;
+  drawGauge(doc, gaugeCX, 156, 32, idx, "ÍNDICE RALLY");
+  setFont(doc, "normal", 8.5, C.slate);
+  const level = idx == null ? NA : statusLabel(rallyBand(idx));
+  textCenter(doc, level.toUpperCase(), gaugeCX, 194);
+
+  // ---- Bloque MVP editorial ----
+  const mvpY = 208;
+  fillRect(doc, margin, mvpY, pageW - margin * 2, 32, C.paper, 4);
+  fillRect(doc, margin, mvpY, 2, 32, C.navy);
+  const mvp = d.awards.mvp;
+  setFont(doc, "bold", 8, C.mute);
+  doc.text("★  JUGADOR MÁS VALIOSO", margin + 8, mvpY + 8);
+  setFont(doc, "bold", 18, C.ink);
+  doc.text(fmtText(mvp?.name), margin + 8, mvpY + 20);
+  if (mvp?.number != null) {
+    setFont(doc, "bold", 11, C.navy);
+    doc.text(`#${mvp.number}`, margin + 8, mvpY + 27);
+  }
+  setFont(doc, "normal", 9, C.slate);
+  doc.text(fmtText(mvp?.detail), margin + 40, mvpY + 27);
+
+  // ---- Meta editorial minimalista (sin tabla) ----
+  const metaY = 254;
+  setFont(doc, "bold", 8, C.mute);
+  const items: Array<[string, string]> = [
+    ["ENTRENADOR", fmtText(coachName)],
+    ["CATEGORÍA", fmtText(d.competition)],
+    ["DURACIÓN", fmtDuration(d.durationMin)],
+    ["FORMATO", ctx.meta.format === "executive" ? "Ejecutivo" : "Técnico completo"],
   ];
-  const colW = (pageW - margin * 2) / 2;
-  let ry = metaTop;
-  for (let i = 0; i < rows.length; i++) {
-    const [k, v] = rows[i];
-    const col = i % 2;
-    const cx = margin + col * colW;
-    if (i > 0 && col === 0) ry += 7;
-    setFont(doc, "bold", 8, C.mute);
-    doc.text(k.toUpperCase(), cx, ry);
-    setFont(doc, "normal", 10.5, C.ink);
-    doc.text(doc.splitTextToSize(v, colW - 4)[0], cx, ry + 5);
+  const cw = (pageW - margin * 2) / items.length;
+  for (let i = 0; i < items.length; i++) {
+    const cx = margin + i * cw;
+    setFont(doc, "bold", 7.5, C.mute);
+    doc.text(items[i][0], cx, metaY);
+    setFont(doc, "normal", 10, C.ink);
+    doc.text(doc.splitTextToSize(items[i][1], cw - 4)[0], cx, metaY + 6);
   }
 
+  // Firma inferior
   hairline(doc, margin, pageH - 22, pageW - margin, pageH - 22);
   setFont(doc, "italic", 8, C.mute);
   doc.text(
-    "Documento generado automáticamente por Rally Intelligence. Todos los datos provienen de eventos registrados en tiempo real durante el partido.",
-    margin, pageH - 16,
+    "Informe generado por Rally Intelligence. Datos derivados exclusivamente de eventos registrados en tiempo real.",
+    margin, pageH - 15,
   );
   setFont(doc, "normal", 8, C.slate);
-  doc.text(ctx.meta.generatedAt, margin, pageH - 10);
-  doc.text(ctx.meta.version, pageW - margin, pageH - 10, { align: "right" });
+  doc.text(ctx.meta.generatedAt, margin, pageH - 9);
+  doc.text(ctx.meta.version, pageW - margin, pageH - 9, { align: "right" });
 }
 
 // ================================================================
@@ -677,7 +729,7 @@ function renderToc(ctx: RenderCtx, tocPage: number) {
 // DASHBOARD EJECUTIVO — solo tarjetas grandes, sin tablas
 // ================================================================
 function renderDashboardBlock(ctx: RenderCtx, a: MatchAnalysis, _coach?: string, _venue?: string) {
-  drawH1(ctx, "Dashboard ejecutivo");
+  drawH1(ctx, "Dashboard ejecutivo", CHAPTER_QUESTION.dashboard);
   const d = a.dashboard;
   const doc = ctx.doc;
   const w = contentW(ctx);
@@ -795,7 +847,7 @@ function winProbability(a: MatchAnalysis): number | null {
 // ÍNDICE RALLY EN PROFUNDIDAD
 // ================================================================
 function renderRallyIndexSection(ctx: RenderCtx, a: MatchAnalysis, opts: { full: boolean }) {
-  drawH1(ctx, "Índice Rally");
+  drawH1(ctx, "Índice Rally", CHAPTER_QUESTION.rally);
   const { overall, breakdown } = a.rallyIndex;
   const idx = isNum(overall) ? Math.round(overall) : null;
 
@@ -869,7 +921,7 @@ function renderRallyIndexSection(ctx: RenderCtx, a: MatchAnalysis, opts: { full:
 // ================================================================
 function renderRadar(ctx: RenderCtx, a: MatchAnalysis) {
   if (!a.radarCompare?.length) return;
-  drawH1(ctx, "Radar comparativo");
+  drawH1(ctx, "Radar comparativo", "¿Cómo se comparan nuestros fundamentos con los del rival y con la temporada?");
   drawParagraph(ctx, "Comparación por fundamento entre equipo, rival y promedio de temporada.", { color: C.slate, size: 9.5 });
 
   drawCard(ctx, 100, (x, y, w) => {
@@ -914,47 +966,71 @@ function renderRadar(ctx: RenderCtx, a: MatchAnalysis) {
 // FUNDAMENTOS — tarjetas ricas
 // ================================================================
 function renderFundamentalChapters(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Análisis por fundamento");
-  drawParagraph(ctx, "Cada tarjeta condensa score, comparación con temporada, impacto, confianza y recomendación de trabajo.", { color: C.slate, size: 9.5 });
+  drawH1(ctx, "Análisis por fundamento", CHAPTER_QUESTION.fund);
+  drawParagraph(ctx, "Una tarjeta narrativa por fundamento: qué pasó, por qué, qué consecuencia tuvo y qué entrenar.", { color: C.slate, size: 9.5 });
+
   for (const item of a.rallyIndex.breakdown) {
-    const detailLines: string[] = ctx.doc.splitTextToSize(fmtText(item.detail), contentW(ctx) - 60);
-    const h = 44 + Math.max(0, detailLines.length - 2) * 4.4;
-    drawCard(ctx, h, (x, y, w) => {
-      // Tile score
+    const beat = beatFundamental(item, a);
+    const doc = ctx.doc;
+    const w = contentW(ctx);
+    const detailLines: string[] = doc.splitTextToSize(fmtText(item.detail), w - 60);
+    const bodyW = w - 62;
+
+    // Precomputar altura
+    const wrap = (t: string) => doc.splitTextToSize(fmtText(t), bodyW) as string[];
+    const l1 = wrap(beat.what), l2 = wrap(beat.why), l3 = wrap(beat.consequence), l4 = wrap(beat.train);
+    const narrH = 6 + (l1.length + l2.length + l3.length + l4.length) * 4.4 + 4 * 5;
+    const h = 40 + Math.max(0, detailLines.length - 2) * 4.4 + narrH;
+
+    drawCard(ctx, h, (x, y) => {
+      // Tile score izquierdo
       const tw = 46;
-      fillRect(ctx.doc, x + 1, y + 1, tw, h - 2, statusSoft(item.score), 2.5);
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      textCenter(ctx.doc, "SCORE", x + tw / 2 + 1, y + 6.5);
-      setFont(ctx.doc, "bold", 22, statusColor(item.score));
-      textCenter(ctx.doc, fmtInt(item.score), x + tw / 2 + 1, y + 20);
-      hairline(ctx.doc, x + tw / 2 - 7, y + 23, x + tw / 2 + 9, y + 23, C.hair, 0.4);
-      setFont(ctx.doc, "bold", 9, C.ink);
-      textCenter(ctx.doc, statusLabel(item.status), x + tw / 2 + 1, y + 28);
-      // Mini bullet
-      drawBullet(ctx.doc, x + 4, y + h - 8, tw - 8, 2, isNum(item.score) ? item.score : null, 70, statusColor(item.score));
+      fillRect(doc, x + 1, y + 1, tw, h - 2, statusSoft(item.score), 2.5);
+      setFont(doc, "bold", 7.5, C.mute);
+      textCenter(doc, "SCORE", x + tw / 2 + 1, y + 6.5);
+      setFont(doc, "bold", 24, statusColor(item.score));
+      textCenter(doc, fmtInt(item.score), x + tw / 2 + 1, y + 21);
+      hairline(doc, x + tw / 2 - 7, y + 24, x + tw / 2 + 9, y + 24, C.hair, 0.4);
+      setFont(doc, "bold", 9, C.ink);
+      textCenter(doc, statusLabel(item.status), x + tw / 2 + 1, y + 30);
+      setFont(doc, "bold", 7.5, C.mute);
+      textCenter(doc, "IMPACTO", x + tw / 2 + 1, y + 40);
+      setFont(doc, "bold", 10, C.navy);
+      textCenter(doc, fmtPct(item.impact), x + tw / 2 + 1, y + 46);
+      setFont(doc, "bold", 7.5, C.mute);
+      textCenter(doc, "CONFIANZA", x + tw / 2 + 1, y + 55);
+      setFont(doc, "bold", 10, C.slate);
+      textCenter(doc, fmtPct(item.confidence), x + tw / 2 + 1, y + 61);
 
-      // Cuerpo
+      // Cuerpo derecho
       const rx = x + tw + 8;
-      const rw = w - tw - 12;
-      setFont(ctx.doc, "bold", 12, C.ink);
-      ctx.doc.text(fmtText(item.label), rx, y + 8);
-      setFont(ctx.doc, "normal", 9.5, C.ink);
-      let ly = y + 14;
-      for (const l of detailLines.slice(0, 4)) { ctx.doc.text(l, rx, ly); ly += 4.4; }
-
-      // Chips
+      setFont(doc, "bold", 14, C.ink);
+      doc.text(fmtText(item.label), rx, y + 8);
       const parts: [string, RGB][] = [
-        [`Impacto ${fmtPct(item.impact)}`, C.navy],
-        [`Confianza ${fmtPct(item.confidence)}`, C.slate],
         [`Δ Temp. ${fmtDelta(item.seasonDelta)}`, isNum(item.seasonDelta) && item.seasonDelta < 0 ? C.bad : C.good],
       ];
-      let px = rx;
-      for (const [t, col] of parts) { const pw = drawPill(ctx.doc, px, y + h - 10, t, col); px += pw + 3; }
-      // Objetivo y ejercicio
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      ctx.doc.text("OBJETIVO / EJERCICIO SUGERIDO", rx, y + h - 3);
-      setFont(ctx.doc, "italic", 8.5, C.slate);
-      ctx.doc.text(suggestExercise(item.label), rx + 62, y + h - 3);
+      let px = rx + doc.getTextWidth(fmtText(item.label)) + 8;
+      for (const [t, col] of parts) { const pw = drawPill(doc, px, y + 8, t, col); px += pw + 3; }
+      setFont(doc, "normal", 9, C.slate);
+      let ly = y + 14;
+      for (const l of detailLines.slice(0, 3)) { doc.text(l, rx, ly); ly += 4.2; }
+      ly += 2;
+
+      // Narrativa Q&A
+      const beats: Array<[string, string[], RGB]> = [
+        ["¿QUÉ PASÓ?", l1, C.navy],
+        ["¿POR QUÉ?", l2, C.slate],
+        ["¿QUÉ CONSECUENCIA TUVO?", l3, C.warn],
+        ["¿QUÉ ENTRENAR?", l4, C.good],
+      ];
+      for (const [q, lines, col] of beats) {
+        setFont(doc, "bold", 7.5, col);
+        doc.text(q, rx, ly);
+        ly += 3.8;
+        setFont(doc, "normal", 9, C.ink);
+        for (const l of lines) { doc.text(l, rx, ly); ly += 4.2; }
+        ly += 1.6;
+      }
     });
   }
 }
@@ -974,7 +1050,7 @@ function suggestExercise(label: string): string {
 // CANCHA ANALÍTICA (mapas de calor por fundamento)
 // ================================================================
 function renderCourtAnalytics(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Cancha analítica");
+  drawH1(ctx, "Mapas de cancha", CHAPTER_QUESTION.court);
   drawParagraph(ctx, "Distribución por zona. La intensidad del color indica la frecuencia; el porcentaje muestra eficacia.", { color: C.slate, size: 9.5 });
 
   // Mapa de ataque (usa attackZones si están)
@@ -1022,7 +1098,7 @@ function renderCourtAnalytics(ctx: RenderCtx, a: MatchAnalysis) {
 // ROTACIONES
 // ================================================================
 function renderRotationBlock(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Análisis por rotación");
+  drawH1(ctx, "Rotaciones", CHAPTER_QUESTION.rot);
   const rot = [...a.strengths, ...a.weaknesses].filter((s) => s.category === "Rotación");
   if (!rot.length) { drawParagraph(ctx, "Sin rotaciones con desempeño destacado.", { color: C.slate, italic: true }); return; }
 
@@ -1100,7 +1176,7 @@ function renderInsightCard(ctx: RenderCtx, card: StrengthCard, tone: "good" | "b
 // FORTALEZAS Y DEBILIDADES
 // ================================================================
 function renderStrengthsWeaknesses(ctx: RenderCtx, a: MatchAnalysis, executive: boolean) {
-  drawH1(ctx, "Fortalezas y debilidades");
+  drawH1(ctx, "Fortalezas y debilidades", "¿Qué sostuvo al equipo y qué le costó puntos?");
   const strengths = a.strengths.slice(0, executive ? 3 : 8);
   const weaknesses = a.weaknesses.slice(0, executive ? 3 : 8);
   drawH2(ctx, "Fortalezas principales");
@@ -1116,7 +1192,7 @@ function renderStrengthsWeaknesses(ctx: RenderCtx, a: MatchAnalysis, executive: 
 // ANÁLISIS INDIVIDUAL — tarjetas de jugadora (grid 2 col)
 // ================================================================
 function renderPlayerAnalysis(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Análisis individual de jugadoras");
+  drawH1(ctx, "Jugadores", CHAPTER_QUESTION.player);
   if (!a.playerRadar.length) { drawParagraph(ctx, "Sin datos individuales suficientes.", { color: C.slate, italic: true }); return; }
   const list = a.playerRadar.slice(0, 12);
   const cardH = 46;
@@ -1165,7 +1241,7 @@ function renderPlayerAnalysis(ctx: RenderCtx, a: MatchAnalysis) {
 // TIMELINE VISUAL
 // ================================================================
 function renderTimeline(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Timeline del partido");
+  drawH1(ctx, "Timeline", "¿En qué momentos se decidió el partido?");
   if (!a.timeline.length && !a.setTrends.length) { drawParagraph(ctx, "Sin eventos destacados.", { color: C.slate, italic: true }); return; }
   drawCard(ctx, 70, (x, y, w) => {
     setFont(ctx.doc, "bold", 10, C.ink);
@@ -1190,7 +1266,7 @@ function renderTimeline(ctx: RenderCtx, a: MatchAnalysis) {
 // COMPARACIÓN CON TEMPORADA
 // ================================================================
 function renderSeasonComparison(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Comparación con temporada");
+  drawH1(ctx, "Comparación con temporada", CHAPTER_QUESTION.season);
   const rows = a.comparison.rows;
   if (!rows.length) { drawParagraph(ctx, "Sin datos históricos suficientes.", { color: C.slate, italic: true }); return; }
   for (const r of rows) {
@@ -1216,7 +1292,7 @@ function renderSeasonComparison(ctx: RenderCtx, a: MatchAnalysis) {
 // RIESGOS Y PREDICCIONES — matriz visual
 // ================================================================
 function renderRisksPredictions(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Riesgos detectados");
+  drawH1(ctx, "Riesgos", CHAPTER_QUESTION.risk);
   if (!a.risks.length) drawParagraph(ctx, "Sin riesgos destacados.", { color: C.slate, italic: true });
   else {
     drawCard(ctx, 76, (x, y, w) => {
@@ -1268,56 +1344,66 @@ function renderRecommendations(ctx: RenderCtx, a: MatchAnalysis) {
 // PLAN DE ENTRENAMIENTO — cronograma visual
 // ================================================================
 function renderTrainingPlan(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Plan de entrenamiento sugerido");
+  drawH1(ctx, "Plan de entrenamiento", CHAPTER_QUESTION.plan);
   const plan = a.trainingPlan;
-  drawParagraph(ctx, `Duración total sugerida: ${isNum(plan.totalMinutes) ? plan.totalMinutes : NA} minutos.`, { color: C.slate });
+  const doc = ctx.doc;
+  drawParagraph(ctx,
+    `Semana estructurada en cuatro sesiones (Lunes · Martes · Jueves · Viernes) derivadas del diagnóstico del partido.`,
+    { color: C.slate, size: 9.5 });
   if (!plan.blocks.length) { drawParagraph(ctx, "Sin bloques definidos.", { color: C.slate, italic: true }); return; }
 
-  const total = plan.totalMinutes || plan.blocks.reduce((a, b) => a + (isNum(b.minutes) ? b.minutes : 0), 0) || 1;
-  // Barra horizontal proporcional
-  drawCard(ctx, 22, (x, y, w) => {
-    setFont(ctx.doc, "bold", 8.5, C.slate);
-    ctx.doc.text("CRONOGRAMA (proporcional a la duración)", x + 4, y + 7);
+  const week = mapBlocksToWeek(plan.blocks);
+
+  // Cronograma visual proporcional (4 barras)
+  drawCard(ctx, 26, (x, y, w) => {
+    setFont(doc, "bold", 8.5, C.slate);
+    doc.text("CRONOGRAMA SEMANAL (proporcional a la duración)", x + 4, y + 7);
+    const total = week.reduce((s, d) => s + (d.minutes || 0), 0) || 1;
     let bx = x + 4;
     const bw = w - 8;
-    const palette: RGB[] = [C.navy, C.info, C.good, C.warn, C.bad, [147, 51, 234]];
-    for (let i = 0; i < plan.blocks.length; i++) {
-      const b = plan.blocks[i];
-      const frac = Math.max(0, (isNum(b.minutes) ? b.minutes : 0) / total);
+    const palette: RGB[] = [C.navy, C.info, C.good, C.warn];
+    for (let i = 0; i < week.length; i++) {
+      const d = week[i];
+      const frac = Math.max(0.06, d.minutes / total);
       const seg = frac * bw;
       const col = palette[i % palette.length];
-      fillRect(ctx.doc, bx, y + 11, seg, 6, col, 2);
-      if (seg > 12) {
-        setFont(ctx.doc, "bold", 7, C.white);
-        ctx.doc.text(`${fmtInt(b.minutes)}'`, bx + 2, y + 15);
-      }
+      fillRect(doc, bx, y + 11, seg - 1.5, 8, col, 2);
+      setFont(doc, "bold", 7, C.white);
+      if (seg > 20) doc.text(`${d.day.slice(0, 3).toUpperCase()} ${fmtInt(d.minutes)}'`, bx + 2, y + 16.5);
       bx += seg;
     }
   });
 
-  // Bloques como tarjetas
-  for (let i = 0; i < plan.blocks.length; i++) {
-    const b = plan.blocks[i];
-    const palette: RGB[] = [C.navy, C.info, C.good, C.warn, C.bad, [147, 51, 234]];
+  // Tarjetas por día
+  const palette: RGB[] = [C.navy, C.info, C.good, C.warn];
+  for (let i = 0; i < week.length; i++) {
+    const d = week[i];
     const col = palette[i % palette.length];
-    const drills = (b.drills || []).map(fmtText);
-    const drillLines: string[] = ctx.doc.splitTextToSize(drills.join(" · "), contentW(ctx) - 30);
-    const reasonLines: string[] = ctx.doc.splitTextToSize(fmtText(b.reason), contentW(ctx) - 30);
-    const h = 14 + drillLines.length * 4.2 + reasonLines.length * 4.2 + 4;
+    const drills = (d.drills || []).map(fmtText);
+    const drillLines: string[] = doc.splitTextToSize(drills.join(" · ") || NA, contentW(ctx) - 30);
+    const reasonLines: string[] = doc.splitTextToSize(fmtText(d.reason), contentW(ctx) - 30);
+    const h = 22 + drillLines.length * 4.2 + reasonLines.length * 4.2 + 6;
     drawCard(ctx, h, (x, y, w) => {
-      fillRect(ctx.doc, x, y, 1.6, h, col);
-      setFont(ctx.doc, "bold", 10.5, C.ink);
-      ctx.doc.text(`Bloque ${i + 1} · ${fmtText(b.focus)}`, x + 6, y + 7);
-      drawPill(ctx.doc, x + w - 22, y + 7, `${fmtInt(b.minutes)}'`, col);
-      let ly = y + 13;
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      ctx.doc.text("EJERCICIOS", x + 6, ly); ly += 4;
-      setFont(ctx.doc, "normal", 9, C.ink);
-      for (const l of drillLines) { ctx.doc.text(l, x + 6, ly); ly += 4.2; }
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      ctx.doc.text("RAZÓN", x + 6, ly); ly += 4;
-      setFont(ctx.doc, "italic", 9, C.slate);
-      for (const l of reasonLines) { ctx.doc.text(l, x + 6, ly); ly += 4.2; }
+      fillRect(doc, x, y, 2, h, col);
+      // Header
+      setFont(doc, "bold", 12, C.ink);
+      doc.text(d.day, x + 6, y + 8);
+      setFont(doc, "bold", 9.5, col);
+      doc.text(fmtText(d.focus), x + 6, y + 15);
+      drawPill(doc, x + w - 22, y + 8, `${fmtInt(d.minutes)}'`, col);
+      // Prioridad chip
+      const priority = i === 0 ? "Prioridad alta" : i === 1 ? "Consolidación" : i === 2 ? "Refinamiento" : "Aplicación";
+      drawPill(doc, x + w - 62, y + 8, priority, C.slate);
+
+      let ly = y + 22;
+      setFont(doc, "bold", 7.5, C.mute);
+      doc.text("EJERCICIOS Y REPETICIONES", x + 6, ly); ly += 4;
+      setFont(doc, "normal", 9, C.ink);
+      for (const l of drillLines) { doc.text(l, x + 6, ly); ly += 4.2; }
+      setFont(doc, "bold", 7.5, C.mute);
+      doc.text("OBJETIVO", x + 6, ly); ly += 4;
+      setFont(doc, "italic", 9, C.slate);
+      for (const l of reasonLines) { doc.text(l, x + 6, ly); ly += 4.2; }
     }, 3);
   }
 }
@@ -1326,30 +1412,223 @@ function renderTrainingPlan(ctx: RenderCtx, a: MatchAnalysis) {
 // COACH INSIGHTS
 // ================================================================
 function renderCoachInsights(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Coach Insights");
+  drawH1(ctx, "Coach Insights", CHAPTER_QUESTION.coach);
   const ci = a.coachInsights;
-  const blocks: Array<[string, string, RGB]> = [
-    ["¿Por qué se ganó/perdió?", ci.whyResult, C.navy],
-    ["¿Qué decisiones funcionaron?", ci.keyDecisionThatWorked, C.good],
-    ["¿Qué decisiones reconsiderar?", ci.decisionToReconsider, C.bad],
-    ["Fundamento decisivo", ci.fundamentalDrivingResult, C.info],
+  const story = buildMatchStory(a);
+  const won = a.dashboard.result === "victoria";
+  const topStr = a.strengths[0];
+  const topWkn = a.weaknesses[0];
+  const worstFund = [...a.rallyIndex.breakdown].sort((x, y) => (x.score || 0) - (y.score || 0))[0];
+  const bestFund = [...a.rallyIndex.breakdown].sort((x, y) => (y.score || 0) - (x.score || 0))[0];
+
+  const qa: Array<[string, string, RGB]> = [
+    [won ? "¿Por qué se ganó?" : "¿Por qué se perdió?", ci.whyResult, won ? C.good : C.bad],
+    ["¿Qué cambió el partido?", story.turningPoint, C.warn],
+    ["¿Qué decisiones fueron correctas?", ci.keyDecisionThatWorked, C.good],
+    ["¿Qué decisiones fueron incorrectas?", ci.decisionToReconsider, C.bad],
+    ["¿Qué haría un entrenador profesional?", topWkn
+      ? `Priorizar ${topWkn.title.toLowerCase()} y sostener ${topStr?.title?.toLowerCase() ?? "los fundamentos ganadores"}.`
+      : `Sostener el nivel de ${bestFund?.label ?? "los mejores fundamentos"} y diversificar el juego ofensivo.`, C.navy],
+    ["¿Qué entrenaría mañana?", worstFund
+      ? `Bloque específico de ${worstFund.label.toLowerCase()} (${fmtInt(worstFund.score)}/100) — el fundamento con menor rendimiento.`
+      : "Sesión de recuperación con foco en video y descanso activo.", C.info],
+    ["¿Qué mantendría igual?", bestFund
+      ? `El plan de ${bestFund.label.toLowerCase()} (${fmtInt(bestFund.score)}/100) — se comporta a nivel de referencia.`
+      : "El plan general de trabajo.", C.good],
+    ["¿Qué cambiaría?", topWkn
+      ? `${topWkn.title} — ${topWkn.conclusion}`
+      : "Ajustes menores de rotación inicial y responsabilidades defensivas.", C.bad],
+    ["¿Qué observar del próximo rival?", `Volumen ofensivo por zona, agresividad de saque y patrones de bloqueo.`, C.slate],
   ];
-  for (const [k, v, col] of blocks) {
+
+  for (const [k, v, col] of qa) {
     const text: string[] = ctx.doc.splitTextToSize(fmtText(v), contentW(ctx) - 12);
-    const h = 14 + text.length * 4.6;
-    drawCard(ctx, h, (x, y, w) => {
-      fillRect(ctx.doc, x, y, 1.6, h, col);
-      setFont(ctx.doc, "bold", 10.5, C.ink);
-      ctx.doc.text(k, x + 6, y + 8);
-      setFont(ctx.doc, "normal", 10, C.ink);
-      let ly = y + 13;
-      for (const l of text) { ctx.doc.text(l, x + 6, ly); ly += 4.6; }
-    }, 3);
+    const h = 12 + text.length * 4.4;
+    drawCard(ctx, h, (x, y) => {
+      fillRect(ctx.doc, x, y, 2, h, col);
+      setFont(ctx.doc, "bold", 10, col);
+      ctx.doc.text(k, x + 7, y + 7);
+      setFont(ctx.doc, "normal", 9.5, C.ink);
+      let ly = y + 12;
+      for (const l of text) { ctx.doc.text(l, x + 7, ly); ly += 4.4; }
+    }, 2.5);
   }
+
   if (a.coachQuestions.length) {
-    drawH2(ctx, "Preguntas para el entrenador");
+    drawH2(ctx, "Preguntas abiertas para el cuerpo técnico");
     for (const q of a.coachQuestions) drawParagraph(ctx, `•  ${fmtText(q)}`);
   }
+}
+
+// ================================================================
+// RESUMEN EJECUTIVO (Capítulo 2, lectura en <30s)
+// ================================================================
+function renderExecutiveSummary(ctx: RenderCtx, a: MatchAnalysis, summaryMd?: string) {
+  drawH1(ctx, "Resumen ejecutivo", CHAPTER_QUESTION.exec);
+  const doc = ctx.doc;
+  const w = contentW(ctx);
+  const story = buildMatchStory(a);
+  const d = a.dashboard;
+
+  // Headline visual
+  drawCard(ctx, 32, (x, y) => {
+    fillRect(doc, x, y, 2.5, 32, d.result === "victoria" ? C.good : d.result === "derrota" ? C.bad : C.slate);
+    setFont(doc, "bold", 8, C.mute);
+    doc.text("TITULAR DEL PARTIDO", x + 8, y + 7);
+    setFont(doc, "bold", 15, C.ink);
+    const lines: string[] = doc.splitTextToSize(story.headline, w - 16);
+    let ly = y + 15;
+    for (const l of lines.slice(0, 2)) { doc.text(l, x + 8, ly); ly += 6.5; }
+  });
+
+  // Grid 2x3: qué pasó / por qué / qué cambió / qué entrenar / jugador diferencial / rotación decisiva
+  const cells: Array<{ title: string; body: string; color: RGB }> = [
+    { title: "¿QUÉ OCURRIÓ?", body: story.narrative, color: C.navy },
+    { title: "¿POR QUÉ OCURRIÓ?", body: a.coachInsights.whyResult, color: C.info },
+    { title: "¿QUÉ CAMBIÓ EL PARTIDO?", body: story.turningPoint, color: C.warn },
+    { title: "¿QUÉ DEBE ENTRENARSE?", body: a.priorities[0]?.title ?? "Mantener plan general.", color: C.bad },
+    { title: "JUGADOR DIFERENCIAL", body: story.keyPlayer + " — " + fmtText(d.awards.mvp?.detail), color: C.good },
+    { title: "ROTACIÓN DECISIVA", body: story.keyRotation, color: C.slate },
+    { title: "FUNDAMENTO GANADOR", body: story.keyFundamental, color: C.navy },
+    { title: "CONFIANZA DEL ANÁLISIS", body: fmtPct(avgConfidence(a)) + " — muestra representativa de eventos.", color: C.info },
+  ];
+
+  const cols = 2;
+  const cellH = 30;
+  for (let i = 0; i < cells.length; i += cols) {
+    drawBlock(ctx, cellH, 4, (x, y) => {
+      const cw = (w - 4) / cols;
+      for (let j = 0; j < cols && i + j < cells.length; j++) {
+        const c = cells[i + j];
+        const cx = x + j * (cw + 4);
+        fillRect(doc, cx, y, cw, cellH, C.white, 3);
+        strokeRect(doc, cx, y, cw, cellH, C.hair, 3, 0.25);
+        fillRect(doc, cx, y, 1.6, cellH, c.color);
+        setFont(doc, "bold", 7.5, c.color);
+        doc.text(c.title, cx + 6, y + 7);
+        setFont(doc, "normal", 9, C.ink);
+        const bLines: string[] = doc.splitTextToSize(fmtText(c.body), cw - 12);
+        let ly = y + 12;
+        for (const l of bLines.slice(0, 4)) { doc.text(l, cx + 6, ly); ly += 4.2; }
+      }
+    });
+  }
+
+  // Nota IA breve si viene
+  if (summaryMd && summaryMd.trim()) {
+    drawH2(ctx, "Síntesis del analista (IA)");
+    const clean = summaryMd.replace(/[#*_`>]/g, "").trim();
+    drawParagraph(ctx, clean, { size: 9.5, color: C.slate });
+  }
+}
+
+// ================================================================
+// CÓMO SE GANÓ / PERDIÓ (Capítulo 5, storyline visual)
+// ================================================================
+function renderHowWonLost(ctx: RenderCtx, a: MatchAnalysis) {
+  const won = a.dashboard.result === "victoria";
+  drawH1(ctx, won ? "Cómo se ganó el partido" : "Cómo se perdió el partido", CHAPTER_QUESTION.story);
+  const doc = ctx.doc;
+  const story = buildMatchStory(a);
+
+  drawParagraph(ctx, story.narrative, { size: 10.5 });
+
+  // Set a set con parciales y eficacias
+  if (a.setTrends.length) {
+    drawH2(ctx, "Recorrido set a set");
+    drawCard(ctx, 44, (x, y, w) => {
+      const cw = w / a.setTrends.length;
+      for (let i = 0; i < a.setTrends.length; i++) {
+        const s = a.setTrends[i];
+        const sx = x + i * cw;
+        const winSet = s.scoreFor > s.scoreAgainst;
+        fillRect(doc, sx + 2, y + 3, cw - 4, 38, winSet ? C.goodSoft : C.badSoft, 3);
+        setFont(doc, "bold", 8, C.mute);
+        textCenter(doc, `SET ${s.setNumber}`, sx + cw / 2, y + 10);
+        setFont(doc, "bold", 18, winSet ? C.good : C.bad);
+        textCenter(doc, `${s.scoreFor}-${s.scoreAgainst}`, sx + cw / 2, y + 22);
+        setFont(doc, "normal", 7.5, C.slate);
+        textCenter(doc, `ATK ${fmtPct(s.attackEff)}  ·  REC ${fmtPct(s.receptionEff)}`, sx + cw / 2, y + 30);
+        setFont(doc, "normal", 7, C.slate);
+        textCenter(doc, `${s.attackErrors} err atk · ${s.serveErrors} err saq`, sx + cw / 2, y + 36);
+      }
+    });
+  }
+
+  // Momento bisagra
+  drawCard(ctx, 26, (x, y, w) => {
+    fillRect(doc, x, y, 2.5, 26, C.warn);
+    setFont(doc, "bold", 8, C.mute);
+    doc.text("MOMENTO BISAGRA", x + 8, y + 7);
+    setFont(doc, "bold", 12, C.ink);
+    const lines: string[] = doc.splitTextToSize(story.turningPoint, w - 16);
+    let ly = y + 15;
+    for (const l of lines.slice(0, 2)) { doc.text(l, x + 8, ly); ly += 5.5; }
+  });
+
+  // 3 razones
+  drawH2(ctx, won ? "Tres razones por las que se ganó" : "Tres razones por las que se perdió");
+  const reasons = won
+    ? a.strengths.slice(0, 3).map((s) => ({ title: s.title, why: s.conclusion, col: C.good }))
+    : a.weaknesses.slice(0, 3).map((w) => ({ title: w.title, why: w.consequence + " " + w.conclusion, col: C.bad }));
+  if (!reasons.length) drawParagraph(ctx, "Sin razones destacadas.", { italic: true, color: C.slate });
+  for (let i = 0; i < reasons.length; i++) {
+    const r = reasons[i];
+    const lines: string[] = doc.splitTextToSize(fmtText(r.why), contentW(ctx) - 18);
+    const h = 12 + lines.length * 4.4;
+    drawCard(ctx, h, (x, y) => {
+      fillRect(doc, x, y, 2, h, r.col);
+      setFont(doc, "bold", 12, r.col);
+      doc.text(`${i + 1}`, x + 6, y + 9);
+      setFont(doc, "bold", 10, C.ink);
+      doc.text(fmtText(r.title), x + 12, y + 7);
+      setFont(doc, "normal", 9, C.slate);
+      let ly = y + 13;
+      for (const l of lines) { doc.text(l, x + 12, ly); ly += 4.4; }
+    }, 2);
+  }
+}
+
+// ================================================================
+// TENDENCIAS (Capítulo 9, evolución últimos partidos)
+// ================================================================
+function renderTendencies(ctx: RenderCtx, a: MatchAnalysis) {
+  drawH1(ctx, "Tendencias", CHAPTER_QUESTION.trend);
+  const doc = ctx.doc;
+  drawParagraph(ctx,
+    "Evolución del equipo en los fundamentos clave. Los datos disponibles se comparan contra el promedio de temporada calculado en el capítulo siguiente.",
+    { color: C.slate, size: 9.5 });
+
+  // Sparklines por fundamento (usa setTrends del partido actual como serie mínima)
+  const series: Array<{ label: string; values: number[]; color: RGB }> = [
+    { label: "Eficacia de ataque (set a set)", values: a.setTrends.map((s) => s.attackEff), color: C.info },
+    { label: "Eficiencia de recepción (set a set)", values: a.setTrends.map((s) => s.receptionEff), color: C.good },
+    { label: "Errores de saque (set a set)", values: a.setTrends.map((s) => s.serveErrors), color: C.warn },
+    { label: "Errores de ataque (set a set)", values: a.setTrends.map((s) => s.attackErrors), color: C.bad },
+  ];
+
+  for (const s of series) {
+    drawCard(ctx, 26, (x, y, w) => {
+      setFont(doc, "bold", 10, C.ink);
+      doc.text(s.label, x + 4, y + 8);
+      const vals = s.values.filter(isNum);
+      if (vals.length) {
+        const min = Math.min(...vals), max = Math.max(...vals), avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+        setFont(doc, "normal", 8, C.slate);
+        doc.text(`Prom. ${Math.round(avg)}  ·  Máx ${Math.round(max)}  ·  Mín ${Math.round(min)}`,
+          x + w - 4, y + 8, { align: "right" });
+        drawSparkline(doc, x + 4, y + 12, w - 8, 10, s.values, s.color);
+      } else {
+        setFont(doc, "italic", 9, C.mute);
+        doc.text("Sin datos suficientes.", x + 4, y + 18);
+      }
+    });
+  }
+
+  // Nota sobre historial
+  drawParagraph(ctx,
+    "Para gráficos multi-partido (últimos 5, mejor, peor y tendencia), la comparación con temporada del próximo capítulo consolida las métricas globales.",
+    { size: 9, color: C.mute, italic: true });
 }
 
 // ================================================================
@@ -1556,6 +1835,7 @@ export async function downloadIntelligencePdf(
 
   if (format === "executive") {
     pageBreak(ctx);
+    renderExecutiveSummary(ctx, analysis, summaryMd);
     renderDashboardBlock(ctx, analysis, extras?.coachName, extras?.venue);
     renderRallyIndexSection(ctx, analysis, { full: false });
     renderStrengthsWeaknesses(ctx, analysis, true);
@@ -1565,23 +1845,26 @@ export async function downloadIntelligencePdf(
     doc.addPage();
     const tocPageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
 
-    // Cuerpo
+    // Cuerpo — 15 capítulos narrativos
     pageBreak(ctx);
-    renderDashboardBlock(ctx, analysis, extras?.coachName, extras?.venue);
-    renderRallyIndexSection(ctx, analysis, { full: true });
+    renderExecutiveSummary(ctx, analysis, summaryMd);          // 2
+    renderDashboardBlock(ctx, analysis, extras?.coachName, extras?.venue); // 3
+    renderRallyIndexSection(ctx, analysis, { full: true });    // 4
+    renderHowWonLost(ctx, analysis);                           // 5
     renderRadar(ctx, analysis);
-    renderFundamentalChapters(ctx, analysis);
-    renderCourtAnalytics(ctx, analysis);
-    renderRotationBlock(ctx, analysis);
-    renderPlayerAnalysis(ctx, analysis);
+    renderFundamentalChapters(ctx, analysis);                  // 6
+    renderRotationBlock(ctx, analysis);                        // 7
+    renderPlayerAnalysis(ctx, analysis);                       // 8
+    renderTendencies(ctx, analysis);                           // 9
+    renderCourtAnalytics(ctx, analysis);                       // 10
     renderTimeline(ctx, analysis);
     renderStrengthsWeaknesses(ctx, analysis, false);
-    renderSeasonComparison(ctx, analysis);
-    renderRisksPredictions(ctx, analysis);
+    renderSeasonComparison(ctx, analysis);                     // 11
+    renderRisksPredictions(ctx, analysis);                     // 12
     renderRecommendations(ctx, analysis);
-    renderTrainingPlan(ctx, analysis);
-    renderCoachInsights(ctx, analysis);
-    renderCoachExecutiveSummary(ctx, analysis);
+    renderTrainingPlan(ctx, analysis);                         // 13
+    renderCoachInsights(ctx, analysis);                        // 14
+    renderCoachExecutiveSummary(ctx, analysis);                // 15
 
     // TOC
     renderToc(ctx, tocPageNo);
