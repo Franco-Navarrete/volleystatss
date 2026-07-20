@@ -382,6 +382,7 @@ export function IntegratedRallyDialog({
   const attackerName = attackerId ? playersOnCourt.find((p) => p.id === attackerId) : null;
   const summary = [
     receptionValue && { label: "Recepción", value: RECEPTION_OPTIONS.find((r) => r.key === receptionValue)?.label ?? "" },
+    defenseValue && { label: "Defensa", value: DEFENSE_OPTIONS.find((r) => r.key === defenseValue)?.label ?? "" },
     setter && { label: "Armó", value: `#${setter.number}` },
     zone && { label: "Zona armado", value: SETTING_ATTACK_ZONE_LABEL[zone] },
     attackerName && { label: "Atacante", value: `#${attackerName.number} ${attackerName.name}` },
