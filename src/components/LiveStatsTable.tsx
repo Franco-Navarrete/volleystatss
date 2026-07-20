@@ -355,7 +355,7 @@ export function LiveStatsTable({
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
             {filtered.length === 0 && (
