@@ -16,6 +16,7 @@ import {
   type AttackDirection,
   type AttackZone,
   type ReceptionRating,
+  type DefenseRating,
   SETTING_ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { AttackDirectionGrid } from "@/components/court/AttackDirectionGrid";
@@ -36,6 +37,14 @@ interface Props {
       quality?: SettingQuality;
     };
   };
+  /** Cuando se define, el panel inicia en el paso "defense" con este jugador. */
+  defenseStep?: {
+    playerId: string;
+    onRegister: (rating: DefenseRating) => {
+      proceed: boolean;
+      quality?: SettingQuality;
+    };
+  };
   onSubmit: (payload: {
     setterId: string;
     setterQuality: SettingQuality;
@@ -44,6 +53,8 @@ interface Props {
     action: RallyAction;
     attackDirection?: AttackDirection;
     receptionQuality?: SettingQuality;
+    /** true si el flujo fue disparado tras una defensa (contraataque). */
+    isCounter?: boolean;
   }) => void;
 }
 
@@ -58,10 +69,11 @@ export type RallyAction =
 
 type ActionKind = "attack" | "counter" | "block" | "attack_error" | "unforced";
 type Rating = "point" | "neutral";
-type Step = "reception" | "zone" | "direction" | "action" | "rating";
+type Step = "reception" | "defense" | "zone" | "direction" | "action" | "rating";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "reception", label: "Recepción" },
+  { key: "defense", label: "Defensa" },
   { key: "zone", label: "Armado" },
   { key: "direction", label: "Zona" },
   { key: "action", label: "Ataque" },
