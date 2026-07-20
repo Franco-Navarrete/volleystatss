@@ -753,6 +753,88 @@ export function buildMatchAnalysis(ctx: AnalysisContext): MatchAnalysis {
     },
   };
 
+  // ---- Deltas de temporada por fundamento (usando comparison ya calculado) ----
+  const findRow = (needle: string) => comparison.rows.find((r) => r.metric.toLowerCase().includes(needle));
+  const atkRow = findRow("ataque");
+  const recRow = findRow("recepción");
+  const aceRow = findRow("aces");
+  const seRow = findRow("saque");
+  const blkRow = findRow("bloqueo");
+  const applyDelta = (key: string, delta?: number) => {
+    if (delta === undefined) return;
+    const item = breakdown.find((b) => b.key === key);
+    if (!item) return;
+    item.seasonDelta = round(delta, 1);
+    item.trend = trendFromDelta(delta);
+  };
+  applyDelta("attack", atkRow?.delta);
+  applyDelta("reception", recRow?.delta);
+  applyDelta("serve", (aceRow?.delta ?? 0) - (seRow?.delta ?? 0));
+  applyDelta("block", blkRow?.delta);
+
+  // ---- Impact breakdown (pareto simple) ----
+  const IMPACT_COLORS: Record<string, string> = {
+    attack: "#6366f1", reception: "#10b981", k1: "#14b8a6", k2: "#f59e0b",
+    serve: "#ef4444", block: "#8b5cf6", defense: "#0ea5e9", transition: "#a855f7",
+    regularity: "#64748b", discipline: "#f43f5e",
+  };
+  // Impacto ponderado por peso base y por qué tan lejos está del ideal (100).
+  const impactRaw = breakdown.map((b) => ({
+    key: b.key,
+    label: b.label,
+    weight: (b.impact ?? 5) * (result === "victoria" ? (b.score / 100) : ((100 - b.score) / 100)),
+  }));
+  const impactSum = impactRaw.reduce((a, r) => a + r.weight, 0) || 1;
+  const impactBreakdown: ImpactSlice[] = impactRaw
+    .map((r) => ({ key: r.key, label: r.label, impact: round((r.weight / impactSum) * 100, 1), color: IMPACT_COLORS[r.key] ?? "#94a3b8" }))
+    .sort((a, b) => b.impact - a.impact);
+
+  // ---- Radar comparativo team vs rival vs temporada ----
+  const oppAttackEffScore = clamp(oppAttackEff * 1.2);
+  const oppServeScore = clamp(50 + (oppStat.ace - oppStat.serveErrors) * 6);
+  const oppBlockScore = clamp(40 + oppStat.block * 6 - oppStat.blockErrors * 4);
+  const oppUnforced = oppStat.unforcedErrors + oppStat.attackErrors + oppStat.blockErrors + oppStat.serveErrors;
+  const oppDiscipline = clamp(100 - (oppUnforced / Math.max(oppStat.total, 1)) * 60);
+  const oppDefense = clamp(40 + oppStat.counterAttack * 4 + oppStat.block * 3 - teamStat.attack * 0.5);
+  const seasonAvgFor = (key: "attack" | "reception" | "serve" | "block") => {
+    const it = breakdown.find((b) => b.key === key);
+    if (!it) return 0;
+    return clamp(round(it.score - (it.seasonDelta ?? 0)));
+  };
+  const radarCompare: MatchAnalysis["radarCompare"] = [
+    { axis: "Ataque",     equipo: breakdown.find((b) => b.key === "attack")!.score,     rival: round(oppAttackEffScore), temporada: seasonAvgFor("attack") },
+    { axis: "Recepción",  equipo: breakdown.find((b) => b.key === "reception")!.score,  rival: 50, temporada: seasonAvgFor("reception") },
+    { axis: "Saque",      equipo: breakdown.find((b) => b.key === "serve")!.score,      rival: round(oppServeScore), temporada: seasonAvgFor("serve") },
+    { axis: "Bloqueo",    equipo: breakdown.find((b) => b.key === "block")!.score,      rival: round(oppBlockScore), temporada: seasonAvgFor("block") },
+    { axis: "Defensa",    equipo: breakdown.find((b) => b.key === "defense")!.score,    rival: round(oppDefense), temporada: breakdown.find((b) => b.key === "defense")!.score },
+    { axis: "Disciplina", equipo: breakdown.find((b) => b.key === "discipline")!.score, rival: round(oppDiscipline), temporada: breakdown.find((b) => b.key === "discipline")!.score },
+  ];
+
+  // ---- Timeline ----
+  const timeline = buildTimeline(match, side);
+
+  // ---- Coach insights (rule-based) ----
+  const topWkn = weaknesses[0];
+  const topStr = strengths[0];
+  const worstFund = [...breakdown].sort((a, b) => a.score - b.score)[0];
+  const bestFund = [...breakdown].sort((a, b) => b.score - a.score)[0];
+  const coachInsights: CoachInsights = {
+    whyResult:
+      result === "victoria"
+        ? `Ganamos apoyados en ${bestFund.label.toLowerCase()} (${bestFund.score}/100)${topStr ? ` y en ${topStr.title.toLowerCase()}` : ""}, con un índice global de ${overall}/100.`
+        : result === "derrota"
+        ? `Perdimos principalmente por ${worstFund.label.toLowerCase()} (${worstFund.score}/100)${topWkn ? `, expresado en ${topWkn.title.toLowerCase()}` : ""}. El índice global fue ${overall}/100.`
+        : `Partido parejo (índice ${overall}/100). El desenlace se explica por la falta de diferencias claras en fundamentos clave.`,
+    keyDecisionThatWorked: topStr ? `${topStr.title} — ${topStr.conclusion}` : "Sin decisiones tácticas decisivas identificadas.",
+    decisionToReconsider: topWkn ? `${topWkn.title} — ${topWkn.conclusion}` : "Sin decisiones tácticas negativas identificadas.",
+    fundamentalDrivingResult: impactBreakdown[0] ? `${impactBreakdown[0].label} (${impactBreakdown[0].impact}% del impacto)` : "Sin patrón dominante",
+  };
+
+  // ---- Resumen del analista (fallback previo a la IA) ----
+  const analystSummary = buildAnalystSummary({
+    teamName, opponentName, result, overall, breakdown, topStr, topWkn, worstFund, bestFund,
+  });
+
   return {
     version: 1,
     matchId: match.id,
@@ -760,6 +842,7 @@ export function buildMatchAnalysis(ctx: AnalysisContext): MatchAnalysis {
     teamName,
     opponentName,
     dashboard,
+    analystSummary,
     rallyIndex,
     strengths,
     weaknesses,
@@ -773,7 +856,103 @@ export function buildMatchAnalysis(ctx: AnalysisContext): MatchAnalysis {
     coachQuestions,
     recommendations,
     comparison,
+    impactBreakdown,
+    radarCompare,
+    timeline,
+    coachInsights,
   };
+}
+
+function statusFromScore(s: number): IndexStatus {
+  if (s >= 80) return "excellent";
+  if (s >= 65) return "good";
+  if (s >= 50) return "regular";
+  if (s >= 35) return "low";
+  return "critical";
+}
+
+function buildTimeline(match: Match, side: "A" | "B"): TimelineEvent[] {
+  const out: TimelineEvent[] = [];
+  for (const s of match.sets) {
+    const setEvents = match.events
+      .filter((e) => "setNumber" in e && e.setNumber === s.number)
+      .sort((a, b) => a.timestamp - b.timestamp);
+    let scoreFor = 0, scoreAgainst = 0;
+    let run: { who: "us" | "them"; length: number; startFor: number; startAgainst: number } | null = null;
+    let lastLeader: "us" | "them" | "tie" = "tie";
+    for (const ev of setEvents) {
+      if (!("scoringSide" in ev)) {
+        if ("kind" in ev && ev.kind === "timeout" && ev.side === side) {
+          out.push({
+            setNumber: s.number, scoreFor, scoreAgainst,
+            kind: "timeout", title: `Tiempo muerto propio`,
+            detail: `Set ${s.number} · ${scoreFor}-${scoreAgainst}`,
+          });
+        }
+        continue;
+      }
+      const who: "us" | "them" = (ev.scoringSide === side) ? "us" : "them";
+      if (who === "us") scoreFor++; else scoreAgainst++;
+      // rachas
+      if (!run || run.who !== who) {
+        if (run && run.length >= 3) {
+          out.push({
+            setNumber: s.number, scoreFor: run.startFor, scoreAgainst: run.startAgainst,
+            kind: run.who === "us" ? "run" : "opp_run",
+            title: run.who === "us" ? `Racha propia +${run.length}` : `Racha rival +${run.length}`,
+            detail: `Set ${s.number} · cerró en ${scoreFor}-${scoreAgainst}`,
+          });
+        }
+        run = { who, length: 1, startFor: scoreFor - (who === "us" ? 1 : 0), startAgainst: scoreAgainst - (who === "them" ? 1 : 0) };
+      } else {
+        run.length++;
+      }
+      // cambios de liderazgo
+      const leader: "us" | "them" | "tie" = scoreFor > scoreAgainst ? "us" : scoreAgainst > scoreFor ? "them" : "tie";
+      if (leader !== "tie" && lastLeader !== "tie" && leader !== lastLeader) {
+        out.push({
+          setNumber: s.number, scoreFor, scoreAgainst, kind: "lead_change",
+          title: leader === "us" ? "Recuperamos la ventaja" : "El rival tomó ventaja",
+          detail: `Set ${s.number} · ${scoreFor}-${scoreAgainst}`,
+        });
+      }
+      lastLeader = leader;
+    }
+    if (run && run.length >= 3) {
+      out.push({
+        setNumber: s.number, scoreFor: run.startFor, scoreAgainst: run.startAgainst,
+        kind: run.who === "us" ? "run" : "opp_run",
+        title: run.who === "us" ? `Racha propia +${run.length}` : `Racha rival +${run.length}`,
+        detail: `Set ${s.number} · cerró en ${scoreFor}-${scoreAgainst}`,
+      });
+    }
+  }
+  return out.slice(0, 20);
+}
+
+function buildAnalystSummary(input: {
+  teamName: string;
+  opponentName: string;
+  result: "victoria" | "derrota" | "empate";
+  overall: number;
+  breakdown: RallyIndexItem[];
+  topStr?: StrengthCard;
+  topWkn?: WeaknessCard;
+  worstFund: RallyIndexItem;
+  bestFund: RallyIndexItem;
+}): string {
+  const { teamName, opponentName, result, overall, topStr, topWkn, worstFund, bestFund } = input;
+  const verbo = result === "victoria" ? "ganó" : result === "derrota" ? "perdió" : "empató";
+  const l1 = `${teamName} ${verbo} frente a ${opponentName} con un índice Rally global de ${overall}/100.`;
+  const l2 = result === "derrota"
+    ? `El resultado se explica principalmente por ${worstFund.label.toLowerCase()} (${worstFund.score}/100)${topWkn ? `, expresado en ${topWkn.title.toLowerCase()}` : ""}.`
+    : result === "victoria"
+    ? `La victoria se apoyó en ${bestFund.label.toLowerCase()} (${bestFund.score}/100)${topStr ? ` y en ${topStr.title.toLowerCase()}` : ""}.`
+    : `No hubo diferencias claras entre los fundamentos de ambos equipos.`;
+  const l3 = topWkn
+    ? `Como contracara, ${topWkn.title.toLowerCase()} limitó la construcción del juego y condicionó el rendimiento en varios tramos.`
+    : `El rendimiento fue parejo entre fundamentos, sin debilidades marcadas.`;
+  return [l1, l2, l3].join(" ");
 }
 
 // ---------------- Helpers privados ----------------
