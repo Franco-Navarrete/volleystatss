@@ -1,64 +1,91 @@
-# Refactor a modelo de Clubes + paleta ampliada + permisos jugadores
+# Interfaz móvil dedicada para toma de estadísticas
 
-Cambio grande y con impacto en datos: introduce **Clubes** como entidad de primer nivel, cambia la relación `Equipo → Club` y agrega permisos de jugadores. Lo dejo en 3 fases; empiezo Fase 1 al aprobar.
+Voy a construir una **experiencia móvil separada** para `/matches/$id`, dejando intacto el layout desktop/tablet actual. Se activa cuando `device-mobile` está resuelto (o `innerWidth < 768`).
 
-## Fase 1 — Clubes + paleta + creación guiada
+## Alcance
 
-### Backend (migración única)
+Solo cambia la UX de la pantalla de toma de estadísticas en móvil. La lógica del store, el motor de rally, las acciones, los diálogos (Integrated Rally, Attack, Setting, etc.) y el flujo se reutilizan **sin cambios**.
 
-- **Nueva tabla `public.clubs`**: `id`, `owner_id` (auth.users, NOT NULL, UNIQUE ← "1 entrenador = 1 club"), `name`, `logo_url`, `city`, `province`, `country`, `primary_color`, `secondary_color`, timestamps.
-- **GRANTs** para `authenticated` y `service_role`.
-- **RLS**:
-  - SELECT: cualquier autenticado (para poder mostrar "Club: Quilino" en listados públicos).
-  - INSERT: `owner_id = auth.uid()` y `has_role('entrenador'|'admin')`.
-  - UPDATE/DELETE: `owner_id = auth.uid() OR has_role('admin')`.
-- **`teams`**: agregar `club_id uuid REFERENCES clubs(id)`. Backfill: para cada `owner_id` distinto de equipos con `club` texto, crear un `club` y setear `club_id`. Deprecar (no borrar) columna `club` texto.
-- **`players`**: agregar policy INSERT/UPDATE/DELETE = `can_manage_team(auth.uid(), team_id)`.
-- Helper SQL `can_create_player(_user) = has_role(admin) OR has_role(entrenador)`.
-- Helper SQL `get_user_club(_user)` (security definer) → id del club del entrenador.
+## Arquitectura
 
-### Server functions (`src/lib/*.functions.ts`)
+Nuevo componente contenedor `MobileMatchLayout` en `src/components/scorer/mobile/`:
 
-- Nuevo `clubs.functions.ts`: `getMyClub`, `createClub`, `updateClub`.
-- `createTeam`:
-  - Si el usuario es entrenador y no tiene club → error "Crea tu club primero".
-  - Si es entrenador con club → forzar `club_id = miClub.id` (ignora cualquier `club` que venga del cliente).
-  - Admin puede pasar `club_id` explícito.
-- `updateTeam`: bloquear cambio de `club_id` para entrenadores.
-- `listTeams`: devolver `clubId` y join con clubes para exponer `clubName`, `clubLogoUrl`.
+```text
+src/components/scorer/mobile/
+  MobileMatchLayout.tsx    ← orquesta todo
+  MobileTopBar.tsx         ← marcador + set + reloj + saque
+  MobilePhaseCapsule.tsx   ← cápsula "Esperando recepción…" etc.
+  MobileLastActionChip.tsx ← tarjeta flotante última acción
+  MobileBottomNav.tsx      ← Deshacer / Armado / Cancha / Stats / Menú
+  MobileMoreMenu.tsx       ← Sheet inferior con Cambio, Líbero, Tiempo, Sanción, Formato, Config
+  MobileStatsSheet.tsx     ← Sheet con LiveStatsTable
+```
 
-### Frontend
+En `matches.$id.index.tsx`, en el render principal:
 
-- **Paleta de 20 colores** (constante compartida `src/lib/team-colors.ts`) con nombre + HEX. Componente `<ColorSwatchPicker>` que muestra círculos reales y guarda el HEX. Reemplaza el picker actual en formularios de equipo y club. Secundario sigue opcional.
-- **Nuevo hook `useMyClub()`** (react-query).
-- **Nueva página `/mi-club`** (o modal): formulario club (nombre, escudo, ciudad, provincia, país, color principal/secundario).
-- **Flujo guiado en `/teams`** para entrenadores:
-  - Si no tiene club → estado vacío grande: "Primero creá tu club" + CTA que abre el formulario de club.
-  - Ya con club: header "Club: {nombre}" + botón "+ Crear equipo".
-  - Formulario de equipo simplificado: quita "Club" (auto), mantiene nombre, categoría, género, liga, escudo, colores.
-- **Permisos UI**: mostrar editar/eliminar/agregar jugadores solo si `useCanManageTeam(team.ownerId)`.
-- **Crear/editar jugadores**: habilitar botón para entrenador (nuevo `useCanCreatePlayer()` = admin O entrenador) sobre sus propios equipos.
+```tsx
+const isMobile = useIsMobileMatchLayout(); // device-mobile o <768
+if (isMobile) return <MobileMatchLayout {...sharedProps} />;
+// … layout desktop/tablet existente sin cambios
+```
 
-### Memoria
+`sharedProps` expone las mismas funciones ya definidas (`onCambio`, `onLibero`, `onTiempo`, `onSancion`, `undo`, handlers de jugadores, diálogos, etc.) para no duplicar lógica.
 
-- Guardar regla core: "1 entrenador = 1 club. Equipos siempre bajo un club. Autorización por `club.owner_id` o admin."
+## Estructura de pantalla (mobile)
 
-## Fase 2 (después, no en esta entrega)
+```text
+┌────────────────────────────────┐
+│ TopBar  A 15 · 12 B   S2 21:04 │  ← 40-44px
+│              ● Saque A          │
+├────────────────────────────────┤
+│  ┌──────────────────────┐       │
+│  │ Esperando recepción  │  ←cápsula 24px
+│  └──────────────────────┘       │
+│                                 │
+│         🏐 CANCHA               │
+│      (80–90% alto útil)         │
+│   jugadores grandes tap-first   │
+│                                 │
+│         [Última: #7 ATK+]  ←chip flotante bottom-left
+│                                 │
+├────────────────────────────────┤
+│ ↶  Armado  Cancha  Stats  ⋮   │  ← BottomNav fija 56px + safe-area
+└────────────────────────────────┘
+```
 
-- Transferencia de jugadores entre equipos del mismo club.
-- Compartir jugadora entre categorías (tabla `player_team_assignments` many-to-many).
-- Partidos: gating por ownership del club/equipo (Fase 2 previa del plan anterior queda absorbida acá).
+### Detalles
 
-## Fase 3 (después)
+- **Cancha**: `flex-1` dentro de un `flex-col h-[100dvh]`, wrapper con `aspect-ratio` desactivado en móvil, escala para llenar. Jugadores `CourtPlayerBadge` en tamaño `size-14` (~56px) para tap cómodo.
+- **Long-press** (500ms) sobre jugador abre `PlayerHistoryDialog`. Tap corto conserva su comportamiento actual (registrar acción / abrir picker).
+- **Swipe-left** global sobre la cancha ejecuta `undo()` (umbral 80px). Feedback háptico si está disponible.
+- **Cápsula de fase** usa `currentActionText` del rally-phase existente y colorea según posesión.
+- **Chip última acción**: absolute bottom-24 left-3, tap abre PlayerHistoryDialog del jugador.
+- **BottomNav**:
+  - Deshacer → `undo()`
+  - Armado → abre selector de zona (mismo del actual)
+  - Cancha → cierra sheets
+  - Stats → abre `MobileStatsSheet` (LiveStatsTable en Sheet fullscreen)
+  - Menú (⋮) → abre `MobileMoreMenu` con Cambio, Líbero, Tiempo, Sanción, Formato, Configuración
+- Todos los botones ≥ `min-w-11 min-h-11` (44px).
+- Animaciones Punto/Ace/Error: reducir a `duration-200` y escala `0.9→1`.
 
-- Roles adicionales dentro del club: asistente, delegado, preparador físico, kinesiólogo, estadístico (tabla `club_members(club_id, user_id, role)` + permisos granulares).
+## Cambios puntuales
 
-## Riesgos
+1. **Nuevo**: los 6 archivos en `src/components/scorer/mobile/`.
+2. **`src/hooks/use-is-mobile-layout.ts`** — combina `device-mobile` class con media query, SSR-safe.
+3. **`src/routes/_authenticated/matches.$id.index.tsx`** — extrae `sharedProps` y hace `if (isMobile) return <MobileMatchLayout …/>`. Cero cambios en la rama desktop.
+4. **`src/styles.css`** — utilidades `.mobile-only`, `.safe-bottom` (padding con `env(safe-area-inset-bottom)`), animaciones reducidas para `.device-mobile`.
 
-- Backfill: si hay equipos del mismo owner con distintos valores de `club` texto, se colapsan en 1 club (el owner queda con 1 solo, tomando el nombre más frecuente). Es intencional por la regla "1 entrenador = 1 club".
-- `UNIQUE(owner_id)` en clubs impide que un entrenador tenga 2 clubes — regla explícita del pedido.
-- Admins siguen pudiendo crear equipos sin club (los que hoy no tienen).
+## Detalles técnicos
 
-## Qué hago al aprobar
+- **Long-press + swipe** con `pointerdown/move/up` nativos (sin dependencias nuevas). Evita conflicto con clic tocando `preventDefault` sólo tras superar umbral.
+- **BottomNav** en `position: fixed; bottom: 0; z-index: 40; padding-bottom: env(safe-area-inset-bottom)`.
+- **Sheets** con `@/components/ui/sheet` (Radix) posición `bottom`, `snap` altura 90%.
+- Reutilizo `IntegratedRallyDialog` tal cual (ya funciona en móvil como diálogo). No se toca su lógica.
+- La orientación no se fuerza (a diferencia de tablet); móvil funciona en portrait.
 
-Ejecuto Fase 1 completa: migración + `clubs.functions.ts` + ajustes en `teams.functions.ts` + paleta 20 colores + página/modal "Mi Club" + refactor UI de `/teams` con flujo guiado + permisos de jugadores. Fases 2 y 3 quedan pendientes.
+## Fuera de alcance
+
+- No cambia el layout desktop/tablet actual.
+- No cambia la lógica de estadísticas, reglas de rally, formaciones ni sincronización.
+- No cambia rutas ni URLs.
