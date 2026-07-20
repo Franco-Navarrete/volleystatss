@@ -483,7 +483,7 @@ function TeamsPage() {
               <Loader2 className="size-3 animate-spin" /> Guardando…
             </span>
           )}
-          {canEdit && (
+          {canCreate && (
             <Button
               size="sm"
               className="gap-1.5"
@@ -492,7 +492,7 @@ function TeamsPage() {
                 setShowNewTeam(true);
               }}
             >
-              <Plus className="size-4" /> Nuevo equipo
+              <Plus className="size-4" /> Crear equipo
             </Button>
           )}
         </div>
