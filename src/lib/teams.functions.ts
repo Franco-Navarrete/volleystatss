@@ -96,9 +96,11 @@ export const createTeam = createServerFn({ method: "POST" })
     name: string;
     shortName: string;
     color: string;
+    secondaryColor?: string | null;
     logoUrl?: string | null;
-    gender?: "M" | "F" | null;
-    category?: "12" | "14" | "16" | "18" | "21" | "primera" | null;
+    gender?: "M" | "F" | "X" | null;
+    category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre" | null;
+    club?: string | null;
   }) =>
     z
       .object({
@@ -106,9 +108,11 @@ export const createTeam = createServerFn({ method: "POST" })
         name: nameSchema,
         shortName: shortSchema,
         color: colorSchema,
+        secondaryColor: secondaryColorSchema,
         logoUrl: optionalUrl,
         gender: genderSchema,
         category: categorySchema,
+        club: clubSchema,
       })
       .parse(input),
   )
@@ -124,7 +128,11 @@ export const createTeam = createServerFn({ method: "POST" })
         gender: data.gender ?? null,
         category: data.category ?? null,
         created_by: context.userId,
-      } as TeamUpdate & { name: string; short_name: string; color: string; created_by: string })
+        // owner_id required by new RLS policy
+        owner_id: context.userId,
+        club: data.club ?? null,
+        secondary_color: data.secondaryColor ?? null,
+      } as TeamUpdate & { name: string; short_name: string; color: string; created_by: string; owner_id: string })
       .select("id")
       .single();
     if (error) throw error;
