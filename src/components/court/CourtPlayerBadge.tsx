@@ -139,7 +139,7 @@ function describeLastAction(events: MatchEvent[], playerId: string): { text: str
           return { text: "Error de ataque", tone: "bad" };
         case "ace":
           return { text: "Ace ⚡", tone: "good" };
-        case "service_error":
+        case "serve_error":
           return { text: "Error de saque", tone: "bad" };
         case "block":
           return { text: "Bloqueo 🛡", tone: "good" };
