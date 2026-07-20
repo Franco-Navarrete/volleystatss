@@ -163,12 +163,28 @@ function IntelligencePage() {
           </div>
         </header>
 
-        {/* Selector de partido */}
+        {/* Estado vacío: entrenador sin equipo asignado */}
+        {hasNoTeam ? (
+          <Card className="p-6 bg-card/40 border-amber-500/30">
+            <div className="flex gap-3 items-start">
+              <ShieldAlert className="size-6 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <h2 className="font-semibold text-base mb-1">Sin equipo asignado</h2>
+                <p className="text-sm text-muted-foreground">
+                  No tenés un equipo asignado. Contactá al administrador para habilitar Rally Intelligence.
+                </p>
+              </div>
+            </div>
+          </Card>
+        ) : (
+        /* Selector de partido */
         <Card className="p-4 space-y-4 bg-card/40">
           <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Analizar partido</h2>
           {finishedMatches.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Aún no tenés partidos finalizados. Finalizá al menos uno para analizarlo.
+              {restricted
+                ? "Todavía no tenés partidos finalizados con tu equipo."
+                : "Aún no tenés partidos finalizados. Finalizá al menos uno para analizarlo."}
             </p>
           ) : (
             <div className="flex flex-col md:flex-row gap-3 md:items-end">
@@ -187,13 +203,22 @@ function IntelligencePage() {
               </div>
               <div className="w-full md:w-56">
                 <label className="text-xs text-muted-foreground">Equipo a analizar</label>
-                <Select value={side} onValueChange={(v) => setSide(v as "A" | "B")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A">{match ? teamName(match.teamAId) : "Equipo A"}</SelectItem>
-                    <SelectItem value="B">{match ? teamName(match.teamBId) : "Equipo B"}</SelectItem>
-                  </SelectContent>
-                </Select>
+                {restricted ? (
+                  <div className="h-10 px-3 rounded-md border border-border/60 bg-muted/40 flex items-center gap-2 text-sm">
+                    <Lock className="size-3.5 text-muted-foreground" />
+                    <span className="font-medium truncate">
+                      {match ? teamName(analyzedTeamId) : "—"}
+                    </span>
+                  </div>
+                ) : (
+                  <Select value={side} onValueChange={(v) => setSide(v as "A" | "B")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">{match ? teamName(match.teamAId) : "Equipo A"}</SelectItem>
+                      <SelectItem value="B">{match ? teamName(match.teamBId) : "Equipo B"}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <Button onClick={handleGenerate} disabled={!match || generating} className="gap-2">
                 {generating ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
@@ -203,6 +228,8 @@ function IntelligencePage() {
           )}
           {error && <p className="text-sm text-red-400">{error}</p>}
         </Card>
+        )}
+
 
         {/* Preview en vivo del análisis */}
         {analysis && (
