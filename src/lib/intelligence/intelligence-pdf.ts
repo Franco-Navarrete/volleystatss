@@ -490,14 +490,26 @@ function drawRiskMatrix(
 }
 
 // ---------------- Bloques tipográficos ----------------
-function drawH1(ctx: RenderCtx, title: string) {
-  ensureSpace(ctx, 40);
+function drawH1(ctx: RenderCtx, title: string, question?: string) {
+  // Cada capítulo abre en una página nueva
+  if (ctx.y > ctx.contentTop + 1) pageBreak(ctx);
   ctx.toc.push({ title, page: (ctx.doc as any).internal.getCurrentPageInfo().pageNumber, level: 1 });
-  setFont(ctx.doc, "bold", 16, C.navy);
+  setFont(ctx.doc, "bold", 8.5, C.mute);
+  ctx.doc.text("CAPÍTULO", ctx.margin, ctx.y);
+  ctx.y += 5;
+  setFont(ctx.doc, "bold", 22, C.navy);
   ctx.doc.text(title, ctx.margin, ctx.y);
-  ctx.y += 2.5;
-  hairline(ctx.doc, ctx.margin, ctx.y, ctx.margin + 40, ctx.y, C.navy, 0.7);
-  ctx.y += 8;
+  ctx.y += 4;
+  hairline(ctx.doc, ctx.margin, ctx.y, ctx.margin + 50, ctx.y, C.navy, 0.9);
+  ctx.y += 6;
+  if (question) {
+    setFont(ctx.doc, "italic", 10.5, C.slate);
+    const lines: string[] = ctx.doc.splitTextToSize(question, contentW(ctx));
+    for (const l of lines) { ctx.doc.text(l, ctx.margin, ctx.y); ctx.y += 5; }
+    ctx.y += 2;
+  } else {
+    ctx.y += 4;
+  }
 }
 function drawH2(ctx: RenderCtx, title: string) {
   ensureSpace(ctx, 14);
