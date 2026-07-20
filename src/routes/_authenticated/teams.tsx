@@ -494,16 +494,31 @@ function TeamsPage() {
               <Loader2 className="size-3 animate-spin" /> Guardando…
             </span>
           )}
+          {canCreate && myClub && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setShowClubDialog(true)}
+              title="Editar mi club"
+            >
+              <Shield className="size-4" /> {myClub.name}
+            </Button>
+          )}
           {canCreate && (
             <Button
               size="sm"
               className="gap-1.5"
               onClick={() => {
+                if (needsClubFirst) {
+                  setShowClubDialog(true);
+                  return;
+                }
                 resetNewTeamForm();
                 setShowNewTeam(true);
               }}
             >
-              <Plus className="size-4" /> Crear equipo
+              <Plus className="size-4" /> {needsClubFirst ? "Crear mi club" : "Crear equipo"}
             </Button>
           )}
         </div>
