@@ -1379,7 +1379,7 @@ function TeamsPage() {
             )}
           </ul>
         </section>
-      )}
+      ); })()}
 
       {/* ========== New team dialog ========== */}
       <Dialog open={showNewTeam} onOpenChange={setShowNewTeam}>
