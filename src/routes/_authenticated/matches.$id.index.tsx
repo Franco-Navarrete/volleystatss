@@ -77,12 +77,14 @@ import {
   Plus,
   RotateCcw,
   RotateCw,
+  Search,
   Shirt,
   Target,
   Undo2,
   Users,
   X,
 } from "lucide-react";
+import { PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
@@ -1808,6 +1810,51 @@ function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; o
   );
 }
 
+const POSITION_BADGE_COLOR: Record<string, { bg: string; text: string; dot: string }> = {
+  armador: { bg: "#3b82f6", text: "#fff", dot: "🔵" },
+  opuesto: { bg: "#a855f7", text: "#fff", dot: "🟣" },
+  central: { bg: "#ef4444", text: "#fff", dot: "🔴" },
+  punta: { bg: "#f97316", text: "#fff", dot: "🟠" },
+  libero: { bg: "#22c55e", text: "#fff", dot: "🟢" },
+  universal: { bg: "#e2e8f0", text: "#0f172a", dot: "⚪" },
+};
+const POSITION_ORDER: Record<string, number> = {
+  armador: 0,
+  opuesto: 1,
+  central: 2,
+  punta: 3,
+  libero: 4,
+  universal: 5,
+};
+const POSITION_FILTERS: { key: "all" | PlayerPosition; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "armador", label: "Armadores" },
+  { key: "opuesto", label: "Opuestos" },
+  { key: "central", label: "Centrales" },
+  { key: "punta", label: "Puntas" },
+  { key: "libero", label: "Líberos" },
+  { key: "universal", label: "Universales" },
+];
+
+function PositionBadge({ position }: { position?: PlayerPosition }) {
+  if (!position) {
+    return (
+      <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+        S/P
+      </span>
+    );
+  }
+  const c = POSITION_BADGE_COLOR[position] ?? POSITION_BADGE_COLOR.universal;
+  return (
+    <span
+      className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
+      style={{ background: c.bg, color: c.text }}
+    >
+      {PLAYER_POSITION_LABEL[position]}
+    </span>
+  );
+}
+
 function LineupEditor({ match, teamA, teamB, onSave }: {
   match: Match; teamA: Team; teamB: Team;
   onSave: (lineupA: string[], lineupB: string[]) => void;
@@ -1825,6 +1872,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const stepValid = step === 1 ? validA : validB;
   const filled = lineup.filter(Boolean).length;
   const [pickingSlot, setPickingSlot] = useState<number | null>(null);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerFilter, setPickerFilter] = useState<"all" | PlayerPosition>("all");
 
   const designatedLiberoIds = new Set<string>(
     (step === 1
@@ -1984,75 +2033,147 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
               </div>
               <button
                 type="button"
-                onClick={() => setPickingSlot(null)}
+                onClick={() => { setPickingSlot(null); setPickerSearch(""); setPickerFilter("all"); }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto mt-2 grid grid-cols-2 gap-1.5">
-              {team.players.length === 0 && (
-                <p className="col-span-2 text-xs text-muted-foreground text-center py-4">Sin jugadores en el equipo.</p>
-              )}
-              {team.players.map((pl) => {
-                const slotOfPl = lineup.indexOf(pl.id);
-                const onCourt = slotOfPl >= 0;
-                const takenElsewhere = onCourt && slotOfPl !== pickingSlot;
-                const isCurrent = lineup[pickingSlot] === pl.id;
-                const isLib = isLiberoPlayer(pl.id);
-                const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
-                // Sólo bloquear si hay OTRO líbero en cancha que NO sea el que vamos a intercambiar
-                const currentPidInSlot = lineup[pickingSlot];
-                const otherLiberoOnCourt = isLib && lineup.some(
-                  (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid) && pid !== currentPidInSlot,
-                );
-                const liberoForbidden = liberoInFront || otherLiberoOnCourt;
-                const disabled = liberoForbidden;
-                const swapLabel = takenElsewhere
-                  ? (grid.flat().find((g) => g.idx === slotOfPl)?.label ?? "")
-                  : "";
-                const reason = liberoInFront
-                  ? "líbero no en frente"
-                  : otherLiberoOnCourt
-                    ? "ya hay un líbero"
-                    : takenElsewhere
-                      ? `P${swapLabel} ⇄`
-                      : null;
+
+            <div className="mt-2 relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={pickerSearch}
+                onChange={(e) => setPickerSearch(e.target.value)}
+                placeholder="Buscar por nombre, número o posición…"
+                className="w-full pl-7 pr-2 py-1.5 rounded-md bg-secondary/60 border border-border/60 text-xs focus:outline-none focus:border-primary"
+                autoFocus
+              />
+            </div>
+
+            <div className="mt-2 flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+              {POSITION_FILTERS.map((f) => {
+                const active = pickerFilter === f.key;
                 return (
                   <button
-                    key={pl.id}
+                    key={f.key}
                     type="button"
-                    disabled={disabled}
-                    onClick={() => { setSlot(pickingSlot, pl.id); setPickingSlot(null); }}
-                    className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors min-w-0 border ${
-                      isCurrent
+                    onClick={() => setPickerFilter(f.key)}
+                    className={`shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border transition-colors ${
+                      active
                         ? "bg-primary text-primary-foreground border-primary"
-                        : takenElsewhere
-                          ? "bg-primary/15 border-primary/60 text-foreground hover:bg-primary/25"
-                          : "bg-secondary border-transparent hover:bg-secondary/70"
-                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        : "bg-secondary/60 border-border/60 text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    {pl.photoUrl ? (
-                      <img src={pl.photoUrl} alt="" className="size-7 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <span className="size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0" style={{ background: team.color, color: "#fff" }}>
-                        {pl.number}
-                      </span>
-                    )}
-                    <span className="truncate flex-1 min-w-0">
-                      <span className="scoreboard-digit font-bold mr-1">#{pl.number}</span>
-                      {pl.name}
-                      {isLib && <span className="ml-1 text-[9px] uppercase opacity-70">líb</span>}
-                    </span>
-                    {reason && <span className="text-[9px] uppercase opacity-80 shrink-0 font-bold">{reason}</span>}
-                    {isCurrent && <Check className="size-3.5 shrink-0" />}
+                    {f.label}
                   </button>
                 );
               })}
             </div>
+
+            <div className="flex-1 overflow-y-auto mt-2 grid grid-cols-2 gap-1.5">
+              {team.players.length === 0 && (
+                <p className="col-span-2 text-xs text-muted-foreground text-center py-4">Sin jugadores en el equipo.</p>
+              )}
+              {(() => {
+                const q = pickerSearch.trim().toLowerCase();
+                const filtered = team.players
+                  .filter((pl) => {
+                    if (pickerFilter !== "all" && pl.position !== pickerFilter) return false;
+                    if (!q) return true;
+                    const posLabel = pl.position ? PLAYER_POSITION_LABEL[pl.position].toLowerCase() : "";
+                    return (
+                      pl.name.toLowerCase().includes(q) ||
+                      String(pl.number).includes(q) ||
+                      posLabel.includes(q)
+                    );
+                  })
+                  .sort((a, b) => {
+                    const oa = a.position ? POSITION_ORDER[a.position] ?? 99 : 99;
+                    const ob = b.position ? POSITION_ORDER[b.position] ?? 99 : 99;
+                    if (oa !== ob) return oa - ob;
+                    return (a.number ?? 0) - (b.number ?? 0);
+                  });
+                if (filtered.length === 0) {
+                  return (
+                    <p className="col-span-2 text-xs text-muted-foreground text-center py-4">
+                      Sin resultados.
+                    </p>
+                  );
+                }
+                return filtered.map((pl) => {
+                  const slotOfPl = lineup.indexOf(pl.id);
+                  const onCourt = slotOfPl >= 0;
+                  const takenElsewhere = onCourt && slotOfPl !== pickingSlot;
+                  const isCurrent = lineup[pickingSlot] === pl.id;
+                  const isLib = isLiberoPlayer(pl.id);
+                  const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
+                  const currentPidInSlot = lineup[pickingSlot];
+                  const otherLiberoOnCourt = isLib && lineup.some(
+                    (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid) && pid !== currentPidInSlot,
+                  );
+                  const liberoForbidden = liberoInFront || otherLiberoOnCourt;
+                  const disabled = liberoForbidden;
+                  const swapLabel = takenElsewhere
+                    ? (grid.flat().find((g) => g.idx === slotOfPl)?.label ?? "")
+                    : "";
+                  const reason = liberoInFront
+                    ? "líbero no en frente"
+                    : otherLiberoOnCourt
+                      ? "ya hay un líbero"
+                      : takenElsewhere
+                        ? `P${swapLabel} ⇄`
+                        : null;
+                  return (
+                    <button
+                      key={pl.id}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => { setSlot(pickingSlot, pl.id); setPickingSlot(null); setPickerSearch(""); setPickerFilter("all"); }}
+                      className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors min-w-0 border-2 ${
+                        isCurrent
+                          ? "bg-success/15 border-success text-foreground"
+                          : takenElsewhere
+                            ? "bg-primary/10 border-primary/60 text-foreground hover:bg-primary/20"
+                            : "bg-secondary border-transparent hover:bg-secondary/70"
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                      {pl.photoUrl ? (
+                        <img src={pl.photoUrl} alt="" className="size-9 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <span className="size-9 rounded-full scoreboard-digit font-bold flex items-center justify-center text-sm shrink-0" style={{ background: team.color, color: "#fff" }}>
+                          {pl.number}
+                        </span>
+                      )}
+                      <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+                        <span className="truncate leading-tight">
+                          <span className="scoreboard-digit font-bold mr-1">#{pl.number}</span>
+                          <span className="font-semibold">{pl.name}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <PositionBadge position={pl.position} />
+                          {reason && (
+                            <span className="text-[9px] uppercase font-bold text-primary/90 truncate">
+                              {reason}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      {isCurrent && (
+                        <span className="shrink-0 size-5 rounded-full bg-success text-white flex items-center justify-center">
+                          <Check className="size-3" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
           </div>
         )}
       </div>
+
 
       <div className="flex items-center gap-2">
         {step === 2 && (
