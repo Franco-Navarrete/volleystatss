@@ -967,46 +967,70 @@ function renderRadar(ctx: RenderCtx, a: MatchAnalysis) {
 // ================================================================
 function renderFundamentalChapters(ctx: RenderCtx, a: MatchAnalysis) {
   drawH1(ctx, "Análisis por fundamento", CHAPTER_QUESTION.fund);
-  drawParagraph(ctx, "Cada tarjeta condensa score, comparación con temporada, impacto, confianza y recomendación de trabajo.", { color: C.slate, size: 9.5 });
+  drawParagraph(ctx, "Una tarjeta narrativa por fundamento: qué pasó, por qué, qué consecuencia tuvo y qué entrenar.", { color: C.slate, size: 9.5 });
+
   for (const item of a.rallyIndex.breakdown) {
-    const detailLines: string[] = ctx.doc.splitTextToSize(fmtText(item.detail), contentW(ctx) - 60);
-    const h = 44 + Math.max(0, detailLines.length - 2) * 4.4;
-    drawCard(ctx, h, (x, y, w) => {
-      // Tile score
+    const beat = beatFundamental(item, a);
+    const doc = ctx.doc;
+    const w = contentW(ctx);
+    const detailLines: string[] = doc.splitTextToSize(fmtText(item.detail), w - 60);
+    const bodyW = w - 62;
+
+    // Precomputar altura
+    const wrap = (t: string) => doc.splitTextToSize(fmtText(t), bodyW) as string[];
+    const l1 = wrap(beat.what), l2 = wrap(beat.why), l3 = wrap(beat.consequence), l4 = wrap(beat.train);
+    const narrH = 6 + (l1.length + l2.length + l3.length + l4.length) * 4.4 + 4 * 5;
+    const h = 40 + Math.max(0, detailLines.length - 2) * 4.4 + narrH;
+
+    drawCard(ctx, h, (x, y) => {
+      // Tile score izquierdo
       const tw = 46;
-      fillRect(ctx.doc, x + 1, y + 1, tw, h - 2, statusSoft(item.score), 2.5);
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      textCenter(ctx.doc, "SCORE", x + tw / 2 + 1, y + 6.5);
-      setFont(ctx.doc, "bold", 22, statusColor(item.score));
-      textCenter(ctx.doc, fmtInt(item.score), x + tw / 2 + 1, y + 20);
-      hairline(ctx.doc, x + tw / 2 - 7, y + 23, x + tw / 2 + 9, y + 23, C.hair, 0.4);
-      setFont(ctx.doc, "bold", 9, C.ink);
-      textCenter(ctx.doc, statusLabel(item.status), x + tw / 2 + 1, y + 28);
-      // Mini bullet
-      drawBullet(ctx.doc, x + 4, y + h - 8, tw - 8, 2, isNum(item.score) ? item.score : null, 70, statusColor(item.score));
+      fillRect(doc, x + 1, y + 1, tw, h - 2, statusSoft(item.score), 2.5);
+      setFont(doc, "bold", 7.5, C.mute);
+      textCenter(doc, "SCORE", x + tw / 2 + 1, y + 6.5);
+      setFont(doc, "bold", 24, statusColor(item.score));
+      textCenter(doc, fmtInt(item.score), x + tw / 2 + 1, y + 21);
+      hairline(doc, x + tw / 2 - 7, y + 24, x + tw / 2 + 9, y + 24, C.hair, 0.4);
+      setFont(doc, "bold", 9, C.ink);
+      textCenter(doc, statusLabel(item.status), x + tw / 2 + 1, y + 30);
+      setFont(doc, "bold", 7.5, C.mute);
+      textCenter(doc, "IMPACTO", x + tw / 2 + 1, y + 40);
+      setFont(doc, "bold", 10, C.navy);
+      textCenter(doc, fmtPct(item.impact), x + tw / 2 + 1, y + 46);
+      setFont(doc, "bold", 7.5, C.mute);
+      textCenter(doc, "CONFIANZA", x + tw / 2 + 1, y + 55);
+      setFont(doc, "bold", 10, C.slate);
+      textCenter(doc, fmtPct(item.confidence), x + tw / 2 + 1, y + 61);
 
-      // Cuerpo
+      // Cuerpo derecho
       const rx = x + tw + 8;
-      const rw = w - tw - 12;
-      setFont(ctx.doc, "bold", 12, C.ink);
-      ctx.doc.text(fmtText(item.label), rx, y + 8);
-      setFont(ctx.doc, "normal", 9.5, C.ink);
-      let ly = y + 14;
-      for (const l of detailLines.slice(0, 4)) { ctx.doc.text(l, rx, ly); ly += 4.4; }
-
-      // Chips
+      setFont(doc, "bold", 14, C.ink);
+      doc.text(fmtText(item.label), rx, y + 8);
       const parts: [string, RGB][] = [
-        [`Impacto ${fmtPct(item.impact)}`, C.navy],
-        [`Confianza ${fmtPct(item.confidence)}`, C.slate],
         [`Δ Temp. ${fmtDelta(item.seasonDelta)}`, isNum(item.seasonDelta) && item.seasonDelta < 0 ? C.bad : C.good],
       ];
-      let px = rx;
-      for (const [t, col] of parts) { const pw = drawPill(ctx.doc, px, y + h - 10, t, col); px += pw + 3; }
-      // Objetivo y ejercicio
-      setFont(ctx.doc, "bold", 7.5, C.mute);
-      ctx.doc.text("OBJETIVO / EJERCICIO SUGERIDO", rx, y + h - 3);
-      setFont(ctx.doc, "italic", 8.5, C.slate);
-      ctx.doc.text(suggestExercise(item.label), rx + 62, y + h - 3);
+      let px = rx + doc.getTextWidth(fmtText(item.label)) + 8;
+      for (const [t, col] of parts) { const pw = drawPill(doc, px, y + 8, t, col); px += pw + 3; }
+      setFont(doc, "normal", 9, C.slate);
+      let ly = y + 14;
+      for (const l of detailLines.slice(0, 3)) { doc.text(l, rx, ly); ly += 4.2; }
+      ly += 2;
+
+      // Narrativa Q&A
+      const beats: Array<[string, string[], RGB]> = [
+        ["¿QUÉ PASÓ?", l1, C.navy],
+        ["¿POR QUÉ?", l2, C.slate],
+        ["¿QUÉ CONSECUENCIA TUVO?", l3, C.warn],
+        ["¿QUÉ ENTRENAR?", l4, C.good],
+      ];
+      for (const [q, lines, col] of beats) {
+        setFont(doc, "bold", 7.5, col);
+        doc.text(q, rx, ly);
+        ly += 3.8;
+        setFont(doc, "normal", 9, C.ink);
+        for (const l of lines) { doc.text(l, rx, ly); ly += 4.2; }
+        ly += 1.6;
+      }
     });
   }
 }
