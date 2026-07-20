@@ -39,6 +39,7 @@ import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
 import { FormationEditor } from "@/components/court/FormationEditor";
+import { CourtPlayerBadge } from "@/components/court/CourtPlayerBadge";
 
 
 
