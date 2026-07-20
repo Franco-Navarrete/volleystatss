@@ -54,27 +54,36 @@ export const listTeams = createServerFn({ method: "GET" })
       arr.push(p);
       playersByTeam.set(p.team_id, arr);
     }
-    const VALID_CATEGORIES = ["12", "14", "16", "18", "21", "primera"] as const;
+    const VALID_CATEGORIES = ["12", "14", "16", "18", "21", "primera", "libre"] as const;
     type Cat = (typeof VALID_CATEGORIES)[number];
-    return (teamsRes.data ?? []).map((t) => ({
-      id: t.id,
-      leagueId: t.league_id,
-      name: t.name,
-      shortName: t.short_name,
-      color: t.color,
-      logoUrl: t.logo_url ?? undefined,
-      gender: (t.gender === "M" || t.gender === "F" ? t.gender : undefined) as "M" | "F" | undefined,
-      category: (VALID_CATEGORIES.includes((t as { category?: string }).category as Cat)
-        ? ((t as { category?: string }).category as Cat)
-        : undefined),
-      players: (playersByTeam.get(t.id) ?? []).map((p) => ({
-        id: p.id,
-        name: p.name,
-        number: p.number,
-        position: p.position ?? undefined,
-        photoUrl: p.photo_url ?? undefined,
-      })),
-    }));
+    return (teamsRes.data ?? []).map((t) => {
+      const raw = t as unknown as Record<string, unknown>;
+      const gRaw = raw.gender;
+      const gender: "M" | "F" | "X" | undefined =
+        gRaw === "M" || gRaw === "F" || gRaw === "X" ? gRaw : undefined;
+      const catRaw = raw.category;
+      const category = VALID_CATEGORIES.includes(catRaw as Cat) ? (catRaw as Cat) : undefined;
+      return {
+        id: t.id,
+        leagueId: t.league_id,
+        name: t.name,
+        shortName: t.short_name,
+        color: t.color,
+        secondaryColor: (raw.secondary_color as string | null) ?? undefined,
+        club: (raw.club as string | null) ?? undefined,
+        ownerId: (raw.owner_id as string | null) ?? undefined,
+        logoUrl: t.logo_url ?? undefined,
+        gender,
+        category,
+        players: (playersByTeam.get(t.id) ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          number: p.number,
+          position: p.position ?? undefined,
+          photoUrl: p.photo_url ?? undefined,
+        })),
+      };
+    });
   });
 
 
