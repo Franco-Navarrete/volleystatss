@@ -40,11 +40,23 @@ import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
 import { FormationEditor } from "@/components/court/FormationEditor";
 import { CourtPlayerBadge } from "@/components/court/CourtPlayerBadge";
+import { SideActionsRail } from "@/components/scorer/SideActionsRail";
+import { RallyProgressBar } from "@/components/scorer/RallyProgressBar";
+import { RallyContextCards } from "@/components/scorer/RallyContextCards";
+import { computeRallyContext } from "@/lib/rally-phase";
 
 
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +71,7 @@ import {
   Flag,
   Hourglass,
   Minus,
+  MoreVertical,
   Play,
   Plus,
   RotateCcw,
@@ -401,6 +414,14 @@ function LiveMatch() {
     else alert(`${side === "A" ? teamA.name : teamB.name} ya usó los 2 tiempos del set.`);
   };
 
+  // Contexto del rally (fase actual + posesión + última acción) para las guías
+  // visuales sobre la cancha. Solo lectura — no altera el store ni el flujo.
+  const rallyCtx = useMemo(
+    () => computeRallyContext(match, { A: teamA, B: teamB }),
+    [match, teamA, teamB],
+  );
+
+
   return (
     <CompactShell>
       <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-1.5 h-full min-h-0 px-2 md:px-6 device-tablet:px-2 py-2 md:py-4 device-tablet:py-1 mx-auto w-full max-w-[1400px] device-tablet:max-w-none select-none">
@@ -530,8 +551,8 @@ function LiveMatch() {
 
 
         {/* Court + side controls */}
-          <div className="grid grid-cols-[auto_1fr_auto] device-tablet:grid-cols-[110px_minmax(0,1fr)_110px] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 device-tablet:gap-2 items-stretch flex-1 min-h-0 overflow-hidden">
-          <SideActions
+        <div className="grid grid-cols-[auto_1fr_auto] device-tablet:grid-cols-[64px_minmax(0,1fr)_64px] gap-2 [@media(max-width:360px)]:gap-1 sm:gap-3 md:gap-5 device-tablet:gap-2 items-stretch flex-1 min-h-0 overflow-hidden">
+          <SideActionsRail
             side="left"
             disabled={actionsDisabled}
             timeoutsUsed={leftSide === "A" ? toUsedA : toUsedB}
@@ -541,21 +562,40 @@ function LiveMatch() {
             onSancion={() => setSanctionSide(leftSide)}
           />
 
-          <CourtView
-            match={match}
-            teamA={teamA}
-            teamB={teamB}
-            leftSide={leftSide}
-            serverPlayerId={server.playerId}
-            serverSide={server.side}
-            onPlayerClick={onPlayerClick}
-            receivingSide={receivingSide}
-            needsReception={needsReception}
-            receiverIds={receiverIds}
-            formationByTeam={formationByTeam}
-          />
+          <div className="relative min-h-0 flex flex-col gap-1">
+            {/* Barra de progreso del rally (fase actual) */}
+            {isLive && (
+              <RallyProgressBar ctx={rallyCtx} />
+            )}
 
-          <SideActions
+            <div className="relative flex-1 min-h-0">
+              <CourtView
+                match={match}
+                teamA={teamA}
+                teamB={teamB}
+                leftSide={leftSide}
+                serverPlayerId={server.playerId}
+                serverSide={server.side}
+                onPlayerClick={onPlayerClick}
+                receivingSide={receivingSide}
+                needsReception={needsReception}
+                receiverIds={receiverIds}
+                formationByTeam={formationByTeam}
+                activePlayerId={pendingPlayer?.playerId ?? null}
+              />
+
+              {/* Chips flotantes de contexto (no consumen alto de layout) */}
+              {isLive && (
+                <RallyContextCards
+                  ctx={rallyCtx}
+                  teamA={teamA}
+                  teamB={teamB}
+                />
+              )}
+            </div>
+          </div>
+
+          <SideActionsRail
             side="right"
             disabled={actionsDisabled}
             timeoutsUsed={rightSide === "A" ? toUsedA : toUsedB}
@@ -566,39 +606,63 @@ function LiveMatch() {
           />
         </div>
 
-        {/* Bottom action row */}
-        <div className={`grid grid-cols-3 ${isCoach ? "sm:grid-cols-8" : "sm:grid-cols-7"} gap-1 md:gap-3 shrink-0`}>
-          <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "scheduled" || match.events.length === 0} onClick={() => undo(match.id)}>
-            <Undo2 className="size-3 md:size-4" /> Deshacer
+        {/* Bottom action row — solo primarias visibles; el resto en un menú "⋮" */}
+        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-1 md:gap-3 shrink-0">
+          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" disabled={match.status === "scheduled" || match.events.length === 0} onClick={() => undo(match.id)}>
+            <Undo2 className="size-4" /> Deshacer
           </Button>
-          <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => setShowLineupEditor(true)}>
-            <Users className="size-3 md:size-4" /> Formación
-          </Button>
-          {isCoach && (
-            <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" disabled={!isLive || actionsDisabled} onClick={() => setShowSettingDialog(true)}>
-              <Target className="size-3 md:size-4" /> Armado
+          {isCoach ? (
+            <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" disabled={!isLive || actionsDisabled} onClick={() => setShowSettingDialog(true)}>
+              <Target className="size-4" /> Armado
+            </Button>
+          ) : (
+            <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" disabled={!isLive} onClick={() => setShowLineupEditor(true)}>
+              <Users className="size-4" /> Formación
             </Button>
           )}
-          <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
-            <Users className="size-3 md:size-4" /> Cancha 5-1
+          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
+            <Users className="size-4" /> Cancha 5-1
+          </Button>
+          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
+            <ChartBarBig className="size-4" /> Stats vivo
           </Button>
 
-          <Button size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
-            <ChartBarBig className="size-3 md:size-4" /> Stats vivo
-          </Button>
-          <Button asChild size="sm" variant="secondary" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm">
-            <Link to="/matches/$id/stats" params={{ id: match.id }}>
-              <ChartBarBig className="size-3 md:size-4" /> Estadísticas
-            </Link>
-          </Button>
-          <Button size="sm" variant="outline" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"} onClick={() => setShowFormatDialog(true)}>
-            <Hourglass className="size-3 md:size-4" /> Formato
-          </Button>
-          <Button size="sm" variant="destructive" className="h-8 sm:h-10 md:h-11 text-xs md:text-sm" disabled={match.status === "finished"}
-            onClick={() => { if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id); }}>
-            <Flag className="size-3 md:size-4" /> Fin Partido
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="h-9 md:h-11 px-3" aria-label="Más acciones">
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Más acciones</DropdownMenuLabel>
+              {isCoach && (
+                <DropdownMenuItem onSelect={() => setShowLineupEditor(true)} disabled={!isLive}>
+                  <Users className="size-4" /> Formación
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem asChild>
+                <Link to="/matches/$id/stats" params={{ id: match.id }}>
+                  <ChartBarBig className="size-4" /> Estadísticas completas
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
+                <Hourglass className="size-4" /> Formato del partido
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={match.status === "finished"}
+                onSelect={() => {
+                  if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id);
+                }}
+                className="text-destructive focus:text-destructive"
+              >
+                <Flag className="size-4" /> Finalizar partido
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
+
 
         {(match.sets.length > 0 || match.setStartTimes?.[1]) && (
           <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 shrink-0">
@@ -1379,12 +1443,13 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam }: {
+function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
   formationByTeam?: Partial<Record<"A" | "B", "reception" | "attack">>;
+  activePlayerId?: string | null;
 }) {
   const a = match.onCourtA;
   const b = match.onCourtB;
@@ -1437,6 +1502,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 receivingSide={receivingSide}
                 receiverIds={receiverIds}
                 onPlayerClick={onPlayerClick}
+                activePlayerId={activePlayerId ?? null}
               />
             );
           }
@@ -1492,7 +1558,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                           key={`${ci}-${idx}`}
                           onClick={() => p && onPlayerClick(col.side, p.id)}
                           disabled={!p}
-                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""}`}
+                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""}`}
                           style={isLibero
                             ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                             : { background: col.team.color, borderColor: pairColor ?? undefined }}
@@ -1530,7 +1596,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
 }
 
 function FormationSide({
-  side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick,
+  side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId,
 }: {
   side: "A" | "B"; team: Team; onCourt: string[];
   formation: ReturnType<typeof useFormation>;
@@ -1538,6 +1604,7 @@ function FormationSide({
   match: Match; serverPlayerId: string | null;
   needsReception: boolean; receivingSide: "A" | "B"; receiverIds: Set<string>;
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
+  activePlayerId?: string | null;
 }) {
   // Mapeo del slot (formation coords) → coords absolutas dentro de la mitad de cancha.
   //   formation.y: 0 = en la red, 100 = línea final
@@ -1658,6 +1725,7 @@ function FormationSide({
               isServer={isServer}
               isLibero={isLibero}
               isReceiverHighlight={isReceiverHighlight}
+              active={!!activePlayerId && activePlayerId === p.id}
               dimmed={!onCourtActive}
               onClick={() => onPlayerClick(side, p.id)}
               className="w-full h-full"

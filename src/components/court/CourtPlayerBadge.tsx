@@ -113,6 +113,8 @@ export interface CourtPlayerBadgeProps {
   isServer?: boolean;
   isLibero?: boolean;
   isReceiverHighlight?: boolean;
+  /** Halo pulsante mientras el jugador está seleccionado para registrar acción. */
+  active?: boolean;
   dimmed?: boolean;
   onClick?: () => void;
   /** Extra classes to control size / positioning of the outer wrapper. */
@@ -127,6 +129,7 @@ export function CourtPlayerBadge({
   isServer,
   isLibero,
   isReceiverHighlight,
+  active,
   dimmed,
   onClick,
   className,
@@ -184,6 +187,7 @@ export function CourtPlayerBadge({
             "flex items-center justify-center",
             "shadow-lg transition-all active:scale-95",
             "hover:scale-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
+            active ? "player-active" : "",
             dimmed ? "opacity-40 grayscale" : "",
             className ?? "",
           ].join(" ")}
