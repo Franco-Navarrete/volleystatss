@@ -111,7 +111,30 @@ export function MobileMatchShell(p: Props) {
   } = p;
 
   const [moreOpen, setMoreOpen] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+  const [chipVisible, setChipVisible] = useState(true);
   const swipeStart = useRef<{ x: number; y: number; t: number } | null>(null);
+  const chipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-hide "última acción" chip después de 4s
+  useEffect(() => {
+    if (!rallyCtx.lastActionLabel) return;
+    setChipVisible(true);
+    if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+    chipTimerRef.current = setTimeout(() => setChipVisible(false), 4000);
+    return () => {
+      if (chipTimerRef.current) clearTimeout(chipTimerRef.current);
+    };
+  }, [rallyCtx.lastActionLabel, rallyCtx.lastActionDetail, rallyCtx.lastActionSide]);
+
+  // Al abrir el menú → volver a mostrar la nav
+  useEffect(() => {
+    if (moreOpen) setNavVisible(true);
+  }, [moreOpen]);
+
+  const onCourtTap = () => {
+    setNavVisible((v) => !v);
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse") return;
@@ -120,15 +143,22 @@ export function MobileMatchShell(p: Props) {
   const onPointerUp = (e: React.PointerEvent) => {
     const s = swipeStart.current;
     swipeStart.current = null;
-    if (!s || !canUndo) return;
+    if (!s) return;
     const dx = e.clientX - s.x;
     const dy = e.clientY - s.y;
-    if (dx < -80 && Math.abs(dy) < 60 && Date.now() - s.t < 600) {
-      // Swipe izquierda → deshacer
+    const dt = Date.now() - s.t;
+    // Swipe hacia arriba desde el borde inferior → mostrar nav
+    if (dy < -60 && Math.abs(dx) < 60 && dt < 600) {
+      setNavVisible(true);
+      return;
+    }
+    // Swipe izquierda → deshacer
+    if (canUndo && dx < -80 && Math.abs(dy) < 60 && dt < 600) {
       onUndo();
       if ("vibrate" in navigator) navigator.vibrate?.(15);
     }
   };
+
 
   const short = (s: "A" | "B") => (s === "A" ? teamA.shortName : teamB.shortName);
   const phaseLabel = rallyCtx.finished
