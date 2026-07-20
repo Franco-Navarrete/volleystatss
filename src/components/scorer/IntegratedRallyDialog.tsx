@@ -90,11 +90,28 @@ const ACTION_KIND_LABEL: Record<ActionKind, string> = {
 
 const CURRENT_ACTION_TEXT: Record<Step, string> = {
   reception: "Esperando valoración de la recepción",
+  defense: "Esperando valoración de la defensa",
   zone: "Esperando zona del armado",
   direction: "Esperando zona destino",
   action: "Esperando tipo de acción",
   rating: "Esperando resultado",
 };
+
+interface DefenseOption {
+  key: DefenseRating;
+  label: string;
+  hotkey: string;
+  className: string;
+  quality?: SettingQuality; // undefined = corta la jugada (error)
+  desc: string;
+}
+const DEFENSE_OPTIONS: DefenseOption[] = [
+  { key: "excellent", label: "#", hotkey: "1", className: "bg-success text-success-foreground", quality: "++", desc: "Excelente" },
+  { key: "positive", label: "+", hotkey: "2", className: "bg-success/80 text-success-foreground", quality: "+", desc: "Positiva" },
+  { key: "controlled", label: "0", hotkey: "3", className: "bg-yellow-400 text-black", quality: "!", desc: "Controlada" },
+  { key: "weak", label: "−", hotkey: "4", className: "bg-yellow-500 text-black", quality: "-", desc: "Débil" },
+  { key: "error", label: "=", hotkey: "5", className: "bg-destructive text-destructive-foreground", desc: "Error" },
+];
 
 interface ReceptionOption {
   key: ReceptionRating;
