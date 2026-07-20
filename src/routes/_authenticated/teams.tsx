@@ -1537,6 +1537,8 @@ function TeamsPage() {
                     name,
                     shortName,
                     color,
+                    secondaryColor: newSecondaryColor || null,
+                    club: newClub.trim() || null,
                     logoUrl: logo,
                     gender: newGender || null,
                     category: newCategory || null,
