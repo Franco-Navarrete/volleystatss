@@ -1226,7 +1226,7 @@ function LiveMatch() {
 
       {/* Live stats */}
       <Dialog open={showLiveStats} onOpenChange={setShowLiveStats} modal={false}>
-        <DialogContent className="live-stats-dialog flex h-[85dvh] max-h-[85dvh] w-[calc(100dvw-24px)] max-w-3xl flex-col overflow-hidden rounded-xl border-border/60 p-0 gap-0">
+        <DialogContent className="live-stats-dialog flex h-[90dvh] max-h-[90dvh] w-[calc(100dvw-16px)] max-w-6xl flex-col overflow-hidden rounded-xl border-border/60 p-0 gap-0">
           <DialogHeader className="shrink-0 border-b border-border/60 px-4 py-3 pr-12 text-left">
             <DialogTitle>Estadísticas en vivo</DialogTitle>
           </DialogHeader>
