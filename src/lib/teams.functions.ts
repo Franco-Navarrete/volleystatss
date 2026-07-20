@@ -23,8 +23,10 @@ const positionSchema = z
   .enum(["punta", "central", "opuesto", "armador", "libero"])
   .optional()
   .nullable();
-const genderSchema = z.enum(["M", "F"]).optional().nullable();
-const categorySchema = z.enum(["12", "14", "16", "18", "21", "primera"]).optional().nullable();
+const genderSchema = z.enum(["M", "F", "X"]).optional().nullable();
+const categorySchema = z.enum(["12", "14", "16", "18", "21", "primera", "libre"]).optional().nullable();
+const clubSchema = z.string().trim().max(80).optional().nullable();
+const secondaryColorSchema = z.string().trim().max(20).optional().nullable();
 
 
 // ---------------- READ ----------------
