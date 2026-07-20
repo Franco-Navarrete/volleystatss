@@ -194,8 +194,12 @@ export const deleteTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => z.object({ id: uuidSchema }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("teams").delete().eq("id", data.id);
+    const { error, count } = await context.supabase
+      .from("teams")
+      .delete({ count: "exact" })
+      .eq("id", data.id);
     if (error) throw error;
+    if (count === 0) throw new Error("No tiene permisos para administrar este equipo.");
     return { ok: true };
   });
 
