@@ -73,6 +73,8 @@ export const listTeams = createServerFn({ method: "GET" })
         gRaw === "M" || gRaw === "F" || gRaw === "X" ? gRaw : undefined;
       const catRaw = raw.category;
       const category = VALID_CATEGORIES.includes(catRaw as Cat) ? (catRaw as Cat) : undefined;
+      const clubId = (raw.club_id as string | null) ?? null;
+      const clubInfo = clubId ? clubById.get(clubId) : undefined;
       return {
         id: t.id,
         leagueId: t.league_id,
@@ -80,7 +82,10 @@ export const listTeams = createServerFn({ method: "GET" })
         shortName: t.short_name,
         color: t.color,
         secondaryColor: (raw.secondary_color as string | null) ?? undefined,
-        club: (raw.club as string | null) ?? undefined,
+        club: (raw.club as string | null) ?? clubInfo?.name ?? undefined,
+        clubId: clubId ?? undefined,
+        clubName: clubInfo?.name ?? undefined,
+        clubLogoUrl: clubInfo?.logoUrl ?? undefined,
         ownerId: (raw.owner_id as string | null) ?? undefined,
         logoUrl: t.logo_url ?? undefined,
         gender,
