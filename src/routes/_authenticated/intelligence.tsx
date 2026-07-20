@@ -1,50 +1,35 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVolley } from "@/lib/volley-store";
-import { buildMatchIntelligenceStats } from "@/lib/intelligence/stats";
-import { runAllEngines } from "@/lib/intelligence/insights/engines";
-import type { Insight, IntelligenceReport } from "@/lib/intelligence/types";
+import { buildMatchAnalysis } from "@/lib/intelligence/analysis";
+import { ReportView } from "@/components/intelligence/ReportView";
+import type { IntelligenceReport } from "@/lib/intelligence/reports.functions";
 import {
   deleteIntelligenceReport,
   generateIntelligenceReport,
   listIntelligenceReports,
 } from "@/lib/intelligence/reports.functions";
-import { Brain, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { Brain, Loader2, Sparkles, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
   head: () => ({
     meta: [
-      { title: "Rally Intelligence · Análisis táctico" },
-      { name: "description", content: "Motor de análisis táctico e informes de IA para partidos de vóley." },
+      { title: "Rally Intelligence · Análisis de rendimiento" },
+      { name: "description", content: "Informes profesionales de rendimiento con datos accionables, gráficos y recomendaciones." },
     ],
   }),
   component: IntelligencePage,
 });
 
-const SEV_COLOR: Record<Insight["severity"], string> = {
-  info: "bg-secondary/60 text-foreground",
-  positive: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-  warning: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-  critical: "bg-red-500/15 text-red-300 border-red-500/30",
-};
-
-const CAT_LABEL: Record<Insight["category"], string> = {
-  attack: "Ataque",
-  reception: "Recepción",
-  serve: "Saque",
-  setting: "Armado",
-  block: "Bloqueo",
-  rotation: "Rotación",
-};
-
 function IntelligencePage() {
-  const router = useRouter();
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
+  const players = useMemo(() => teams.flatMap((t) => t.players ?? []), [teams]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const finishedMatches = useMemo(
@@ -58,6 +43,7 @@ function IntelligencePage() {
   const [loadingList, setLoadingList] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [openReports, setOpenReports] = useState<Set<string>>(new Set());
 
   const genFn = useServerFn(generateIntelligenceReport);
   const listFn = useServerFn(listIntelligenceReports);
@@ -73,16 +59,16 @@ function IntelligencePage() {
   }, [listFn]);
 
   const match = useMemo(() => finishedMatches.find((m) => m.id === matchId), [finishedMatches, matchId]);
-  const previewInsights = useMemo(() => {
-    if (!match) return [] as Insight[];
-    const stats = buildMatchIntelligenceStats(match, side);
-    return runAllEngines(stats);
-  }, [match, side]);
+
+  const analysis = useMemo(() => {
+    if (!match) return null;
+    return buildMatchAnalysis({ match, side, teams, players, history: matches });
+  }, [match, side, teams, players, matches]);
 
   const teamName = (id?: string) => (id ? teamById.get(id)?.name ?? "Equipo" : "—");
 
   async function handleGenerate() {
-    if (!match) return;
+    if (!match || !analysis) return;
     setGenerating(true);
     setError(null);
     try {
@@ -92,10 +78,11 @@ function IntelligencePage() {
           scope: "match",
           scopeRef: match.id,
           title,
-          insights: previewInsights,
+          analysis: analysis as unknown as never,
         },
       });
       setReports((prev) => [report, ...prev]);
+      if (report.id) setOpenReports((s) => new Set(s).add(report.id!));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error generando informe");
     } finally {
@@ -111,12 +98,19 @@ function IntelligencePage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error eliminando informe");
     }
-    router.invalidate();
+  }
+
+  function toggleReport(id: string) {
+    setOpenReports((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 space-y-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-6">
         <header className="flex items-center gap-3">
           <div className="size-10 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow">
             <Brain className="size-5 text-primary-foreground" />
@@ -124,20 +118,21 @@ function IntelligencePage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Rally Intelligence</h1>
             <p className="text-sm text-muted-foreground">
-              Insights automáticos + informes redactados por IA a partir de tus partidos.
+              Informes profesionales de rendimiento con datos, gráficos y recomendaciones accionables.
             </p>
           </div>
         </header>
 
-        <section className="rounded-xl border border-border/60 bg-card/40 p-4 space-y-4">
-          <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Generar informe</h2>
+        {/* Selector de partido */}
+        <Card className="p-4 space-y-4 bg-card/40">
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Analizar partido</h2>
           {finishedMatches.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Aún no tenés partidos finalizados. Finalizá al menos uno para analizarlo.
             </p>
           ) : (
             <div className="flex flex-col md:flex-row gap-3 md:items-end">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <label className="text-xs text-muted-foreground">Partido</label>
                 <Select value={matchId} onValueChange={setMatchId}>
                   <SelectTrigger><SelectValue placeholder="Elegí un partido" /></SelectTrigger>
@@ -150,7 +145,7 @@ function IntelligencePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="w-full md:w-48">
+              <div className="w-full md:w-56">
                 <label className="text-xs text-muted-foreground">Equipo a analizar</label>
                 <Select value={side} onValueChange={(v) => setSide(v as "A" | "B")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -162,63 +157,71 @@ function IntelligencePage() {
               </div>
               <Button onClick={handleGenerate} disabled={!match || generating} className="gap-2">
                 {generating ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                Generar informe
+                Generar informe con IA
               </Button>
             </div>
           )}
-
-          {previewInsights.length > 0 && (
-            <div className="pt-2">
-              <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-                Insights detectados ({previewInsights.length})
-              </h3>
-              <ul className="grid gap-2 md:grid-cols-2">
-                {previewInsights.map((i) => (
-                  <li key={i.id} className={`rounded-lg border px-3 py-2 text-sm ${SEV_COLOR[i.severity]}`}>
-                    <div className="text-[10px] uppercase tracking-widest opacity-70">{CAT_LABEL[i.category]}</div>
-                    <div className="font-semibold">{i.title}</div>
-                    <div className="opacity-90">{i.detail}</div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
           {error && <p className="text-sm text-red-400">{error}</p>}
-        </section>
+        </Card>
 
+        {/* Preview en vivo del análisis */}
+        {analysis && (
+          <section className="space-y-2">
+            <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Vista previa del informe</h2>
+            <ReportView analysis={analysis} />
+          </section>
+        )}
+
+        {/* Historial de informes guardados */}
         <section className="space-y-3">
-          <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Informes anteriores</h2>
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Informes guardados</h2>
           {loadingList ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Cargando…</div>
           ) : reports.length === 0 ? (
             <p className="text-sm text-muted-foreground">Todavía no generaste ningún informe.</p>
           ) : (
             <ul className="space-y-3">
-              {reports.map((r) => (
-                <li key={r.id} className="rounded-xl border border-border/60 bg-card/40 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="font-semibold">{r.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {r.createdAt ? new Date(r.createdAt).toLocaleString() : ""} · {r.insights.length} insights
-                        {r.model ? ` · ${r.model}` : ""}
-                      </div>
+              {reports.map((r) => {
+                const isOpen = r.id ? openReports.has(r.id) : false;
+                return (
+                  <li key={r.id} className="rounded-xl border border-border/60 bg-card/40 overflow-hidden">
+                    <div className="flex items-center gap-2 p-3">
+                      <button
+                        onClick={() => r.id && toggleReport(r.id)}
+                        className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                      >
+                        {isOpen ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
+                        <div className="min-w-0">
+                          <div className="font-semibold truncate">{r.title}</div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {r.createdAt ? new Date(r.createdAt).toLocaleString() : ""}
+                            {r.analysis ? ` · Índice ${r.analysis.dashboard.rallyIndex}/100` : ""}
+                            {r.model ? ` · ${r.model}` : ""}
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(r.id)}
+                        className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+                        title="Eliminar informe"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
-                      title="Eliminar informe"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                  {r.summaryMd && (
-                    <pre className="mt-3 whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground/90">
-                      {r.summaryMd}
-                    </pre>
-                  )}
-                </li>
-              ))}
+                    {isOpen && (
+                      <div className="p-4 border-t border-border/50">
+                        {r.analysis ? (
+                          <ReportView analysis={r.analysis} summaryMd={r.summaryMd} />
+                        ) : (
+                          <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground/90">
+                            {r.summaryMd || "Informe legacy sin análisis estructurado."}
+                          </pre>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

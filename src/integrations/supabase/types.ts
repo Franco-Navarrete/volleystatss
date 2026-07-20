@@ -97,6 +97,7 @@ export type Database = {
       }
       intelligence_reports: {
         Row: {
+          analysis: Json | null
           created_at: string
           id: string
           insights: Json
@@ -109,6 +110,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analysis?: Json | null
           created_at?: string
           id?: string
           insights?: Json
@@ -121,6 +123,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analysis?: Json | null
           created_at?: string
           id?: string
           insights?: Json

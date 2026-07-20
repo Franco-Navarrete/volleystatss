@@ -1,0 +1,1 @@
+ALTER TABLE public.intelligence_reports ADD COLUMN IF NOT EXISTS analysis jsonb;

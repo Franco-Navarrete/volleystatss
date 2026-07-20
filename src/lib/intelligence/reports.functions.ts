@@ -1,28 +1,32 @@
 // Rally Intelligence — server functions para generar y persistir informes.
-// Solo declaraciones createServerFn + imports. Helpers viven en *.server.ts.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { RALLY_SYSTEM_PROMPT, buildUserPrompt } from "./ai/prompt.server";
-import type { Insight, IntelligenceReport } from "./types";
+import type { MatchAnalysis } from "./analysis";
+import type { Insight } from "./types";
 
-const InsightSchema = z.object({
-  id: z.string(),
-  category: z.enum(["attack", "reception", "serve", "setting", "block", "rotation"]),
-  severity: z.enum(["info", "positive", "warning", "critical"]),
-  title: z.string(),
-  detail: z.string(),
-  metrics: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
-  playerId: z.string().optional(),
-  rotation: z.number().optional(),
-});
+export interface IntelligenceReport {
+  id?: string;
+  scope: "match" | "team";
+  scopeRef: string;
+  title: string;
+  insights: Insight[];
+  analysis?: MatchAnalysis;
+  summaryMd: string;
+  model?: string;
+  createdAt?: number;
+}
+
+// Validación laxa del análisis (solo verificamos que exista y sea versión 1).
+const AnalysisSchema = z.object({ version: z.literal(1) }).passthrough();
 
 const GenerateInput = z.object({
   scope: z.enum(["match", "team"]),
   scopeRef: z.string().min(1),
   title: z.string().min(1).max(200),
-  insights: z.array(InsightSchema).max(200),
+  analysis: AnalysisSchema,
 });
 
 const MODEL = "google/gemini-3.5-flash";
@@ -34,33 +38,34 @@ export const generateIntelligenceReport = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Falta LOVABLE_API_KEY");
 
-    const insights = data.insights as Insight[];
-    const userPrompt = buildUserPrompt(data.title, insights);
+    const analysis = data.analysis as unknown as MatchAnalysis;
+    const userPrompt = buildUserPrompt(analysis);
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": key,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: RALLY_SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      if (res.status === 429) throw new Error("Límite de IA alcanzado. Intentá nuevamente en unos minutos.");
-      if (res.status === 402) throw new Error("Sin créditos de IA en el workspace.");
-      throw new Error(`Error de IA (${res.status}): ${body.slice(0, 200)}`);
+    let summary = "";
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            { role: "system", content: RALLY_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        if (res.status === 429) throw new Error("Límite de IA alcanzado. Intentá nuevamente en unos minutos.");
+        if (res.status === 402) throw new Error("Sin créditos de IA en el workspace.");
+        throw new Error(`Error de IA (${res.status}): ${body.slice(0, 200)}`);
+      }
+      const json = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+      summary = json.choices?.[0]?.message?.content?.trim() ?? "";
+    } catch (e) {
+      // Guardamos el informe aunque falle la IA: el análisis visual ya vale por sí solo.
+      summary = `_No fue posible generar la síntesis narrativa: ${e instanceof Error ? e.message : "error desconocido"}_`;
     }
-
-    const json = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const summary = json.choices?.[0]?.message?.content?.trim() ?? "";
 
     const { data: row, error } = await context.supabase
       .from("intelligence_reports")
@@ -69,7 +74,8 @@ export const generateIntelligenceReport = createServerFn({ method: "POST" })
         scope: data.scope,
         scope_ref: data.scopeRef,
         title: data.title,
-        insights: insights as unknown as never,
+        insights: [] as unknown as never,
+        analysis: analysis as unknown as never,
         summary_md: summary,
         model: MODEL,
       })
@@ -82,7 +88,8 @@ export const generateIntelligenceReport = createServerFn({ method: "POST" })
       scope: data.scope,
       scopeRef: data.scopeRef,
       title: data.title,
-      insights,
+      insights: [],
+      analysis,
       summaryMd: summary,
       model: MODEL,
       createdAt: new Date(row.created_at).getTime(),
@@ -94,20 +101,28 @@ export const listIntelligenceReports = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<IntelligenceReport[]> => {
     const { data, error } = await context.supabase
       .from("intelligence_reports")
-      .select("id, scope, scope_ref, title, insights, summary_md, model, created_at")
+      .select("id, scope, scope_ref, title, insights, analysis, summary_md, model, created_at")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    return (data ?? []).map((r) => ({
-      id: r.id,
-      scope: r.scope as "match" | "team",
-      scopeRef: r.scope_ref ?? "",
-      title: r.title,
-      insights: (r.insights ?? []) as unknown as Insight[],
-      summaryMd: r.summary_md ?? "",
-      model: r.model ?? undefined,
-      createdAt: new Date(r.created_at).getTime(),
-    }));
+    return (data ?? []).map((r) => {
+      const rowAny = r as unknown as {
+        id: string; scope: string; scope_ref: string | null; title: string;
+        insights: unknown; analysis: unknown; summary_md: string | null;
+        model: string | null; created_at: string;
+      };
+      return {
+        id: rowAny.id,
+        scope: (rowAny.scope as "match" | "team") ?? "match",
+        scopeRef: rowAny.scope_ref ?? "",
+        title: rowAny.title,
+        insights: (Array.isArray(rowAny.insights) ? rowAny.insights : []) as Insight[],
+        analysis: (rowAny.analysis ?? undefined) as MatchAnalysis | undefined,
+        summaryMd: rowAny.summary_md ?? "",
+        model: rowAny.model ?? undefined,
+        createdAt: new Date(rowAny.created_at).getTime(),
+      };
+    });
   });
 
 export const deleteIntelligenceReport = createServerFn({ method: "POST" })
