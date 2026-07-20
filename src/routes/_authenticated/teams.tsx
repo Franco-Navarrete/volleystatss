@@ -1450,15 +1450,21 @@ function TeamsPage() {
                 </option>
               ))}
             </select>
+            <Input
+              placeholder="Club (opcional)"
+              value={newClub}
+              onChange={(e) => setNewClub(e.target.value.slice(0, 80))}
+            />
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={newGender}
-                onChange={(e) => setNewGender(e.target.value as "" | "M" | "F")}
+                onChange={(e) => setNewGender(e.target.value as "" | "M" | "F" | "X")}
                 className="bg-background border border-input rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Sin género</option>
                 <option value="F">Femenino</option>
                 <option value="M">Masculino</option>
+                <option value="X">Mixto</option>
               </select>
               <select
                 value={newCategory}
@@ -1472,6 +1478,49 @@ function TeamsPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">
+                Color principal
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setColor(c)}
+                    className={`size-7 rounded-md ring-offset-2 ring-offset-card transition-all ${
+                      color === c ? "ring-2 ring-foreground scale-110" : ""
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">
+                Color secundario (opcional)
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setNewSecondaryColor("")}
+                  className={`size-7 rounded-md border border-border/60 flex items-center justify-center text-[10px] ${
+                    newSecondaryColor === "" ? "ring-2 ring-foreground scale-110" : ""
+                  }`}
+                  title="Sin color secundario"
+                >
+                  —
+                </button>
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setNewSecondaryColor(c)}
+                    className={`size-7 rounded-md ring-offset-2 ring-offset-card transition-all ${
+                      newSecondaryColor === c ? "ring-2 ring-foreground scale-110" : ""
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {COLORS.map((c) => (
