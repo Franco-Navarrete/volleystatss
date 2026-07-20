@@ -45,6 +45,8 @@ import { SideActionsRail } from "@/components/scorer/SideActionsRail";
 import { RallyProgressBar } from "@/components/scorer/RallyProgressBar";
 import { RallyContextCards } from "@/components/scorer/RallyContextCards";
 import { computeRallyContext } from "@/lib/rally-phase";
+import { useIsMobileLayout } from "@/hooks/use-is-mobile-layout";
+import { MobileMatchShell } from "@/components/scorer/mobile/MobileMatchShell";
 
 
 
@@ -215,6 +217,8 @@ function LiveMatch() {
 
   // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
+  const isMobile = useIsMobileLayout();
+
 
 
   if (!match || !teamA || !teamB) {
@@ -444,7 +448,66 @@ function LiveMatch() {
 
   return (
     <CompactShell>
+      {isMobile ? (
+        <MobileMatchShell
+          match={match}
+          teamA={teamA}
+          teamB={teamB}
+          leftTeam={leftTeam}
+          rightTeam={rightTeam}
+          leftSide={leftSide}
+          rightSide={rightSide}
+          scoreLeft={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB}
+          scoreRight={rightSide === "A" ? currentSet.scoreA : currentSet.scoreB}
+          setsLeft={leftSide === "A" ? w.a : w.b}
+          setsRight={rightSide === "A" ? w.a : w.b}
+          serverSide={server.side}
+          setNumber={match.currentSet}
+          setTimerLabel={setTimerLabel}
+          isLive={isLive}
+          isCoach={isCoach}
+          toUsedA={toUsedA}
+          toUsedB={toUsedB}
+          actionsDisabled={actionsDisabled}
+          rallyCtx={rallyCtx}
+          canUndo={match.status !== "scheduled" && match.events.length > 0}
+          onUndo={() => undo(match.id)}
+          onOpenSetting={() => setShowSettingDialog(true)}
+          onOpenFormation={() => setShowFormationDialog(true)}
+          onOpenLineup={() => setShowLineupEditor(true)}
+          onOpenLiveStats={() => setShowLiveStats(true)}
+          onOpenFormat={() => setShowFormatDialog(true)}
+          onOpenScore={() => setShowScoreDialog(true)}
+          onOpenRotate={() => setShowRotateDialog(true)}
+          onFinishMatch={() => finishMatch(match.id)}
+          onCambio={(side) => setSubState({ side, playerOutId: "" })}
+          onLibero={(side) => setLiberoState({ side, liberoId: null })}
+          onTimeout={(side) => handleTimeout(side)}
+          onSancion={(side) => setSanctionSide(side)}
+          onStartSet={() => startSet(match.id)}
+          onToggleSides={() => toggleSidesFlipped(match.id)}
+          needsLineup={needsLineup}
+          needsSetStart={needsSetStart}
+          courtSlot={
+            <CourtView
+              match={match}
+              teamA={teamA}
+              teamB={teamB}
+              leftSide={leftSide}
+              serverPlayerId={server.playerId}
+              serverSide={server.side}
+              onPlayerClick={onPlayerClick}
+              receivingSide={receivingSide}
+              needsReception={needsReception}
+              receiverIds={receiverIds}
+              formationByTeam={formationByTeam}
+              activePlayerId={pendingPlayer?.playerId ?? null}
+            />
+          }
+        />
+      ) : (
       <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-1.5 h-full min-h-0 px-2 md:px-6 device-tablet:px-2 py-2 md:py-4 device-tablet:py-1 mx-auto w-full max-w-[1400px] device-tablet:max-w-none select-none">
+
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 device-tablet:gap-3 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 device-tablet:px-3 py-0.5 md:py-4 device-tablet:py-1 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
@@ -711,6 +774,8 @@ function LiveMatch() {
         )}
 
       </div>
+      )}
+
 
 
       {/* Action menu when a player is tapped */}
