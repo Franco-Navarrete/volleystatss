@@ -967,72 +967,292 @@ function renderRadar(ctx: RenderCtx, a: MatchAnalysis) {
 // ================================================================
 function renderFundamentalChapters(ctx: RenderCtx, a: MatchAnalysis) {
   drawH1(ctx, "Análisis por fundamento", CHAPTER_QUESTION.fund);
-  drawParagraph(ctx, "Una tarjeta narrativa por fundamento: qué pasó, por qué, qué consecuencia tuvo y qué entrenar.", { color: C.slate, size: 9.5 });
+  drawParagraph(
+    ctx,
+    "Cada fundamento se lee como un informe de scouting: diagnóstico, evidencia, impacto en el partido y recomendación concreta de entrenamiento.",
+    { color: C.slate, size: 9.5 },
+  );
 
   for (const item of a.rallyIndex.breakdown) {
-    const beat = beatFundamental(item, a);
-    const doc = ctx.doc;
-    const w = contentW(ctx);
-    const detailLines: string[] = doc.splitTextToSize(fmtText(item.detail), w - 60);
-    const bodyW = w - 62;
+    renderFundamentalCard(ctx, item, a);
+  }
+}
 
-    // Precomputar altura
-    const wrap = (t: string) => doc.splitTextToSize(fmtText(t), bodyW) as string[];
-    const l1 = wrap(beat.what), l2 = wrap(beat.why), l3 = wrap(beat.consequence), l4 = wrap(beat.train);
-    const narrH = 6 + (l1.length + l2.length + l3.length + l4.length) * 4.4 + 4 * 5;
-    const h = 40 + Math.max(0, detailLines.length - 2) * 4.4 + narrH;
+// Diseño editorial: KPI sidebar (28mm) + análisis ancho.
+function renderFundamentalCard(ctx: RenderCtx, item: RallyIndexItem, a: MatchAnalysis) {
+  const doc = ctx.doc;
+  const beat = beatFundamental(item, a);
 
-    drawCard(ctx, h, (x, y) => {
-      // Tile score izquierdo
-      const tw = 46;
-      fillRect(doc, x + 1, y + 1, tw, h - 2, statusSoft(item.score), 2.5);
-      setFont(doc, "bold", 7.5, C.mute);
-      textCenter(doc, "SCORE", x + tw / 2 + 1, y + 6.5);
-      setFont(doc, "bold", 24, statusColor(item.score));
-      textCenter(doc, fmtInt(item.score), x + tw / 2 + 1, y + 21);
-      hairline(doc, x + tw / 2 - 7, y + 24, x + tw / 2 + 9, y + 24, C.hair, 0.4);
-      setFont(doc, "bold", 9, C.ink);
-      textCenter(doc, statusLabel(item.status), x + tw / 2 + 1, y + 30);
-      setFont(doc, "bold", 7.5, C.mute);
-      textCenter(doc, "IMPACTO", x + tw / 2 + 1, y + 40);
-      setFont(doc, "bold", 10, C.navy);
-      textCenter(doc, fmtPct(item.impact), x + tw / 2 + 1, y + 46);
-      setFont(doc, "bold", 7.5, C.mute);
-      textCenter(doc, "CONFIANZA", x + tw / 2 + 1, y + 55);
-      setFont(doc, "bold", 10, C.slate);
-      textCenter(doc, fmtPct(item.confidence), x + tw / 2 + 1, y + 61);
+  // Geometría: sidebar delgada, cuerpo ancho.
+  const w = contentW(ctx);
+  const padX = 6;
+  const padY = 7;
+  const sideW = 34;          // ~40% más angosta que antes
+  const gap = 6;
+  const bodyX0Rel = 1 + sideW + gap;
+  const bodyW = w - bodyX0Rel - padX - 1;
 
-      // Cuerpo derecho
-      const rx = x + tw + 8;
-      setFont(doc, "bold", 14, C.ink);
-      doc.text(fmtText(item.label), rx, y + 8);
-      const parts: [string, RGB][] = [
-        [`Δ Temp. ${fmtDelta(item.seasonDelta)}`, isNum(item.seasonDelta) && item.seasonDelta < 0 ? C.bad : C.good],
-      ];
-      let px = rx + doc.getTextWidth(fmtText(item.label)) + 8;
-      for (const [t, col] of parts) { const pw = drawPill(doc, px, y + 8, t, col); px += pw + 3; }
-      setFont(doc, "normal", 9, C.slate);
-      let ly = y + 14;
-      for (const l of detailLines.slice(0, 3)) { doc.text(l, rx, ly); ly += 4.2; }
-      ly += 2;
+  // Preparar líneas (fijar fuente ANTES de medir para wrap correcto).
+  setFont(doc, "normal", 10, C.ink);
+  const wrap = (t: string) => doc.splitTextToSize(sanitizeText(t), bodyW) as string[];
+  const evidence = buildEvidence(item);
 
-      // Narrativa Q&A
-      const beats: Array<[string, string[], RGB]> = [
-        ["¿QUÉ PASÓ?", l1, C.navy],
-        ["¿POR QUÉ?", l2, C.slate],
-        ["¿QUÉ CONSECUENCIA TUVO?", l3, C.warn],
-        ["¿QUÉ ENTRENAR?", l4, C.good],
-      ];
-      for (const [q, lines, col] of beats) {
-        setFont(doc, "bold", 7.5, col);
-        doc.text(q, rx, ly);
-        ly += 3.8;
-        setFont(doc, "normal", 9, C.ink);
-        for (const l of lines) { doc.text(l, rx, ly); ly += 4.2; }
-        ly += 1.6;
-      }
+  const lDiag = wrap(beat.what);
+  const lWhy = wrap(beat.why);
+  const lCons = wrap(beat.consequence);
+  const lReco = wrap(beat.train);
+  const lConcl = wrap(buildConclusion(item, beat));
+
+  const LH_BODY = 4.8;         // line-height cómodo
+  const LH_LABEL = 4.2;
+  const SECTION_GAP = 3.2;
+  const HEADER_H = 12;         // título + chip comparación
+
+  const evidenceH = evidence.length * LH_LABEL + 2;
+  const sectionH = (lines: string[]) =>
+    4.6 /*icon+label*/ + lines.length * LH_BODY + SECTION_GAP;
+
+  const bodyH =
+    HEADER_H +
+    sectionH(lDiag) +
+    (evidence.length ? 4.6 + evidenceH + SECTION_GAP : 0) +
+    sectionH(lCons) +
+    sectionH(lReco) +
+    5 /* separador */ +
+    3 /* label conclusión */ +
+    lConcl.length * LH_BODY;
+
+  // Sidebar mínima (score+bar+kpis+trend)
+  const sideMinH = 88;
+  const h = Math.max(bodyH + padY * 2, sideMinH + padY * 2);
+
+  drawCard(ctx, h, (x, y) => {
+    // ---------- SIDEBAR KPI ----------
+    const sx = x + 1;
+    const sy = y + 1;
+    const sh = h - 2;
+    fillRect(doc, sx, sy, sideW, sh, statusSoft(item.score), 2.5);
+
+    // Título fundamento (rotado horizontalmente arriba)
+    setFont(doc, "bold", 7.5, C.mute);
+    textCenter(doc, "PUNTAJE", sx + sideW / 2, sy + 6.5);
+
+    // Puntaje grande
+    setFont(doc, "bold", 30, statusColor(item.score));
+    textCenter(doc, fmtInt(item.score), sx + sideW / 2, sy + 20);
+
+    // Nivel
+    setFont(doc, "bold", 9, C.ink);
+    textCenter(doc, statusLabel(item.status), sx + sideW / 2, sy + 27);
+
+    // Barra visual (10 bloques)
+    drawScoreBlocks(doc, sx + 4, sy + 31, sideW - 8, 3.5, item.score, statusColor(item.score));
+
+    // KPI: Impacto
+    const kpiY0 = sy + 40;
+    hairline(doc, sx + 4, kpiY0, sx + sideW - 4, kpiY0, C.hair, 0.3);
+    setFont(doc, "bold", 6.8, C.mute);
+    textCenter(doc, "IMPACTO", sx + sideW / 2, kpiY0 + 4.2);
+    setFont(doc, "bold", 11, C.navy);
+    textCenter(doc, fmtPct(item.impact), sx + sideW / 2, kpiY0 + 9.5);
+
+    // KPI: Confianza
+    const kpiY1 = kpiY0 + 13.5;
+    hairline(doc, sx + 4, kpiY1, sx + sideW - 4, kpiY1, C.hair, 0.3);
+    setFont(doc, "bold", 6.8, C.mute);
+    textCenter(doc, "CONFIANZA", sx + sideW / 2, kpiY1 + 4.2);
+    setFont(doc, "bold", 11, C.slate);
+    textCenter(doc, fmtPct(item.confidence), sx + sideW / 2, kpiY1 + 9.5);
+
+    // KPI: vs Temporada (tendencia con flecha real)
+    const kpiY2 = kpiY1 + 13.5;
+    hairline(doc, sx + 4, kpiY2, sx + sideW - 4, kpiY2, C.hair, 0.3);
+    setFont(doc, "bold", 6.8, C.mute);
+    textCenter(doc, "VS TEMPORADA", sx + sideW / 2, kpiY2 + 4.2);
+    const trend = trendInfo(item.seasonDelta);
+    setFont(doc, "bold", 10, trend.color);
+    textCenter(doc, trend.short, sx + sideW / 2, kpiY2 + 9.5);
+    setFont(doc, "normal", 6.5, C.slate);
+    textCenter(doc, trend.long, sx + sideW / 2, kpiY2 + 13);
+
+    // ---------- CUERPO ANALÍTICO ----------
+    const bx = x + bodyX0Rel;
+    let by = y + padY;
+
+    // Título fundamento + chip semántico
+    setFont(doc, "bold", 15, C.ink);
+    doc.text(sanitizeText(item.label), bx, by + 3);
+    const titleW = doc.getTextWidth(sanitizeText(item.label));
+    const chip = trend.short === "—" ? null : trend;
+    if (chip) {
+      drawSoftChip(doc, bx + titleW + 5, by + 3, `${chip.short} ${chip.longShort}`, chip.color);
+    }
+    by += HEADER_H;
+
+    // Diagnóstico
+    by = renderSection(doc, bx, by, bodyW, {
+      icon: "•", label: "Diagnóstico", color: C.info,
+      lines: lDiag, LH_BODY,
+    }) + SECTION_GAP;
+
+    // Evidencia (bullets con métricas)
+    if (evidence.length) {
+      by = renderEvidence(doc, bx, by, bodyW, evidence, LH_LABEL) + SECTION_GAP;
+    }
+
+    // Impacto
+    by = renderSection(doc, bx, by, bodyW, {
+      icon: "!", label: "Impacto en el partido", color: C.warn,
+      lines: lCons, LH_BODY,
+    }) + SECTION_GAP;
+
+    // Recomendación
+    by = renderSection(doc, bx, by, bodyW, {
+      icon: "→", label: "Recomendación", color: C.good,
+      lines: lReco, LH_BODY,
+    });
+
+    // Separador + Conclusión
+    by += 3;
+    hairline(doc, bx, by, bx + bodyW, by, C.hair, 0.3);
+    by += 4;
+    setFont(doc, "bold", 8, C.navy);
+    doc.text("CONCLUSIÓN", bx, by);
+    by += 4;
+    setFont(doc, "normal", 9.5, C.ink);
+    for (const l of lConcl) { doc.text(l, bx, by); by += LH_BODY; }
+  });
+}
+
+// ---------------- Helpers específicos de fundamento ----------------
+
+// Sanitiza espacios raros que podrían "letra-a-letra" el texto.
+function sanitizeText(s: unknown): string {
+  const t = typeof s === "string" ? s : "";
+  if (!t.trim()) return NA;
+  return t
+    .replace(/\u00A0/g, " ")     // nbsp
+    .replace(/\s+/g, " ")         // colapsar espacios
+    .trim();
+}
+
+interface SectionOpts {
+  icon: string; label: string; color: RGB; lines: string[]; LH_BODY: number;
+}
+function renderSection(
+  doc: any, x: number, y: number, w: number, o: SectionOpts,
+): number {
+  // Marca lateral de color + label
+  fillRect(doc, x, y - 3.2, 1.2, 4.2, o.color, 0.5);
+  setFont(doc, "bold", 8, o.color);
+  doc.text(`${o.icon}  ${o.label.toUpperCase()}`, x + 3.2, y);
+  let ny = y + 4.4;
+  setFont(doc, "normal", 10, C.ink);
+  for (const line of o.lines) {
+    doc.text(line, x, ny);
+    ny += o.LH_BODY;
+  }
+  return ny;
+}
+
+function renderEvidence(
+  doc: any, x: number, y: number, w: number,
+  items: Array<{ label: string; value: string; tone: RGB }>,
+  LH: number,
+): number {
+  fillRect(doc, x, y - 3.2, 1.2, 4.2, C.slate, 0.5);
+  setFont(doc, "bold", 8, C.slate);
+  doc.text("·  EVIDENCIA", x + 3.2, y);
+  let ny = y + 4.4;
+  // Layout 2 columnas si caben
+  const colW = (w - 6) / 2;
+  const perCol = Math.ceil(items.length / 2);
+  for (let i = 0; i < items.length; i++) {
+    const col = i < perCol ? 0 : 1;
+    const row = i % perCol;
+    const cx = x + col * (colW + 6);
+    const cy = ny + row * LH;
+    setFont(doc, "bold", 9, C.ink);
+    doc.text(items[i].value, cx, cy);
+    const vw = doc.getTextWidth(items[i].value);
+    setFont(doc, "normal", 9, C.slate);
+    doc.text(` — ${items[i].label}`, cx + vw, cy);
+  }
+  return ny + perCol * LH;
+}
+
+function buildEvidence(item: RallyIndexItem): Array<{ label: string; value: string; tone: RGB }> {
+  const out: Array<{ label: string; value: string; tone: RGB }> = [];
+  if (isNum(item.score)) out.push({ label: "puntaje", value: fmtInt(item.score) + "/100", tone: statusColor(item.score) });
+  if (isNum(item.impact)) out.push({ label: "impacto en el rally", value: fmtPct(item.impact), tone: C.navy });
+  if (isNum(item.confidence)) out.push({ label: "confianza del dato", value: fmtPct(item.confidence), tone: C.slate });
+  if (isNum(item.seasonDelta)) {
+    const s = item.seasonDelta;
+    out.push({
+      label: "vs promedio de temporada",
+      value: `${s > 0 ? "▲" : s < 0 ? "▼" : "="} ${fmtDelta(s)}`,
+      tone: s > 0 ? C.good : s < 0 ? C.bad : C.slate,
     });
   }
+  return out;
+}
+
+function buildConclusion(item: RallyIndexItem, beat: { train: string }): string {
+  const level = statusLabel(item.status);
+  const trend = trendInfo(item.seasonDelta).longShort.toLowerCase();
+  const base =
+    isNum(item.score) && item.score >= 70
+      ? `${item.label} fue una fortaleza del partido (${level.toLowerCase()}, ${trend}).`
+      : isNum(item.score) && item.score >= 50
+        ? `${item.label} tuvo un rendimiento ${level.toLowerCase()} (${trend}) con margen claro de mejora.`
+        : `${item.label} fue un punto débil del partido (${level.toLowerCase()}, ${trend}) y debe priorizarse en el trabajo semanal.`;
+  return `${base} ${beat.train}`;
+}
+
+function trendInfo(delta: unknown): { short: string; long: string; longShort: string; color: RGB } {
+  if (!isNum(delta)) return { short: "—", long: "Sin dato de temporada", longShort: "sin dato", color: C.mute };
+  const abs = Math.abs(delta);
+  const pct = `${abs > 0 ? Math.round(abs * 10) / 10 : 0}%`;
+  if (delta >= 3) return {
+    short: `▲ +${pct}`, long: "sobre promedio", longShort: "mejor que promedio", color: C.good,
+  };
+  if (delta <= -3) return {
+    short: `▼ -${pct}`, long: "debajo del promedio", longShort: "peor que promedio", color: C.bad,
+  };
+  return { short: `≈ ${pct}`, long: "en línea con promedio", longShort: "en promedio", color: C.slate };
+}
+
+function drawScoreBlocks(
+  doc: any, x: number, y: number, w: number, h: number,
+  score: unknown, color: RGB,
+) {
+  const total = 10;
+  const gap = 0.6;
+  const bw = (w - gap * (total - 1)) / total;
+  const filled = isNum(score) ? Math.round(clampPct(score) / 10) : 0;
+  for (let i = 0; i < total; i++) {
+    const bx = x + i * (bw + gap);
+    fillRect(doc, bx, y, bw, h, i < filled ? color : C.hair, 0.6);
+  }
+}
+
+function drawSoftChip(doc: any, x: number, y: number, label: string, color: RGB) {
+  setFont(doc, "bold", 7.8, color);
+  const padX = 2.5;
+  const tw = doc.getTextWidth(label);
+  const w = tw + padX * 2;
+  const h = 5.2;
+  // Fondo suave del mismo tono
+  const soft: RGB = [
+    Math.round(255 - (255 - color[0]) * 0.15),
+    Math.round(255 - (255 - color[1]) * 0.15),
+    Math.round(255 - (255 - color[2]) * 0.15),
+  ];
+  fillRect(doc, x, y - h + 1.3, w, h, soft, h / 2);
+  doc.setDrawColor(color[0], color[1], color[2]);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(x, y - h + 1.3, w, h, h / 2, h / 2, "S");
+  doc.text(label, x + padX, y);
 }
 
 function suggestExercise(label: string): string {
