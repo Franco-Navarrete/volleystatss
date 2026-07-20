@@ -443,6 +443,8 @@ function TeamsPage() {
     setNewLeagueId("");
     setNewGender("");
     setNewCategory("");
+    setNewClub("");
+    setNewSecondaryColor("");
     setLogo(undefined);
     setColor(COLORS[0]);
   };
