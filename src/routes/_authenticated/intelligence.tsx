@@ -13,8 +13,10 @@ import {
   generateIntelligenceReport,
   listIntelligenceReports,
 } from "@/lib/intelligence/reports.functions";
-import { Brain, Loader2, Sparkles, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Brain, Loader2, Sparkles, Trash2, ChevronDown, ChevronRight, ShieldAlert, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
   head: () => ({
@@ -32,12 +34,27 @@ function IntelligencePage() {
   const players = useMemo(() => teams.flatMap((t) => t.players ?? []), [teams]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
-  const finishedMatches = useMemo(
-    () => matches.filter((m) => m.status === "finished").sort((a, b) => b.scheduledAt - a.scheduledAt),
-    [matches],
-  );
+  const { user } = useAuthUser();
+  const { isAdmin, checking: adminChecking } = useIsAdmin();
 
-  const [matchId, setMatchId] = useState<string>(finishedMatches[0]?.id ?? "");
+  // Equipos propios: los que tienen ownerId === userId. Admin ve todos.
+  const myTeamIds = useMemo(() => {
+    if (!user) return new Set<string>();
+    return new Set(teams.filter((t) => t.ownerId === user.id).map((t) => t.id));
+  }, [teams, user]);
+
+  const restricted = !adminChecking && !isAdmin;
+  const hasNoTeam = restricted && myTeamIds.size === 0;
+
+  const finishedMatches = useMemo(() => {
+    const base = matches
+      .filter((m) => m.status === "finished")
+      .sort((a, b) => b.scheduledAt - a.scheduledAt);
+    if (!restricted) return base;
+    return base.filter((m) => myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId));
+  }, [matches, restricted, myTeamIds]);
+
+  const [matchId, setMatchId] = useState<string>("");
   const [side, setSide] = useState<"A" | "B">("A");
   const [reports, setReports] = useState<IntelligenceReport[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -58,7 +75,22 @@ function IntelligencePage() {
     return () => { cancel = true; };
   }, [listFn]);
 
+  // Seleccionar automáticamente el primer partido disponible.
+  useEffect(() => {
+    if (!matchId && finishedMatches[0]) setMatchId(finishedMatches[0].id);
+    else if (matchId && !finishedMatches.some((m) => m.id === matchId)) {
+      setMatchId(finishedMatches[0]?.id ?? "");
+    }
+  }, [finishedMatches, matchId]);
+
   const match = useMemo(() => finishedMatches.find((m) => m.id === matchId), [finishedMatches, matchId]);
+
+  // Para entrenadores: forzar side al lado del equipo propio.
+  useEffect(() => {
+    if (!restricted || !match) return;
+    if (myTeamIds.has(match.teamAId)) setSide("A");
+    else if (myTeamIds.has(match.teamBId)) setSide("B");
+  }, [restricted, match, myTeamIds]);
 
   const analysis = useMemo(() => {
     if (!match) return null;
@@ -66,9 +98,15 @@ function IntelligencePage() {
   }, [match, side, teams, players, matches]);
 
   const teamName = (id?: string) => (id ? teamById.get(id)?.name ?? "Equipo" : "—");
+  const analyzedTeamId = match ? (side === "A" ? match.teamAId : match.teamBId) : undefined;
 
   async function handleGenerate() {
     if (!match || !analysis) return;
+    // Guardia cliente: entrenador solo puede analizar su equipo.
+    if (restricted && analyzedTeamId && !myTeamIds.has(analyzedTeamId)) {
+      setError("Permisos insuficientes: solo podés analizar tu propio equipo.");
+      return;
+    }
     setGenerating(true);
     setError(null);
     try {
@@ -79,6 +117,7 @@ function IntelligencePage() {
           scopeRef: match.id,
           title,
           analysis: analysis as unknown as never,
+          teamId: analyzedTeamId,
         },
       });
       setReports((prev) => [report, ...prev]);
@@ -89,6 +128,7 @@ function IntelligencePage() {
       setGenerating(false);
     }
   }
+
 
   async function handleDelete(id?: string) {
     if (!id) return;
@@ -123,12 +163,28 @@ function IntelligencePage() {
           </div>
         </header>
 
-        {/* Selector de partido */}
+        {/* Estado vacío: entrenador sin equipo asignado */}
+        {hasNoTeam ? (
+          <Card className="p-6 bg-card/40 border-amber-500/30">
+            <div className="flex gap-3 items-start">
+              <ShieldAlert className="size-6 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <h2 className="font-semibold text-base mb-1">Sin equipo asignado</h2>
+                <p className="text-sm text-muted-foreground">
+                  No tenés un equipo asignado. Contactá al administrador para habilitar Rally Intelligence.
+                </p>
+              </div>
+            </div>
+          </Card>
+        ) : (
+        /* Selector de partido */
         <Card className="p-4 space-y-4 bg-card/40">
           <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Analizar partido</h2>
           {finishedMatches.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Aún no tenés partidos finalizados. Finalizá al menos uno para analizarlo.
+              {restricted
+                ? "Todavía no tenés partidos finalizados con tu equipo."
+                : "Aún no tenés partidos finalizados. Finalizá al menos uno para analizarlo."}
             </p>
           ) : (
             <div className="flex flex-col md:flex-row gap-3 md:items-end">
@@ -147,13 +203,22 @@ function IntelligencePage() {
               </div>
               <div className="w-full md:w-56">
                 <label className="text-xs text-muted-foreground">Equipo a analizar</label>
-                <Select value={side} onValueChange={(v) => setSide(v as "A" | "B")}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A">{match ? teamName(match.teamAId) : "Equipo A"}</SelectItem>
-                    <SelectItem value="B">{match ? teamName(match.teamBId) : "Equipo B"}</SelectItem>
-                  </SelectContent>
-                </Select>
+                {restricted ? (
+                  <div className="h-10 px-3 rounded-md border border-border/60 bg-muted/40 flex items-center gap-2 text-sm">
+                    <Lock className="size-3.5 text-muted-foreground" />
+                    <span className="font-medium truncate">
+                      {match ? teamName(analyzedTeamId) : "—"}
+                    </span>
+                  </div>
+                ) : (
+                  <Select value={side} onValueChange={(v) => setSide(v as "A" | "B")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">{match ? teamName(match.teamAId) : "Equipo A"}</SelectItem>
+                      <SelectItem value="B">{match ? teamName(match.teamBId) : "Equipo B"}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <Button onClick={handleGenerate} disabled={!match || generating} className="gap-2">
                 {generating ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
@@ -163,6 +228,8 @@ function IntelligencePage() {
           )}
           {error && <p className="text-sm text-red-400">{error}</p>}
         </Card>
+        )}
+
 
         {/* Preview en vivo del análisis */}
         {analysis && (

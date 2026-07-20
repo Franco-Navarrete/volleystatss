@@ -27,7 +27,32 @@ const GenerateInput = z.object({
   scopeRef: z.string().min(1),
   title: z.string().min(1).max(200),
   analysis: AnalysisSchema,
+  /** ID del equipo analizado — obligatorio para validar ownership en backend. */
+  teamId: z.string().uuid().optional(),
 });
+
+async function assertCanAnalyzeTeam(
+  supabase: import("@supabase/supabase-js").SupabaseClient,
+  userId: string,
+  teamId: string | undefined,
+) {
+  if (!teamId) return; // scope=team libre por ahora; scope=match debería pasarlo.
+  const { data: isAdmin } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "admin",
+  });
+  if (isAdmin) return;
+  const { data: team, error } = await supabase
+    .from("teams")
+    .select("id, owner_id")
+    .eq("id", teamId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!team || team.owner_id !== userId) {
+    throw new Error("Permisos insuficientes: no podés analizar este equipo.");
+  }
+}
+
 
 const MODEL = "google/gemini-3.5-flash";
 
@@ -35,6 +60,7 @@ export const generateIntelligenceReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => GenerateInput.parse(input))
   .handler(async ({ data, context }): Promise<IntelligenceReport> => {
+    await assertCanAnalyzeTeam(context.supabase, context.userId, data.teamId);
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Falta LOVABLE_API_KEY");
 
