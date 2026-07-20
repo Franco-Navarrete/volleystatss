@@ -1294,6 +1294,15 @@ function LiveMatch() {
               return { proceed: !!quality, quality };
             },
           } : undefined}
+          defenseStep={integratedRally.defenderId ? {
+            playerId: integratedRally.defenderId,
+            onRegister: (rating) => {
+              const side = integratedRally.side;
+              recordDefense(match.id, side, integratedRally.defenderId!, rating);
+              // Toda defensa que no cierra el rally habilita armado (calidad neutra).
+              return { proceed: rating !== "error", quality: "!" };
+            },
+          } : undefined}
           onSubmit={(payload) => {
             const attackZone = settingZoneToAttackZone(payload.attackZone);
             const isNeutral =
