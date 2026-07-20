@@ -801,7 +801,8 @@ function HistoryTable({
             const tB = m ? teamById.get(m.teamBId) : undefined;
             const leagueId = tA?.leagueId ?? tB?.leagueId;
             const leagueName = leagueId ? leagueById.get(leagueId)?.name : null;
-            const score = m ? `${setsWon(m, "A")}–${setsWon(m, "B")}` : "—";
+            const sw = m ? setsWon(m) : null;
+            const score = sw ? `${sw.a}–${sw.b}` : "—";
             const atk = p.attack + p.counterAttack + p.rotationAttack;
             return (
               <tr key={p.matchId} className="hover:bg-secondary/20">
