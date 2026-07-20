@@ -117,7 +117,7 @@ function hairline(doc: any, x1: number, y1: number, x2: number, y2: number, colo
 function drawH1(ctx: RenderCtx, title: string) {
   // 40mm de reserva mínima para evitar títulos huérfanos (H1 + primer bloque).
   ensureSpace(ctx, 40);
-  ctx.toc.push({ title, page: ctx.(doc as any).internal.getCurrentPageInfo().pageNumber, level: 1 });
+  ctx.toc.push({ title, page: (ctx.doc as any).internal.getCurrentPageInfo().pageNumber, level: 1 });
   setFont(ctx.doc, "bold", 16, C.navy);
   ctx.doc.text(title, ctx.margin, ctx.y);
   ctx.y += 2.5;
@@ -855,7 +855,7 @@ function renderVisualSummary(ctx: RenderCtx, a: MatchAnalysis, summaryMd?: strin
   ctx.y += 10;
   hairline(ctx.doc, ctx.margin, ctx.y, ctx.margin + 40, ctx.y, C.navy, 0.6);
   ctx.y += 8;
-  ctx.toc.push({ title: "Resumen Ejecutivo (hero)", page: ctx.(doc as any).internal.getCurrentPageInfo().pageNumber, level: 1 });
+  ctx.toc.push({ title: "Resumen Ejecutivo (hero)", page: (ctx.doc as any).internal.getCurrentPageInfo().pageNumber, level: 1 });
 
   const d = a.dashboard;
   const w = contentW(ctx);
