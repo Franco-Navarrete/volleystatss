@@ -46,7 +46,7 @@ function ensureSpace(ctx: RenderCtx, needed: number) {
 function drawH1(ctx: RenderCtx, text: string, opts?: { toc?: boolean }) {
   ensureSpace(ctx, 18);
   const { doc, margin } = ctx;
-  if (opts?.toc) ctx.toc.push({ title: text, page: doc.internal.getCurrentPageInfo().pageNumber });
+  if (opts?.toc) ctx.toc.push({ title: text, page: (doc as any).internal.getCurrentPageInfo().pageNumber });
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.setTextColor(...C.dark);
@@ -716,7 +716,7 @@ export async function downloadIntelligencePdf(
   } else {
     // reservar página TOC (se rellena al final)
     doc.addPage();
-    const tocPageNo = doc.internal.getCurrentPageInfo().pageNumber;
+    const tocPageNo = (doc as any).internal.getCurrentPageInfo().pageNumber;
 
     doc.addPage();
     ctx.y = ctx.margin + 14;
