@@ -39,6 +39,7 @@ import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
 import { FormationEditor } from "@/components/court/FormationEditor";
+import { CourtPlayerBadge } from "@/components/court/CourtPlayerBadge";
 
 
 
@@ -1645,37 +1646,23 @@ function FormationSide({
         const dx = projectX(slot.x, slot.y);
         const dy = projectY(slot.x, slot.y);
         return (
-          <button
+          <div
             key={slot.role}
-            onClick={() => onPlayerClick(side, p.id)}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center text-white font-black shadow-lg transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/40 aspect-square overflow-hidden h-[18%] sm:h-[20%] md:h-[22%] ${isServer ? "ring-2 sm:ring-4 ring-primary" : ""} ${isReceiverHighlight ? "ring-2 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${!onCourtActive ? "opacity-40 grayscale" : ""}`}
-            style={{
-              left: `${dx}%`,
-              top: `${dy}%`,
-              background: isLibero ? "#ffffff" : team.color,
-              color: isLibero ? team.color : "#ffffff",
-              border: `3px solid ${isLibero ? team.color : "rgba(255,255,255,0.85)"}`,
-            }}
-            title={`#${p.number} ${p.name}`}
+            className="absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square"
+            style={{ left: `${dx}%`, top: `${dy}%` }}
           >
-            <span
-              className="scoreboard-digit leading-none text-base sm:text-2xl md:text-3xl"
-              style={isLibero ? undefined : { textShadow: "-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000" }}
-            >
-              {p.number}
-            </span>
-            <span
-              className="max-w-[90%] truncate text-[8px] sm:text-[11px] md:text-[13px] font-bold leading-tight"
-              style={isLibero ? undefined : { textShadow: "-0.5px -0.5px 0 #000,0.5px -0.5px 0 #000,-0.5px 0.5px 0 #000,0.5px 0.5px 0 #000" }}
-            >
-              {p.name}
-            </span>
-            {isServer && (
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[8px] font-bold uppercase tracking-widest">
-                Saque
-              </span>
-            )}
-          </button>
+            <CourtPlayerBadge
+              player={p}
+              team={team}
+              match={match}
+              isServer={isServer}
+              isLibero={isLibero}
+              isReceiverHighlight={isReceiverHighlight}
+              dimmed={!onCourtActive}
+              onClick={() => onPlayerClick(side, p.id)}
+              className="w-full h-full"
+            />
+          </div>
         );
       })}
     </div>
