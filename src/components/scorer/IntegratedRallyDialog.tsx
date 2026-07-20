@@ -480,6 +480,34 @@ export function IntegratedRallyDialog({
               </div>
             )}
 
+            {step === "defense" && defensePlayer && (
+              <div className="space-y-2">
+                <div className="text-center">
+                  <div className="text-[10px] uppercase tracking-widest font-black text-orange-500">Defensa</div>
+                  <div className="scoreboard-digit text-2xl font-black">#{defensePlayer.number}</div>
+                  <div className="text-xs text-muted-foreground truncate">{defensePlayer.name}</div>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {DEFENSE_OPTIONS.map((o) => (
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() => pickDefense(o.key)}
+                      className={`relative min-h-16 rounded-lg font-black text-3xl active:scale-95 transition ${o.className}`}
+                      title={`${o.desc} · ${o.hotkey}`}
+                    >
+                      {o.label}
+                      <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-70">{o.hotkey}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-center text-muted-foreground">
+                  1# · 2+ · 30 · 4− · 5= — “Error” cierra el rally
+                </p>
+              </div>
+            )}
+
+
             {step === "zone" && (
               <div className="space-y-2">
                 <div className="grid grid-cols-3 gap-2">
