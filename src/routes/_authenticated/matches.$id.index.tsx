@@ -322,6 +322,17 @@ function LiveMatch() {
       }
       return;
     }
+    // Continuidad del rally: si toca defender y el usuario clickea a un
+    // jugador de ese equipo, abrimos el flujo integrado en el paso "Defensa".
+    if (
+      isCoach &&
+      rallyCtx.currentPhase === "defense" &&
+      rallyCtx.currentPhaseSide === side &&
+      !rallyCtx.finished
+    ) {
+      setIntegratedRally({ side, defenderId: playerId });
+      return;
+    }
     setPendingPlayer({ side, playerId });
   };
 
