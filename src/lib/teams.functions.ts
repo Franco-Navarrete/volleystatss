@@ -147,10 +147,12 @@ export const updateTeam = createServerFn({ method: "POST" })
     name?: string;
     shortName?: string;
     color?: string;
+    secondaryColor?: string | null;
     logoUrl?: string | null;
     leagueId?: string | null;
-    gender?: "M" | "F" | null;
-    category?: "12" | "14" | "16" | "18" | "21" | "primera" | null;
+    gender?: "M" | "F" | "X" | null;
+    category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre" | null;
+    club?: string | null;
   }) =>
     z
       .object({
@@ -158,24 +160,32 @@ export const updateTeam = createServerFn({ method: "POST" })
         name: nameSchema.optional(),
         shortName: shortSchema.optional(),
         color: colorSchema.optional(),
+        secondaryColor: secondaryColorSchema,
         logoUrl: optionalUrl,
         leagueId: leagueIdSchema,
         gender: genderSchema,
         category: categorySchema,
+        club: clubSchema,
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: TeamUpdate & { category?: string | null } = {};
+    const patch: TeamUpdate & { category?: string | null; club?: string | null; secondary_color?: string | null } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.shortName !== undefined) patch.short_name = data.shortName;
     if (data.color !== undefined) patch.color = data.color;
+    if (data.secondaryColor !== undefined) patch.secondary_color = data.secondaryColor;
     if (data.logoUrl !== undefined) patch.logo_url = data.logoUrl;
     if (data.leagueId !== undefined) patch.league_id = data.leagueId;
     if (data.gender !== undefined) patch.gender = data.gender;
     if (data.category !== undefined) patch.category = data.category;
-    const { error } = await context.supabase.from("teams").update(patch).eq("id", data.id);
+    if (data.club !== undefined) patch.club = data.club;
+    const { error, count } = await context.supabase
+      .from("teams")
+      .update(patch, { count: "exact" })
+      .eq("id", data.id);
     if (error) throw error;
+    if (count === 0) throw new Error("No tiene permisos para administrar este equipo.");
     return { ok: true };
   });
 
