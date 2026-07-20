@@ -317,8 +317,9 @@ function PlayerProfile() {
 
             {/* Historial */}
             <Section title="Historial" icon={<Calendar className="size-4" />}>
-              <HistoryTable agg={agg!} matches={allMatches} teamById={teamById} leagueById={leagueById} />
+              <HistoryTable agg={agg!} matches={allMatches} teamById={teamById} leagueById={leagueById} playerId={id} />
             </Section>
+
 
             {/* Comparación visual */}
             <Section title="Comparación" icon={<Award className="size-4" />}>
@@ -776,12 +777,13 @@ function TimelinePanel({
 }
 
 function HistoryTable({
-  agg, matches, teamById, leagueById,
+  agg, matches, teamById, leagueById, playerId,
 }: {
   agg: PlayerAggregate;
   matches: Match[];
   teamById: Map<string, Team>;
   leagueById: Map<string, { id: string; name: string; season?: string }>;
+  playerId: string;
 }) {
   const matchIndex = new Map(matches.map((m) => [m.id, m]));
   return (
@@ -831,7 +833,7 @@ function HistoryTable({
                 <td className="px-2 py-2 text-right tabular-nums hidden md:table-cell">{p.block}</td>
                 <td className="px-2 py-2 text-right tabular-nums hidden lg:table-cell">{atk + p.attackError > 0 ? `${eff}%` : "—"}</td>
                 <td className="px-2 py-2 print:hidden">
-                  <Link to="/partidos/$id" params={{ id: p.matchId }} className="text-primary text-[10px] font-semibold hover:underline">Ver detalle</Link>
+                  <Link to="/partidos/$id" params={{ id: p.matchId }} search={{ from: "jugadora", fromId: playerId }} className="text-primary text-[10px] font-semibold hover:underline">Ver detalle</Link>
                 </td>
               </tr>
             );
