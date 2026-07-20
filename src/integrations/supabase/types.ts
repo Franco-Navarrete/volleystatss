@@ -53,6 +53,48 @@ export type Database = {
         }
         Relationships: []
       }
+      clubs: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          primary_color: string | null
+          province: string | null
+          secondary_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          primary_color?: string | null
+          province?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          primary_color?: string | null
+          province?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leagues: {
         Row: {
           color: string | null
@@ -420,6 +462,7 @@ export type Database = {
         Row: {
           category: string | null
           club: string | null
+          club_id: string | null
           color: string
           created_at: string
           created_by: string | null
@@ -436,6 +479,7 @@ export type Database = {
         Insert: {
           category?: string | null
           club?: string | null
+          club_id?: string | null
           color?: string
           created_at?: string
           created_by?: string | null
@@ -452,6 +496,7 @@ export type Database = {
         Update: {
           category?: string | null
           club?: string | null
+          club_id?: string | null
           color?: string
           created_at?: string
           created_by?: string | null
@@ -466,6 +511,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "teams_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "teams_league_id_fkey"
             columns: ["league_id"]
@@ -549,12 +601,14 @@ export type Database = {
     }
     Functions: {
       can_create_matches: { Args: { _user_id: string }; Returns: boolean }
+      can_create_player: { Args: { _user_id: string }; Returns: boolean }
       can_create_team: { Args: { _user_id: string }; Returns: boolean }
       can_manage_team: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
       can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
+      get_user_club: { Args: { _user_id: string }; Returns: string }
       has_league_access: {
         Args: { _league_id: string; _user_id: string }
         Returns: boolean

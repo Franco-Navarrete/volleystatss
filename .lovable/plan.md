@@ -1,66 +1,64 @@
-# Propietario de equipos + rol Entrenador
+# Refactor a modelo de Clubes + paleta ampliada + permisos jugadores
 
-El pedido cubre desde ownership básico hasta asistentes técnicos, convocatorias, dorsales y formaciones. Es demasiado para una sola entrega sin romper lo existente (RLS actual, cloud-sync, UI de teams). Propongo dividirlo en **3 fases** que se aprueban y sueltan de a una. Empiezo por la Fase 1 apenas apruebes.
+Cambio grande y con impacto en datos: introduce **Clubes** como entidad de primer nivel, cambia la relación `Equipo → Club` y agrega permisos de jugadores. Lo dejo en 3 fases; empiezo Fase 1 al aprobar.
 
-## Decisiones aplicadas (de tus respuestas)
+## Fase 1 — Clubes + paleta + creación guiada
 
-- Nueva columna `owner_id` en `teams` (separada de `created_by`).
-- RLS **reemplazada**: acceso = admin OR owner OR (equipo con liga = "público", solo lectura).
-- "Equipo público" = tiene `league_id` NOT NULL.
-- Nuevo permiso lógico `team.create`, asignado automáticamente al rol `entrenador`.
+### Backend (migración única)
 
-## Fase 1 — Ownership + crear/editar/eliminar equipos (base)
+- **Nueva tabla `public.clubs`**: `id`, `owner_id` (auth.users, NOT NULL, UNIQUE ← "1 entrenador = 1 club"), `name`, `logo_url`, `city`, `province`, `country`, `primary_color`, `secondary_color`, timestamps.
+- **GRANTs** para `authenticated` y `service_role`.
+- **RLS**:
+  - SELECT: cualquier autenticado (para poder mostrar "Club: Quilino" en listados públicos).
+  - INSERT: `owner_id = auth.uid()` y `has_role('entrenador'|'admin')`.
+  - UPDATE/DELETE: `owner_id = auth.uid() OR has_role('admin')`.
+- **`teams`**: agregar `club_id uuid REFERENCES clubs(id)`. Backfill: para cada `owner_id` distinto de equipos con `club` texto, crear un `club` y setear `club_id`. Deprecar (no borrar) columna `club` texto.
+- **`players`**: agregar policy INSERT/UPDATE/DELETE = `can_manage_team(auth.uid(), team_id)`.
+- Helper SQL `can_create_player(_user) = has_role(admin) OR has_role(entrenador)`.
+- Helper SQL `get_user_club(_user)` (security definer) → id del club del entrenador.
 
-**Backend**
-- Migración: `ALTER TABLE teams ADD COLUMN owner_id uuid REFERENCES auth.users`. Backfill `owner_id = created_by` para filas existentes.
-- Función SQL `public.can_manage_team(_user uuid, _team uuid)` = `admin OR owner`.
-- Reemplazar policies de `teams`:
-  - SELECT: `owner = auth.uid() OR league_id IS NOT NULL OR has_role(admin)`.
-  - INSERT: rol admin o entrenador (nuevo helper `public.can_create_team`), con `owner_id = auth.uid()`.
-  - UPDATE/DELETE: `can_manage_team(auth.uid(), id)`.
-- Policies de `players`: escritura solo si `can_manage_team` sobre el team; lectura si SELECT del team pasa.
-- `createTeam` / `updateTeam` / `deleteTeam` server fns: setean/validan `owner_id`; devuelven error "No tiene permisos para administrar este equipo" cuando corresponde.
+### Server functions (`src/lib/*.functions.ts`)
 
-**Frontend**
-- Nuevo hook `useCanCreateTeam()` (admin o rol entrenador).
-- Nuevo hook `useIsTeamOwner(teamId)` para gatear UI.
-- Página `/equipos` (privada + pública):
-  - Botón **+ Crear equipo** visible si `useCanCreateTeam()`.
-  - Formulario nuevo con los campos pedidos (nombre, club, escudo, colores, género, categoría con Sub 12/14/16/18/21/Primera/Libre, liga opcional).
-  - Categorías nuevas requieren ampliar el enum: `12,14,16,18,21,primera,libre` (agrega `libre`). Club = campo texto nuevo → migración columna `club text` en `teams`.
-  - Acciones editar/eliminar/subir escudo/gestionar jugadores solo visibles si `isOwner || admin`.
-  - Estado vacío: "Todavía no creaste ningún equipo" + botón "Crear mi primer equipo" (solo se muestra a usuarios con `team.create` y sin equipos propios).
-- Cloud-sync: filtrar equipos que no son propios ni públicos, y no intentar upsert de equipos ajenos.
+- Nuevo `clubs.functions.ts`: `getMyClub`, `createClub`, `updateClub`.
+- `createTeam`:
+  - Si el usuario es entrenador y no tiene club → error "Crea tu club primero".
+  - Si es entrenador con club → forzar `club_id = miClub.id` (ignora cualquier `club` que venga del cliente).
+  - Admin puede pasar `club_id` explícito.
+- `updateTeam`: bloquear cambio de `club_id` para entrenadores.
+- `listTeams`: devolver `clubId` y join con clubes para exponer `clubName`, `clubLogoUrl`.
 
-## Fase 2 — Partidos y estadísticas del entrenador
+### Frontend
 
-- `matches` gana `owner_id` (mismo modelo). RLS admin/owner/público (partido de liga).
-- Entrenador puede crear partidos solo entre sus equipos (o sus equipos vs. equipos públicos de la misma liga).
-- Cargar estadísticas y formaciones: permitido si es owner del partido.
-- Ajuste de `useCanCreateMatches` para reconocer al entrenador propietario.
+- **Paleta de 20 colores** (constante compartida `src/lib/team-colors.ts`) con nombre + HEX. Componente `<ColorSwatchPicker>` que muestra círculos reales y guarda el HEX. Reemplaza el picker actual en formularios de equipo y club. Secundario sigue opcional.
+- **Nuevo hook `useMyClub()`** (react-query).
+- **Nueva página `/mi-club`** (o modal): formulario club (nombre, escudo, ciudad, provincia, país, color principal/secundario).
+- **Flujo guiado en `/teams`** para entrenadores:
+  - Si no tiene club → estado vacío grande: "Primero creá tu club" + CTA que abre el formulario de club.
+  - Ya con club: header "Club: {nombre}" + botón "+ Crear equipo".
+  - Formulario de equipo simplificado: quita "Club" (auto), mantiene nombre, categoría, género, liga, escudo, colores.
+- **Permisos UI**: mostrar editar/eliminar/agregar jugadores solo si `useCanManageTeam(team.ownerId)`.
+- **Crear/editar jugadores**: habilitar botón para entrenador (nuevo `useCanCreatePlayer()` = admin O entrenador) sobre sus propios equipos.
 
-## Fase 3 — Asistentes, convocatorias, dorsales
+### Memoria
 
-- Nueva tabla `team_members(team_id, user_id, role: 'owner'|'assistant', invited_by)` con RLS: owner administra, assistant lee + gestiona plantel/convocatorias.
-- Nueva tabla `team_call_ups(team_id, match_id, player_id, status)` para convocatorias por partido.
-- UI de invitación por email (usa admin API igual que altas de usuario actuales).
-- Dorsales: agregar `default_number` por jugador y override por convocatoria.
-- Actualizar `can_manage_team` para incluir asistentes en escritura de plantel/convocatorias, pero no en borrar el equipo.
+- Guardar regla core: "1 entrenador = 1 club. Equipos siempre bajo un club. Autorización por `club.owner_id` o admin."
 
-## Detalles técnicos
+## Fase 2 (después, no en esta entrega)
 
-- Todas las policies usan security-definer helpers (`can_manage_team`, `can_create_team`) para evitar recursión y centralizar autorización.
-- `can_create_team(_user)` = `has_role(_user,'admin') OR has_role(_user,'entrenador')`. Reemplaza el chequeo actual basado en `can_manage_teams`.
-- `owner_id` NOT NULL a futuro; en la migración se deja nullable durante el backfill y luego `SET NOT NULL` en la misma migración usando `COALESCE(created_by, ...)`.
-- GRANT completos para `authenticated` y `service_role` en cada tabla nueva.
-- Cloud-sync (`src/lib/cloud-sync.ts` + `use-cloud-teams.ts`) deja de subir equipos ajenos: filtra por `owner_id === userId` antes del upsert.
-- `mem://` se actualiza con la nueva regla de ownership.
+- Transferencia de jugadores entre equipos del mismo club.
+- Compartir jugadora entre categorías (tabla `player_team_assignments` many-to-many).
+- Partidos: gating por ownership del club/equipo (Fase 2 previa del plan anterior queda absorbida acá).
+
+## Fase 3 (después)
+
+- Roles adicionales dentro del club: asistente, delegado, preparador físico, kinesiólogo, estadístico (tabla `club_members(club_id, user_id, role)` + permisos granulares).
 
 ## Riesgos
 
-- La política SELECT nueva expone lectura de **todos** los equipos con liga a cualquier usuario autenticado. Es lo pedido; lo dejo documentado.
-- Reemplazar RLS puede dejar sin acceso a usuarios `planillero`/`can_manage_teams` que hoy editan equipos que no crearon. Se pierde intencionalmente (elegiste "Reemplazar").
+- Backfill: si hay equipos del mismo owner con distintos valores de `club` texto, se colapsan en 1 club (el owner queda con 1 solo, tomando el nombre más frecuente). Es intencional por la regla "1 entrenador = 1 club".
+- `UNIQUE(owner_id)` en clubs impide que un entrenador tenga 2 clubes — regla explícita del pedido.
+- Admins siguen pudiendo crear equipos sin club (los que hoy no tienen).
 
 ## Qué hago al aprobar
 
-Ejecuto Fase 1 completa (migración + server fns + UI + hooks + cloud-sync + estado vacío). Fases 2 y 3 quedan pendientes de tu OK explícito.
+Ejecuto Fase 1 completa: migración + `clubs.functions.ts` + ajustes en `teams.functions.ts` + paleta 20 colores + página/modal "Mi Club" + refactor UI de `/teams` con flujo guiado + permisos de jugadores. Fases 2 y 3 quedan pendientes.

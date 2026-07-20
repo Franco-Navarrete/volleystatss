@@ -35,18 +35,28 @@ export const listTeams = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const [teamsRes, playersRes] = await Promise.all([
+    const [teamsRes, playersRes, clubsRes] = await Promise.all([
       supabase
         .from("teams")
-        .select("id, league_id, name, short_name, color, logo_url, gender, category, created_at")
+        .select("id, league_id, club_id, name, short_name, color, logo_url, gender, category, owner_id, secondary_color, club, created_at")
         .order("created_at", { ascending: true }),
       supabase
         .from("players")
         .select("id, team_id, name, number, position, photo_url, created_at")
         .order("number", { ascending: true }),
+      supabase.from("clubs").select("id, name, logo_url"),
     ]);
     if (teamsRes.error) throw teamsRes.error;
     if (playersRes.error) throw playersRes.error;
+    if (clubsRes.error) throw clubsRes.error;
+    const clubById = new Map<string, { name: string; logoUrl: string | null }>();
+    for (const c of clubsRes.data ?? []) {
+      clubById.set(c.id as string, {
+        name: (c as { name: string }).name,
+        logoUrl: ((c as { logo_url: string | null }).logo_url) ?? null,
+      });
+    }
+
 
     const playersByTeam = new Map<string, typeof playersRes.data>();
     for (const p of playersRes.data ?? []) {
@@ -63,6 +73,8 @@ export const listTeams = createServerFn({ method: "GET" })
         gRaw === "M" || gRaw === "F" || gRaw === "X" ? gRaw : undefined;
       const catRaw = raw.category;
       const category = VALID_CATEGORIES.includes(catRaw as Cat) ? (catRaw as Cat) : undefined;
+      const clubId = (raw.club_id as string | null) ?? null;
+      const clubInfo = clubId ? clubById.get(clubId) : undefined;
       return {
         id: t.id,
         leagueId: t.league_id,
@@ -70,7 +82,10 @@ export const listTeams = createServerFn({ method: "GET" })
         shortName: t.short_name,
         color: t.color,
         secondaryColor: (raw.secondary_color as string | null) ?? undefined,
-        club: (raw.club as string | null) ?? undefined,
+        club: (raw.club as string | null) ?? clubInfo?.name ?? undefined,
+        clubId: clubId ?? undefined,
+        clubName: clubInfo?.name ?? undefined,
+        clubLogoUrl: clubInfo?.logoUrl ?? undefined,
         ownerId: (raw.owner_id as string | null) ?? undefined,
         logoUrl: t.logo_url ?? undefined,
         gender,
@@ -117,6 +132,16 @@ export const createTeam = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    // Regla "1 entrenador = 1 club": si el usuario tiene un club, todos sus
+    // equipos quedan bajo ese club automáticamente. Los admins pueden crear
+    // equipos sin club si aún no crearon uno.
+    const { data: myClub } = await context.supabase
+      .from("clubs")
+      .select("id, name")
+      .eq("owner_id", context.userId)
+      .maybeSingle();
+    const clubId = myClub?.id ?? null;
+    const clubText = myClub?.name ?? data.club ?? null;
     const { data: row, error } = await context.supabase
       .from("teams")
       .insert({
@@ -128,9 +153,9 @@ export const createTeam = createServerFn({ method: "POST" })
         gender: data.gender ?? null,
         category: data.category ?? null,
         created_by: context.userId,
-        // owner_id required by new RLS policy
         owner_id: context.userId,
-        club: data.club ?? null,
+        club: clubText,
+        club_id: clubId,
         secondary_color: data.secondaryColor ?? null,
       } as TeamUpdate & { name: string; short_name: string; color: string; created_by: string; owner_id: string })
       .select("id")
@@ -138,6 +163,7 @@ export const createTeam = createServerFn({ method: "POST" })
     if (error) throw error;
     return { id: row.id };
   });
+
 
 
 export const updateTeam = createServerFn({ method: "POST" })

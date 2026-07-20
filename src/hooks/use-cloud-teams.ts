@@ -33,6 +33,9 @@ export type CloudTeam = {
   color: string;
   secondaryColor?: string;
   club?: string;
+  clubId?: string;
+  clubName?: string;
+  clubLogoUrl?: string;
   logoUrl?: string;
   gender?: "M" | "F" | "X";
   category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre";

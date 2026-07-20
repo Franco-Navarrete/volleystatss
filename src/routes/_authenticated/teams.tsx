@@ -48,6 +48,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Shield,
   Trash2,
   Trophy,
   UserPlus,
@@ -70,7 +71,10 @@ export const Route = createFileRoute("/_authenticated/teams")({
   component: TeamsPage,
 });
 
-const COLORS = ["#ff7a3d", "#3ec1d3", "#ffd23f", "#9b5de5", "#43d27a", "#ff5d8f", "#5d9cec", "#f48c06"];
+import { TEAM_COLORS_HEX } from "@/lib/team-colors";
+import { useMyClub } from "@/hooks/use-my-club";
+import { MyClubDialog } from "@/components/MyClubDialog";
+const COLORS = TEAM_COLORS_HEX;
 const MAX_PHOTO_BYTES = 800 * 1024;
 const PAGE_SIZE = 20;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -148,6 +152,10 @@ function TeamsPage() {
   const { isAdmin } = useIsAdmin();
   const { allowed: canCreate } = useCanCreateTeam();
   const { user: authUser } = useAuthUser();
+  const myClubQ = useMyClub();
+  const myClub = myClubQ.data ?? null;
+  const needsClubFirst = canCreate && !isAdmin && !myClub;
+  const [showClubDialog, setShowClubDialog] = useState(false);
   const currentUserId = authUser?.id;
   const canManage = (t?: { ownerId?: string } | null) =>
     isAdmin || (!!t && !!currentUserId && t.ownerId === currentUserId);
@@ -487,16 +495,31 @@ function TeamsPage() {
               <Loader2 className="size-3 animate-spin" /> Guardando…
             </span>
           )}
+          {canCreate && myClub && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setShowClubDialog(true)}
+              title="Editar mi club"
+            >
+              <Shield className="size-4" /> {myClub.name}
+            </Button>
+          )}
           {canCreate && (
             <Button
               size="sm"
               className="gap-1.5"
               onClick={() => {
+                if (needsClubFirst) {
+                  setShowClubDialog(true);
+                  return;
+                }
                 resetNewTeamForm();
                 setShowNewTeam(true);
               }}
             >
-              <Plus className="size-4" /> Crear equipo
+              <Plus className="size-4" /> {needsClubFirst ? "Crear mi club" : "Crear equipo"}
             </Button>
           )}
         </div>
@@ -1450,11 +1473,11 @@ function TeamsPage() {
                 </option>
               ))}
             </select>
-            <Input
-              placeholder="Club (opcional)"
-              value={newClub}
-              onChange={(e) => setNewClub(e.target.value.slice(0, 80))}
-            />
+            {myClub && (
+              <div className="rounded-md border border-border/60 bg-secondary/30 px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                <Shield className="size-3.5" /> Se asignará al club <span className="font-semibold text-foreground">{myClub.name}</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={newGender}
@@ -1630,6 +1653,7 @@ function TeamsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <MyClubDialog open={showClubDialog} onOpenChange={setShowClubDialog} />
     </AppShell>
   );
 }
