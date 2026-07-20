@@ -73,9 +73,17 @@ const MAX_PHOTO_BYTES = 800 * 1024;
 const PAGE_SIZE = 20;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type SortKey = "name" | "matches" | "league" | "created" | "activity";
+type SortKey =
+  | "name"
+  | "name_desc"
+  | "matches"
+  | "matches_asc"
+  | "league"
+  | "created"
+  | "activity";
 type ViewMode = "grid" | "list";
 type GenderChip = "all" | "F" | "M";
+type StatusChip = "all" | "active" | "no_league";
 
 async function fileToCompressedDataUrl(file: File): Promise<string> {
   const url = URL.createObjectURL(file);
