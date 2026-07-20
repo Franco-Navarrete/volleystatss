@@ -1229,6 +1229,8 @@ export const useVolley = create<VolleyState>()(
           }),
         }));
       },
+
+      recordSetting: (matchId, side, payload) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
