@@ -1522,18 +1522,6 @@ function TeamsPage() {
                 ))}
               </div>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {COLORS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={`size-7 rounded-md ring-offset-2 ring-offset-card transition-all ${
-                    color === c ? "ring-2 ring-foreground scale-110" : ""
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
           </div>
           <DialogFooter className="flex-row gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowNewTeam(false)}>
