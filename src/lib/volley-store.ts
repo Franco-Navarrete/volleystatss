@@ -1197,7 +1197,38 @@ export const useVolley = create<VolleyState>()(
         }));
       },
 
-      recordSetting: (matchId, side, payload) => {
+      recordDefense: (matchId, side, playerId, rating) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId || m.status === "finished") return m;
+            const ev: DefenseEvent = {
+              id: uid(),
+              kind: "defense",
+              side,
+              playerId,
+              rating,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            let next = { ...m, events: [...m.events, ev] };
+            if (rating === "error") {
+              const scoringSide: "A" | "B" = side === "A" ? "B" : "A";
+              const pev: PointEvent = {
+                id: uid(),
+                scoringSide,
+                playerSide: side,
+                playerId,
+                type: "unforced_error",
+                setNumber: next.currentSet,
+                timestamp: Date.now() + 1,
+              };
+              next = { ...next, events: [...next.events, pev] };
+              return applyAutoLibero(next, s.teams);
+            }
+            return next;
+          }),
+        }));
+      },
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
