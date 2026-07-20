@@ -887,10 +887,27 @@ function TeamsPage() {
 
       {/* ========== Teams grid / list ========== */}
       {filteredTeams.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-          {teams.length === 0
-            ? "Aún no hay equipos cargados."
-            : "Ningún equipo coincide con los filtros."}
+        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground flex flex-col items-center gap-3">
+          {teams.length === 0 ? (
+            <>
+              <div className="text-base font-medium text-foreground">
+                Todavía no creaste ningún equipo.
+              </div>
+              {canCreate && (
+                <Button
+                  onClick={() => {
+                    resetNewTeamForm();
+                    setShowNewTeam(true);
+                  }}
+                  className="gap-1.5"
+                >
+                  <Plus className="size-4" /> Crear mi primer equipo
+                </Button>
+              )}
+            </>
+          ) : (
+            "Ningún equipo coincide con los filtros."
+          )}
         </div>
       ) : viewMode === "grid" ? (
         <ul className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
