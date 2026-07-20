@@ -95,6 +95,45 @@ export type Database = {
         }
         Relationships: []
       }
+      intelligence_reports: {
+        Row: {
+          created_at: string
+          id: string
+          insights: Json
+          model: string | null
+          scope: string
+          scope_ref: string | null
+          summary_md: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insights?: Json
+          model?: string | null
+          scope: string
+          scope_ref?: string | null
+          summary_md?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insights?: Json
+          model?: string | null
+          scope?: string
+          scope_ref?: string | null
+          summary_md?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leagues: {
         Row: {
           color: string | null
