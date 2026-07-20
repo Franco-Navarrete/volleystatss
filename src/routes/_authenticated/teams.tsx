@@ -1568,6 +1568,123 @@ function TeamsPage() {
    Presentational helpers
 ============================================================ */
 
+const SORT_LABELS: Record<SortKey, string> = {
+  name: "Nombre A-Z",
+  name_desc: "Nombre Z-A",
+  matches: "Mayor cantidad de partidos",
+  matches_asc: "Menor cantidad de partidos",
+  activity: "Última actividad",
+  created: "Fecha de creación",
+  league: "Liga",
+};
+
+function ActiveChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 h-7 pl-2.5 pr-1 rounded-full bg-primary/15 border border-primary/30 text-xs font-semibold text-foreground">
+      <span className="truncate max-w-[160px]">{label}</span>
+      <button
+        type="button"
+        onClick={onClear}
+        className="size-5 rounded-full inline-flex items-center justify-center hover:bg-primary/25 text-muted-foreground hover:text-foreground"
+        aria-label={`Quitar filtro ${label}`}
+      >
+        <X className="size-3" />
+      </button>
+    </span>
+  );
+}
+
+function SegBtn({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-9 inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-all ${
+        active
+          ? "bg-primary text-primary-foreground border border-primary shadow-sm"
+          : "bg-background border border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function PillBtn({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-8 px-3 rounded-full text-xs font-semibold transition-all ${
+        active
+          ? "bg-primary text-primary-foreground border border-primary"
+          : "bg-background border border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function LeagueRow({
+  active,
+  onClick,
+  label,
+  count,
+  accent,
+  muted,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
+  accent?: string | null;
+  muted?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors ${
+        active ? "bg-primary/10" : "hover:bg-secondary/40"
+      }`}
+    >
+      <span
+        className="size-2.5 rounded-full shrink-0"
+        style={{ background: accent || (muted ? "hsl(var(--muted-foreground) / 0.3)" : "hsl(var(--primary) / 0.6)") }}
+      />
+      <span className={`flex-1 min-w-0 truncate ${muted ? "text-muted-foreground" : ""}`}>
+        {label}
+      </span>
+      <span className="text-[11px] tabular-nums font-bold text-muted-foreground">
+        ({count})
+      </span>
+      {active && <Check className="size-4 text-primary shrink-0" />}
+    </button>
+  );
+}
+
+
+
 function Chip({
   active,
   onClick,
