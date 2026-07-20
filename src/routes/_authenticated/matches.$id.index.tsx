@@ -1872,6 +1872,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const stepValid = step === 1 ? validA : validB;
   const filled = lineup.filter(Boolean).length;
   const [pickingSlot, setPickingSlot] = useState<number | null>(null);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerFilter, setPickerFilter] = useState<"all" | PlayerPosition>("all");
 
   const designatedLiberoIds = new Set<string>(
     (step === 1
