@@ -308,10 +308,11 @@ export function IntegratedRallyDialog({
       action: a,
       attackDirection: direction ?? undefined,
       receptionQuality: effectiveQuality,
+      isCounter: isCounterFlow,
     });
     toast.success("✓ Rally registrado", { duration: 900 });
     onClose();
-  }, [attackerId, setter, zone, direction, effectiveQuality, onSubmit, onClose]);
+  }, [attackerId, setter, zone, direction, effectiveQuality, onSubmit, onClose, isCounterFlow]);
 
   const pickActionKind = useCallback((k: ActionKind) => {
     setActionKind(k);
@@ -331,8 +332,9 @@ export function IntegratedRallyDialog({
     if (step === "rating") setStep("action");
     else if (step === "action") setStep("direction");
     else if (step === "direction") setStep("zone");
+    else if (step === "zone" && defenseStep) setStep("defense");
     else if (step === "zone" && receptionStep) setStep("reception");
-  }, [step, receptionStep]);
+  }, [step, receptionStep, defenseStep]);
 
   // Teclas rápidas
   useEffect(() => {
@@ -346,6 +348,9 @@ export function IntegratedRallyDialog({
       if (step === "reception") {
         const opt = RECEPTION_OPTIONS.find((o) => o.hotkey === ev.key);
         if (opt) { ev.preventDefault(); pickReception(opt.key); }
+      } else if (step === "defense") {
+        const opt = DEFENSE_OPTIONS.find((o) => o.hotkey === ev.key);
+        if (opt) { ev.preventDefault(); pickDefense(opt.key); }
       } else if (step === "zone") {
         const idx = Number(ev.key) - 1;
         if (idx >= 0 && idx < ZONE_ORDER.length) { ev.preventDefault(); pickZone(ZONE_ORDER[idx]); }
@@ -362,11 +367,15 @@ export function IntegratedRallyDialog({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, step, pickReception, pickZone, pickDirection, pickActionKind, pickRating, goBack]);
+  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, pickActionKind, pickRating, goBack]);
 
   const activeSteps: { key: Step; label: string }[] = useMemo(
-    () => receptionStep ? STEPS : STEPS.filter((s) => s.key !== "reception"),
-    [receptionStep],
+    () => STEPS.filter((s) => {
+      if (s.key === "reception") return !!receptionStep;
+      if (s.key === "defense") return !!defenseStep;
+      return true;
+    }),
+    [receptionStep, defenseStep],
   );
   const stepIdx = activeSteps.findIndex((s) => s.key === step);
 
