@@ -1810,6 +1810,51 @@ function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; o
   );
 }
 
+const POSITION_BADGE_COLOR: Record<string, { bg: string; text: string; dot: string }> = {
+  armador: { bg: "#3b82f6", text: "#fff", dot: "🔵" },
+  opuesto: { bg: "#a855f7", text: "#fff", dot: "🟣" },
+  central: { bg: "#ef4444", text: "#fff", dot: "🔴" },
+  punta: { bg: "#f97316", text: "#fff", dot: "🟠" },
+  libero: { bg: "#22c55e", text: "#fff", dot: "🟢" },
+  universal: { bg: "#e2e8f0", text: "#0f172a", dot: "⚪" },
+};
+const POSITION_ORDER: Record<string, number> = {
+  armador: 0,
+  opuesto: 1,
+  central: 2,
+  punta: 3,
+  libero: 4,
+  universal: 5,
+};
+const POSITION_FILTERS: { key: "all" | PlayerPosition; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "armador", label: "Armadores" },
+  { key: "opuesto", label: "Opuestos" },
+  { key: "central", label: "Centrales" },
+  { key: "punta", label: "Puntas" },
+  { key: "libero", label: "Líberos" },
+  { key: "universal", label: "Universales" },
+];
+
+function PositionBadge({ position }: { position?: PlayerPosition }) {
+  if (!position) {
+    return (
+      <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+        S/P
+      </span>
+    );
+  }
+  const c = POSITION_BADGE_COLOR[position] ?? POSITION_BADGE_COLOR.universal;
+  return (
+    <span
+      className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded"
+      style={{ background: c.bg, color: c.text }}
+    >
+      {PLAYER_POSITION_LABEL[position]}
+    </span>
+  );
+}
+
 function LineupEditor({ match, teamA, teamB, onSave }: {
   match: Match; teamA: Team; teamB: Team;
   onSave: (lineupA: string[], lineupB: string[]) => void;
