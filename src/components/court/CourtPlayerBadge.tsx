@@ -390,8 +390,9 @@ export function CourtPlayerBadge({
   }, [newestEventId, lastRelevant]);
 
   return (
-    <HoverCard open={isOpen} onOpenChange={(o) => setHover(o)} openDelay={120} closeDelay={60}>
+    <HoverCard open={isOpen} onOpenChange={(o) => setHover(o)} openDelay={120} closeDelay={150}>
       <HoverCardTrigger asChild>
+
         <button
           type="button"
           ref={triggerRef}
