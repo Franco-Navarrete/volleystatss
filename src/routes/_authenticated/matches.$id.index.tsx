@@ -2033,75 +2033,147 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
               </div>
               <button
                 type="button"
-                onClick={() => setPickingSlot(null)}
+                onClick={() => { setPickingSlot(null); setPickerSearch(""); setPickerFilter("all"); }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto mt-2 grid grid-cols-2 gap-1.5">
-              {team.players.length === 0 && (
-                <p className="col-span-2 text-xs text-muted-foreground text-center py-4">Sin jugadores en el equipo.</p>
-              )}
-              {team.players.map((pl) => {
-                const slotOfPl = lineup.indexOf(pl.id);
-                const onCourt = slotOfPl >= 0;
-                const takenElsewhere = onCourt && slotOfPl !== pickingSlot;
-                const isCurrent = lineup[pickingSlot] === pl.id;
-                const isLib = isLiberoPlayer(pl.id);
-                const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
-                // Sólo bloquear si hay OTRO líbero en cancha que NO sea el que vamos a intercambiar
-                const currentPidInSlot = lineup[pickingSlot];
-                const otherLiberoOnCourt = isLib && lineup.some(
-                  (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid) && pid !== currentPidInSlot,
-                );
-                const liberoForbidden = liberoInFront || otherLiberoOnCourt;
-                const disabled = liberoForbidden;
-                const swapLabel = takenElsewhere
-                  ? (grid.flat().find((g) => g.idx === slotOfPl)?.label ?? "")
-                  : "";
-                const reason = liberoInFront
-                  ? "líbero no en frente"
-                  : otherLiberoOnCourt
-                    ? "ya hay un líbero"
-                    : takenElsewhere
-                      ? `P${swapLabel} ⇄`
-                      : null;
+
+            <div className="mt-2 relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={pickerSearch}
+                onChange={(e) => setPickerSearch(e.target.value)}
+                placeholder="Buscar por nombre, número o posición…"
+                className="w-full pl-7 pr-2 py-1.5 rounded-md bg-secondary/60 border border-border/60 text-xs focus:outline-none focus:border-primary"
+                autoFocus
+              />
+            </div>
+
+            <div className="mt-2 flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+              {POSITION_FILTERS.map((f) => {
+                const active = pickerFilter === f.key;
                 return (
                   <button
-                    key={pl.id}
+                    key={f.key}
                     type="button"
-                    disabled={disabled}
-                    onClick={() => { setSlot(pickingSlot, pl.id); setPickingSlot(null); }}
-                    className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors min-w-0 border ${
-                      isCurrent
+                    onClick={() => setPickerFilter(f.key)}
+                    className={`shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border transition-colors ${
+                      active
                         ? "bg-primary text-primary-foreground border-primary"
-                        : takenElsewhere
-                          ? "bg-primary/15 border-primary/60 text-foreground hover:bg-primary/25"
-                          : "bg-secondary border-transparent hover:bg-secondary/70"
-                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                        : "bg-secondary/60 border-border/60 text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    {pl.photoUrl ? (
-                      <img src={pl.photoUrl} alt="" className="size-7 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <span className="size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0" style={{ background: team.color, color: "#fff" }}>
-                        {pl.number}
-                      </span>
-                    )}
-                    <span className="truncate flex-1 min-w-0">
-                      <span className="scoreboard-digit font-bold mr-1">#{pl.number}</span>
-                      {pl.name}
-                      {isLib && <span className="ml-1 text-[9px] uppercase opacity-70">líb</span>}
-                    </span>
-                    {reason && <span className="text-[9px] uppercase opacity-80 shrink-0 font-bold">{reason}</span>}
-                    {isCurrent && <Check className="size-3.5 shrink-0" />}
+                    {f.label}
                   </button>
                 );
               })}
             </div>
+
+            <div className="flex-1 overflow-y-auto mt-2 grid grid-cols-2 gap-1.5">
+              {team.players.length === 0 && (
+                <p className="col-span-2 text-xs text-muted-foreground text-center py-4">Sin jugadores en el equipo.</p>
+              )}
+              {(() => {
+                const q = pickerSearch.trim().toLowerCase();
+                const filtered = team.players
+                  .filter((pl) => {
+                    if (pickerFilter !== "all" && pl.position !== pickerFilter) return false;
+                    if (!q) return true;
+                    const posLabel = pl.position ? PLAYER_POSITION_LABEL[pl.position].toLowerCase() : "";
+                    return (
+                      pl.name.toLowerCase().includes(q) ||
+                      String(pl.number).includes(q) ||
+                      posLabel.includes(q)
+                    );
+                  })
+                  .sort((a, b) => {
+                    const oa = a.position ? POSITION_ORDER[a.position] ?? 99 : 99;
+                    const ob = b.position ? POSITION_ORDER[b.position] ?? 99 : 99;
+                    if (oa !== ob) return oa - ob;
+                    return (a.number ?? 0) - (b.number ?? 0);
+                  });
+                if (filtered.length === 0) {
+                  return (
+                    <p className="col-span-2 text-xs text-muted-foreground text-center py-4">
+                      Sin resultados.
+                    </p>
+                  );
+                }
+                return filtered.map((pl) => {
+                  const slotOfPl = lineup.indexOf(pl.id);
+                  const onCourt = slotOfPl >= 0;
+                  const takenElsewhere = onCourt && slotOfPl !== pickingSlot;
+                  const isCurrent = lineup[pickingSlot] === pl.id;
+                  const isLib = isLiberoPlayer(pl.id);
+                  const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
+                  const currentPidInSlot = lineup[pickingSlot];
+                  const otherLiberoOnCourt = isLib && lineup.some(
+                    (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid) && pid !== currentPidInSlot,
+                  );
+                  const liberoForbidden = liberoInFront || otherLiberoOnCourt;
+                  const disabled = liberoForbidden;
+                  const swapLabel = takenElsewhere
+                    ? (grid.flat().find((g) => g.idx === slotOfPl)?.label ?? "")
+                    : "";
+                  const reason = liberoInFront
+                    ? "líbero no en frente"
+                    : otherLiberoOnCourt
+                      ? "ya hay un líbero"
+                      : takenElsewhere
+                        ? `P${swapLabel} ⇄`
+                        : null;
+                  return (
+                    <button
+                      key={pl.id}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => { setSlot(pickingSlot, pl.id); setPickingSlot(null); setPickerSearch(""); setPickerFilter("all"); }}
+                      className={`flex items-center gap-2 px-2 py-2 rounded-md text-left text-xs transition-colors min-w-0 border-2 ${
+                        isCurrent
+                          ? "bg-success/15 border-success text-foreground"
+                          : takenElsewhere
+                            ? "bg-primary/10 border-primary/60 text-foreground hover:bg-primary/20"
+                            : "bg-secondary border-transparent hover:bg-secondary/70"
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                      {pl.photoUrl ? (
+                        <img src={pl.photoUrl} alt="" className="size-9 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <span className="size-9 rounded-full scoreboard-digit font-bold flex items-center justify-center text-sm shrink-0" style={{ background: team.color, color: "#fff" }}>
+                          {pl.number}
+                        </span>
+                      )}
+                      <span className="flex-1 min-w-0 flex flex-col gap-0.5">
+                        <span className="truncate leading-tight">
+                          <span className="scoreboard-digit font-bold mr-1">#{pl.number}</span>
+                          <span className="font-semibold">{pl.name}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <PositionBadge position={pl.position} />
+                          {reason && (
+                            <span className="text-[9px] uppercase font-bold text-primary/90 truncate">
+                              {reason}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                      {isCurrent && (
+                        <span className="shrink-0 size-5 rounded-full bg-success text-white flex items-center justify-center">
+                          <Check className="size-3" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
           </div>
         )}
       </div>
+
 
       <div className="flex items-center gap-2">
         {step === 2 && (
