@@ -1473,11 +1473,11 @@ function TeamsPage() {
                 </option>
               ))}
             </select>
-            <Input
-              placeholder="Club (opcional)"
-              value={newClub}
-              onChange={(e) => setNewClub(e.target.value.slice(0, 80))}
-            />
+            {myClub && (
+              <div className="rounded-md border border-border/60 bg-secondary/30 px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                <Shield className="size-3.5" /> Se asignará al club <span className="font-semibold text-foreground">{myClub.name}</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={newGender}
