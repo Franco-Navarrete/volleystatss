@@ -248,21 +248,7 @@ export function IntegratedRallyDialog({
     toast.success(`✓ Zona destino ${d}`, { duration: 800 });
   }, []);
 
-  const pickActionKind = useCallback((k: ActionKind) => {
-    setActionKind(k);
-    if (k === "attack" || k === "counter") {
-      setStep("rating");
-    } else {
-      finalize(resolveAction(k, null));
-    }
-  }, []);
-
-  const pickRating = useCallback((r: Rating) => {
-    if (!actionKind) return;
-    finalize(resolveAction(actionKind, r));
-  }, [actionKind]);
-
-  const finalize = (a: RallyAction) => {
+  const finalize = useCallback((a: RallyAction) => {
     if (!attackerId || !setter || !zone) return;
     onSubmit({
       setterId: setter.id,
@@ -275,7 +261,21 @@ export function IntegratedRallyDialog({
     });
     toast.success("✓ Rally registrado", { duration: 900 });
     onClose();
-  };
+  }, [attackerId, setter, zone, direction, effectiveQuality, onSubmit, onClose]);
+
+  const pickActionKind = useCallback((k: ActionKind) => {
+    setActionKind(k);
+    if (k === "attack" || k === "counter") {
+      setStep("rating");
+    } else {
+      finalize(resolveAction(k, null));
+    }
+  }, [finalize]);
+
+  const pickRating = useCallback((r: Rating) => {
+    if (!actionKind) return;
+    finalize(resolveAction(actionKind, r));
+  }, [actionKind, finalize]);
 
   const goBack = useCallback(() => {
     if (step === "rating") setStep("action");
