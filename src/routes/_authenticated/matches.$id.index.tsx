@@ -26,6 +26,7 @@ import {
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
+import { LiveStatsTable, type LiveStatsRow, type LiveStatsTeamSummary } from "@/components/LiveStatsTable";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
 import { AttackResultDialog } from "@/components/scorer/AttackResultDialog";
