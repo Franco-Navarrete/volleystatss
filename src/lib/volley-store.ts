@@ -365,7 +365,35 @@ export interface AttackAttemptEvent {
   isCounter?: boolean;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent | AttackAttemptEvent;
+// ============= Defensa =============
+
+export type DefenseRating = "excellent" | "positive" | "controlled" | "weak" | "error";
+
+export const DEFENSE_RATING_LABEL: Record<DefenseRating, string> = {
+  excellent: "Excelente",
+  positive: "Positiva",
+  controlled: "Controlada",
+  weak: "Débil",
+  error: "Error",
+};
+
+/**
+ * Defensa dentro de un rally en curso (post-ataque rival). No modifica el
+ * cálculo de estadísticas existentes; sirve para representar el flujo real
+ * del juego y como base para métricas futuras. Si `rating === "error"` el
+ * equipo atacante recibe punto por error del defensor.
+ */
+export interface DefenseEvent {
+  id: string;
+  kind: "defense";
+  side: "A" | "B";
+  playerId: string;
+  rating: DefenseRating;
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent | AttackAttemptEvent | DefenseEvent;
 
 export interface MatchSet {
   number: number;
