@@ -1,70 +1,103 @@
 
-# Perfil de Jugador — Centro de análisis
+# Rediseño pantalla de toma en vivo (`/matches/$id`)
 
-Mantener el diseño oscuro y moderno actual. No rediseñar, sino ampliar `/jugadora/$id` con nuevas secciones y agregaciones. Todo el trabajo respeta la identidad visual: `bg-card/40`, `border-border/60`, `text-primary`, `tabular-nums`.
+Objetivo: acelerar el registro para 1 solo entrenador manteniendo la identidad Rally (tema oscuro, colores, tipografía). **No se toca la lógica de registro ni el flujo de acciones** — solo layout, jerarquía visual, ayudas contextuales y micro‑animaciones.
 
-## Alcance por sección
+Archivo principal: `src/routes/_authenticated/matches.$id.index.tsx` (2499 líneas). Se apoya en varios componentes nuevos pequeños para no inflar el archivo.
 
-1. **Contexto comparativo por métrica** — cada KPI muestra valor + promedio del equipo + promedio de la liga + delta (%). Reutiliza `computeHistoricalStats` filtrado.
-2. **Evolución** — gráficos de líneas (recharts, ya en el proyecto) para Puntos / Ataques / Eficiencia / Recepción / Saque / Bloqueo. Selector: Últimos 5 / 10 / Toda la temporada.
-3. **Radar de habilidades** — `RadarChart` de recharts. Ejes: Ataque, Recepción, Saque, Bloqueo, Defensa, Eficiencia. 3 series: jugadora, equipo, liga (normalizados 0–100).
-4. **Mapas de calor** — grilla 3×3 de zonas de cancha:
-   - Ataque: frecuencia y % éxito por zona destino (de `AttackAttemptEvent.direction`).
-   - Recepción: eficiencia por zona (de `ReceptionEvent.zone`).
-   - Saque: aces/errores por zona objetivo (de `ServeEvent.targetZone` si existe, si no placeholder).
-   - Bloqueo: sectores con más puntos (por posición en cancha al momento del bloqueo).
-   Componente nuevo `PlayerHeatmap` reutilizando estilo de `AttackHeatmap`.
-5. **Filtros temporales globales** — Toda la carrera / Temporada actual / Últimos 10 / Últimos 5 / Último. Un solo estado, aplica a todas las secciones.
-6. **Ficha del jugador ampliada** — mostrar Edad, Altura, Peso, Mano hábil, Categoría, Posición, Fecha de nacimiento, Nacionalidad, Equipo. Extender `Player` en el store con los campos opcionales que falten (`birthDate`, `height`, `weight`, `dominantHand`, `nationality`); "No disponible" si vacío. Editor rápido en la ficha para completar datos.
-7. **Indicadores visuales** — badge de color (🟢🟡🟠🔴) según percentil vs liga. Helper `perfBadge(value, leagueAvg)`.
-8. **Insights automáticos** — nueva sección "Análisis automático" con reglas:
-   - Máximo anotador del equipo, ataque > promedio liga, % contraataque alto, baja participación en bloqueo, gran % recepción positiva, jugadora más eficiente del equipo, MVP recurrente, etc.
-9. **Historial mejorado** — tabla con Fecha, Rival, Liga, Resultado, Puntos, Ataques, Recepción, Saque (aces/err), Bloqueo, Defensa, Eficiencia + botón "Ver detalle" → `/partidos/$id`.
-10. **Comparaciones visuales** — barras horizontales normalizadas contra Equipo / Liga / Mismo puesto. Estado claro: por encima / igual / por debajo.
-11. **Estadísticas por rotación (P1–P6)** — reusar `computeRotationStats` filtrando eventos por jugadora en cancha. Extender: contar puntos/ataques/eficiencia/recepción/bloqueo por rotación de la jugadora.
-12. **Rendimiento por armador** — reusar `computeSetterDistribution` filtrado por `attackerId = playerId`. Muestra top armadores con ataques / puntos / eficiencia.
-13. **Tendencias** — comparar promedio últimos 5 vs promedio histórico. Deltas por métrica con flechas ▲▼.
-14. **Timeline del último partido** — listado cronológico de eventos de la jugadora en el último partido finalizado. Cada fila: set, marcador, tipo, resultado. Colapsable por set.
-15. **Exportación** — botones Exportar PDF (reutilizar `match-pdf` extendido), Exportar Excel (nuevo `player-xlsx.ts` con SheetJS o export CSV nativo), Compartir enlace (Web Share / copia URL), Imprimir (`window.print()` con `@media print` CSS).
-16. **Patrones de juego** — nueva sección "Patrones de juego". Reglas automáticas sobre eventos filtrados por la jugadora:
-   - % de ataques por zona origen (de `AttackAttemptEvent`).
-   - Tipo de ataque más frecuente y efectivo.
-   - % conversión post-recepción positiva.
-   - Zona destino más usada.
-   - Contraataque vs rotación (ratio).
-   - Rendimiento vs bloqueo doble (si `blockers` en evento).
-   - Rotaciones con mayor puntería.
-   - Éxito con armado rápido (cuando `SettingEvent.quality === "++"`).
-   - Zona de mejor recepción.
-   - Zona de saque más problemática para el rival.
+## Áreas de trabajo
+
+### 1. Layout general — la cancha manda
+Grid a 3 filas: **header 8–10%** · **cancha 65–70%** · **barra inferior 8–10%**, con dos columnas de utilidades ultra‑delgadas a los lados de la cancha (56–64px). Se reducen paddings actuales y se elimina el `max-width` que aún limita en desktop.
+
+### 2. Marcador superior compacto
+Una sola fila (≈56–64px):
+
+```text
+[LIVE] [Local logo] LOC 21 · Sets 1 · SAQUE ●   |   VIS 18 · Sets 0   [Visit logo]   ⏱ 34:21   [⋮]
+```
+
+- Nombres cortos, puntos y sets en la misma línea con separadores.
+- Chip “SAQUE” con punto pulsante junto al equipo al saque.
+- Cronómetro y estado LIVE integrados al mismo renglón.
+- Menú `⋮` para acciones frías (Formato, Fin del partido, etc.).
+
+### 3. Botones laterales cuadrados con icono + tooltip
+Convertir `Cambio / Líbero / Tiempo / Sanción` en columna de botones 44×44 con `lucide-react` (`Repeat`, `Shirt`, `Timer`, `AlertTriangle`) y `Tooltip` de shadcn. Un lado por equipo. Deshacer y Formación se elevan (más grandes / color primario). Estadísticas, Formato y Fin del partido se mueven al menú `⋮`.
+
+### 4. Jugadores en la cancha
+Ya existe `CourtPlayerBadge` (foto/iniciales + insignia número + hover stats). Se reutiliza y se refuerza:
+- Sin nombre dentro del círculo (ya está así).
+- Insignia número sobresaliente y siempre legible.
+- Al seleccionar para registrar acción → clase `.player-active` con halo pulsante (`ring-4 ring-primary/70 animate-pulse` + `box-shadow` glow).
+
+### 5. Micro‑animaciones de acción
+Ya hay `HIGHLIGHT_STYLE` (ACE/PUNTO/BLOQUEO/REC+). Añadir keyframe `player-pop` (scale 1 → 1.12 → 1, 900ms) al detectar nuevo evento del jugador. Definido en `src/styles.css` para no depender de tailwind config.
+
+### 6. Barra de progreso del rally
+Nuevo componente `RallyProgressBar` sobre la cancha:
+
+```text
+● SAQUE ✔  →  ● RECEPCIÓN ✔  →  ● ARMADO ✔  →  ○ ATAQUE  →  ○ BLOQUEO  →  ○ DEFENSA
+```
+
+Deriva estado del store leyendo los últimos eventos del rally en curso (sin cambiar la lógica: solo lectura). Al finalizar el rally muestra “✔ Rally finalizado” y se resetea al siguiente saque.
+
+### 7. Panel “Acción actual”
+Chip flotante arriba‑derecha de la cancha:
+
+```text
+ACCIÓN ACTUAL
+Recepción positiva · #7
+Esperando armado…
+```
+
+Se alimenta del mismo estado que la barra de progreso.
+
+### 8. Panel “Última acción”
+Chip flotante abajo‑izquierda:
+
+```text
+ÚLTIMA · Ramiro
+Ataque JATU · Z5 · PUNTO
+```
+
+Lee el último `PointEvent` del `match.events`.
+
+### 9. Indicador de posesión
+Cinta fina bajo el marcador con `LOCAL ATACANDO · VISITANTE DEFENDIENDO`, calculado desde el equipo al saque y el último evento (recepción/ataque). Cambia automáticamente sin intervención.
+
+### 10. Cancha con zonas diferenciadas
+Añadir en `CourtFormation` (o wrapper) un sutil degradado / `bg-white/[0.02]` para zona de ataque vs zona de defensa, sin cambiar coordenadas ni tamaños de jugadores. Puramente cosmético.
+
+### 11. Jerarquía de botones
+- **Grandes / primarios**: Armado, Formación, Deshacer.
+- **Medianos**: acciones laterales por equipo.
+- **En menú `⋮`**: Estadísticas, Formato, Fin del partido, Reclasificar, Compartir.
 
 ## Detalles técnicos
 
-- **Archivo nuevo `src/lib/player-analytics.ts`** — agrega funciones puras que reciben `(matches, teams, playerId, timeframe)` y devuelven:
-  - `computePlayerContext` — totales + promedios equipo/liga/puesto.
-  - `computePlayerEvolution` — series temporales por partido.
-  - `computePlayerHeatmaps` — matrices 3×3 para ataque/recepción/saque/bloqueo.
-  - `computePlayerRotations` — buckets P1–P6 por métrica.
-  - `computePlayerBySetter` — desglose por armador.
-  - `computePlayerTrends` — deltas recientes vs histórico.
-  - `computePlayerPatterns` — reglas heurísticas para patrones.
-  - `computePlayerTimeline` — eventos del último partido.
-- **Filtrado temporal** — `applyTimeframe(matches, tf)` a nivel de partidos finalizados.
-- **Extensión de `Player`** — agregar campos opcionales sin migración de datos (viven en el store persistido en `app_state`). El editor de equipo ya guarda todo el player como JSON.
-- **Componente `src/routes/jugadora.$id.tsx`** — reorganizar en secciones y consumir los helpers. Todos los cálculos memoizados por `[matches, teams, playerId, timeframe]`.
-- **Charts** — usar recharts (ya está). `LineChart`, `RadarChart`, `BarChart`, `PieChart` si aplica.
-- **Heatmap** — componente `PlayerHeatmap` con grilla 3×3, color por intensidad (verde→rojo según % éxito o frecuencia).
-- **Exportación PDF** — reutilizar patrón de `match-pdf.ts`, nuevo `player-pdf.ts` con secciones del dashboard.
-- **Exportación Excel** — `bun add xlsx` para libro con hojas: Resumen / Historial / Rotaciones / Patrones.
+Nuevos archivos:
+- `src/components/scorer/ScorerHeader.tsx` — marcador compacto + posesión + menú.
+- `src/components/scorer/SideActionsRail.tsx` — columna de botones icónicos con tooltip.
+- `src/components/scorer/RallyProgressBar.tsx` — 6 pasos + estado finalizado.
+- `src/components/scorer/CurrentActionCard.tsx` y `LastActionCard.tsx` — chips flotantes.
+- `src/lib/rally-phase.ts` — helper puro que dada `match.events` devuelve `{ phase, lastEvent, possession, playerId, description }`. Cero mutaciones al store.
 
-## Fuera de este turno
+Cambios a archivos existentes:
+- `src/routes/_authenticated/matches.$id.index.tsx` — reemplazar layout del header + laterales + barra inferior, montar los nuevos paneles. Toda la lógica de handlers `onRegister…` se mantiene idéntica; solo cambian los componentes visuales que la disparan.
+- `src/components/court/CourtPlayerBadge.tsx` — nueva prop `active` para el halo del jugador seleccionado.
+- `src/styles.css` — keyframes `player-pop`, clases `.player-active`, sutil gradiente de zonas.
 
-- Persistir los nuevos campos de `Player` en columnas dedicadas (viven como JSON en `app_state`).
-- Editor completo de biografía en la vista del equipo (se agrega solo el botón "Editar datos" en la ficha del jugador).
+Restricciones respetadas:
+- Sin tocar el store (`src/lib/volley-store.ts`) ni los diálogos de registro (`IntegratedRallyDialog`, `AttackResultDialog`, etc.).
+- Sin cambiar tipos de eventos ni cálculos de estadísticas.
+- Se mantiene el modo tablet horizontal ya existente.
+- Todo en tokens semánticos (`bg-card`, `text-primary`, `border-border`), sin colores hardcoded.
 
-## Estimación
+## Fuera de alcance (no se toca)
+- Lógica de rotaciones, líbero automático, fórmulas de eficiencia.
+- Flujo secuencial del diálogo de rally.
+- Vista pública `/m/$slug` (solo se beneficia indirectamente del badge activo si se comparte).
 
-Archivos nuevos: `src/lib/player-analytics.ts`, `src/lib/player-pdf.ts`, `src/lib/player-xlsx.ts`, `src/components/PlayerHeatmap.tsx`, `src/components/PlayerRadar.tsx`, `src/components/PlayerBioEditor.tsx`.
-Archivos modificados: `src/routes/jugadora.$id.tsx`, `src/lib/volley-store.ts` (campos opcionales en `Player`), `src/styles.css` (reglas `@media print`).
-
-¿Avanzo con este alcance completo, o preferís que lo entregue en fases (fase 1: contexto + evolución + radar + insights + tendencias; fase 2: heatmaps + rotaciones + patrones + armador; fase 3: exportaciones + timeline + bio)?
+Confirmá y avanzo con la implementación en un solo turno.
