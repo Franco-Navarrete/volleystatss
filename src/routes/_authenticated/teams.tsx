@@ -1653,6 +1653,7 @@ function TeamsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <MyClubDialog open={showClubDialog} onOpenChange={setShowClubDialog} />
     </AppShell>
   );
 }
