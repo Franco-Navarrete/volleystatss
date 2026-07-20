@@ -1,63 +1,74 @@
+# Rediseño del perfil de jugadora
 
-## Objetivo
+Objetivo: convertir `/jugadora/$id` en un panel de análisis individual, eliminar los filtros de búsqueda y organizar la información en bloques temáticos.
 
-Al tocar un jugador en cancha, ya sabemos la zona de origen (su posición real). Eliminar la pantalla "¿DESDE QUÉ ZONA?" y reemplazar el catálogo actual de tipos de ataque por uno nuevo, filtrado por rol + fila (delantero/zaguero). Después del tipo, elegir resultado (Punto / Continúa / Error) y, salvo en Error, marcar la zona de destino (opcional).
+## 1. Eliminar de la página
 
-El diálogo integrado post-recepción (Zona armado → Dirección → Acción → Valoración) no se toca.
+- Barra horizontal de ligas y todos los chips con `overflow-x-auto`.
+- Estado `leagueFilter` y el filtrado de `matches` por liga.
+- Toda referencia a filtros heredados de la pantalla anterior.
 
-## Flujo nuevo (tap jugador → ataque/contra)
+Los filtros seguirán existiendo solo en Equipos, Jugadores y Partidos.
 
-```text
-Tap jugador
-   ↓
-Acción (Saque / Ataque rot. / Contra / Bloqueo / Err. ataque / Err. no forz. / Err. saque)
-   ↓  (solo si Ataque rot. o Contraataque)
-Tipo de ataque  ← filtrado por rol + fila; ya no se pregunta zona origen
-   ↓
-Resultado: Punto · Continúa · Error
-   ↓  (si Punto o Continúa)
-Zona destino (grilla 3×3, con botón "Sin zona / saltar")
-   ↓
-Guardar y volver
-```
+## 2. Nuevo layout — dashboard por bloques
 
-Si el resultado es Error → se guarda como `attack_error` y no se pide zona destino.
-"Continúa" se guarda como `attack_neutral` / `counter_neutral` (ya existen esos PointType).
+Debajo del encabezado, un dashboard con estas secciones:
 
-## Catálogo nuevo de tipos de ataque
+**Resumen (tarjetas)** — Partidos jugados, Sets jugados*, Puntos, Aces, Ataques, Bloqueos, Errores totales, Eficiencia general.
+Más una tarjeta "Rendimiento" (score MVP promedio).
 
-Reemplazar `src/lib/formations/attack-types.ts` (mantengo el nombre `AttackType` para no romper el store; los ids viejos dejan de emitirse hacia adelante).
+**Gráficos**
+- Evolución por partido (barras de puntos, ya existe — se mejora visualmente).
+- Rendimiento por rival (top 5 rivales por puntos).
+- Rendimiento por liga (agrupado según liga del rival — usa la liga del equipo local para partidos ya jugados).
 
-| Rol + fila | Opciones (id → label corto) |
-|---|---|
-| Punta delantero (Z4) | `jatu` JATU · `alta_z4` Alta · `media_z4` Media · `emergencia` Emergencia |
-| Punta zaguero (Z6) | `pipe` Pipe · `emergencia` Emergencia |
-| Central delantero (Z3) | `primer_tiempo` 1er tiempo · `corta_atras` Corta atrás · `v` V · `emergencia` Emergencia |
-| Opuesto delantero (Z2) | `alta_z2` Alta · `media_z2` Media · `emergencia` Emergencia |
-| Opuesto zaguero (Z1) | `zaguero_z1` Zaguero · `emergencia` Emergencia |
-| Armador / Líbero / Central zaguero / fallback | `emergencia` Emergencia |
+**Ataque** — totales, puntos, errores, eficiencia; desglose Ataque/Contraataque/Rotación (los tres tipos que sí trackea la app).
 
-`getAttackTypeOptions({ position, isBackRow })` se reescribe para devolver estas listas. `ATTACK_TYPE_LABEL` / `ATTACK_TYPE_SHORT` se regeneran; ids viejos se dejan en un mapa de "legacy → label" solo para render de eventos históricos en stats (no aparecen en pickers).
+**Recepción** — Total, Positivas, Neutras, Negativas, % perfecta y % eficiencia (fórmulas ya definidas en el store).
 
-## Cambios de código
+**Saque** — Aces, Errores, Saques efectivos (aces + puntos ganados en el rally posterior no está trackeado; se muestra "Aces / Errores / Ratio").
 
-- **`src/lib/formations/attack-types.ts`** — nuevo union type con los ids de arriba; mapa `LEGACY_ATTACK_TYPE_LABEL` para eventos guardados con ids viejos; `getAttackTypeOptions` filtra por rol/fila. `ALL_ATTACK_TYPES` = union nuevo.
-- **`src/components/AttackTypesPanel.tsx`** y **`src/lib/attack-type-stats.ts`** — usar el nuevo catálogo; fallback al label legacy si el id no está en el catálogo nuevo (para partidos ya jugados).
-- **`src/components/scorer/AttackTypeDialog.tsx`** — sin cambios estructurales; ya usa `getAttackTypeOptions`. Ajustar copy del subtítulo a "Tipo de ataque · Z4 Punta", etc., derivando la zona/rol desde el jugador y la fila.
-- **`src/routes/_authenticated/matches.$id.index.tsx`**
-  - `submitAction`: para `rotation_attack` / `counter_attack` en modo entrenador, saltar `pendingZone` y pasar directo a `pendingAttackType` (con `zone` = zona real de la posición del jugador, calculada desde `onCourt.indexOf(playerId)` → 0=Z1, 1=Z2, 2=Z3, 3=Z4, 4=Z5, 5=Z6).
-  - Después de `AttackTypeDialog`, abrir un nuevo **`AttackResultDialog`** (Punto / Continúa / Error). Punto → mantiene el `PointType` original (`rotation_attack`/`counter_attack`). Continúa → convierte a `attack_neutral`/`counter_neutral`. Error → `attack_error`.
-  - Después del resultado (si no fue Error), abrir **`AttackDirectionDialog`** con la grilla 3×3 existente (`AttackDirectionGrid`) + botón "Sin zona / saltar". Al elegir/saltar, `recordPoint(match.id, side, finalType, playerId, originZone, attackType, direction)`.
-  - Eliminar el bloque `pendingZone` (líneas ~600-704) para taps de jugador; el diálogo "¿DESDE QUÉ ZONA?" desaparece. La lógica `pendingZone` puede quedar sin usar; se retira su render y setter.
-- **`src/lib/volley-store.ts`** — verificar que `recordPoint` acepte `attackDirection` como parámetro opcional junto con `attackZone` y `attackType`; si no, agregarlo y persistirlo en el evento (mismo campo que ya usa el flujo integrado).
+**Bloqueo** — Bloqueos punto, Errores de bloqueo (`blockError`), Ratio.
 
-## Componentes nuevos
+**Defensa** — sección informativa: "Sin trackeo por jugadora todavía" con un badge tenue (freeballs/defensas/continuidades no se registran por jugadora en el modelo actual). Se deja el bloque preparado para cuando existan datos.
 
-- `src/components/scorer/AttackResultDialog.tsx` — 3 botones grandes (Punto verde · Continúa gris · Error rojo).
-- `src/components/scorer/AttackDirectionDialog.tsx` — envuelve `AttackDirectionGrid` en un `Dialog` con header del jugador y botón "Sin zona / saltar".
+**Historial** — tabla completa: Fecha, Rival, Liga, Resultado, Puntos, Ataques, Recepción%, Saque (aces/err), Bloqueo. Filas clicables al partido.
 
-## Notas
+**Comparación** — tarjetas con delta vs:
+- Promedio del equipo (jugadoras del mismo equipo, mismo periodo).
+- Promedio de la liga (jugadoras cuyo equipo comparte liga con el de la jugadora).
+- Jugadoras del mismo puesto (misma `position`).
 
-- La zona de origen ya no se pregunta, se deduce del pin tocado. Se sigue guardando en el evento (`attackZone`) para no romper stats existentes.
-- Datos históricos con tipos viejos (`first_tempo`, `slide`, `tense_middle`, `high_outside`…) se siguen mostrando en paneles vía `LEGACY_ATTACK_TYPE_LABEL`; no se re-clasifican.
-- El flujo del diálogo integrado post-recepción y los botones de bloqueo / error no forzado / saque no cambian.
+*Sets jugados: derivar del recuento de sets de los partidos donde participó (no hay minutaje por set en el modelo; se usa `sets.length` del match como aproximación).
+
+## 3. Estado vacío
+
+Reemplazar el mensaje simple por una tarjeta grande centrada:
+
+- Icono grande (BarChart3).
+- Título: "Sin estadísticas disponibles".
+- Descripción: "Esta jugadora todavía no tiene partidos registrados. Cuando participe en un partido usando Rally, aquí aparecerán sus estadísticas, gráficos y evolución."
+- Botón primario: "Ver partidos del equipo" → `/equipos/$id`.
+
+## 4. Detalles técnicos
+
+- Se modifica únicamente `src/routes/jugadora.$id.tsx`.
+- Se añaden funciones locales `computeTeamAverages`, `computeLeagueAverages`, `computePositionAverages` que reutilizan `computeHistoricalStats(matches, teams)` filtrando el arreglo de agregados resultante. Sin cambios en el store ni en `historical-stats.ts`.
+- Todas las agregaciones se memoizan.
+- Sin librería de charts nueva: barras simples con divs (ya se usa así hoy). Mantiene bundle pequeño y estética consistente.
+- Estilo oscuro actual, `border-border/60`, `bg-card/40`, acentos en `text-primary`, `tabular-nums` para números.
+
+## 5. Fuera de alcance
+
+Los siguientes requieren nueva agregación de eventos por jugadora que hoy no existe:
+
+- Mapa de calor y ataques por zona/tipo (los eventos guardan zona/tipo, pero `PlayerAggregate` no los desglosa).
+- Rendimiento por set y por rotación por jugadora.
+- Distribución de saque por zona.
+- Defensa/freeballs/continuidades por jugadora.
+
+Se dejan como bloques con placeholder "Próximamente" para no romper el layout ni la promesa visual, y se puede abordar en un turno posterior extendiendo `PlayerAggregate`.
+
+## Confirmación
+
+¿Avanzo con este alcance (secciones con datos reales + placeholders para las métricas que aún no se agregan por jugadora), o preferís que primero extienda `historical-stats.ts` para calcular zonas/rotaciones/set/defensa antes de rediseñar la UI?
