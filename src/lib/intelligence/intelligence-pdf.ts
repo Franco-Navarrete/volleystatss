@@ -584,78 +584,113 @@ function paintChrome(ctx: RenderCtx, totalPages: number) {
 // ================================================================
 function renderCover(ctx: RenderCtx, a: MatchAnalysis, coachName?: string, venue?: string) {
   const { doc, pageW, pageH, margin } = ctx;
-  fillRect(doc, 0, 0, pageW, 78, C.ink);
-  fillRect(doc, 0, 78, pageW, 2.2, C.navy);
 
-  setFont(doc, "bold", 11, C.white);
-  doc.text("RALLY", margin, 20);
-  setFont(doc, "normal", 11, [200, 210, 225]);
-  doc.text("  INTELLIGENCE", margin + doc.getTextWidth("RALLY"), 20);
-  setFont(doc, "normal", 9, [190, 200, 220]);
-  doc.text(ctx.meta.format === "executive" ? "INFORME EJECUTIVO" : "INFORME TÉCNICO COMPLETO", margin, 27);
+  // Fondo hero superior editorial
+  fillRect(doc, 0, 0, pageW, 96, C.ink);
+  // Franja de acento
+  fillRect(doc, 0, 96, pageW, 3, C.navy);
 
-  setFont(doc, "bold", 26, C.white);
-  const titleLines: string[] = doc.splitTextToSize(`${a.teamName}  vs  ${a.opponentName}`, pageW - margin * 2);
-  let ty = 50;
-  for (const line of titleLines.slice(0, 2)) { doc.text(line, margin, ty); ty += 10; }
+  // Marca
+  setFont(doc, "bold", 10, C.white);
+  doc.text("RALLY", margin, 18);
+  setFont(doc, "normal", 10, [200, 210, 225]);
+  doc.text("  INTELLIGENCE", margin + doc.getTextWidth("RALLY"), 18);
 
+  // Subtítulo formato
+  setFont(doc, "normal", 8.5, [180, 195, 220]);
+  doc.text(ctx.meta.format === "executive" ? "INFORME EJECUTIVO" : "INFORME TÉCNICO COMPLETO", margin, 25);
+
+  // Título editorial: equipo vs rival
+  setFont(doc, "bold", 30, C.white);
+  const titleLines: string[] = doc.splitTextToSize(fmtText(a.teamName), pageW - margin * 2);
+  doc.text(titleLines[0], margin, 52);
+  setFont(doc, "normal", 14, [200, 210, 225]);
+  doc.text("vs", margin, 63);
+  setFont(doc, "bold", 22, C.white);
+  const oppLines: string[] = doc.splitTextToSize(fmtText(a.opponentName), pageW - margin * 2 - 12);
+  doc.text(oppLines[0], margin + 10, 63);
+
+  // Fecha + competencia en línea de subtítulo
   const d = a.dashboard;
+  setFont(doc, "normal", 10, [190, 205, 225]);
+  const meta1 = [fmtText(d.date), fmtText(d.competition)].filter((s) => s !== NA).join("  ·  ");
+  if (meta1) doc.text(meta1, margin, 78);
+  if (venue) {
+    setFont(doc, "italic", 9, [170, 190, 215]);
+    doc.text(fmtText(venue), margin, 86);
+  }
+
+  // ---- Bloque central: Resultado + Índice Rally ----
   const scoreLine = fmtScoreline(d.scoreline);
   const setsOnly = scoreLine !== NA ? scoreLine.split(" ")[0] : NA;
-
-  const centerX = pageW / 2;
-  const blockY = 108;
-
-  setFont(doc, "normal", 10, C.mute);
-  textCenter(doc, "RESULTADO", centerX, blockY);
-  setFont(doc, "bold", 44, C.ink);
-  textCenter(doc, setsOnly, centerX, blockY + 18);
-  setFont(doc, "bold", 11, d.result === "victoria" ? C.good : d.result === "derrota" ? C.bad : C.slate);
-  textCenter(doc, (d.result || NA).toUpperCase(), centerX, blockY + 25);
-  if (scoreLine !== NA && scoreLine.includes("(")) {
-    setFont(doc, "normal", 9, C.slate);
-    const detail = scoreLine.substring(scoreLine.indexOf("("));
-    textCenter(doc, detail, centerX, blockY + 31);
-  }
-
-  // Gauge Rally central
   const idx = isNum(d.rallyIndex) ? Math.round(d.rallyIndex) : null;
-  drawGauge(doc, centerX, blockY + 78, 26, idx, "ÍNDICE RALLY");
 
-  const metaTop = 218;
-  hairline(doc, margin, metaTop - 6, pageW - margin, metaTop - 6);
-  const rows: [string, string][] = [
-    ["Equipo", fmtText(a.teamName)],
-    ["Rival", fmtText(a.opponentName)],
-    ["Fecha", fmtText(d.date)],
-    ["Competencia", fmtText(d.competition)],
-    ["Lugar", fmtText(venue)],
-    ["Duración", fmtDuration(d.durationMin)],
-    ["Entrenador", fmtText(coachName)],
-    ["MVP", fmtText(d.awards.mvp?.name)],
+  // Columna izquierda: resultado
+  setFont(doc, "normal", 9, C.mute);
+  doc.text("RESULTADO FINAL", margin, 122);
+  setFont(doc, "bold", 60, C.ink);
+  doc.text(setsOnly, margin, 158);
+  setFont(doc, "bold", 12, d.result === "victoria" ? C.good : d.result === "derrota" ? C.bad : C.slate);
+  doc.text((d.result || NA).toUpperCase(), margin, 168);
+  if (scoreLine !== NA && scoreLine.includes("(")) {
+    setFont(doc, "normal", 9.5, C.slate);
+    const detail = scoreLine.substring(scoreLine.indexOf("("));
+    doc.text(detail, margin, 176);
+  }
+  setFont(doc, "italic", 9, C.mute);
+  doc.text(fmtDuration(d.durationMin), margin, 184);
+
+  // Columna derecha: Gauge Rally
+  const gaugeCX = pageW - margin - 40;
+  drawGauge(doc, gaugeCX, 156, 32, idx, "ÍNDICE RALLY");
+  setFont(doc, "normal", 8.5, C.slate);
+  const level = idx == null ? NA : statusLabel(rallyBand(idx));
+  textCenter(doc, level.toUpperCase(), gaugeCX, 194);
+
+  // ---- Bloque MVP editorial ----
+  const mvpY = 208;
+  fillRect(doc, margin, mvpY, pageW - margin * 2, 32, C.paper, 4);
+  fillRect(doc, margin, mvpY, 2, 32, C.navy);
+  const mvp = d.awards.mvp;
+  setFont(doc, "bold", 8, C.mute);
+  doc.text("★  JUGADOR MÁS VALIOSO", margin + 8, mvpY + 8);
+  setFont(doc, "bold", 18, C.ink);
+  doc.text(fmtText(mvp?.name), margin + 8, mvpY + 20);
+  if (mvp?.number != null) {
+    setFont(doc, "bold", 11, C.navy);
+    doc.text(`#${mvp.number}`, margin + 8, mvpY + 27);
+  }
+  setFont(doc, "normal", 9, C.slate);
+  doc.text(fmtText(mvp?.detail), margin + 40, mvpY + 27);
+
+  // ---- Meta editorial minimalista (sin tabla) ----
+  const metaY = 254;
+  setFont(doc, "bold", 8, C.mute);
+  const items: Array<[string, string]> = [
+    ["ENTRENADOR", fmtText(coachName)],
+    ["CATEGORÍA", fmtText(d.competition)],
+    ["DURACIÓN", fmtDuration(d.durationMin)],
+    ["FORMATO", ctx.meta.format === "executive" ? "Ejecutivo" : "Técnico completo"],
   ];
-  const colW = (pageW - margin * 2) / 2;
-  let ry = metaTop;
-  for (let i = 0; i < rows.length; i++) {
-    const [k, v] = rows[i];
-    const col = i % 2;
-    const cx = margin + col * colW;
-    if (i > 0 && col === 0) ry += 7;
-    setFont(doc, "bold", 8, C.mute);
-    doc.text(k.toUpperCase(), cx, ry);
-    setFont(doc, "normal", 10.5, C.ink);
-    doc.text(doc.splitTextToSize(v, colW - 4)[0], cx, ry + 5);
+  const cw = (pageW - margin * 2) / items.length;
+  for (let i = 0; i < items.length; i++) {
+    const cx = margin + i * cw;
+    setFont(doc, "bold", 7.5, C.mute);
+    doc.text(items[i][0], cx, metaY);
+    setFont(doc, "normal", 10, C.ink);
+    doc.text(doc.splitTextToSize(items[i][1], cw - 4)[0], cx, metaY + 6);
   }
 
+  // Firma inferior
   hairline(doc, margin, pageH - 22, pageW - margin, pageH - 22);
   setFont(doc, "italic", 8, C.mute);
   doc.text(
-    "Documento generado automáticamente por Rally Intelligence. Todos los datos provienen de eventos registrados en tiempo real durante el partido.",
-    margin, pageH - 16,
+    "Informe generado por Rally Intelligence. Datos derivados exclusivamente de eventos registrados en tiempo real.",
+    margin, pageH - 15,
   );
   setFont(doc, "normal", 8, C.slate);
-  doc.text(ctx.meta.generatedAt, margin, pageH - 10);
-  doc.text(ctx.meta.version, pageW - margin, pageH - 10, { align: "right" });
+  doc.text(ctx.meta.generatedAt, margin, pageH - 9);
+  doc.text(ctx.meta.version, pageW - margin, pageH - 9, { align: "right" });
 }
 
 // ================================================================
