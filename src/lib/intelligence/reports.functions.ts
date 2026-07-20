@@ -103,7 +103,7 @@ export const listIntelligenceReports = createServerFn({ method: "GET" })
       scope: r.scope as "match" | "team",
       scopeRef: r.scope_ref ?? "",
       title: r.title,
-      insights: (r.insights ?? []) as Insight[],
+      insights: (r.insights ?? []) as unknown as Insight[],
       summaryMd: r.summary_md ?? "",
       model: r.model ?? undefined,
       createdAt: new Date(r.created_at).getTime(),
