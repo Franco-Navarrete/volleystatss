@@ -1267,18 +1267,32 @@ function LiveMatch() {
 }
 
 function CompactShell({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+  const handleBack = () => {
+    // Prefer real browser history so we return to whichever page (perfil de jugador,
+    // liga, equipo, dashboard, etc.) originó la navegación al detalle del partido.
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    navigate({ to: "/matches" });
+  };
   return (
     <div className="live-match-shell h-[100dvh] max-h-[100dvh] overflow-hidden flex flex-col bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
       <header className="border-b border-border/60 bg-card px-3 md:px-8 h-8 md:h-14 flex items-center justify-between shrink-0">
-        <Link to="/matches" className="flex items-center gap-2 md:gap-3 min-h-10">
+        <Link to="/" className="flex items-center gap-2 md:gap-3 min-h-10">
           <div className="size-6 md:size-9 rounded-md md:rounded-lg bg-gradient-primary flex items-center justify-center">
             <Volleyball className="size-3.5 md:size-5 text-primary-foreground" />
           </div>
           <span className="font-bold text-xs md:text-base tracking-tight">RALLY</span>
         </Link>
-        <Link to="/matches" className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold min-h-10 flex items-center">
-          ← Partidos
-        </Link>
+        <button
+          type="button"
+          onClick={handleBack}
+          className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold min-h-10 flex items-center bg-transparent border-0 cursor-pointer"
+        >
+          ← Volver
+        </button>
       </header>
       <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
     </div>
