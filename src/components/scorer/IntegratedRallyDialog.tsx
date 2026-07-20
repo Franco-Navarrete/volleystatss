@@ -271,6 +271,19 @@ export function IntegratedRallyDialog({
     }
   }, [receptionStep, onClose]);
 
+  const pickDefense = useCallback((rating: DefenseRating) => {
+    if (!defenseStep) return;
+    setDefenseValue(rating);
+    const result = defenseStep.onRegister(rating);
+    toast.success(`✓ Defensa ${DEFENSE_OPTIONS.find((r) => r.key === rating)?.label ?? ""}`, { duration: 900 });
+    if (result.proceed) {
+      setEffectiveQuality(result.quality);
+      setStep("zone");
+    } else {
+      onClose();
+    }
+  }, [defenseStep, onClose]);
+
   const pickZone = useCallback((z: SettingAttackZone) => {
     const pid = zoneAssignments[z] ?? onCourt[0];
     setZone(z);
