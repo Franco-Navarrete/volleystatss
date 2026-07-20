@@ -282,9 +282,8 @@ export function LiveStatsTable({
               const hasRec = p.recTotal > 0;
               const hasBlk = p.block + p.blockError > 0;
               return (
-                <>
+                <Fragment key={p.playerId}>
                   <tr
-                    key={p.playerId}
                     className="border-t border-border/40 hover:bg-secondary/30 cursor-pointer"
                     onClick={() => toggleExpand(p.playerId)}
                   >
