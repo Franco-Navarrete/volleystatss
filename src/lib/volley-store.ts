@@ -555,6 +555,7 @@ interface VolleyState {
   ) => void;
   overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
+  recordDefense: (matchId: string, side: "A" | "B", playerId: string, rating: DefenseRating) => void;
   recordSetting: (
     matchId: string,
     side: "A" | "B",
