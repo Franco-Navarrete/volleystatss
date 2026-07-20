@@ -151,6 +151,7 @@ function LiveMatch() {
   const recordSanction = useVolley((s) => s.recordSanction);
   const overrideLineup = useVolley((s) => s.overrideLineup);
   const recordReception = useVolley((s) => s.recordReception);
+  const recordDefense = useVolley((s) => s.recordDefense);
   const recordSetting = useVolley((s) => s.recordSetting);
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
   const overrideScore = useVolley((s) => s.overrideScore);
@@ -193,7 +194,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showSettingDialog, setShowSettingDialog] = useState(false);
-  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string } | null>(null);
+  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string; defenderId?: string } | null>(null);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [showFormationDialog, setShowFormationDialog] = useState(false);
@@ -319,6 +320,17 @@ function LiveMatch() {
       } else {
         setPendingReception({ side, playerId });
       }
+      return;
+    }
+    // Continuidad del rally: si toca defender y el usuario clickea a un
+    // jugador de ese equipo, abrimos el flujo integrado en el paso "Defensa".
+    if (
+      isCoach &&
+      rallyCtx.currentPhase === "defense" &&
+      rallyCtx.currentPhaseSide === side &&
+      !rallyCtx.finished
+    ) {
+      setIntegratedRally({ side, defenderId: playerId });
       return;
     }
     setPendingPlayer({ side, playerId });
@@ -1291,6 +1303,15 @@ function LiveMatch() {
               };
               const quality = map[rating];
               return { proceed: !!quality, quality };
+            },
+          } : undefined}
+          defenseStep={integratedRally.defenderId ? {
+            playerId: integratedRally.defenderId,
+            onRegister: (rating) => {
+              const side = integratedRally.side;
+              recordDefense(match.id, side, integratedRally.defenderId!, rating);
+              // Toda defensa que no cierra el rally habilita armado (calidad neutra).
+              return { proceed: rating !== "error", quality: "!" };
             },
           } : undefined}
           onSubmit={(payload) => {

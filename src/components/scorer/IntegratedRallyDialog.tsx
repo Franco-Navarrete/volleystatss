@@ -16,6 +16,7 @@ import {
   type AttackDirection,
   type AttackZone,
   type ReceptionRating,
+  type DefenseRating,
   SETTING_ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { AttackDirectionGrid } from "@/components/court/AttackDirectionGrid";
@@ -36,6 +37,14 @@ interface Props {
       quality?: SettingQuality;
     };
   };
+  /** Cuando se define, el panel inicia en el paso "defense" con este jugador. */
+  defenseStep?: {
+    playerId: string;
+    onRegister: (rating: DefenseRating) => {
+      proceed: boolean;
+      quality?: SettingQuality;
+    };
+  };
   onSubmit: (payload: {
     setterId: string;
     setterQuality: SettingQuality;
@@ -44,6 +53,8 @@ interface Props {
     action: RallyAction;
     attackDirection?: AttackDirection;
     receptionQuality?: SettingQuality;
+    /** true si el flujo fue disparado tras una defensa (contraataque). */
+    isCounter?: boolean;
   }) => void;
 }
 
@@ -58,10 +69,11 @@ export type RallyAction =
 
 type ActionKind = "attack" | "counter" | "block" | "attack_error" | "unforced";
 type Rating = "point" | "neutral";
-type Step = "reception" | "zone" | "direction" | "action" | "rating";
+type Step = "reception" | "defense" | "zone" | "direction" | "action" | "rating";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "reception", label: "Recepción" },
+  { key: "defense", label: "Defensa" },
   { key: "zone", label: "Armado" },
   { key: "direction", label: "Zona" },
   { key: "action", label: "Ataque" },
@@ -78,11 +90,28 @@ const ACTION_KIND_LABEL: Record<ActionKind, string> = {
 
 const CURRENT_ACTION_TEXT: Record<Step, string> = {
   reception: "Esperando valoración de la recepción",
+  defense: "Esperando valoración de la defensa",
   zone: "Esperando zona del armado",
   direction: "Esperando zona destino",
   action: "Esperando tipo de acción",
   rating: "Esperando resultado",
 };
+
+interface DefenseOption {
+  key: DefenseRating;
+  label: string;
+  hotkey: string;
+  className: string;
+  quality?: SettingQuality; // undefined = corta la jugada (error)
+  desc: string;
+}
+const DEFENSE_OPTIONS: DefenseOption[] = [
+  { key: "excellent", label: "#", hotkey: "1", className: "bg-success text-success-foreground", quality: "++", desc: "Excelente" },
+  { key: "positive", label: "+", hotkey: "2", className: "bg-success/80 text-success-foreground", quality: "+", desc: "Positiva" },
+  { key: "controlled", label: "0", hotkey: "3", className: "bg-yellow-400 text-black", quality: "!", desc: "Controlada" },
+  { key: "weak", label: "−", hotkey: "4", className: "bg-yellow-500 text-black", quality: "-", desc: "Débil" },
+  { key: "error", label: "=", hotkey: "5", className: "bg-destructive text-destructive-foreground", desc: "Error" },
+];
 
 interface ReceptionOption {
   key: ReceptionRating;
@@ -177,6 +206,7 @@ export function IntegratedRallyDialog({
   onCourt,
   receptionQuality,
   receptionStep,
+  defenseStep,
   onSubmit,
 }: Props) {
   const playersOnCourt: Player[] = useMemo(
@@ -191,14 +221,20 @@ export function IntegratedRallyDialog({
     () => (receptionStep ? team.players.find((p) => p.id === receptionStep.playerId) : null),
     [receptionStep, team.players],
   );
+  const defensePlayer = useMemo(
+    () => (defenseStep ? team.players.find((p) => p.id === defenseStep.playerId) : null),
+    [defenseStep, team.players],
+  );
 
-  const initialStep: Step = receptionStep ? "reception" : "zone";
+  const initialStep: Step = defenseStep ? "defense" : receptionStep ? "reception" : "zone";
+  const isCounterFlow = !!defenseStep;
   const [step, setStep] = useState<Step>(initialStep);
   const [zone, setZone] = useState<SettingAttackZone | null>(null);
   const [attackerId, setAttackerId] = useState<string | null>(null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
   const [actionKind, setActionKind] = useState<ActionKind | null>(null);
   const [receptionValue, setReceptionValue] = useState<ReceptionRating | null>(null);
+  const [defenseValue, setDefenseValue] = useState<DefenseRating | null>(null);
   const [effectiveQuality, setEffectiveQuality] = useState<SettingQuality | undefined>(receptionQuality);
   const [fadeKey, setFadeKey] = useState(0);
 
@@ -212,6 +248,7 @@ export function IntegratedRallyDialog({
       setDirection(null);
       setActionKind(null);
       setReceptionValue(null);
+      setDefenseValue(null);
       setEffectiveQuality(receptionQuality);
     }
   }, [open, initialStep, receptionQuality]);
@@ -233,6 +270,19 @@ export function IntegratedRallyDialog({
       onClose();
     }
   }, [receptionStep, onClose]);
+
+  const pickDefense = useCallback((rating: DefenseRating) => {
+    if (!defenseStep) return;
+    setDefenseValue(rating);
+    const result = defenseStep.onRegister(rating);
+    toast.success(`✓ Defensa ${DEFENSE_OPTIONS.find((r) => r.key === rating)?.label ?? ""}`, { duration: 900 });
+    if (result.proceed) {
+      setEffectiveQuality(result.quality);
+      setStep("zone");
+    } else {
+      onClose();
+    }
+  }, [defenseStep, onClose]);
 
   const pickZone = useCallback((z: SettingAttackZone) => {
     const pid = zoneAssignments[z] ?? onCourt[0];
@@ -258,10 +308,11 @@ export function IntegratedRallyDialog({
       action: a,
       attackDirection: direction ?? undefined,
       receptionQuality: effectiveQuality,
+      isCounter: isCounterFlow,
     });
     toast.success("✓ Rally registrado", { duration: 900 });
     onClose();
-  }, [attackerId, setter, zone, direction, effectiveQuality, onSubmit, onClose]);
+  }, [attackerId, setter, zone, direction, effectiveQuality, onSubmit, onClose, isCounterFlow]);
 
   const pickActionKind = useCallback((k: ActionKind) => {
     setActionKind(k);
@@ -281,8 +332,9 @@ export function IntegratedRallyDialog({
     if (step === "rating") setStep("action");
     else if (step === "action") setStep("direction");
     else if (step === "direction") setStep("zone");
+    else if (step === "zone" && defenseStep) setStep("defense");
     else if (step === "zone" && receptionStep) setStep("reception");
-  }, [step, receptionStep]);
+  }, [step, receptionStep, defenseStep]);
 
   // Teclas rápidas
   useEffect(() => {
@@ -296,6 +348,9 @@ export function IntegratedRallyDialog({
       if (step === "reception") {
         const opt = RECEPTION_OPTIONS.find((o) => o.hotkey === ev.key);
         if (opt) { ev.preventDefault(); pickReception(opt.key); }
+      } else if (step === "defense") {
+        const opt = DEFENSE_OPTIONS.find((o) => o.hotkey === ev.key);
+        if (opt) { ev.preventDefault(); pickDefense(opt.key); }
       } else if (step === "zone") {
         const idx = Number(ev.key) - 1;
         if (idx >= 0 && idx < ZONE_ORDER.length) { ev.preventDefault(); pickZone(ZONE_ORDER[idx]); }
@@ -312,17 +367,22 @@ export function IntegratedRallyDialog({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, step, pickReception, pickZone, pickDirection, pickActionKind, pickRating, goBack]);
+  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, pickActionKind, pickRating, goBack]);
 
   const activeSteps: { key: Step; label: string }[] = useMemo(
-    () => receptionStep ? STEPS : STEPS.filter((s) => s.key !== "reception"),
-    [receptionStep],
+    () => STEPS.filter((s) => {
+      if (s.key === "reception") return !!receptionStep;
+      if (s.key === "defense") return !!defenseStep;
+      return true;
+    }),
+    [receptionStep, defenseStep],
   );
   const stepIdx = activeSteps.findIndex((s) => s.key === step);
 
   const attackerName = attackerId ? playersOnCourt.find((p) => p.id === attackerId) : null;
   const summary = [
     receptionValue && { label: "Recepción", value: RECEPTION_OPTIONS.find((r) => r.key === receptionValue)?.label ?? "" },
+    defenseValue && { label: "Defensa", value: DEFENSE_OPTIONS.find((r) => r.key === defenseValue)?.label ?? "" },
     setter && { label: "Armó", value: `#${setter.number}` },
     zone && { label: "Zona armado", value: SETTING_ATTACK_ZONE_LABEL[zone] },
     attackerName && { label: "Atacante", value: `#${attackerName.number} ${attackerName.name}` },
@@ -419,6 +479,34 @@ export function IntegratedRallyDialog({
                 </p>
               </div>
             )}
+
+            {step === "defense" && defensePlayer && (
+              <div className="space-y-2">
+                <div className="text-center">
+                  <div className="text-[10px] uppercase tracking-widest font-black text-orange-500">Defensa</div>
+                  <div className="scoreboard-digit text-2xl font-black">#{defensePlayer.number}</div>
+                  <div className="text-xs text-muted-foreground truncate">{defensePlayer.name}</div>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {DEFENSE_OPTIONS.map((o) => (
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() => pickDefense(o.key)}
+                      className={`relative min-h-16 rounded-lg font-black text-3xl active:scale-95 transition ${o.className}`}
+                      title={`${o.desc} · ${o.hotkey}`}
+                    >
+                      {o.label}
+                      <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-70">{o.hotkey}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-center text-muted-foreground">
+                  1# · 2+ · 30 · 4− · 5= — “Error” cierra el rally
+                </p>
+              </div>
+            )}
+
 
             {step === "zone" && (
               <div className="space-y-2">

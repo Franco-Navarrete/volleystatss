@@ -1,103 +1,87 @@
+## Objetivo
 
-# Rediseño pantalla de toma en vivo (`/matches/$id`)
+Corregir el flujo de registro para que refleje fielmente la estructura del voleibol:
+- **K1 (post-saque)**: Saque → Recepción → Armado → Ataque.
+- **A partir del 1er ataque**: si el rally continúa, ciclar automáticamente **Defensa → Armado → Contraataque** cuantas veces sea necesario. Nunca volver a Recepción dentro del mismo rally.
 
-Objetivo: acelerar el registro para 1 solo entrenador manteniendo la identidad Rally (tema oscuro, colores, tipografía). **No se toca la lógica de registro ni el flujo de acciones** — solo layout, jerarquía visual, ayudas contextuales y micro‑animaciones.
+## Cambios de datos (store)
 
-Archivo principal: `src/routes/_authenticated/matches.$id.index.tsx` (2499 líneas). Se apoya en varios componentes nuevos pequeños para no inflar el archivo.
+Archivo: `src/lib/volley-store.ts`
 
-## Áreas de trabajo
+- Nuevo evento `DefenseEvent`:
+  ```ts
+  { kind: "defense"; matchId; setNumber; side: "A"|"B"; playerId;
+    rating: "excellent" | "positive" | "controlled" | "weak" | "error";
+    timestamp }
+  ```
+- Nueva acción `recordDefense(matchId, side, playerId, rating)`. Si `rating === "error"`, otorga punto al rival (mismo patrón que `overpass` en recepción).
+- Añadir `DefenseEvent` a la unión `MatchEvent` y contemplarlo en `undoLastEvent` y en el replay del estado. No tocamos otras estadísticas: el evento existe pero **no altera** los cálculos actuales de recepción/ataque/bloqueo/eficiencia.
 
-### 1. Layout general — la cancha manda
-Grid a 3 filas: **header 8–10%** · **cancha 65–70%** · **barra inferior 8–10%**, con dos columnas de utilidades ultra‑delgadas a los lados de la cancha (56–64px). Se reducen paddings actuales y se elimina el `max-width` que aún limita en desktop.
+## Fase del rally (motor)
 
-### 2. Marcador superior compacto
-Una sola fila (≈56–64px):
+Archivo: `src/lib/rally-phase.ts`
 
-```text
-[LIVE] [Local logo] LOC 21 · Sets 1 · SAQUE ●   |   VIS 18 · Sets 0   [Visit logo]   ⏱ 34:21   [⋮]
-```
+Refactor de `computeRallyContext` para representar el ciclo real:
+- Fases base: `serve → reception → setting → attack`.
+- Tras el 1er `AttackAttemptEvent` (continúa el rally), el ciclo pasa a repetir: `defense → setting → counter_attack`.
+- Nuevas fases en la unión: `"counter_attack"` (visualmente "Contraataque"). La `possession` alterna con cada `AttackAttemptEvent` y con cada `DefenseEvent`.
+- `currentPhase` post-continuidad se determina así:
+  - último evento = `AttackAttempt` del equipo X → `currentPhase = "defense"` para el rival.
+  - último evento = `Defense` con rating ≠ error → `currentPhase = "setting"` para el defensor.
+  - último evento = `Setting` post-defensa → `currentPhase = "counter_attack"` para ese equipo.
+- Se elimina "Esperando recepción" una vez que hubo al menos un ataque en el rally.
 
-- Nombres cortos, puntos y sets en la misma línea con separadores.
-- Chip “SAQUE” con punto pulsante junto al equipo al saque.
-- Cronómetro y estado LIVE integrados al mismo renglón.
-- Menú `⋮` para acciones frías (Formato, Fin del partido, etc.).
+Además exportar un `RallyTimeline: Array<{ phase, side, playerId?, detail? }>` para el historial visual del rally en curso.
 
-### 3. Botones laterales cuadrados con icono + tooltip
-Convertir `Cambio / Líbero / Tiempo / Sanción` en columna de botones 44×44 con `lucide-react` (`Repeat`, `Shirt`, `Timer`, `AlertTriangle`) y `Tooltip` de shadcn. Un lado por equipo. Deshacer y Formación se elevan (más grandes / color primario). Estadísticas, Formato y Fin del partido se mueven al menú `⋮`.
+## Barra de progreso
 
-### 4. Jugadores en la cancha
-Ya existe `CourtPlayerBadge` (foto/iniciales + insignia número + hover stats). Se reutiliza y se refuerza:
-- Sin nombre dentro del círculo (ya está así).
-- Insignia número sobresaliente y siempre legible.
-- Al seleccionar para registrar acción → clase `.player-active` con halo pulsante (`ring-4 ring-primary/70 animate-pulse` + `box-shadow` glow).
+Archivo: `src/components/scorer/RallyProgressBar.tsx`
 
-### 5. Micro‑animaciones de acción
-Ya hay `HIGHLIGHT_STYLE` (ACE/PUNTO/BLOQUEO/REC+). Añadir keyframe `player-pop` (scale 1 → 1.12 → 1, 900ms) al detectar nuevo evento del jugador. Definido en `src/styles.css` para no depender de tailwind config.
+- Render dinámico basado en el timeline (no un array fijo). Los primeros 4 pasos siempre son `Saque · Recepción · Armado · Ataque`. Cada continuidad añade `Defensa · Armado · Contraataque` con color naranja (fase de rally largo) y numeración correlativa.
+- Marca `done`, `current`, y muestra flechas entre pasos. Con scroll horizontal si crece.
 
-### 6. Barra de progreso del rally
-Nuevo componente `RallyProgressBar` sobre la cancha:
+## Chips de contexto
 
-```text
-● SAQUE ✔  →  ● RECEPCIÓN ✔  →  ● ARMADO ✔  →  ○ ATAQUE  →  ○ BLOQUEO  →  ○ DEFENSA
-```
+Archivo: `src/components/scorer/RallyContextCards.tsx`
 
-Deriva estado del store leyendo los últimos eventos del rally en curso (sin cambiar la lógica: solo lectura). Al finalizar el rally muestra “✔ Rally finalizado” y se resetea al siguiente saque.
+- Cinta superior: `Equipo X atacando · Equipo Y defendiendo` se recalcula con la nueva `possession` en cada continuidad.
+- Nueva línea "Contexto del rally": `Rally #N · Saque CCF · Recepción AEC · Ataque CCF · Defensa AEC ← ACTUAL`, construida desde `RallyTimeline`.
 
-### 7. Panel “Acción actual”
-Chip flotante arriba‑derecha de la cancha:
+## Diálogo integrado
 
-```text
-ACCIÓN ACTUAL
-Recepción positiva · #7
-Esperando armado…
-```
+Archivo: `src/components/scorer/IntegratedRallyDialog.tsx`
 
-Se alimenta del mismo estado que la barra de progreso.
+- Nuevo `Step = "defense"` con 5 botones (Excelente / Positiva / Controlada / Débil / Error). Colores paralelos a los de recepción, hotkeys 1–5.
+- Nuevo prop `mode: "reception" | "defense"` (o derivado desde `receptionStep` vs `defenseStep`). Cuando llega en modo defensa:
+  - Paso 1: **Defensa** (valoración del defensor recibido por prop).
+  - Si rating ≠ error → paso 2: **Armado** (misma grilla actual).
+  - Continúa con **Zona destino → Acción → Resultado** (idéntico al flujo existente).
+  - Si rating = error → cierra y otorga punto al rival.
+- La barra interna del diálogo refleja el subciclo actual (Def → Armado → Contra → Zona → Resultado). Backspace sigue funcionando como "paso anterior".
+- Se remueve la posibilidad de volver a "Recepción" durante continuidad.
 
-### 8. Panel “Última acción”
-Chip flotante abajo‑izquierda:
+## Integración en la pantalla del partido
 
-```text
-ÚLTIMA · Ramiro
-Ataque JATU · Z5 · PUNTO
-```
+Archivo: `src/routes/_authenticated/matches.$id.index.tsx`
 
-Lee el último `PointEvent` del `match.events`.
+- `onPlayerClick` actual sólo dispara "Recepción" cuando `needsReception`. Añadir la lógica gemela:
+  - Si `rallyCtx.currentPhase === "defense"` y el clic es del lado que defiende → abrir `IntegratedRallyDialog` en modo `defense` con el jugador seleccionado como defensor.
+- Cuando el resultado del ataque es "Continúa" (ya existente, `recordAttackAttempt`), no cambiar nada: el nuevo `computeRallyContext` se encargará de mover `currentPhase` a `defense` del rival.
+- Menú de acciones del planillero (no-coach) sin cambios.
 
-### 9. Indicador de posesión
-Cinta fina bajo el marcador con `LOCAL ATACANDO · VISITANTE DEFENDIENDO`, calculado desde el equipo al saque y el último evento (recepción/ataque). Cambia automáticamente sin intervención.
+## Historial del rally (opcional visual)
 
-### 10. Cancha con zonas diferenciadas
-Añadir en `CourtFormation` (o wrapper) un sutil degradado / `bg-white/[0.02]` para zona de ataque vs zona de defensa, sin cambiar coordenadas ni tamaños de jugadores. Puramente cosmético.
+Nuevo componente `RallyTimelineStrip.tsx` colgado bajo la barra de progreso: chips con el resumen del rally vivo (Saque +, Recepción #, Armado Z4, Ataque Alta Z1, Defensa +, Armado Pipe, Contraataque JATU Z5, …). Se alimenta del `RallyTimeline` derivado. Se oculta si el rally está cerrado.
 
-### 11. Jerarquía de botones
-- **Grandes / primarios**: Armado, Formación, Deshacer.
-- **Medianos**: acciones laterales por equipo.
-- **En menú `⋮`**: Estadísticas, Formato, Fin del partido, Reclasificar, Compartir.
+## Validación
 
-## Detalles técnicos
-
-Nuevos archivos:
-- `src/components/scorer/ScorerHeader.tsx` — marcador compacto + posesión + menú.
-- `src/components/scorer/SideActionsRail.tsx` — columna de botones icónicos con tooltip.
-- `src/components/scorer/RallyProgressBar.tsx` — 6 pasos + estado finalizado.
-- `src/components/scorer/CurrentActionCard.tsx` y `LastActionCard.tsx` — chips flotantes.
-- `src/lib/rally-phase.ts` — helper puro que dada `match.events` devuelve `{ phase, lastEvent, possession, playerId, description }`. Cero mutaciones al store.
-
-Cambios a archivos existentes:
-- `src/routes/_authenticated/matches.$id.index.tsx` — reemplazar layout del header + laterales + barra inferior, montar los nuevos paneles. Toda la lógica de handlers `onRegister…` se mantiene idéntica; solo cambian los componentes visuales que la disparan.
-- `src/components/court/CourtPlayerBadge.tsx` — nueva prop `active` para el halo del jugador seleccionado.
-- `src/styles.css` — keyframes `player-pop`, clases `.player-active`, sutil gradiente de zonas.
-
-Restricciones respetadas:
-- Sin tocar el store (`src/lib/volley-store.ts`) ni los diálogos de registro (`IntegratedRallyDialog`, `AttackResultDialog`, etc.).
-- Sin cambiar tipos de eventos ni cálculos de estadísticas.
-- Se mantiene el modo tablet horizontal ya existente.
-- Todo en tokens semánticos (`bg-card`, `text-primary`, `border-border`), sin colores hardcoded.
+- Registro manual de un rally completo: saque, recepción +, armado Z4, ataque continúa → verificar que se ofrece Defensa en el rival, no Recepción.
+- Ciclo largo: encadenar 2–3 continuidades y ver la barra crecer con Defensa/Armado/Contraataque.
+- Undo: deshacer una defensa restaura la posesión previa; deshacer un attackAttempt vuelve al paso "esperando resultado" del atacante anterior.
+- `serve_error` y `ace` siguen cerrando el rally sin abrir recepción/defensa.
 
 ## Fuera de alcance (no se toca)
-- Lógica de rotaciones, líbero automático, fórmulas de eficiencia.
-- Flujo secuencial del diálogo de rally.
-- Vista pública `/m/$slug` (solo se beneficia indirectamente del badge activo si se comparte).
 
-Confirmá y avanzo con la implementación en un solo turno.
+- Cálculo de estadísticas de ataque, recepción, saque, bloqueo y eficiencias.
+- Modo planillero simple (sin cambios).
+- Sincronización a nube (`cloud-sync`), PDF, dashboards.

@@ -365,7 +365,35 @@ export interface AttackAttemptEvent {
   isCounter?: boolean;
 }
 
-export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent | AttackAttemptEvent;
+// ============= Defensa =============
+
+export type DefenseRating = "excellent" | "positive" | "controlled" | "weak" | "error";
+
+export const DEFENSE_RATING_LABEL: Record<DefenseRating, string> = {
+  excellent: "Excelente",
+  positive: "Positiva",
+  controlled: "Controlada",
+  weak: "Débil",
+  error: "Error",
+};
+
+/**
+ * Defensa dentro de un rally en curso (post-ataque rival). No modifica el
+ * cálculo de estadísticas existentes; sirve para representar el flujo real
+ * del juego y como base para métricas futuras. Si `rating === "error"` el
+ * equipo atacante recibe punto por error del defensor.
+ */
+export interface DefenseEvent {
+  id: string;
+  kind: "defense";
+  side: "A" | "B";
+  playerId: string;
+  rating: DefenseRating;
+  setNumber: number;
+  timestamp: number;
+}
+
+export type MatchEvent = PointEvent | SubstitutionEvent | TimeoutEvent | SanctionEvent | LiberoEvent | LineupOverrideEvent | ReceptionEvent | SettingEvent | AttackAttemptEvent | DefenseEvent;
 
 export interface MatchSet {
   number: number;
@@ -527,6 +555,7 @@ interface VolleyState {
   ) => void;
   overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
+  recordDefense: (matchId: string, side: "A" | "B", playerId: string, rating: DefenseRating) => void;
   recordSetting: (
     matchId: string,
     side: "A" | "B",
@@ -1157,6 +1186,39 @@ export const useVolley = create<VolleyState>()(
                 playerSide: servingSide,
                 playerId: serverId,
                 type: "ace",
+                setNumber: next.currentSet,
+                timestamp: Date.now() + 1,
+              };
+              next = { ...next, events: [...next.events, pev] };
+              return applyAutoLibero(next, s.teams);
+            }
+            return next;
+          }),
+        }));
+      },
+
+      recordDefense: (matchId, side, playerId, rating) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId || m.status === "finished") return m;
+            const ev: DefenseEvent = {
+              id: uid(),
+              kind: "defense",
+              side,
+              playerId,
+              rating,
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+            };
+            let next = { ...m, events: [...m.events, ev] };
+            if (rating === "error") {
+              const scoringSide: "A" | "B" = side === "A" ? "B" : "A";
+              const pev: PointEvent = {
+                id: uid(),
+                scoringSide,
+                playerSide: side,
+                playerId,
+                type: "unforced_error",
                 setNumber: next.currentSet,
                 timestamp: Date.now() + 1,
               };
