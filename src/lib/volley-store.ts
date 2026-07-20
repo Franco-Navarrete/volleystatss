@@ -115,16 +115,17 @@ export function getMatchStatsMode(
   return DEFAULT_STATS_MODE;
 }
 
-export type TeamGender = "M" | "F";
+export type TeamGender = "M" | "F" | "X";
 
 export const TEAM_GENDER_LABEL: Record<TeamGender, string> = {
   M: "Masculino",
   F: "Femenino",
+  X: "Mixto",
 };
 
-export type TeamCategory = "12" | "14" | "16" | "18" | "21" | "primera";
+export type TeamCategory = "12" | "14" | "16" | "18" | "21" | "primera" | "libre";
 
-export const TEAM_CATEGORIES: TeamCategory[] = ["12", "14", "16", "18", "21", "primera"];
+export const TEAM_CATEGORIES: TeamCategory[] = ["12", "14", "16", "18", "21", "primera", "libre"];
 
 export const TEAM_CATEGORY_LABEL: Record<TeamCategory, string> = {
   "12": "Sub-12",
@@ -133,6 +134,7 @@ export const TEAM_CATEGORY_LABEL: Record<TeamCategory, string> = {
   "18": "Sub-18",
   "21": "Sub-21",
   primera: "Primera",
+  libre: "Libre",
 };
 
 export interface Team {
@@ -140,15 +142,21 @@ export interface Team {
   name: string;
   shortName: string;
   color: string;
+  /** Optional secondary color used in the crest/badge. */
+  secondaryColor?: string;
   players: Player[];
   /** Optional league this team belongs to. */
   leagueId?: string;
   /** Optional team logo/crest as data URL or remote URL. */
   logoUrl?: string;
-  /** Optional team gender (masculino / femenino). */
+  /** Optional team gender (masculino / femenino / mixto). */
   gender?: TeamGender;
   /** Optional age category. */
   category?: TeamCategory;
+  /** Optional club name. */
+  club?: string;
+  /** Owner user id (Supabase auth) — coach or admin who owns the team. */
+  ownerId?: string;
 }
 
 
