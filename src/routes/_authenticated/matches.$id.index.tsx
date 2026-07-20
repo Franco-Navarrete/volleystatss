@@ -1596,7 +1596,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
 }
 
 function FormationSide({
-  side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick,
+  side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId,
 }: {
   side: "A" | "B"; team: Team; onCourt: string[];
   formation: ReturnType<typeof useFormation>;
@@ -1604,6 +1604,7 @@ function FormationSide({
   match: Match; serverPlayerId: string | null;
   needsReception: boolean; receivingSide: "A" | "B"; receiverIds: Set<string>;
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
+  activePlayerId?: string | null;
 }) {
   // Mapeo del slot (formation coords) → coords absolutas dentro de la mitad de cancha.
   //   formation.y: 0 = en la red, 100 = línea final
