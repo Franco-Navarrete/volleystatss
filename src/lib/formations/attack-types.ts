@@ -122,6 +122,11 @@ export function getAttackTypeOptions(opts: {
   if (position === "opuesto") {
     return (isBackRow ? OPUESTO_BACK : OPUESTO_FRONT).map(toOption);
   }
+  if (position === "universal") {
+    // Universal: se comporta según la fila que ocupe en la rotación.
+    // Delantero: opciones de punta/opuesto. Zaguero: pipe + zaguero Z1.
+    return (isBackRow ? OPUESTO_BACK : PUNTA_FRONT).map(toOption);
+  }
   // armador, líbero, sin posición → emergencia
   return FALLBACK.map(toOption);
 }
