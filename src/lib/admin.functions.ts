@@ -95,13 +95,45 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       password: data.password,
       email_confirm: true,
     });
+    let newUserId: string;
     if (created.error || !created.data.user) {
-      if (created.error?.name === "AuthWeakPasswordError" || (created.error as { code?: string } | null)?.code === "weak_password") {
+      const errMsg = created.error?.message ?? "";
+      const errCode = (created.error as { code?: string } | null)?.code;
+      const alreadyExists =
+        errCode === "email_exists" ||
+        errCode === "user_already_exists" ||
+        /already been registered|already registered|already exists/i.test(errMsg);
+      if (alreadyExists) {
+        // Look up existing user by email and reuse it (update password + permissions).
+        const { data: existing, error: lookupErr } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("email", data.email)
+          .maybeSingle();
+        let existingId = existing?.id as string | undefined;
+        if (!existingId) {
+          // Fallback: paginate auth users to find by email.
+          const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+          existingId = list?.users.find((u) => u.email?.toLowerCase() === data.email.toLowerCase())?.id;
+        }
+        if (lookupErr || !existingId) {
+          throw new Error("Ya existe un usuario con ese email, pero no se pudo recuperar. Editalo desde la lista.");
+        }
+        const { error: pwUpdErr } = await supabaseAdmin.auth.admin.updateUserById(existingId, {
+          password: data.password,
+          email_confirm: true,
+        });
+        if (pwUpdErr) throw new Error(pwUpdErr.message);
+        newUserId = existingId;
+      } else if (created.error?.name === "AuthWeakPasswordError" || errCode === "weak_password") {
         throw new Error("La contraseña es demasiado débil o conocida. Elegí una más segura (mezclá mayúsculas, números y símbolos).");
+      } else {
+        throw new Error(errMsg || "No se pudo crear el usuario.");
       }
-      throw new Error(created.error?.message ?? "No se pudo crear el usuario.");
+    } else {
+      newUserId = created.data.user.id;
     }
-    const newUserId = created.data.user.id;
+
 
     const { error: profileErr } = await supabaseAdmin
       .from("profiles")
