@@ -948,7 +948,7 @@ function TeamsPage() {
       )}
 
       {/* ========== Detail panel (below grid) ========== */}
-      {activeTeam && (
+      {activeTeam && (() => { const canManageActive = canManage(activeTeam); return (
         <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 scroll-mt-24" id="team-detail">
           <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
