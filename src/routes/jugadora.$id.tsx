@@ -777,12 +777,13 @@ function TimelinePanel({
 }
 
 function HistoryTable({
-  agg, matches, teamById, leagueById,
+  agg, matches, teamById, leagueById, playerId,
 }: {
   agg: PlayerAggregate;
   matches: Match[];
   teamById: Map<string, Team>;
   leagueById: Map<string, { id: string; name: string; season?: string }>;
+  playerId: string;
 }) {
   const matchIndex = new Map(matches.map((m) => [m.id, m]));
   return (
