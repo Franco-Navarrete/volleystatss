@@ -168,21 +168,24 @@ function PublicCourt({
                     return (
                       <div
                         key={`${ci}-${idx}`}
-                        className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md aspect-square size-[clamp(2rem,8vw,4rem)] md:size-[clamp(3rem,5vw,5rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""}`}
-                        style={isLibero
-                          ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
-                          : { background: col.team.color }}
-                        title={p ? `#${p.number} ${p.name}` : ""}
+                        className="relative aspect-square size-[clamp(2rem,8vw,4rem)] md:size-[clamp(3rem,5vw,5rem)] max-w-[86%] max-h-[86%]"
                       >
-                        <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
-                        {p && (
-                          <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
-                        )}
-                        {isLibero && (
-                          <span className="absolute top-0 left-1/2 -translate-x-1/2 px-1 rounded-b text-[5px] [@media(max-width:360px)]:text-[4px] sm:text-[8px] font-bold uppercase tracking-widest text-white" style={{ background: col.team.color }}>L</span>
-                        )}
-                        {isServer && (
-                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
+                        {p ? (
+                          <CourtPlayerBadge
+                            player={p}
+                            team={col.team}
+                            match={match}
+                            isServer={isServer}
+                            isLibero={isLibero}
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          <div
+                            className="w-full h-full rounded-full flex items-center justify-center text-white font-black shadow-md"
+                            style={{ background: col.team.color }}
+                          >
+                            <span className="scoreboard-digit">?</span>
+                          </div>
                         )}
                       </div>
                     );
