@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/intelligence")({
 function IntelligencePage() {
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
-  const players = useVolley((s) => s.players);
+  const players = useMemo(() => teams.flatMap((t) => t.players ?? []), [teams]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const finishedMatches = useMemo(
