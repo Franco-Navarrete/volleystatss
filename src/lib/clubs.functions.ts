@@ -125,7 +125,15 @@ export const updateClub = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      name?: string;
+      logo_url?: string | null;
+      city?: string | null;
+      province?: string | null;
+      country?: string | null;
+      primary_color?: string | null;
+      secondary_color?: string | null;
+    } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.logoUrl !== undefined) patch.logo_url = data.logoUrl;
     if (data.city !== undefined) patch.city = data.city;
