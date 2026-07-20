@@ -23,8 +23,10 @@ const positionSchema = z
   .enum(["punta", "central", "opuesto", "armador", "libero"])
   .optional()
   .nullable();
-const genderSchema = z.enum(["M", "F"]).optional().nullable();
-const categorySchema = z.enum(["12", "14", "16", "18", "21", "primera"]).optional().nullable();
+const genderSchema = z.enum(["M", "F", "X"]).optional().nullable();
+const categorySchema = z.enum(["12", "14", "16", "18", "21", "primera", "libre"]).optional().nullable();
+const clubSchema = z.string().trim().max(80).optional().nullable();
+const secondaryColorSchema = z.string().trim().max(20).optional().nullable();
 
 
 // ---------------- READ ----------------
@@ -52,27 +54,36 @@ export const listTeams = createServerFn({ method: "GET" })
       arr.push(p);
       playersByTeam.set(p.team_id, arr);
     }
-    const VALID_CATEGORIES = ["12", "14", "16", "18", "21", "primera"] as const;
+    const VALID_CATEGORIES = ["12", "14", "16", "18", "21", "primera", "libre"] as const;
     type Cat = (typeof VALID_CATEGORIES)[number];
-    return (teamsRes.data ?? []).map((t) => ({
-      id: t.id,
-      leagueId: t.league_id,
-      name: t.name,
-      shortName: t.short_name,
-      color: t.color,
-      logoUrl: t.logo_url ?? undefined,
-      gender: (t.gender === "M" || t.gender === "F" ? t.gender : undefined) as "M" | "F" | undefined,
-      category: (VALID_CATEGORIES.includes((t as { category?: string }).category as Cat)
-        ? ((t as { category?: string }).category as Cat)
-        : undefined),
-      players: (playersByTeam.get(t.id) ?? []).map((p) => ({
-        id: p.id,
-        name: p.name,
-        number: p.number,
-        position: p.position ?? undefined,
-        photoUrl: p.photo_url ?? undefined,
-      })),
-    }));
+    return (teamsRes.data ?? []).map((t) => {
+      const raw = t as unknown as Record<string, unknown>;
+      const gRaw = raw.gender;
+      const gender: "M" | "F" | "X" | undefined =
+        gRaw === "M" || gRaw === "F" || gRaw === "X" ? gRaw : undefined;
+      const catRaw = raw.category;
+      const category = VALID_CATEGORIES.includes(catRaw as Cat) ? (catRaw as Cat) : undefined;
+      return {
+        id: t.id,
+        leagueId: t.league_id,
+        name: t.name,
+        shortName: t.short_name,
+        color: t.color,
+        secondaryColor: (raw.secondary_color as string | null) ?? undefined,
+        club: (raw.club as string | null) ?? undefined,
+        ownerId: (raw.owner_id as string | null) ?? undefined,
+        logoUrl: t.logo_url ?? undefined,
+        gender,
+        category,
+        players: (playersByTeam.get(t.id) ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          number: p.number,
+          position: p.position ?? undefined,
+          photoUrl: p.photo_url ?? undefined,
+        })),
+      };
+    });
   });
 
 
@@ -85,9 +96,11 @@ export const createTeam = createServerFn({ method: "POST" })
     name: string;
     shortName: string;
     color: string;
+    secondaryColor?: string | null;
     logoUrl?: string | null;
-    gender?: "M" | "F" | null;
-    category?: "12" | "14" | "16" | "18" | "21" | "primera" | null;
+    gender?: "M" | "F" | "X" | null;
+    category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre" | null;
+    club?: string | null;
   }) =>
     z
       .object({
@@ -95,9 +108,11 @@ export const createTeam = createServerFn({ method: "POST" })
         name: nameSchema,
         shortName: shortSchema,
         color: colorSchema,
+        secondaryColor: secondaryColorSchema,
         logoUrl: optionalUrl,
         gender: genderSchema,
         category: categorySchema,
+        club: clubSchema,
       })
       .parse(input),
   )
@@ -113,7 +128,11 @@ export const createTeam = createServerFn({ method: "POST" })
         gender: data.gender ?? null,
         category: data.category ?? null,
         created_by: context.userId,
-      } as TeamUpdate & { name: string; short_name: string; color: string; created_by: string })
+        // owner_id required by new RLS policy
+        owner_id: context.userId,
+        club: data.club ?? null,
+        secondary_color: data.secondaryColor ?? null,
+      } as TeamUpdate & { name: string; short_name: string; color: string; created_by: string; owner_id: string })
       .select("id")
       .single();
     if (error) throw error;
@@ -128,10 +147,12 @@ export const updateTeam = createServerFn({ method: "POST" })
     name?: string;
     shortName?: string;
     color?: string;
+    secondaryColor?: string | null;
     logoUrl?: string | null;
     leagueId?: string | null;
-    gender?: "M" | "F" | null;
-    category?: "12" | "14" | "16" | "18" | "21" | "primera" | null;
+    gender?: "M" | "F" | "X" | null;
+    category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre" | null;
+    club?: string | null;
   }) =>
     z
       .object({
@@ -139,24 +160,32 @@ export const updateTeam = createServerFn({ method: "POST" })
         name: nameSchema.optional(),
         shortName: shortSchema.optional(),
         color: colorSchema.optional(),
+        secondaryColor: secondaryColorSchema,
         logoUrl: optionalUrl,
         leagueId: leagueIdSchema,
         gender: genderSchema,
         category: categorySchema,
+        club: clubSchema,
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: TeamUpdate & { category?: string | null } = {};
+    const patch: TeamUpdate & { category?: string | null; club?: string | null; secondary_color?: string | null } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.shortName !== undefined) patch.short_name = data.shortName;
     if (data.color !== undefined) patch.color = data.color;
+    if (data.secondaryColor !== undefined) patch.secondary_color = data.secondaryColor;
     if (data.logoUrl !== undefined) patch.logo_url = data.logoUrl;
     if (data.leagueId !== undefined) patch.league_id = data.leagueId;
     if (data.gender !== undefined) patch.gender = data.gender;
     if (data.category !== undefined) patch.category = data.category;
-    const { error } = await context.supabase.from("teams").update(patch).eq("id", data.id);
+    if (data.club !== undefined) patch.club = data.club;
+    const { error, count } = await context.supabase
+      .from("teams")
+      .update(patch, { count: "exact" })
+      .eq("id", data.id);
     if (error) throw error;
+    if (count === 0) throw new Error("No tiene permisos para administrar este equipo.");
     return { ok: true };
   });
 
@@ -165,8 +194,12 @@ export const deleteTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => z.object({ id: uuidSchema }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("teams").delete().eq("id", data.id);
+    const { error, count } = await context.supabase
+      .from("teams")
+      .delete({ count: "exact" })
+      .eq("id", data.id);
     if (error) throw error;
+    if (count === 0) throw new Error("No tiene permisos para administrar este equipo.");
     return { ok: true };
   });
 

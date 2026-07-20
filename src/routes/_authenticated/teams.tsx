@@ -20,6 +20,8 @@ import {
   type CloudTeam,
 } from "@/hooks/use-cloud-teams";
 import { useCanManageTeams } from "@/hooks/use-permissions";
+import { useCanCreateTeam } from "@/hooks/use-team-permissions";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
@@ -142,7 +144,15 @@ function TeamsPage() {
   }, [cloudLeagues, storeLeagues]);
 
   const perms = useCanManageTeams();
-  const canEdit = perms.allowed;
+  const legacyCanEdit = perms.allowed;
+  const { isAdmin } = useIsAdmin();
+  const { allowed: canCreate } = useCanCreateTeam();
+  const { user: authUser } = useAuthUser();
+  const currentUserId = authUser?.id;
+  const canManage = (t?: { ownerId?: string } | null) =>
+    isAdmin || (!!t && !!currentUserId && t.ownerId === currentUserId);
+  // Retained for global admin-only operations (e.g. auto-migration of legacy leagues).
+  const canEdit = isAdmin || legacyCanEdit;
   const mut = useTeamMutations();
 
   // Per-team activity index derived from local store matches (fallback source)
@@ -238,8 +248,10 @@ function TeamsPage() {
   const [color, setColor] = useState(COLORS[0]);
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [newLeagueId, setNewLeagueId] = useState<string>("");
-  const [newGender, setNewGender] = useState<"" | "M" | "F">("");
+  const [newGender, setNewGender] = useState<"" | "M" | "F" | "X">("");
   const [newCategory, setNewCategory] = useState<"" | TeamCategory>("");
+  const [newClub, setNewClub] = useState("");
+  const [newSecondaryColor, setNewSecondaryColor] = useState<string>("");
   const logoFileRef = useRef<HTMLInputElement | null>(null);
 
   // ============ Selection / detail state ============
@@ -431,6 +443,8 @@ function TeamsPage() {
     setNewLeagueId("");
     setNewGender("");
     setNewCategory("");
+    setNewClub("");
+    setNewSecondaryColor("");
     setLogo(undefined);
     setColor(COLORS[0]);
   };
@@ -473,7 +487,7 @@ function TeamsPage() {
               <Loader2 className="size-3 animate-spin" /> Guardando…
             </span>
           )}
-          {canEdit && (
+          {canCreate && (
             <Button
               size="sm"
               className="gap-1.5"
@@ -482,7 +496,7 @@ function TeamsPage() {
                 setShowNewTeam(true);
               }}
             >
-              <Plus className="size-4" /> Nuevo equipo
+              <Plus className="size-4" /> Crear equipo
             </Button>
           )}
         </div>
@@ -877,10 +891,27 @@ function TeamsPage() {
 
       {/* ========== Teams grid / list ========== */}
       {filteredTeams.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground">
-          {teams.length === 0
-            ? "Aún no hay equipos cargados."
-            : "Ningún equipo coincide con los filtros."}
+        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 p-10 text-center text-sm text-muted-foreground flex flex-col items-center gap-3">
+          {teams.length === 0 ? (
+            <>
+              <div className="text-base font-medium text-foreground">
+                Todavía no creaste ningún equipo.
+              </div>
+              {canCreate && (
+                <Button
+                  onClick={() => {
+                    resetNewTeamForm();
+                    setShowNewTeam(true);
+                  }}
+                  className="gap-1.5"
+                >
+                  <Plus className="size-4" /> Crear mi primer equipo
+                </Button>
+              )}
+            </>
+          ) : (
+            "Ningún equipo coincide con los filtros."
+          )}
         </div>
       ) : viewMode === "grid" ? (
         <ul className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -891,7 +922,7 @@ function TeamsPage() {
               league={t.leagueId ? leagueById.get(t.leagueId) : undefined}
               stats={teamStats.get(t.id) ?? { count: 0, lastAt: 0, nextAt: null }}
               onOpen={() => setSelected(t.id)}
-              canEdit={canEdit}
+              canEdit={canManage(t)}
               isActive={activeTeam?.id === t.id}
             />
           ))}
@@ -921,19 +952,19 @@ function TeamsPage() {
       )}
 
       {/* ========== Detail panel (below grid) ========== */}
-      {activeTeam && (
+      {activeTeam && (() => { const canManageActive = canManage(activeTeam); return (
         <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 scroll-mt-24" id="team-detail">
           <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <button
                 type="button"
-                onClick={() => canEdit && teamLogoFileRef.current?.click()}
+                onClick={() => canManageActive && teamLogoFileRef.current?.click()}
                 className="relative group rounded-lg overflow-hidden shrink-0"
-                title={canEdit ? "Cambiar escudo" : ""}
-                disabled={!canEdit}
+                title={canManageActive ? "Cambiar escudo" : ""}
+                disabled={!canManageActive}
               >
                 <TeamBadge team={activeTeam} size="lg" />
-                {canEdit && (
+                {canManageActive && (
                   <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                     <Camera className="size-4 text-white" />
                   </span>
@@ -981,7 +1012,7 @@ function TeamsPage() {
                     </p>
                   </>
                 )}
-                {activeTeam.logoUrl && !editingTeam && canEdit && (
+                {activeTeam.logoUrl && !editingTeam && canManageActive && (
                   <button
                     onClick={() => mut.updateTeam.mutate({ id: activeTeam.id, logoUrl: null })}
                     className="text-[10px] text-muted-foreground hover:text-destructive mt-1"
@@ -1013,7 +1044,7 @@ function TeamsPage() {
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
               <select
                 value={activeTeam.leagueId ?? ""}
-                disabled={!canEdit || leagues.length === 0}
+                disabled={!canManageActive || leagues.length === 0}
                 onChange={(e) => {
                   const newLeagueId = e.target.value || null;
                   mut.updateTeam.mutate({ id: activeTeam.id, leagueId: newLeagueId });
@@ -1035,7 +1066,7 @@ function TeamsPage() {
               </select>
               <select
                 value={activeTeam.gender ?? ""}
-                disabled={!canEdit}
+                disabled={!canManageActive}
                 onChange={(e) => {
                   const v = e.target.value;
                   mut.updateTeam.mutate({
@@ -1052,7 +1083,7 @@ function TeamsPage() {
               </select>
               <select
                 value={activeTeam.category ?? ""}
-                disabled={!canEdit}
+                disabled={!canManageActive}
                 onChange={(e) => {
                   const v = e.target.value as "" | TeamCategory;
                   mut.updateTeam.mutate({ id: activeTeam.id, category: v || null });
@@ -1068,7 +1099,7 @@ function TeamsPage() {
                 ))}
               </select>
 
-              {canEdit && (
+              {canManageActive && (
                 editingTeam ? (
                   <>
                     <Button
@@ -1120,7 +1151,7 @@ function TeamsPage() {
             </div>
           </div>
 
-          {canEdit && (
+          {canManageActive && (
             <div className="grid sm:grid-cols-[auto_1fr_90px_130px_auto] gap-2 mb-4 items-center">
               <button
                 type="button"
@@ -1230,8 +1261,8 @@ function TeamsPage() {
                 <li key={p.id} className="flex items-center gap-3 bg-secondary/40 rounded-lg px-3 py-2">
                   <button
                     type="button"
-                    title={canEdit ? "Cambiar foto" : ""}
-                    disabled={!canEdit}
+                    title={canManageActive ? "Cambiar foto" : ""}
+                    disabled={!canManageActive}
                     onClick={() => {
                       setEditingPlayerId(p.id);
                       editFileRef.current?.click();
@@ -1245,7 +1276,7 @@ function TeamsPage() {
                     )}
                   </button>
 
-                  {isEditing && canEdit ? (
+                  {isEditing && canManageActive ? (
                     <>
                       <Input
                         type="number"
@@ -1308,7 +1339,7 @@ function TeamsPage() {
                         {p.number}
                       </div>
                       <button
-                        onClick={() => canEdit && setEditingPlayerId(p.id)}
+                        onClick={() => canManageActive && setEditingPlayerId(p.id)}
                         className="flex-1 min-w-0 text-left"
                       >
                         <div className="truncate font-medium flex items-center gap-1">
@@ -1326,7 +1357,7 @@ function TeamsPage() {
                     </>
                   )}
 
-                  {p.photoUrl && !isEditing && canEdit && (
+                  {p.photoUrl && !isEditing && canManageActive && (
                     <button
                       onClick={() => mut.updatePlayer.mutate({ id: p.id, photoUrl: null })}
                       className="text-[10px] text-muted-foreground hover:text-destructive"
@@ -1334,7 +1365,7 @@ function TeamsPage() {
                       Quitar foto
                     </button>
                   )}
-                  {!isEditing && canEdit && (
+                  {!isEditing && canManageActive && (
                     <button
                       onClick={() => mut.deletePlayer.mutate({ id: p.id })}
                       className="text-muted-foreground hover:text-destructive"
@@ -1352,7 +1383,7 @@ function TeamsPage() {
             )}
           </ul>
         </section>
-      )}
+      ); })()}
 
       {/* ========== New team dialog ========== */}
       <Dialog open={showNewTeam} onOpenChange={setShowNewTeam}>
@@ -1419,15 +1450,21 @@ function TeamsPage() {
                 </option>
               ))}
             </select>
+            <Input
+              placeholder="Club (opcional)"
+              value={newClub}
+              onChange={(e) => setNewClub(e.target.value.slice(0, 80))}
+            />
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={newGender}
-                onChange={(e) => setNewGender(e.target.value as "" | "M" | "F")}
+                onChange={(e) => setNewGender(e.target.value as "" | "M" | "F" | "X")}
                 className="bg-background border border-input rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Sin género</option>
                 <option value="F">Femenino</option>
                 <option value="M">Masculino</option>
+                <option value="X">Mixto</option>
               </select>
               <select
                 value={newCategory}
@@ -1442,17 +1479,48 @@ function TeamsPage() {
                 ))}
               </select>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {COLORS.map((c) => (
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">
+                Color principal
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setColor(c)}
+                    className={`size-7 rounded-md ring-offset-2 ring-offset-card transition-all ${
+                      color === c ? "ring-2 ring-foreground scale-110" : ""
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">
+                Color secundario (opcional)
+              </div>
+              <div className="flex flex-wrap gap-1.5">
                 <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={`size-7 rounded-md ring-offset-2 ring-offset-card transition-all ${
-                    color === c ? "ring-2 ring-foreground scale-110" : ""
+                  onClick={() => setNewSecondaryColor("")}
+                  className={`size-7 rounded-md border border-border/60 flex items-center justify-center text-[10px] ${
+                    newSecondaryColor === "" ? "ring-2 ring-foreground scale-110" : ""
                   }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
+                  title="Sin color secundario"
+                >
+                  —
+                </button>
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setNewSecondaryColor(c)}
+                    className={`size-7 rounded-md ring-offset-2 ring-offset-card transition-all ${
+                      newSecondaryColor === c ? "ring-2 ring-foreground scale-110" : ""
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter className="flex-row gap-2">
@@ -1469,6 +1537,8 @@ function TeamsPage() {
                     name,
                     shortName,
                     color,
+                    secondaryColor: newSecondaryColor || null,
+                    club: newClub.trim() || null,
                     logoUrl: logo,
                     gender: newGender || null,
                     category: newCategory || null,

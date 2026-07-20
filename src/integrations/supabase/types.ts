@@ -419,6 +419,7 @@ export type Database = {
       teams: {
         Row: {
           category: string | null
+          club: string | null
           color: string
           created_at: string
           created_by: string | null
@@ -427,11 +428,14 @@ export type Database = {
           league_id: string | null
           logo_url: string | null
           name: string
+          owner_id: string | null
+          secondary_color: string | null
           short_name: string
           updated_at: string
         }
         Insert: {
           category?: string | null
+          club?: string | null
           color?: string
           created_at?: string
           created_by?: string | null
@@ -440,11 +444,14 @@ export type Database = {
           league_id?: string | null
           logo_url?: string | null
           name: string
+          owner_id?: string | null
+          secondary_color?: string | null
           short_name: string
           updated_at?: string
         }
         Update: {
           category?: string | null
+          club?: string | null
           color?: string
           created_at?: string
           created_by?: string | null
@@ -453,6 +460,8 @@ export type Database = {
           league_id?: string | null
           logo_url?: string | null
           name?: string
+          owner_id?: string | null
+          secondary_color?: string | null
           short_name?: string
           updated_at?: string
         }
@@ -540,6 +549,11 @@ export type Database = {
     }
     Functions: {
       can_create_matches: { Args: { _user_id: string }; Returns: boolean }
+      can_create_team: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
       has_league_access: {
         Args: { _league_id: string; _user_id: string }
