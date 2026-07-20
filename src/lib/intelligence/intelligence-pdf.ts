@@ -729,7 +729,7 @@ function renderToc(ctx: RenderCtx, tocPage: number) {
 // DASHBOARD EJECUTIVO — solo tarjetas grandes, sin tablas
 // ================================================================
 function renderDashboardBlock(ctx: RenderCtx, a: MatchAnalysis, _coach?: string, _venue?: string) {
-  drawH1(ctx, "Dashboard ejecutivo");
+  drawH1(ctx, "Dashboard ejecutivo", CHAPTER_QUESTION.dashboard);
   const d = a.dashboard;
   const doc = ctx.doc;
   const w = contentW(ctx);
@@ -847,7 +847,7 @@ function winProbability(a: MatchAnalysis): number | null {
 // ÍNDICE RALLY EN PROFUNDIDAD
 // ================================================================
 function renderRallyIndexSection(ctx: RenderCtx, a: MatchAnalysis, opts: { full: boolean }) {
-  drawH1(ctx, "Índice Rally");
+  drawH1(ctx, "Índice Rally", CHAPTER_QUESTION.rally);
   const { overall, breakdown } = a.rallyIndex;
   const idx = isNum(overall) ? Math.round(overall) : null;
 
@@ -921,7 +921,7 @@ function renderRallyIndexSection(ctx: RenderCtx, a: MatchAnalysis, opts: { full:
 // ================================================================
 function renderRadar(ctx: RenderCtx, a: MatchAnalysis) {
   if (!a.radarCompare?.length) return;
-  drawH1(ctx, "Radar comparativo");
+  drawH1(ctx, "Radar comparativo", "¿Cómo se comparan nuestros fundamentos con los del rival y con la temporada?");
   drawParagraph(ctx, "Comparación por fundamento entre equipo, rival y promedio de temporada.", { color: C.slate, size: 9.5 });
 
   drawCard(ctx, 100, (x, y, w) => {
@@ -966,7 +966,7 @@ function renderRadar(ctx: RenderCtx, a: MatchAnalysis) {
 // FUNDAMENTOS — tarjetas ricas
 // ================================================================
 function renderFundamentalChapters(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Análisis por fundamento");
+  drawH1(ctx, "Análisis por fundamento", CHAPTER_QUESTION.fund);
   drawParagraph(ctx, "Cada tarjeta condensa score, comparación con temporada, impacto, confianza y recomendación de trabajo.", { color: C.slate, size: 9.5 });
   for (const item of a.rallyIndex.breakdown) {
     const detailLines: string[] = ctx.doc.splitTextToSize(fmtText(item.detail), contentW(ctx) - 60);
@@ -1026,7 +1026,7 @@ function suggestExercise(label: string): string {
 // CANCHA ANALÍTICA (mapas de calor por fundamento)
 // ================================================================
 function renderCourtAnalytics(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Cancha analítica");
+  drawH1(ctx, "Mapas de cancha", CHAPTER_QUESTION.court);
   drawParagraph(ctx, "Distribución por zona. La intensidad del color indica la frecuencia; el porcentaje muestra eficacia.", { color: C.slate, size: 9.5 });
 
   // Mapa de ataque (usa attackZones si están)
@@ -1074,7 +1074,7 @@ function renderCourtAnalytics(ctx: RenderCtx, a: MatchAnalysis) {
 // ROTACIONES
 // ================================================================
 function renderRotationBlock(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Análisis por rotación");
+  drawH1(ctx, "Rotaciones", CHAPTER_QUESTION.rot);
   const rot = [...a.strengths, ...a.weaknesses].filter((s) => s.category === "Rotación");
   if (!rot.length) { drawParagraph(ctx, "Sin rotaciones con desempeño destacado.", { color: C.slate, italic: true }); return; }
 
@@ -1152,7 +1152,7 @@ function renderInsightCard(ctx: RenderCtx, card: StrengthCard, tone: "good" | "b
 // FORTALEZAS Y DEBILIDADES
 // ================================================================
 function renderStrengthsWeaknesses(ctx: RenderCtx, a: MatchAnalysis, executive: boolean) {
-  drawH1(ctx, "Fortalezas y debilidades");
+  drawH1(ctx, "Fortalezas y debilidades", "¿Qué sostuvo al equipo y qué le costó puntos?");
   const strengths = a.strengths.slice(0, executive ? 3 : 8);
   const weaknesses = a.weaknesses.slice(0, executive ? 3 : 8);
   drawH2(ctx, "Fortalezas principales");
@@ -1168,7 +1168,7 @@ function renderStrengthsWeaknesses(ctx: RenderCtx, a: MatchAnalysis, executive: 
 // ANÁLISIS INDIVIDUAL — tarjetas de jugadora (grid 2 col)
 // ================================================================
 function renderPlayerAnalysis(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Análisis individual de jugadoras");
+  drawH1(ctx, "Jugadores", CHAPTER_QUESTION.player);
   if (!a.playerRadar.length) { drawParagraph(ctx, "Sin datos individuales suficientes.", { color: C.slate, italic: true }); return; }
   const list = a.playerRadar.slice(0, 12);
   const cardH = 46;
@@ -1217,7 +1217,7 @@ function renderPlayerAnalysis(ctx: RenderCtx, a: MatchAnalysis) {
 // TIMELINE VISUAL
 // ================================================================
 function renderTimeline(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Timeline del partido");
+  drawH1(ctx, "Timeline", "¿En qué momentos se decidió el partido?");
   if (!a.timeline.length && !a.setTrends.length) { drawParagraph(ctx, "Sin eventos destacados.", { color: C.slate, italic: true }); return; }
   drawCard(ctx, 70, (x, y, w) => {
     setFont(ctx.doc, "bold", 10, C.ink);
@@ -1242,7 +1242,7 @@ function renderTimeline(ctx: RenderCtx, a: MatchAnalysis) {
 // COMPARACIÓN CON TEMPORADA
 // ================================================================
 function renderSeasonComparison(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Comparación con temporada");
+  drawH1(ctx, "Comparación con temporada", CHAPTER_QUESTION.season);
   const rows = a.comparison.rows;
   if (!rows.length) { drawParagraph(ctx, "Sin datos históricos suficientes.", { color: C.slate, italic: true }); return; }
   for (const r of rows) {
@@ -1268,7 +1268,7 @@ function renderSeasonComparison(ctx: RenderCtx, a: MatchAnalysis) {
 // RIESGOS Y PREDICCIONES — matriz visual
 // ================================================================
 function renderRisksPredictions(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Riesgos detectados");
+  drawH1(ctx, "Riesgos", CHAPTER_QUESTION.risk);
   if (!a.risks.length) drawParagraph(ctx, "Sin riesgos destacados.", { color: C.slate, italic: true });
   else {
     drawCard(ctx, 76, (x, y, w) => {
@@ -1320,7 +1320,7 @@ function renderRecommendations(ctx: RenderCtx, a: MatchAnalysis) {
 // PLAN DE ENTRENAMIENTO — cronograma visual
 // ================================================================
 function renderTrainingPlan(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Plan de entrenamiento sugerido");
+  drawH1(ctx, "Plan de entrenamiento", CHAPTER_QUESTION.plan);
   const plan = a.trainingPlan;
   drawParagraph(ctx, `Duración total sugerida: ${isNum(plan.totalMinutes) ? plan.totalMinutes : NA} minutos.`, { color: C.slate });
   if (!plan.blocks.length) { drawParagraph(ctx, "Sin bloques definidos.", { color: C.slate, italic: true }); return; }
@@ -1378,7 +1378,7 @@ function renderTrainingPlan(ctx: RenderCtx, a: MatchAnalysis) {
 // COACH INSIGHTS
 // ================================================================
 function renderCoachInsights(ctx: RenderCtx, a: MatchAnalysis) {
-  drawH1(ctx, "Coach Insights");
+  drawH1(ctx, "Coach Insights", CHAPTER_QUESTION.coach);
   const ci = a.coachInsights;
   const blocks: Array<[string, string, RGB]> = [
     ["¿Por qué se ganó/perdió?", ci.whyResult, C.navy],
