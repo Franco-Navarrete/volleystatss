@@ -265,9 +265,13 @@ function TeamsPage() {
   });
   const [filterGender, setFilterGender] = useState<GenderChip>("all");
   const [filterCategory, setFilterCategory] = useState<"all" | TeamCategory>("all");
+  const [filterStatus, setFilterStatus] = useState<StatusChip>("all");
   const [sortBy, setSortBy] = useState<SortKey>("name");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [page, setPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const [leagueSearch, setLeagueSearch] = useState("");
+  const isMobile = useIsMobile();
 
   // Sync selection with the Ligas page (shared localStorage key)
   useEffect(() => {
