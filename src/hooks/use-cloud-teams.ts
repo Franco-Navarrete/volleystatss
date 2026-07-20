@@ -31,11 +31,13 @@ export type CloudTeam = {
   name: string;
   shortName: string;
   color: string;
+  secondaryColor?: string;
+  club?: string;
   logoUrl?: string;
-  gender?: "M" | "F";
-  category?: "12" | "14" | "16" | "18" | "21" | "primera";
+  gender?: "M" | "F" | "X";
+  category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre";
+  ownerId?: string;
   players: CloudPlayer[];
-
 };
 
 export type CloudLeague = {
