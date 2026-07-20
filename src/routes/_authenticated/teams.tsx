@@ -48,6 +48,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Shield,
   Trash2,
   Trophy,
   UserPlus,
