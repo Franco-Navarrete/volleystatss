@@ -334,60 +334,6 @@ html.force-landscape [data-slot="dialog-content"] button {
   min-height: 0;
 }
 
-/* Sheet + HoverCard portals: keep them aligned with the rotated live shell on
-   phone (force-landscape rotates the shell 90°), and un-rotate on tablet
-   (which uses the real landscape viewport). */
-
-/* Phone force-landscape: rotate Sheet portals to match the shell. */
-html.force-landscape:not(.device-tablet) [data-slot="sheet-overlay"] {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 9998 !important;
-}
-html.force-landscape:not(.device-tablet) [data-slot="sheet-content"] {
-  position: fixed !important;
-  top: 0 !important;
-  left: 100dvw !important;
-  width: 100dvh !important;
-  height: 100dvw !important;
-  max-width: none !important;
-  max-height: none !important;
-  transform: rotate(90deg) !important;
-  transform-origin: top left !important;
-  z-index: 9999 !important;
-  overflow-y: auto !important;
-}
-
-/* Phone force-landscape: rotate HoverCard / Popover popper wrappers. */
-html.force-landscape:not(.device-tablet) [data-radix-popper-content-wrapper],
-html.force-landscape:not(.device-tablet) [data-slot="hover-card-content"],
-html.force-landscape:not(.device-tablet) [data-slot="popover-content"],
-html.force-landscape:not(.device-tablet) [data-slot="dropdown-menu-content"],
-html.force-landscape:not(.device-tablet) [data-slot="tooltip-content"] {
-  transform: rotate(90deg) !important;
-  transform-origin: center center !important;
-}
-
-/* Tablet force-landscape: portals must NOT rotate (real landscape viewport). */
-html.device-tablet.force-landscape [data-slot="sheet-overlay"] {
-  position: fixed !important;
-  inset: 0 !important;
-  transform: none !important;
-}
-html.device-tablet.force-landscape [data-slot="sheet-content"] {
-  position: fixed !important;
-  transform: none !important;
-  max-width: min(560px, calc(100dvw - 28px)) !important;
-  max-height: 100dvh !important;
-}
-html.device-tablet.force-landscape [data-radix-popper-content-wrapper],
-html.device-tablet.force-landscape [data-slot="hover-card-content"],
-html.device-tablet.force-landscape [data-slot="popover-content"],
-html.device-tablet.force-landscape [data-slot="dropdown-menu-content"],
-html.device-tablet.force-landscape [data-slot="tooltip-content"] {
-  transform: none !important;
-}
-
 /* Ocultar spinners de inputs numéricos */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
