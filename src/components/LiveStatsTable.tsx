@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Team } from "@/lib/types";
+import type { Team } from "@/lib/volley-store";
 
 export type LiveStatsRow = {
   playerId: string;
