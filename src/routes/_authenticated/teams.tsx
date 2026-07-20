@@ -35,6 +35,7 @@ import {
   ArrowUpDown,
   BarChart3,
   Camera,
+  Check,
   CloudOff,
   LayoutGrid,
   List,
@@ -44,6 +45,7 @@ import {
   Pencil,
   Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
   Trophy,
   UserPlus,
@@ -52,6 +54,14 @@ import {
   Volleyball,
   X,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({ meta: [{ title: "Equipos · RALLY" }] }),
@@ -63,9 +73,17 @@ const MAX_PHOTO_BYTES = 800 * 1024;
 const PAGE_SIZE = 20;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type SortKey = "name" | "matches" | "league" | "created" | "activity";
+type SortKey =
+  | "name"
+  | "name_desc"
+  | "matches"
+  | "matches_asc"
+  | "league"
+  | "created"
+  | "activity";
 type ViewMode = "grid" | "list";
 type GenderChip = "all" | "F" | "M";
+type StatusChip = "all" | "active" | "no_league";
 
 async function fileToCompressedDataUrl(file: File): Promise<string> {
   const url = URL.createObjectURL(file);
@@ -247,9 +265,13 @@ function TeamsPage() {
   });
   const [filterGender, setFilterGender] = useState<GenderChip>("all");
   const [filterCategory, setFilterCategory] = useState<"all" | TeamCategory>("all");
+  const [filterStatus, setFilterStatus] = useState<StatusChip>("all");
   const [sortBy, setSortBy] = useState<SortKey>("name");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [page, setPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const [leagueSearch, setLeagueSearch] = useState("");
+  const isMobile = useIsMobile();
 
   // Sync selection with the Ligas page (shared localStorage key)
   useEffect(() => {
@@ -273,17 +295,31 @@ function TeamsPage() {
   // Reset pagination when filters change
   useEffect(() => {
     setPage(1);
-  }, [query, filterLeague, filterGender, filterCategory, sortBy]);
+  }, [query, filterLeague, filterGender, filterCategory, filterStatus, sortBy]);
 
   const leagueById = useMemo(() => new Map(leagues.map((l) => [l.id, l])), [leagues]);
 
+  // Team counts per league (for the filter panel)
+  const teamsPerLeague = useMemo(() => {
+    const m = new Map<string, number>();
+    let noLeague = 0;
+    for (const t of teams) {
+      if (t.leagueId) m.set(t.leagueId, (m.get(t.leagueId) ?? 0) + 1);
+      else noLeague++;
+    }
+    return { byId: m, noLeague };
+  }, [teams]);
+
   const filteredTeams = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     let list = teams.filter((t) => {
       if (filterLeague === "none" && t.leagueId) return false;
       if (filterLeague !== "all" && filterLeague !== "none" && t.leagueId !== filterLeague) return false;
       if (filterGender !== "all" && t.gender !== filterGender) return false;
       if (filterCategory !== "all" && t.category !== filterCategory) return false;
+      if (filterStatus === "no_league" && t.leagueId) return false;
+      if (filterStatus === "active" && stat(t.id).count === 0) return false;
       if (q) {
         const league = t.leagueId ? leagueById.get(t.leagueId)?.name ?? "" : "";
         const hay = [t.name, t.shortName, league].join(" ").toLowerCase();
@@ -291,11 +327,14 @@ function TeamsPage() {
       }
       return true;
     });
-    const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     list = [...list].sort((a, b) => {
       switch (sortBy) {
+        case "name_desc":
+          return b.name.localeCompare(a.name);
         case "matches":
           return stat(b.id).count - stat(a.id).count;
+        case "matches_asc":
+          return stat(a.id).count - stat(b.id).count;
         case "league": {
           const la = a.leagueId ? leagueById.get(a.leagueId)?.name ?? "zzz" : "zzz";
           const lb = b.leagueId ? leagueById.get(b.leagueId)?.name ?? "zzz" : "zzz";
@@ -311,7 +350,7 @@ function TeamsPage() {
       }
     });
     return list;
-  }, [teams, filterLeague, filterGender, filterCategory, query, sortBy, leagueById, teamStats]);
+  }, [teams, filterLeague, filterGender, filterCategory, filterStatus, query, sortBy, leagueById, teamStats]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTeams.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -487,110 +526,354 @@ function TeamsPage() {
         )}
       </div>
 
-      {/* ========== Chips row: gender ========== */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
-        <Chip
-          active={filterGender === "all"}
-          onClick={() => setFilterGender("all")}
-          icon={<Volleyball className="size-3.5" />}
-          label="Todos"
-        />
-        <Chip
-          active={filterGender === "F"}
-          onClick={() => setFilterGender("F")}
-          icon={<Venus className="size-3.5" />}
-          label="Femenino"
-        />
-        <Chip
-          active={filterGender === "M"}
-          onClick={() => setFilterGender("M")}
-          icon={<Mars className="size-3.5" />}
-          label="Masculino"
-        />
-      </div>
+      {/* ========== Toolbar: Filtros button + result count + view toggle ========== */}
+      {(() => {
+        const activeCount =
+          (filterGender !== "all" ? 1 : 0) +
+          (filterLeague !== "all" ? 1 : 0) +
+          (filterCategory !== "all" ? 1 : 0) +
+          (filterStatus !== "all" ? 1 : 0) +
+          (sortBy !== "name" ? 1 : 0);
+        const genderLabel =
+          filterGender === "F" ? "Femenino" : filterGender === "M" ? "Masculino" : null;
+        const leagueLabel =
+          filterLeague === "none"
+            ? "Sin liga"
+            : filterLeague !== "all"
+              ? leagueById.get(filterLeague)?.name ?? null
+              : null;
+        const categoryLabel =
+          filterCategory !== "all" ? TEAM_CATEGORY_LABEL[filterCategory] : null;
+        const statusLabel =
+          filterStatus === "active"
+            ? "Activos"
+            : filterStatus === "no_league"
+              ? "Sin liga"
+              : null;
+        const sortLabel = sortBy !== "name" ? SORT_LABELS[sortBy] : null;
+        const anyChip =
+          !!(genderLabel || leagueLabel || categoryLabel || statusLabel || sortLabel);
 
-      {/* ========== Chips row: leagues ========== */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3 -mx-1 px-1">
-        <Chip
-          active={filterLeague === "all"}
-          onClick={() => setFilterLeague("all")}
-          icon={<Trophy className="size-3.5" />}
-          label="Todas las ligas"
-        />
-        <Chip
-          active={filterLeague === "none"}
-          onClick={() => setFilterLeague("none")}
-          label="Sin liga"
-        />
-        {leagues.map((l) => (
-          <Chip
-            key={l.id}
-            active={filterLeague === l.id}
-            onClick={() => setFilterLeague(l.id)}
-            label={l.name + (l.season ? ` · ${l.season}` : "")}
-            accent={l.color}
-          />
-        ))}
-      </div>
+        return (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setShowFilters(true)}
+                className="h-10 inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card px-3.5 text-sm font-semibold hover:border-primary/50 hover:bg-secondary/40 transition-colors"
+              >
+                <SlidersHorizontal className="size-4" />
+                Filtros
+                {activeCount > 0 && (
+                  <span className="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold tabular-nums">
+                    {activeCount}
+                  </span>
+                )}
+              </button>
 
-      {/* ========== Sort / view toggle ========== */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-          {filteredTeams.length} {filteredTeams.length === 1 ? "equipo" : "equipos"}
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value as "all" | TeamCategory)}
-            className="h-9 rounded-lg bg-card border border-border/60 px-2.5 text-xs sm:text-sm"
-          >
-            <option value="all">Todas las categorías</option>
-            {TEAM_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {TEAM_CATEGORY_LABEL[c]}
-              </option>
-            ))}
-          </select>
-          <div className="relative">
-            <ArrowUpDown className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="h-9 rounded-lg bg-card border border-border/60 pl-8 pr-3 text-xs sm:text-sm"
-            >
-              <option value="name">Nombre</option>
-              <option value="matches">Cantidad de partidos</option>
-              <option value="league">Liga</option>
-              <option value="activity">Última actividad</option>
-              <option value="created">Fecha de creación</option>
-            </select>
-          </div>
-          <div className="flex items-center rounded-lg border border-border/60 bg-card p-0.5">
+              <div className="flex items-center gap-2">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold hidden xs:block">
+                  <span className="tabular-nums text-foreground font-bold">
+                    {filteredTeams.length}
+                  </span>{" "}
+                  {filteredTeams.length === 1 ? "equipo" : "equipos"}
+                </div>
+                <div className="flex items-center rounded-lg border border-border/60 bg-card p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    className={`size-8 rounded-md flex items-center justify-center transition-colors ${
+                      viewMode === "grid"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title="Vista en grilla"
+                    aria-label="Vista en grilla"
+                  >
+                    <LayoutGrid className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className={`size-8 rounded-md flex items-center justify-center transition-colors ${
+                      viewMode === "list"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title="Vista en lista"
+                    aria-label="Vista en lista"
+                  >
+                    <List className="size-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {anyChip && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                {genderLabel && (
+                  <ActiveChip
+                    label={genderLabel}
+                    onClear={() => setFilterGender("all")}
+                  />
+                )}
+                {leagueLabel && (
+                  <ActiveChip
+                    label={leagueLabel}
+                    onClear={() => setFilterLeague("all")}
+                  />
+                )}
+                {categoryLabel && (
+                  <ActiveChip
+                    label={categoryLabel}
+                    onClear={() => setFilterCategory("all")}
+                  />
+                )}
+                {statusLabel && (
+                  <ActiveChip
+                    label={statusLabel}
+                    onClear={() => setFilterStatus("all")}
+                  />
+                )}
+                {sortLabel && (
+                  <ActiveChip
+                    label={`Orden: ${sortLabel}`}
+                    onClear={() => setSortBy("name")}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterGender("all");
+                    setFilterLeague("all");
+                    setFilterCategory("all");
+                    setFilterStatus("all");
+                    setSortBy("name");
+                  }}
+                  className="ml-1 h-7 px-2.5 rounded-full text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                >
+                  Limpiar todos
+                </button>
+              </div>
+            )}
+          </>
+        );
+      })()}
+
+      {/* ========== Filters Sheet (right on desktop, bottom on mobile) ========== */}
+      <Sheet open={showFilters} onOpenChange={setShowFilters}>
+        <SheetContent
+          side={isMobile ? "bottom" : "right"}
+          className={
+            isMobile
+              ? "p-0 max-h-[85vh] rounded-t-2xl border-t border-border/60 bg-card flex flex-col"
+              : "p-0 w-full sm:max-w-md bg-card border-l border-border/60 flex flex-col"
+          }
+        >
+          <SheetHeader className="px-5 py-4 border-b border-border/60 flex-row items-center justify-between space-y-0">
+            <SheetTitle className="text-base font-bold flex items-center gap-2">
+              <SlidersHorizontal className="size-4 text-primary" />
+              Filtros
+            </SheetTitle>
             <button
               type="button"
-              onClick={() => setViewMode("grid")}
-              className={`size-8 rounded-md flex items-center justify-center transition-colors ${
-                viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Vista en grilla"
-              aria-label="Vista en grilla"
+              onClick={() => {
+                setFilterGender("all");
+                setFilterLeague("all");
+                setFilterCategory("all");
+                setFilterStatus("all");
+                setSortBy("name");
+              }}
+              className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
             >
-              <LayoutGrid className="size-4" />
+              Restablecer
             </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={`size-8 rounded-md flex items-center justify-center transition-colors ${
-                viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Vista en lista"
-              aria-label="Vista en lista"
-            >
-              <List className="size-4" />
-            </button>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+            {/* Género */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                Género
+              </h3>
+              <div className="grid grid-cols-3 gap-1.5">
+                <SegBtn
+                  active={filterGender === "all"}
+                  onClick={() => setFilterGender("all")}
+                  icon={<Volleyball className="size-3.5" />}
+                  label="Todos"
+                />
+                <SegBtn
+                  active={filterGender === "F"}
+                  onClick={() => setFilterGender("F")}
+                  icon={<Venus className="size-3.5" />}
+                  label="Femenino"
+                />
+                <SegBtn
+                  active={filterGender === "M"}
+                  onClick={() => setFilterGender("M")}
+                  icon={<Mars className="size-3.5" />}
+                  label="Masculino"
+                />
+              </div>
+            </section>
+
+            {/* Liga */}
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Liga
+                </h3>
+                <span className="text-[11px] text-muted-foreground">
+                  {leagues.length} disponibles
+                </span>
+              </div>
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  type="search"
+                  placeholder="Buscar liga…"
+                  value={leagueSearch}
+                  onChange={(e) => setLeagueSearch(e.target.value)}
+                  className="w-full h-9 bg-background border border-border/60 rounded-lg pl-9 pr-3 text-sm focus:outline-none focus:border-primary/50"
+                />
+              </div>
+              <div className="rounded-lg border border-border/60 max-h-64 overflow-y-auto divide-y divide-border/40">
+                <LeagueRow
+                  active={filterLeague === "all"}
+                  onClick={() => setFilterLeague("all")}
+                  label="Todas"
+                  count={teams.length}
+                />
+                <LeagueRow
+                  active={filterLeague === "none"}
+                  onClick={() => setFilterLeague("none")}
+                  label="Sin liga"
+                  count={teamsPerLeague.noLeague}
+                  muted
+                />
+                {leagues
+                  .filter((l) =>
+                    !leagueSearch.trim() ||
+                    l.name.toLowerCase().includes(leagueSearch.trim().toLowerCase()),
+                  )
+                  .map((l) => (
+                    <LeagueRow
+                      key={l.id}
+                      active={filterLeague === l.id}
+                      onClick={() => setFilterLeague(l.id)}
+                      label={l.name + (l.season ? ` · ${l.season}` : "")}
+                      count={teamsPerLeague.byId.get(l.id) ?? 0}
+                      accent={l.color}
+                    />
+                  ))}
+                {leagueSearch.trim() &&
+                  leagues.filter((l) =>
+                    l.name.toLowerCase().includes(leagueSearch.trim().toLowerCase()),
+                  ).length === 0 && (
+                    <div className="px-3 py-4 text-xs text-muted-foreground text-center">
+                      Sin resultados
+                    </div>
+                  )}
+              </div>
+            </section>
+
+            {/* Categoría */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                Categoría
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                <PillBtn
+                  active={filterCategory === "all"}
+                  onClick={() => setFilterCategory("all")}
+                  label="Todas"
+                />
+                {TEAM_CATEGORIES.map((c) => (
+                  <PillBtn
+                    key={c}
+                    active={filterCategory === c}
+                    onClick={() => setFilterCategory(c)}
+                    label={TEAM_CATEGORY_LABEL[c]}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* Estado */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                Estado
+              </h3>
+              <div className="grid grid-cols-3 gap-1.5">
+                <SegBtn
+                  active={filterStatus === "all"}
+                  onClick={() => setFilterStatus("all")}
+                  label="Todos"
+                />
+                <SegBtn
+                  active={filterStatus === "active"}
+                  onClick={() => setFilterStatus("active")}
+                  label="Activos"
+                />
+                <SegBtn
+                  active={filterStatus === "no_league"}
+                  onClick={() => setFilterStatus("no_league")}
+                  label="Sin liga"
+                />
+              </div>
+            </section>
+
+            {/* Ordenar por */}
+            <section>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                Ordenar por
+              </h3>
+              <div className="rounded-lg border border-border/60 divide-y divide-border/40 overflow-hidden">
+                {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setSortBy(k)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 text-sm text-left transition-colors ${
+                      sortBy === k
+                        ? "bg-primary/10 text-foreground"
+                        : "hover:bg-secondary/40 text-muted-foreground"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <ArrowUpDown className="size-3.5 opacity-70" />
+                      {SORT_LABELS[k]}
+                    </span>
+                    {sortBy === k && <Check className="size-4 text-primary" />}
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
-        </div>
-      </div>
+
+          <SheetFooter className="px-5 py-3 border-t border-border/60 bg-card flex-row gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setFilterGender("all");
+                setFilterLeague("all");
+                setFilterCategory("all");
+                setFilterStatus("all");
+                setSortBy("name");
+              }}
+            >
+              Limpiar
+            </Button>
+            <Button className="flex-1" onClick={() => setShowFilters(false)}>
+              Mostrar {filteredTeams.length}{" "}
+              {filteredTeams.length === 1 ? "equipo" : "equipos"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
 
       {/* ========== Teams grid / list ========== */}
       {filteredTeams.length === 0 ? (
@@ -1284,6 +1567,123 @@ function TeamsPage() {
 /* ============================================================
    Presentational helpers
 ============================================================ */
+
+const SORT_LABELS: Record<SortKey, string> = {
+  name: "Nombre A-Z",
+  name_desc: "Nombre Z-A",
+  matches: "Mayor cantidad de partidos",
+  matches_asc: "Menor cantidad de partidos",
+  activity: "Última actividad",
+  created: "Fecha de creación",
+  league: "Liga",
+};
+
+function ActiveChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 h-7 pl-2.5 pr-1 rounded-full bg-primary/15 border border-primary/30 text-xs font-semibold text-foreground">
+      <span className="truncate max-w-[160px]">{label}</span>
+      <button
+        type="button"
+        onClick={onClear}
+        className="size-5 rounded-full inline-flex items-center justify-center hover:bg-primary/25 text-muted-foreground hover:text-foreground"
+        aria-label={`Quitar filtro ${label}`}
+      >
+        <X className="size-3" />
+      </button>
+    </span>
+  );
+}
+
+function SegBtn({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-9 inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-all ${
+        active
+          ? "bg-primary text-primary-foreground border border-primary shadow-sm"
+          : "bg-background border border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function PillBtn({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-8 px-3 rounded-full text-xs font-semibold transition-all ${
+        active
+          ? "bg-primary text-primary-foreground border border-primary"
+          : "bg-background border border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function LeagueRow({
+  active,
+  onClick,
+  label,
+  count,
+  accent,
+  muted,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
+  accent?: string | null;
+  muted?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors ${
+        active ? "bg-primary/10" : "hover:bg-secondary/40"
+      }`}
+    >
+      <span
+        className="size-2.5 rounded-full shrink-0"
+        style={{ background: accent || (muted ? "hsl(var(--muted-foreground) / 0.3)" : "hsl(var(--primary) / 0.6)") }}
+      />
+      <span className={`flex-1 min-w-0 truncate ${muted ? "text-muted-foreground" : ""}`}>
+        {label}
+      </span>
+      <span className="text-[11px] tabular-nums font-bold text-muted-foreground">
+        ({count})
+      </span>
+      {active && <Check className="size-4 text-primary shrink-0" />}
+    </button>
+  );
+}
+
+
 
 function Chip({
   active,
