@@ -248,8 +248,10 @@ function TeamsPage() {
   const [color, setColor] = useState(COLORS[0]);
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [newLeagueId, setNewLeagueId] = useState<string>("");
-  const [newGender, setNewGender] = useState<"" | "M" | "F">("");
+  const [newGender, setNewGender] = useState<"" | "M" | "F" | "X">("");
   const [newCategory, setNewCategory] = useState<"" | TeamCategory>("");
+  const [newClub, setNewClub] = useState("");
+  const [newSecondaryColor, setNewSecondaryColor] = useState<string>("");
   const logoFileRef = useRef<HTMLInputElement | null>(null);
 
   // ============ Selection / detail state ============
