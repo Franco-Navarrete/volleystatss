@@ -390,8 +390,9 @@ export function CourtPlayerBadge({
   }, [newestEventId, lastRelevant]);
 
   return (
-    <HoverCard open={isOpen} onOpenChange={(o) => setHover(o)} openDelay={120} closeDelay={60}>
+    <HoverCard open={isOpen} onOpenChange={(o) => setHover(o)} openDelay={120} closeDelay={150}>
       <HoverCardTrigger asChild>
+
         <button
           type="button"
           ref={triggerRef}
@@ -486,12 +487,14 @@ export function CourtPlayerBadge({
       <HoverCardContent
         ref={contentRef}
         side="top"
-        sideOffset={10}
+        sideOffset={12}
         align="center"
-        collisionPadding={12}
+        collisionPadding={16}
         avoidCollisions
-        className="w-[240px] p-0 overflow-hidden border-border/70 bg-popover/95 backdrop-blur-sm shadow-xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+        sticky="always"
+        className="w-[240px] p-0 overflow-hidden border-border/70 bg-popover/95 backdrop-blur-sm shadow-2xl ring-1 ring-black/20 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
       >
+
         <PlayerTooltipContent
           player={player}
           team={team}
