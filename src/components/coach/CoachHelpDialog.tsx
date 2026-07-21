@@ -29,6 +29,12 @@ export function CoachHelpDialog() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener("coach:help:open", onOpen);
+    return () => window.removeEventListener("coach:help:open", onOpen);
+  }, []);
+
+  useEffect(() => {
     if (!enabled) return;
     const onAction = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: CoachAction }>).detail;

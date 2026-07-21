@@ -52,6 +52,8 @@ import { useCoachShortcuts } from "@/hooks/use-coach-shortcuts";
 import { CoachHUD } from "@/components/coach/CoachHUD";
 import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
 import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
+import { CoachHelpBar } from "@/components/coach/CoachHelpBar";
+import { toast } from "sonner";
 import { CoachAttackPanel } from "@/components/coach/CoachAttackPanel";
 import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
@@ -81,6 +83,7 @@ import {
   Edit3,
   Flag,
   Hourglass,
+  Keyboard,
   Minus,
   MoreVertical,
   Play,
@@ -88,6 +91,7 @@ import {
   RotateCcw,
   RotateCw,
   Search,
+  Settings2,
   Shirt,
   Target,
   Undo2,
@@ -227,6 +231,28 @@ function LiveMatch() {
   const { hasAccess: coachOverride } = useCoachAccess();
   const isMobile = useIsMobileLayout();
   const coachEnabled = useCoachMode((s) => s.enabled);
+  const setCoachEnabled = useCoachMode((s) => s.setEnabled);
+
+  // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
+  useEffect(() => {
+    if (!coachOverride || !match?.id || !coachEnabled) return;
+    const key = `rally.coachHelpShown.${match.id}`;
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, "1");
+    window.dispatchEvent(new CustomEvent("coach:help:open"));
+  }, [coachEnabled, coachOverride, match?.id]);
+
+  const toggleCoachMode = () => {
+    const next = !coachEnabled;
+    setCoachEnabled(next);
+    toast(next ? "Coach Mode activado" : "Coach Mode desactivado", {
+      description: next
+        ? "Los comandos de teclado ya están disponibles."
+        : "Los atajos de teclado se han deshabilitado.",
+      duration: 2000,
+    });
+  };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
   useCoachShortcuts({ active: coachOverride && !isMobile && match?.status === "live" });
 
@@ -513,7 +539,8 @@ function LiveMatch() {
       <CoachHUD />
       <CoachAttackPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
-      <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9998] pointer-events-none">
+      <CoachHelpBar />
+      <div className="fixed top-2 right-2 z-[9998] pointer-events-none">
         <CoachModeBadge />
       </div>
 
@@ -772,9 +799,27 @@ function LiveMatch() {
               <Users className="size-4" /> Formación
             </Button>
           )}
-          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
-            <Users className="size-4" /> Cancha 5-1
-          </Button>
+          {coachOverride ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className={`h-9 md:h-11 text-xs md:text-sm transition-all ${
+                coachEnabled
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 border border-primary shadow-glow animate-in fade-in"
+                  : "bg-secondary hover:bg-secondary/80 border border-border/60"
+              }`}
+              onClick={toggleCoachMode}
+              aria-pressed={coachEnabled}
+              title={coachEnabled ? "Desactivar Coach Mode" : "Activar Coach Mode (atajos de teclado)"}
+            >
+              <Keyboard className="size-4" />
+              {coachEnabled ? "Coach Mode Activo" : "Coach Mode"}
+            </Button>
+          ) : (
+            <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
+              <Users className="size-4" /> Cancha 5-1
+            </Button>
+          )}
           <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
             <ChartBarBig className="size-4" /> Stats vivo
           </Button>
@@ -800,6 +845,28 @@ function LiveMatch() {
               <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
                 <Hourglass className="size-4" /> Formato del partido
               </DropdownMenuItem>
+              {coachOverride && (
+                <DropdownMenuItem onSelect={() => setShowFormationDialog(true)}>
+                  <Users className="size-4" /> Cancha 5-1
+                </DropdownMenuItem>
+              )}
+              {coachOverride && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Coach Mode</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={toggleCoachMode}>
+                    <Keyboard className="size-4" /> {coachEnabled ? "Desactivar" : "Activar"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => window.dispatchEvent(new CustomEvent("coach:help:open"))}>
+                    <Keyboard className="size-4" /> Ayuda de atajos (F1)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings">
+                      <Settings2 className="size-4" /> Configuración
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={match.status === "finished"}
