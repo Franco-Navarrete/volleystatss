@@ -1,113 +1,134 @@
-# Coach Mode — Atajos de teclado para entrenadores
+# Coach Mode v2 — Motor de Estados Guiado
 
-Modo opcional para escritorio (desactivado por default) que permite registrar acciones del rally por teclado sin quitar la interfaz gráfica. Convive con mouse; nunca es obligatorio.
+Rediseñamos Coach Mode: dejar de ser "atajos + panel de ataque suelto" para convertirse en un **motor de estados** que guía el rally completo dentro de **un único panel flotante**, con selección automática de jugador desde la formación efectiva y valoración universal.
 
-## 1. Store de configuración (nuevo)
+## 1. Motor de estados (nuevo)
 
-Archivo: `src/lib/coach-mode-store.ts` (zustand + persist en `localStorage`, key `rally.coachMode.v1`).
+Archivo: `src/lib/coach/rally-machine.ts`
 
-```ts
-type ActionKey =
-  | 'saque' | 'recepcion' | 'armado' | 'ataque'
-  | 'bloqueo' | 'defensa' | 'contraataque'
-  | 'timeout' | 'cambio' | 'libero' | 'sancion'
-  | 'undo' | 'redo' | 'confirm' | 'cancel' | 'back' | 'help';
+Máquina de estados desacoplada del `volley-store` (todavía comitea vía sus acciones existentes al confirmar cada fundamento):
 
-type Binding = { key: string; ctrl?: boolean; alt?: boolean; shift?: boolean };
-type Macro = { id: string; label: string; binding: Binding; steps: MacroStep[] };
-// MacroStep: { kind:'action', action:'saque' } | { kind:'player', number:number }
-//          | { kind:'zone', zone:1..6 } | { kind:'rating', code:'#|+|0|-|=|≠' }
-//          | { kind:'confirm' }
-
-interface CoachModeState {
-  enabled: boolean;
-  bindings: Record<ActionKey, Binding>;
-  macros: Macro[];
-  setEnabled(v: boolean): void;
-  setBinding(a: ActionKey, b: Binding): void;
-  resetDefaults(): void;
-  addMacro(m: Macro): void; updateMacro(id, patch): void; removeMacro(id): void;
-}
+```text
+IDLE → SAQUE → RECEPCION → ARMADO → ATAQUE
+              ↑ (según valoración)   ↓
+              └── BLOQUEO ← DEFENSA ← CONTRAATAQUE
+                       ↓
+                     FIN_RALLY
 ```
 
-Defaults según especificación (A ataque, R recepción, S saque, B bloqueo, D defensa, L armado, C contraataque, T timeout, M cambio, F1 ayuda, Enter confirmar, Esc cancelar, Backspace atrás, Ctrl+Z/Y deshacer/rehacer).
+Elementos:
 
-## 2. Hook global de teclado
+- `RallyState = 'idle' | 'saque' | 'recepcion' | 'armado' | 'ataque' | 'bloqueo' | 'defensa' | 'contraataque' | 'fin'`
+- `RallyStep = { state, side: 'A'|'B', playerId?, zone?, origin?, target?, rating? }`
+- Store zustand `useCoachRally`:
+  - `history: RallyStep[]`, `redo: RallyStep[]`, `current: PartialStep | null`
+  - `start(state, side)`, `setPlayer(id)`, `setZone(z)`, `setOrigin/Target(z)`, `setRating(r)`, `commit()`, `back()`, `cancel()`, `undo()`, `redo()`
+- `nextState(step)`: función pura que decide el próximo fundamento según la valoración universal (`# + 0 - = ≠`). Ej: recepción `=`/`≠` → `fin` (punto rival); saque `#` → `fin`; ataque `#` → `fin`; ataque `-` → `defensa` del otro lado; etc.
+- `commit()` mapea la step a llamadas del `volley-store` (recycleando `recordPoint`, `recordPass`, `recordSet`, `recordAttack`, `recordBlock`, `recordDig`) sin duplicar reglas.
 
-Archivo: `src/hooks/use-coach-shortcuts.ts`.
+Universal rating: `# + 0 - = ≠`. Cada fundamento tiene su propio `meaningOfRating` (recibido / punto / continúa / etc.), pero UI y teclas son idénticas.
 
-- Se registra en `matches.$id.index.tsx` (sólo dentro del partido en vivo).
-- `useEffect` con `window.addEventListener('keydown', ...)`.
-- Guardas: si `document.activeElement` es `INPUT|TEXTAREA|SELECT` o `[contenteditable]`, o si `document.body.dataset.coachInput === 'lock'`, ignorar.
-- Estado interno `sequence: { action?, playerNumber?, zone?, rating? }` con timeout 3s.
-- Al matchear una tecla:
-  - Si es un binding de acción → abre `IntegratedRallyDialog` con `initialAction` y setea el paso inicial.
-  - Si es dígito y hay acción activa y jugador no elegido → asigna `playerNumber` (permite 2 dígitos: buffer + timer 400ms).
-  - Si es Q/W/E/A/S/D o dígito zona configurada → asigna `zone`.
-  - `+ - 0 = # ≠` → valoración.
-  - `Enter` → confirma (llama a la acción `commit` del diálogo).
-- Macros (`Ctrl+1..9`) ejecutan `steps` secuencialmente vía la misma máquina.
-- Emite eventos vía un pequeño bus (`window.dispatchEvent(new CustomEvent('coach:seq', {detail}))`) para el HUD.
+## 2. Selección automática (fuente de verdad: formación efectiva)
 
-## 3. Puente con `IntegratedRallyDialog`
+Archivo: `src/lib/coach/effective-lineup.ts`
 
-- Añadir prop opcional `controller?: RallyController` que expone `openWith({action, playerId?, zone?, rating?})`, `confirm()`, `cancel()`, `back()`.
-- El controller se construye con `useImperativeHandle` y se registra en el store del coach mode. El hook de teclado dispara métodos del controller cuando existe.
-- El diálogo sigue funcionando idéntico con mouse; sólo agrega un input path.
-- Además, si Coach Mode está OFF, no se instala el listener global.
+- `getEffectiveOnCourt(match, side)` — usa `match.onCourtA/B` (ya refleja rotaciones, líbero, sustituciones) + `buildEffective` compartido con `CourtView`.
+- `playerAtZone(match, side, zone)` — mapea Z1..Z6 al índice correcto del array efectivo.
+- Reglas:
+  - Saque → jugador en Z1 del equipo que saca.
+  - Recepción → si se conoce `target` del saque, receptor = jugador en esa zona del lado receptor.
+  - Armado → armadora si está en cancha; si no, jugador en Z2/Z3 más cercano.
+  - Ataque → jugador en zona origen elegida (Z4/Z3/Z2/Pipe(Z6)/Z1).
+  - Bloqueo/Defensa → jugador en la zona destino del ataque previo.
+- Nunca preguntar al usuario un dato deducible: sólo pedir manual si `playerAtZone` devuelve `null` o ambiguo.
 
-## 4. HUD flotante (asistente visual)
+## 3. Panel único (state machine UI)
 
-Componente: `src/components/coach/CoachHUD.tsx`.
+Componente: `src/components/coach/CoachRallyPanel.tsx`
 
-- Fixed bottom-right, oculto por default. Se muestra 3s tras cada tecla y persiste mientras hay `sequence` activa.
-- Muestra los pasos con el mismo formato del ejemplo:
-  ```
-  S  →  Selecciona jugador
-  5  →  Selecciona zona
-  Q  →  Resultado
-  +  →  Enter para confirmar
-  ```
-- Al confirmar, toast pequeño + reset.
+Un solo `<div>` flotante (fixed, centro-inferior, ~420px). NO usar Radix `Dialog` (romperá con tablet forzado + evita focus trap que corrompe hotkeys). Estructura:
 
-## 5. Indicador y panel de ayuda
+```text
+┌────────────────────────────────────────┐
+│ ⌨ Coach Mode · Equipo A · ATAQUE  [×] │  ← Cabecera
+├────────────────────────────────────────┤
+│ SAQUE › REC › ARM › ATA · BLQ · DEF ·  │  ← Progress bar
+├─────────────────────────┬──────────────┤
+│ Paso actual (contenido) │ Resumen del  │
+│ dinámico por estado)    │ rally lateral│
+│                         │              │
+│ [Esc] cancelar          │              │
+│ [⌫] volver              │              │
+└─────────────────────────┴──────────────┘
+```
 
-- Chip fijo `⌨ Coach Mode` en el `TopBar` del partido cuando está activo.
-- `F1` abre `CoachHelpDialog.tsx` con tabla de todos los atajos y macros actuales.
+Sub-componentes reutilizables por estado (renderizan sólo su input y consumen la machine):
 
-## 6. Configuración en Ajustes
+- `StepPickPlayer` — grilla con onCourt efectivo, resalta autopickeado; teclas 0-9 (buffer 350ms).
+- `StepPickZone` — grilla 3×3 QWE/ASD (Z5 Z6 Z1 / Z4 Z3 Z2) reutilizando teclas actuales.
+- `StepPickOriginZone` — 1..5 (Z4/Z3/Z2/Pipe/Zag) para ataque.
+- `StepPickRating` — 6 botones con teclas `# + 0 - = ≠`. Confirm automático (sin Enter).
+- `StepSummary` — al FIN, muestra resultado + [Enter] nuevo rally.
 
-En `src/routes/_authenticated/settings.tsx` añadir sección **Coach Mode** (visible sólo si `useCoachAccess().hasAccess`):
+Transiciones con `data-[state]` y `animate-in fade-in-0 slide-in-from-bottom-1 duration-200`.
 
-- Switch ON/OFF.
-- Grilla de bindings: cada fila tiene label + botón "Cambiar" que captura la próxima combinación (excluyendo modificadores solos).
-- Detección de conflicto (misma combinación asignada a dos acciones).
-- Botón "Restaurar valores por defecto".
-- Sub-sección **Macros**: lista con crear/editar/eliminar; editor simple (label + binding + secuencia de pasos elegidos por dropdown).
-- Todo persistido automáticamente por el store (sin botón guardar).
+**Resumen del rally lateral**: componente `CoachRallySummary.tsx` recorre `history` y renderiza tarjetas por fundamento con `{estado, #jugador, zona/dest, rating}`.
 
-## 7. Restricciones y compatibilidad
+## 4. Cabecera con equipo activo
 
-- Sólo se activa en layout de escritorio (`useIsMobileLayout() === false` y no tablet forzado). En mobile/tablet, la sección de Ajustes muestra "Disponible sólo en escritorio".
-- No modifica lógica del rally: sólo dispara los mismos handlers que los botones existentes.
-- Nunca captura teclas cuando hay un input activo, un `<Dialog>` de nombre/búsqueda abierto (`[data-coach-input=lock]`) o el usuario está tipeando.
-- Ctrl+Z/Ctrl+Y llaman a `undo()`/`redo()` del `volley-store` que ya existen.
+- Se calcula desde la máquina: equipo que saca en `saque`, receptor en `recepcion`, etc.
+- Botón `[×]` (Esc) descarta la rally-in-progress sin comitear al store.
 
-## 8. Archivos
+## 5. Hook integrador de teclado
+
+Ampliar `src/hooks/use-coach-shortcuts.ts` para que:
+
+- Cuando la máquina está `idle`, teclas `S R L A B D C` → `start(state, sideAutodetectado)`.
+- Cuando NO está idle: teclas dispatch al step actual (número→jugador, QWE/ASD→zona, `# + 0 - = ≠`→rating).
+- `Esc` → `cancel()`, `Backspace` → `back()`, `Ctrl+Z/Y` → volley-store `undo/redo`.
+- `T` timeout, `M` cambio, `I` líbero (llaman handlers existentes; no entran a la máquina).
+- Se ignora si `document.activeElement` es INPUT/TEXTAREA/SELECT/contentEditable o `body[data-coach-input=lock]`.
+
+## 6. Barra de progreso + secuencia visible
+
+Extraer del panel: `CoachStateProgress.tsx` — chips SAQUE › REC › ARM › ATA › BLQ › DEF › FIN. El fundamento activo se resalta (`bg-primary`), los completados marcados con check (`bg-primary/20`), los pendientes en gris.
+
+## 7. Extensibilidad
+
+- Añadir un fundamento nuevo (`FreeBall`, `Challenge`) = registrar entry en el enum + step component + regla en `nextState`. Nada más se toca.
+- Hook `registerRallyExtension({state, keyBinding, stepComponent, transitions})` opcional para features futuras.
+
+## 8. Compatibilidad con Coach Mode actual
+
+- Conservamos `CoachHelpDialog`, `CoachHelpBar`, `CoachModeBadge`, toggle inferior en `matches.$id.index.tsx` y settings.
+- Reemplazamos el flujo suelto de `CoachAttackPanel.tsx` (queda deprecado; borrar tras verificar).
+- El HUD viejo (`CoachHUD.tsx`) se retira porque el nuevo panel único cubre su función.
+
+## 9. Archivos
 
 **Nuevos**
-- `src/lib/coach-mode-store.ts`
-- `src/hooks/use-coach-shortcuts.ts`
-- `src/components/coach/CoachHUD.tsx`
-- `src/components/coach/CoachHelpDialog.tsx`
-- `src/components/coach/CoachModeSettings.tsx`
-- `src/components/coach/CoachModeBadge.tsx`
+- `src/lib/coach/rally-machine.ts` — store + `nextState` + commit al volley-store.
+- `src/lib/coach/effective-lineup.ts` — helpers `playerAtZone`, `getEffectiveOnCourt`.
+- `src/components/coach/CoachRallyPanel.tsx` — panel único.
+- `src/components/coach/CoachRallySummary.tsx` — tarjeta lateral.
+- `src/components/coach/CoachStateProgress.tsx` — progress bar de estados.
+- `src/components/coach/steps/StepPickPlayer.tsx`
+- `src/components/coach/steps/StepPickZone.tsx`
+- `src/components/coach/steps/StepPickOriginZone.tsx`
+- `src/components/coach/steps/StepPickRating.tsx`
+- `src/components/coach/steps/StepSummary.tsx`
 
 **Modificados**
-- `src/routes/_authenticated/settings.tsx` — añade sección Coach Mode.
-- `src/routes/_authenticated/matches.$id.index.tsx` — monta hook, HUD, badge y controller del rally dialog.
-- `src/components/scorer/IntegratedRallyDialog.tsx` — expone `RallyController` vía `ref` para pasos remotos y confirmación.
+- `src/hooks/use-coach-shortcuts.ts` — dispatch a la máquina en vez de emitir eventos sueltos.
+- `src/routes/_authenticated/matches.$id.index.tsx` — monta `<CoachRallyPanel/>`, retira `CoachAttackPanel` y `CoachHUD`.
+- `src/components/coach/CoachHelpDialog.tsx` — actualiza tabla con nuevos comandos y flujo.
 
-## 9. Nota técnica
+**Deprecados** (borrar al final)
+- `src/components/coach/CoachAttackPanel.tsx`
+- `src/components/coach/CoachHUD.tsx`
 
-No requiere cambios en Supabase ni en el backend. Todo vive en el cliente (localStorage por usuario). El hook usa `KeyboardEvent.code` para las letras (evita problemas con layouts non-QWERTY cuando el usuario elige "KeyA") y `event.key` para dígitos/símbolos.
+## 10. No cambia
+
+- No se toca el `volley-store` (sólo se consumen sus acciones existentes).
+- No hay cambios en Supabase ni RLS.
+- Solo escritorio (mismo gate actual con `useCoachAccess` + no mobile/tablet).
