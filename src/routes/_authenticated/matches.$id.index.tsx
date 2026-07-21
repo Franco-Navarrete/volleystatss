@@ -867,6 +867,7 @@ function LiveMatch() {
                   </DropdownMenuItem>
                 </>
               )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={match.status === "finished"}
                 onSelect={() => {
