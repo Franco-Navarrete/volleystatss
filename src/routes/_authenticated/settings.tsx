@@ -17,6 +17,8 @@ import { forceReloadFromCloud } from "@/lib/cloud-sync";
 import { useDeviceMode, type DeviceMode } from "@/hooks/use-device-mode";
 import { cn } from "@/lib/utils";
 import { FormationEditor } from "@/components/court/FormationEditor";
+import { CoachModeSettings } from "@/components/coach/CoachModeSettings";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -38,6 +40,7 @@ const DEVICE_OPTIONS: {
 
 function SettingsPage() {
   const { user } = useIsAdmin();
+  const { hasAccess: coachAccess } = useCoachAccess();
   const [loading, setLoading] = useState(false);
   const { mode, setMode } = useDeviceMode();
 
@@ -162,6 +165,10 @@ function SettingsPage() {
           </div>
           <FormationEditor />
         </section>
+
+        {coachAccess && <CoachModeSettings />}
+
+
 
 
         {user?.email && (

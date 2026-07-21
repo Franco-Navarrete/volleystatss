@@ -48,6 +48,12 @@ import { RallyContextCards } from "@/components/scorer/RallyContextCards";
 import { computeRallyContext } from "@/lib/rally-phase";
 import { useIsMobileLayout } from "@/hooks/use-is-mobile-layout";
 import { MobileMatchShell } from "@/components/scorer/mobile/MobileMatchShell";
+import { useCoachShortcuts } from "@/hooks/use-coach-shortcuts";
+import { CoachHUD } from "@/components/coach/CoachHUD";
+import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
+import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
+import type { CoachAction } from "@/lib/coach-mode-store";
+import { useCoachMode } from "@/lib/coach-mode-store";
 
 
 
@@ -219,6 +225,57 @@ function LiveMatch() {
   // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
   const isMobile = useIsMobileLayout();
+  const coachEnabled = useCoachMode((s) => s.enabled);
+  // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
+  useCoachShortcuts({ active: coachOverride && !isMobile && match?.status === "live" });
+
+  // Dispatcher central: los atajos emiten `coach:action` con la acción y
+  // (opcional) número de jugador/zona/valoración. Aquí mapeamos a los
+  // handlers existentes para no duplicar lógica del store.
+  useEffect(() => {
+    if (!coachEnabled || !match) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ action?: CoachAction; playerNumber?: number }>).detail;
+      const action = detail?.action;
+      if (!action) return;
+      const side = match.servingSide as "A" | "B";
+      switch (action) {
+        case "undo":
+          if (match.events.length > 0) undo(match.id);
+          break;
+        case "timeout":
+          handleTimeout(side);
+          break;
+        case "cambio":
+          setSubState({ side, playerOutId: "" });
+          break;
+        case "libero":
+          setLiberoState({ side, liberoId: null });
+          break;
+        case "sancion":
+          setSanctionSide(side);
+          break;
+        case "armado":
+          if (isCoach && isLive && !actionsDisabled) setShowSettingDialog(true);
+          break;
+        case "ataque":
+        case "saque":
+        case "recepcion":
+        case "bloqueo":
+        case "defensa":
+        case "contraataque":
+          // Abre el diálogo integrado del lado que corresponde;
+          // el usuario completa jugador/zona/valoración con el HUD guía.
+          setIntegratedRally({ side });
+          break;
+      }
+    };
+    window.addEventListener("coach:action", handler as EventListener);
+    return () => window.removeEventListener("coach:action", handler as EventListener);
+    // Los setters de useState son estables; el resto se lee desde `match` actualizado.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
+
 
 
 
@@ -449,6 +506,12 @@ function LiveMatch() {
 
   return (
     <CompactShell>
+      <CoachHUD />
+      <CoachHelpDialog />
+      <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9998] pointer-events-none">
+        <CoachModeBadge />
+      </div>
+
       {isMobile ? (
         <MobileMatchShell
           match={match}
