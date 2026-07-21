@@ -129,15 +129,16 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
     case "defensa":
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de defensa" };
       if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de defensa" };
-      // # + 0 - → nuevo ciclo: armado del mismo equipo
+      // # + 0 - → contraataque: armado del mismo equipo, luego ataque = contraataque
       return { state: "armado", side };
     case "contraataque":
-      // No usado en el ciclo v3, pero mantenido por compatibilidad.
-      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Contraataque punto" };
-      if (rating === "=" || rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
+      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de contraataque" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de contraataque" };
       return { state: "bloqueo", side: opposite(side) };
   }
 }
+
 
 /**
  * Persiste el rally al volley-store cuando termina (única vez).
