@@ -6,12 +6,11 @@ import {
   RATING_ORDER,
   RATING_MEANING,
   STATE_LABEL,
-  FLOW_STATES,
   type Rating,
   type RallyState,
 } from "@/lib/coach/rally-machine";
 import { useCoachMode } from "@/lib/coach-mode-store";
-import { playerLabel, getEffectiveOnCourt } from "@/lib/coach/effective-lineup";
+import { SET_DISTRIBUTION_TO_ZONE, SET_DISTRIBUTION_LABEL } from "@/lib/coach/effective-lineup";
 
 interface Props {
   match: Match;
@@ -21,14 +20,13 @@ interface Props {
 
 /**
  * Panel único de Coach Mode: motor de estados guiado.
- * Todo el flujo del rally (Saque → Recepción → Armado → Ataque → ...) vive
- * dentro de este panel flotante. No abre ventanas ni modales adicionales.
+ * Anclado al lateral derecho (~28% ancho) para no ocultar la cancha.
+ * Sólo muestra la información del fundamento actual.
  */
 export function CoachRallyPanel({ match, teamA, teamB }: Props) {
   const enabled = useCoachMode((s) => s.enabled);
   const state = useCoachRally((s) => s.state);
   const current = useCoachRally((s) => s.current);
-  const history = useCoachRally((s) => s.history);
   const outcome = useCoachRally((s) => s.outcome);
   const setPlayer = useCoachRally((s) => s.setPlayer);
   const setOrigin = useCoachRally((s) => s.setOrigin);
@@ -44,21 +42,17 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
 
   const activeSide = current?.side ?? outcome?.scoringSide ?? "A";
   const activeTeam = teams[activeSide];
-  const otherTeam = teams[activeSide === "A" ? "B" : "A"];
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9998] w-[min(680px,96vw)] pointer-events-auto animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+    <div className="fixed top-1/2 -translate-y-1/2 right-3 z-[9998] w-[28vw] min-w-[280px] max-w-[380px] pointer-events-auto animate-in fade-in-0 slide-in-from-right-2 duration-200">
       <div className="rounded-2xl border-2 border-primary/40 bg-background/98 backdrop-blur shadow-2xl overflow-hidden">
-        {/* Cabecera */}
-        <header className="flex items-center justify-between gap-2 bg-primary text-primary-foreground px-4 py-2">
-          <div className="flex items-center gap-2 text-sm font-bold">
-            <span className="text-[10px] uppercase tracking-widest opacity-80">Coach Mode</span>
-            <span className="opacity-60">·</span>
-            <span>{activeTeam.name}</span>
-            <span className="opacity-60">·</span>
-            <span className="uppercase text-xs">{STATE_LABEL[state]}</span>
+        {/* Cabecera compacta */}
+        <header className="flex items-center justify-between gap-2 bg-primary text-primary-foreground px-3 py-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[9px] uppercase tracking-widest opacity-80 shrink-0">Coach</span>
+            <span className="text-sm font-bold uppercase truncate">{STATE_LABEL[state]}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <button onClick={back} className="p-1 rounded hover:bg-primary-foreground/20" title="Volver (⌫)">
               <ChevronLeft className="size-4" />
             </button>
@@ -68,95 +62,41 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
           </div>
         </header>
 
-        {/* Progress bar */}
-        <StateProgress current={state} history={history} />
-
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-0">
-          {/* Paso actual */}
-          <section className="p-4 min-h-[220px]">
-            {state === "fin" ? (
-              <FinPanel outcome={outcome} scoringTeam={teams[outcome?.scoringSide ?? "A"]} onNew={reset} />
-            ) : current ? (
-              <StepView
-                current={current}
-                match={match}
-                teams={teams}
-                onPlayer={setPlayer}
-                onOrigin={setOrigin}
-                onTarget={setTarget}
-                onRating={setRating}
-              />
-            ) : null}
-          </section>
-
-          {/* Resumen lateral */}
-          <aside className="border-t md:border-t-0 md:border-l bg-muted/30 p-3">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-2">Resumen del rally</div>
-            <div className="space-y-1.5 max-h-[220px] overflow-y-auto">
-              {history.length === 0 && (
-                <div className="text-xs text-muted-foreground italic">Sin acciones registradas.</div>
-              )}
-              {history.map((h, i) => (
-                <div key={i} className="text-xs bg-background rounded-md px-2 py-1.5 border">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-bold text-primary uppercase text-[10px]">{STATE_LABEL[h.state]}</span>
-                    <span className="font-mono text-[11px] font-bold">{h.rating ?? "?"}</span>
-                  </div>
-                  <div className="text-muted-foreground">
-                    {playerLabel(teams[h.side], h.playerId)}
-                    {h.origin ? ` · O:Z${h.origin}` : ""}
-                    {h.target ? ` · D:Z${h.target}` : ""}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </aside>
+        {/* Contexto de equipo */}
+        <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b bg-muted/30 truncate">
+          {activeTeam.name}
         </div>
 
-        <footer className="px-3 py-1.5 border-t bg-muted/50 flex items-center justify-between text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-2">
-            <kbd className="rounded bg-background border px-1 font-mono">Esc</kbd> cancelar
-            <kbd className="rounded bg-background border px-1 font-mono">⌫</kbd> volver
-            <kbd className="rounded bg-background border px-1 font-mono">Ctrl+Z</kbd> deshacer
+        {/* Paso actual */}
+        <section className="p-3">
+          {state === "fin" ? (
+            <FinPanel outcome={outcome} scoringTeam={teams[outcome?.scoringSide ?? "A"]} onNew={reset} />
+          ) : current ? (
+            <StepView
+              current={current}
+              teams={teams}
+              onPlayer={setPlayer}
+              onOrigin={setOrigin}
+              onTarget={setTarget}
+              onRating={setRating}
+            />
+          ) : null}
+        </section>
+
+        <footer className="px-3 py-1.5 border-t bg-muted/50 flex items-center justify-between text-[9px] text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <kbd className="rounded bg-background border px-1 font-mono">Esc</kbd>
+            <kbd className="rounded bg-background border px-1 font-mono">⌫</kbd>
+            <kbd className="rounded bg-background border px-1 font-mono">Ctrl+Z</kbd>
           </span>
-          <span className="uppercase font-bold">vs {otherTeam.name}</span>
         </footer>
       </div>
     </div>
   );
 }
 
-function StateProgress({ current, history }: { current: RallyState; history: { state: RallyState }[] }) {
-  const done = new Set(history.map((h) => h.state));
-  return (
-    <div className="flex items-center gap-1 px-3 py-2 border-b bg-muted/20 overflow-x-auto">
-      {FLOW_STATES.map((s, i) => {
-        const isActive = s === current;
-        const isDone = done.has(s) && !isActive;
-        return (
-          <div key={s} className="flex items-center gap-1 flex-shrink-0">
-            <div
-              className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider transition-colors ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : isDone
-                    ? "bg-primary/20 text-primary"
-                    : "bg-transparent text-muted-foreground/60"
-              }`}
-            >
-              {s === "recepcion" ? "REC" : s === "contraataque" ? "C-ATK" : STATE_LABEL[s].slice(0, 4)}
-            </div>
-            {i < FLOW_STATES.length - 1 && <span className="text-muted-foreground/40 text-[10px]">›</span>}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 interface StepViewProps {
   current: NonNullable<ReturnType<typeof useCoachRally.getState>["current"]>;
-  match: Match;
   teams: { A: Team; B: Team };
   onPlayer: (id: string) => void;
   onOrigin: (z: 1 | 2 | 3 | 4 | 5 | 6) => void;
@@ -164,27 +104,52 @@ interface StepViewProps {
   onRating: (r: Rating) => void;
 }
 
-function StepView({ current, match, teams, onPlayer, onOrigin, onTarget, onRating }: StepViewProps) {
+function detectedLabel(state: RallyState): string {
+  switch (state) {
+    case "saque": return "Sacador";
+    case "recepcion": return "Receptor";
+    case "armado": return "Armador";
+    case "ataque": return "Atacante";
+    case "contraataque": return "Contraatacante";
+    case "bloqueo": return "Bloqueador";
+    case "defensa": return "Defensor";
+    default: return "Jugador";
+  }
+}
+
+function PlayerCard({ team, playerId, state, origin }: { team: Team; playerId: string | null | undefined; state: RallyState; origin?: number }) {
+  const p = playerId ? team.players.find((x) => x.id === playerId) : null;
+  return (
+    <div className="mb-3 rounded-lg border-2 border-primary/30 bg-primary/5 px-3 py-2">
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{detectedLabel(state)} detectado</div>
+      <div className="flex items-center justify-between gap-2 mt-0.5">
+        <div className="text-sm font-bold truncate">{p ? `#${p.number} ${p.name}` : "—"}</div>
+        {origin && (
+          <div className="text-[10px] uppercase text-muted-foreground shrink-0">Z<span className="font-bold text-primary">{origin}</span></div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StepView({ current, teams, onPlayer, onTarget, onRating }: StepViewProps) {
   const team = teams[current.side];
 
-  if (current.sub === "origin") {
+  // Selección manual de jugador (sólo si Coach Mode no pudo autodetectar).
+  if (current.sub === "player") {
+    const onCourt = current.side === "A" ? null : null; // fallback: rara vez ocurre
+    void onCourt;
     return (
       <div>
-        <div className="text-xs text-muted-foreground mb-2">Zona de origen · {STATE_LABEL[current.state]}</div>
-        <div className="grid grid-cols-5 gap-2">
-          {[
-            { z: 4 as const, label: "1 · Z4" },
-            { z: 3 as const, label: "2 · Z3" },
-            { z: 2 as const, label: "3 · Z2" },
-            { z: 6 as const, label: "4 · Pipe" },
-            { z: 1 as const, label: "5 · Zag." },
-          ].map((it) => (
+        <div className="text-xs text-muted-foreground mb-2">Seleccionar jugador · {STATE_LABEL[current.state]}</div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {team.players.slice(0, 12).map((p) => (
             <button
-              key={it.z}
-              onClick={() => onOrigin(it.z)}
-              className="rounded-lg border-2 border-primary/30 hover:border-primary hover:bg-primary/10 py-3 text-sm font-bold transition-colors"
+              key={p.id}
+              onClick={() => onPlayer(p.id)}
+              className="rounded-md border border-primary/30 hover:border-primary hover:bg-primary/10 py-1.5 px-2 text-left text-xs font-bold transition-colors truncate"
             >
-              {it.label}
+              #{p.number} {p.name.split(" ")[0]}
             </button>
           ))}
         </div>
@@ -192,56 +157,40 @@ function StepView({ current, match, teams, onPlayer, onOrigin, onTarget, onRatin
     );
   }
 
-  if (current.sub === "player") {
-    const onCourt = getEffectiveOnCourt(match, current.side);
+  // Armado: distribución (1..5). Armador ya autodetectado.
+  if (current.state === "armado" && current.sub === "target") {
     return (
       <div>
-        <div className="text-xs text-muted-foreground mb-2">Jugador · {STATE_LABEL[current.state]}</div>
-        <div className="grid grid-cols-3 gap-2">
-          {onCourt.map((pid, idx) => {
-            const p = team.players.find((x) => x.id === pid);
-            if (!p) return null;
-            const zone = idx + 1;
+        <PlayerCard team={team} playerId={current.playerId} state="armado" />
+        <div className="text-xs text-muted-foreground mb-2">¿Hacia qué zona distribuyó?</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {([1, 2, 3, 4, 5] as const).map((key) => {
+            const zone = SET_DISTRIBUTION_TO_ZONE[key];
             return (
               <button
-                key={pid}
-                onClick={() => onPlayer(pid)}
-                className="rounded-lg border-2 border-primary/30 hover:border-primary hover:bg-primary/10 py-2 px-2 text-left transition-colors"
+                key={key}
+                onClick={() => onTarget(zone)}
+                className="rounded-lg border-2 border-primary/30 hover:border-primary hover:bg-primary/10 py-3 flex flex-col items-center transition-colors"
               >
-                <div className="text-[10px] text-muted-foreground">Z{zone}</div>
-                <div className="text-sm font-bold">#{p.number} {p.name.split(" ")[0]}</div>
+                <span className="text-[9px] text-muted-foreground">{key}</span>
+                <span className="text-sm font-bold">{SET_DISTRIBUTION_LABEL[key]}</span>
               </button>
             );
           })}
         </div>
-        <p className="text-[10px] text-muted-foreground mt-2">
-          Pista: los números 1..9 seleccionan por número de camiseta.
-        </p>
       </div>
     );
   }
 
+  // Saque / Ataque / Contraataque: destino en cancha rival (Q W E / A S D).
   if (current.sub === "target") {
-    const auto = current.playerId ? team.players.find((p) => p.id === current.playerId) : null;
     return (
       <div>
-        {auto && (
-          <div className="mb-3 rounded-lg border-2 border-primary/30 bg-primary/5 px-3 py-2 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                {current.state === "saque" ? "Sacador detectado" : "Jugador detectado"}
-              </div>
-              <div className="text-sm font-bold">#{auto.number} {auto.name}</div>
-            </div>
-            {current.origin && (
-              <div className="text-[10px] uppercase text-muted-foreground">Zona <span className="font-bold text-primary">Z{current.origin}</span></div>
-            )}
-          </div>
-        )}
+        <PlayerCard team={team} playerId={current.playerId} state={current.state} origin={current.origin} />
         <div className="text-xs text-muted-foreground mb-2">
-          {current.state === "saque" ? "Destino del saque en cancha rival" : "Zona destino en cancha rival"}
+          {current.state === "saque" ? "Destino del saque" : "Destino del ataque"}
         </div>
-        <div className="grid grid-cols-3 gap-2 max-w-sm mx-auto">
+        <div className="grid grid-cols-3 gap-1.5">
           {[
             { z: 5 as const, k: "Q" }, { z: 6 as const, k: "W" }, { z: 1 as const, k: "E" },
             { z: 4 as const, k: "A" }, { z: 3 as const, k: "S" }, { z: 2 as const, k: "D" },
@@ -249,10 +198,10 @@ function StepView({ current, match, teams, onPlayer, onOrigin, onTarget, onRatin
             <button
               key={it.z}
               onClick={() => onTarget(it.z)}
-              className="rounded-lg border-2 border-primary/30 hover:border-primary hover:bg-primary/10 py-4 text-sm font-bold flex flex-col items-center transition-colors"
+              className="rounded-lg border-2 border-primary/30 hover:border-primary hover:bg-primary/10 py-3 flex flex-col items-center transition-colors"
             >
-              <span className="text-[10px] text-muted-foreground">{it.k}</span>
-              Z{it.z}
+              <span className="text-[9px] text-muted-foreground">{it.k}</span>
+              <span className="text-sm font-bold">Z{it.z}</span>
             </button>
           ))}
         </div>
@@ -260,43 +209,24 @@ function StepView({ current, match, teams, onPlayer, onOrigin, onTarget, onRatin
     );
   }
 
-
-  // rating
-  const ratingPlayer = current.playerId ? team.players.find((p) => p.id === current.playerId) : null;
+  // Rating universal.
   return (
     <div>
-      {ratingPlayer && (
-        <div className="mb-3 rounded-lg border-2 border-primary/30 bg-primary/5 px-3 py-2 flex items-center justify-between">
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              {current.state === "recepcion" ? "Receptor detectado" : "Jugador"}
-            </div>
-            <div className="text-sm font-bold">#{ratingPlayer.number} {ratingPlayer.name}</div>
-          </div>
-          {current.origin && (
-            <div className="text-[10px] uppercase text-muted-foreground">Zona <span className="font-bold text-primary">Z{current.origin}</span></div>
-          )}
-        </div>
-      )}
-      <div className="text-xs text-muted-foreground mb-2">
-        Valoración · {STATE_LABEL[current.state]}
-      </div>
-
-      <div className="grid grid-cols-6 gap-2">
+      <PlayerCard team={team} playerId={current.playerId} state={current.state} origin={current.origin} />
+      <div className="text-xs text-muted-foreground mb-2">Valoración</div>
+      <div className="grid grid-cols-3 gap-1.5">
         {RATING_ORDER.map((r) => (
           <button
             key={r}
             onClick={() => onRating(r)}
-            className={`rounded-lg border-2 py-3 font-mono font-bold text-lg transition-colors ${
-              ratingClass(r)
-            }`}
+            className={`rounded-lg border-2 py-2.5 font-mono font-bold text-base transition-colors ${ratingClass(r)}`}
             title={RATING_MEANING[current.state][r] ?? ""}
           >
             {r}
           </button>
         ))}
       </div>
-      <div className="mt-2 text-[10px] text-muted-foreground grid grid-cols-6 gap-2 text-center">
+      <div className="mt-1.5 text-[9px] text-muted-foreground grid grid-cols-3 gap-1.5 text-center">
         {RATING_ORDER.map((r) => (
           <div key={r} className="truncate">{RATING_MEANING[current.state][r]}</div>
         ))}
@@ -317,15 +247,15 @@ function ratingClass(r: Rating): string {
 function FinPanel({ outcome, scoringTeam, onNew }: { outcome: { scoringSide: "A" | "B"; reason: string } | null; scoringTeam: Team; onNew: () => void }) {
   if (!outcome) return null;
   return (
-    <div className="text-center py-4 animate-in fade-in-0 zoom-in-95 duration-200">
+    <div className="text-center py-3 animate-in fade-in-0 zoom-in-95 duration-200">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Punto</div>
-      <div className="text-2xl font-bold text-primary mt-1">{scoringTeam.name}</div>
-      <div className="text-sm text-muted-foreground mt-1">{outcome.reason}</div>
+      <div className="text-xl font-bold text-primary mt-1 truncate">{scoringTeam.name}</div>
+      <div className="text-xs text-muted-foreground mt-1">{outcome.reason}</div>
       <button
         onClick={onNew}
-        className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90"
+        className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90"
       >
-        <Undo2 className="size-4" /> Nuevo rally (S)
+        <Undo2 className="size-3.5" /> Nuevo rally (S)
       </button>
     </div>
   );
