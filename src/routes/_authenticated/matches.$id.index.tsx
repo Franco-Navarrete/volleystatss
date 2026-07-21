@@ -231,6 +231,28 @@ function LiveMatch() {
   const { hasAccess: coachOverride } = useCoachAccess();
   const isMobile = useIsMobileLayout();
   const coachEnabled = useCoachMode((s) => s.enabled);
+  const setCoachEnabled = useCoachMode((s) => s.setEnabled);
+
+  // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
+  useEffect(() => {
+    if (!coachOverride || !match?.id || !coachEnabled) return;
+    const key = `rally.coachHelpShown.${match.id}`;
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, "1");
+    window.dispatchEvent(new CustomEvent("coach:help:open"));
+  }, [coachEnabled, coachOverride, match?.id]);
+
+  const toggleCoachMode = () => {
+    const next = !coachEnabled;
+    setCoachEnabled(next);
+    toast(next ? "Coach Mode activado" : "Coach Mode desactivado", {
+      description: next
+        ? "Los comandos de teclado ya están disponibles."
+        : "Los atajos de teclado se han deshabilitado.",
+      duration: 2000,
+    });
+  };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
   useCoachShortcuts({ active: coachOverride && !isMobile && match?.status === "live" });
 
