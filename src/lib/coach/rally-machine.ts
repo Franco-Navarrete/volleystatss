@@ -291,6 +291,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     const nextHistory = [...get().history, step];
     const t = transition(step);
     (get() as unknown as { _pendingRating?: Rating })._pendingRating = undefined;
+    set({ redoStack: [] });
 
     if (t.state === "fin") {
       const outcome = { scoringSide: t.scoringSide ?? cur.side, reason: t.reason ?? "" };
