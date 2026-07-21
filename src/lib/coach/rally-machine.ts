@@ -27,13 +27,13 @@ export const RATING_ORDER: Rating[] = ["#", "+", "0", "-", "=", "≠"];
 
 export const RATING_MEANING: Record<RallyState, Partial<Record<Rating, string>>> = {
   idle: {},
-  saque: { "#": "Ace (punto)", "+": "Positivo", "0": "Neutro", "-": "Presionado", "=": "Devuelto fácil", "≠": "Error de saque" },
-  recepcion: { "#": "Perfecta", "+": "Buena", "0": "Neutra", "-": "Mala", "=": "Punto rival", "≠": "Punto directo rival" },
-  armado: { "#": "Perfecto", "+": "Bueno", "0": "Neutro", "-": "Malo", "=": "Muy malo", "≠": "Error de armador" },
-  ataque: { "#": "Punto (Kill)", "+": "Fuerte", "0": "Continúa", "-": "Bloqueado / defendido", "=": "Muy defendido", "≠": "Error de ataque" },
-  bloqueo: { "#": "Punto de bloqueo", "+": "Toque positivo", "0": "Neutro", "-": "Deja abierto", "=": "Rebote fácil", "≠": "Error de bloqueo" },
-  defensa: { "#": "Perfecta", "+": "Buena", "0": "Continúa", "-": "Débil", "=": "Muy débil", "≠": "Error de defensa" },
-  contraataque: { "#": "Punto (Contra)", "+": "Fuerte", "0": "Continúa", "-": "Defendido", "=": "Muy defendido", "≠": "Error" },
+  saque: { "#": "Ace (punto)", "+": "Positivo", "0": "Neutro", "-": "Presionado", "=": "Error de saque", "≠": "Devuelto fácil" },
+  recepcion: { "#": "Perfecta", "+": "Buena", "0": "Neutra", "-": "Mala", "=": "Error de recepción", "≠": "Falta de recepción" },
+  armado: { "#": "Perfecto", "+": "Bueno", "0": "Neutro", "-": "Malo", "=": "Error de armado", "≠": "Doble / Retención" },
+  ataque: { "#": "Punto (Kill)", "+": "Fuerte", "0": "Continúa", "-": "Defendido", "=": "Error (out/red)", "≠": "Falta de ataque" },
+  bloqueo: { "#": "Punto de bloqueo", "+": "Toque positivo", "0": "Neutro", "-": "Deja abierto", "=": "Error de bloqueo", "≠": "Falta de bloqueo" },
+  defensa: { "#": "Perfecta", "+": "Buena", "0": "Continúa", "-": "Débil", "=": "Error de defensa", "≠": "Falta" },
+  contraataque: { "#": "Punto (Contra)", "+": "Fuerte", "0": "Continúa", "-": "Defendido", "=": "Error", "≠": "Falta" },
   fin: {},
 };
 
@@ -63,6 +63,7 @@ interface CoachRallyState {
   matchId: string | null;
   state: RallyState;
   history: RallyStep[];
+  redoStack: RallyStep[];
   current: CurrentStep | null;
   /** Resultado del rally cuando `state === "fin"`. */
   outcome: { scoringSide: "A" | "B"; reason: string } | null;
@@ -75,6 +76,10 @@ interface CoachRallyState {
   back: () => void;
   cancel: () => void;
   reset: () => void;
+  /** Deshace la última acción registrada en el rally (Ctrl+Z). */
+  undoStep: () => void;
+  /** Rehace (Ctrl+Y). */
+  redoStep: () => void;
   /** Comitea la step actual y avanza al siguiente estado. */
   commit: () => void;
 }
@@ -97,29 +102,39 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
   switch (state) {
     case "saque":
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Ace" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de saque" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de saque" };
+      // + 0 - ≠ → recepción del rival
       return { state: "recepcion", side: opposite(side) };
     case "recepcion":
-      if (rating === "=" || rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Recepción perdida" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de recepción" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de recepción" };
+      // # + 0 - → armado propio
       return { state: "armado", side };
     case "armado":
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de armado" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de armado" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de armado" };
       return { state: "ataque", side };
     case "ataque":
-      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Kill" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de ataque" };
-      if (rating === "-" || rating === "=") return { state: "bloqueo", side: opposite(side) };
+      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de ataque" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de ataque" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de ataque" };
+      // + 0 - → bloqueo rival
       return { state: "bloqueo", side: opposite(side) };
     case "bloqueo":
-      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Bloqueo punto" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de bloqueo" };
+      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de bloqueo" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de bloqueo" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de bloqueo" };
+      // + 0 - → defensa (mismo lado que bloqueó)
       return { state: "defensa", side };
     case "defensa":
-      if (rating === "≠" || rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Defensa perdida" };
-      return { state: "contraataque", side };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de defensa" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de defensa" };
+      // # + 0 - → nuevo ciclo: armado del mismo equipo
+      return { state: "armado", side };
     case "contraataque":
+      // No usado en el ciclo v3, pero mantenido por compatibilidad.
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Contraataque punto" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
+      if (rating === "=" || rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
       return { state: "bloqueo", side: opposite(side) };
   }
 }
@@ -144,7 +159,7 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, scoring, "ace", serve?.playerId ?? null);
     return;
   }
-  if (finisher.state === "saque" && finisher.rating === "≠") {
+  if (finisher.state === "saque" && finisher.rating === "=") {
     store.recordPoint(matchId, opposite(scoring), "serve_error", serve?.playerId ?? null);
     return;
   }
@@ -152,19 +167,15 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, scoring, "attack", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
-  if (finisher.state === "ataque" && finisher.rating === "≠") {
+  if (finisher.state === "ataque" && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "attack_error", attack?.playerId ?? null);
-    return;
-  }
-  if (finisher.state === "contraataque" && finisher.rating === "#") {
-    store.recordPoint(matchId, scoring, "counter_attack", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
   if (finisher.state === "bloqueo" && finisher.rating === "#") {
     store.recordPoint(matchId, scoring, "block", block?.playerId ?? null);
     return;
   }
-  if (finisher.state === "bloqueo" && finisher.rating === "≠") {
+  if (finisher.state === "bloqueo" && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "block_error", block?.playerId ?? null);
     return;
   }
@@ -173,15 +184,16 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, scoring, "ace", serve?.playerId ?? null);
     return;
   }
-  if (finisher.state === "armado" && finisher.rating === "≠") {
+  if (finisher.state === "armado" && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "unforced_error", finisher.playerId ?? null);
     return;
   }
   if (finisher.state === "defensa") {
+    // Defensa fallida ⇒ el atacante rival ganó el punto.
     store.recordPoint(matchId, scoring, attack ? "attack" : "opponent_error", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
-  // Fallback: punto al scoring
+  // Fallback
   store.recordPoint(matchId, scoring, "opponent_error", null);
 }
 
@@ -189,6 +201,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   matchId: null,
   state: "idle",
   history: [],
+  redoStack: [],
   current: null,
   outcome: null,
 
@@ -198,6 +211,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       matchId,
       state: entry,
       history: [],
+      redoStack: [],
       outcome: null,
       current: {
         state: entry,
@@ -277,6 +291,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     const nextHistory = [...get().history, step];
     const t = transition(step);
     (get() as unknown as { _pendingRating?: Rating })._pendingRating = undefined;
+    set({ redoStack: [] });
 
     if (t.state === "fin") {
       const outcome = { scoringSide: t.scoringSide ?? cur.side, reason: t.reason ?? "" };
@@ -337,11 +352,62 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   },
 
   cancel: () => {
-    set({ state: "idle", current: null, history: [], outcome: null, matchId: null });
+    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null, matchId: null });
   },
 
   reset: () => {
-    set({ state: "idle", current: null, history: [], outcome: null });
+    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null });
+  },
+
+  undoStep: () => {
+    const { history, redoStack, current } = get();
+    if (history.length === 0) {
+      // Sin historia: sólo limpiamos el sub-paso actual.
+      if (current) set({ current: { ...current, playerId: undefined, origin: undefined, target: undefined, sub: NEEDS_ORIGIN_BEFORE_PLAYER.includes(current.state) ? "origin" : "player" } });
+      return;
+    }
+    const last = history[history.length - 1];
+    set({
+      state: last.state,
+      history: history.slice(0, -1),
+      redoStack: [...redoStack, last],
+      outcome: null,
+      current: {
+        state: last.state,
+        side: last.side,
+        playerId: last.playerId,
+        origin: last.origin,
+        target: last.target,
+        sub: "rating",
+      },
+    });
+  },
+
+  redoStep: () => {
+    const { redoStack } = get();
+    if (redoStack.length === 0) return;
+    const step = redoStack[redoStack.length - 1];
+    const nextRedo = redoStack.slice(0, -1);
+    const nextHistory = [...get().history, step];
+    const t = transition(step);
+    if (t.state === "fin") {
+      const outcome = { scoringSide: t.scoringSide ?? step.side, reason: t.reason ?? "" };
+      const mid = get().matchId;
+      if (mid) persistToStore(mid, nextHistory, outcome);
+      set({ state: "fin", history: nextHistory, redoStack: nextRedo, current: null, outcome });
+      return;
+    }
+    const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(t.state as Exclude<RallyState, "idle" | "fin">);
+    set({
+      state: t.state,
+      history: nextHistory,
+      redoStack: nextRedo,
+      current: {
+        state: t.state as Exclude<RallyState, "idle" | "fin">,
+        side: t.side,
+        sub: needsOriginFirst ? "origin" : "player",
+      },
+    });
   },
 }));
 
@@ -360,5 +426,5 @@ export const STATE_LABEL: Record<RallyState, string> = {
 
 /** Orden canónico del flujo (para progress bar). */
 export const FLOW_STATES: RallyState[] = [
-  "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "contraataque", "fin",
+  "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "fin",
 ];
