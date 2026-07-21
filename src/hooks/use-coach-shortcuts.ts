@@ -75,16 +75,36 @@ export function useCoachShortcuts(options?: { active?: boolean; matchId?: string
 
       // 1) Navegación / undo / help
       if (bindingMatches(bindings.help, e)) { e.preventDefault(); dispatchAction("help"); return; }
-      if (bindingMatches(bindings.cancel, e)) { e.preventDefault(); if (rally.state !== "idle") rally.cancel(); else dispatchAction("cancel"); return; }
-      if (bindingMatches(bindings.back, e)) { e.preventDefault(); if (rally.state !== "idle") rally.back(); return; }
-      if (bindingMatches(bindings.undo, e)) {
+      if (bindingMatches(bindings.cancel, e)) {
         e.preventDefault();
-        const match = matchId ? useVolley.getState().matches.find((m) => m.id === matchId) : null;
-        if (match && match.events.length > 0) useVolley.getState().undoLastEvent(match.id);
-        rally.cancel();
+        if (rally.state !== "idle" && rally.state !== "fin") {
+          const ok = rally.history.length === 0 || window.confirm("¿Cancelar el rally en curso? Se perderán las acciones registradas.");
+          if (ok) rally.cancel();
+        } else {
+          dispatchAction("cancel");
+        }
         return;
       }
-      if (bindingMatches(bindings.redo, e)) { e.preventDefault(); return; }
+      if (bindingMatches(bindings.back, e)) {
+        e.preventDefault();
+        if (rally.state !== "idle") rally.back();
+        return;
+      }
+      if (bindingMatches(bindings.undo, e)) {
+        e.preventDefault();
+        if (rally.state !== "idle" && rally.state !== "fin") {
+          rally.undoStep();
+        } else {
+          const match = matchId ? useVolley.getState().matches.find((m) => m.id === matchId) : null;
+          if (match && match.events.length > 0) useVolley.getState().undoLastEvent(match.id);
+        }
+        return;
+      }
+      if (bindingMatches(bindings.redo, e)) {
+        e.preventDefault();
+        if (rally.state !== "idle") rally.redoStep();
+        return;
+      }
 
       // 2) Atajos externos al rally: timeout, cambio, libero, sancion
       const external: CoachAction[] = ["timeout", "cambio", "libero", "sancion"];
@@ -92,19 +112,19 @@ export function useCoachShortcuts(options?: { active?: boolean; matchId?: string
         if (bindingMatches(bindings[a], e)) { e.preventDefault(); dispatchAction(a); return; }
       }
 
-      // 3) Iniciar fundamento (sólo si la máquina está idle)
-      if (rally.state === "idle" && matchId) {
-        for (const [action, state] of Object.entries(FUNDAMENTAL_TO_STATE)) {
-          if (bindingMatches(bindings[action as CoachAction], e)) {
-            e.preventDefault();
-            const match = useVolley.getState().matches.find((m) => m.id === matchId);
-            if (!match) return;
-            // Lado por defecto: quien saca para SAQUE; para el resto usamos posesión inferida.
-            const side: "A" | "B" = state === "saque" ? match.servingSide : (match.servingSide === "A" ? "B" : "A");
-            rally.start(matchId, state as never, side);
-            return;
-          }
+      // 3) Iniciar rally: SÓLO desde SAQUE (tecla S por defecto).
+      //    El resto de fundamentos no puede iniciar un rally: Coach Mode
+      //    determina automáticamente qué fundamento viene después.
+      if (rally.state === "idle" || rally.state === "fin") {
+        if (bindingMatches(bindings.saque, e) && matchId) {
+          e.preventDefault();
+          const match = useVolley.getState().matches.find((m) => m.id === matchId);
+          if (!match) return;
+          rally.start(matchId, "saque", match.servingSide);
+          return;
         }
+        // Ignoramos otros fundamentos cuando estamos idle.
+        return;
       }
 
       // 4) Dentro del rally: dispatch al sub-paso actual
