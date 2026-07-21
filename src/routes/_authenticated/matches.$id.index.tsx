@@ -511,6 +511,7 @@ function LiveMatch() {
   return (
     <CompactShell>
       <CoachHUD />
+      <CoachAttackPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9998] pointer-events-none">
         <CoachModeBadge />
