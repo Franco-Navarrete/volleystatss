@@ -52,6 +52,7 @@ import { useCoachShortcuts } from "@/hooks/use-coach-shortcuts";
 import { CoachHUD } from "@/components/coach/CoachHUD";
 import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
 import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
+import { CoachAttackPanel } from "@/components/coach/CoachAttackPanel";
 import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
 
@@ -259,17 +260,20 @@ function LiveMatch() {
           if (isCoach && isLive && !actionsDisabled) setShowSettingDialog(true);
           break;
         case "ataque":
+          // Coach Mode: el flujo de ataque lo maneja CoachAttackPanel
+          // con su propio panel flotante multi-paso. No abrimos el
+          // diálogo integrado para no duplicar la experiencia.
+          break;
         case "saque":
         case "recepcion":
         case "bloqueo":
         case "defensa":
         case "contraataque":
-          // Abre el diálogo integrado del lado que corresponde;
-          // el usuario completa jugador/zona/valoración con el HUD guía.
           setIntegratedRally({ side });
           break;
       }
     };
+
     window.addEventListener("coach:action", handler as EventListener);
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // Los setters de useState son estables; el resto se lee desde `match` actualizado.
@@ -507,6 +511,7 @@ function LiveMatch() {
   return (
     <CompactShell>
       <CoachHUD />
+      <CoachAttackPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[9998] pointer-events-none">
         <CoachModeBadge />

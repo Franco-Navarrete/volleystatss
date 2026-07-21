@@ -185,6 +185,27 @@ export function isAttackType(t: PointType): boolean {
 /** Sector 1..9 de la cancha rival (3×3): 1..3 cerca de la red, 7..9 fondo. */
 export type AttackDirection = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
+/**
+ * Tipo de finalización de un ataque ganador (Coach Mode).
+ * Enriquece las estadísticas tácticas sin cambiar la lógica del marcador.
+ */
+export type AttackFinishType =
+  | "kill"        // Ataque ganador limpio
+  | "block_out"   // Pelota sale tras tocar el bloqueo
+  | "tool"        // Toque de bloqueo (desvía y cae)
+  | "tip"         // Finta
+  | "line"        // Línea
+  | "cross";      // Cruzado
+
+export const ATTACK_FINISH_LABEL: Record<AttackFinishType, string> = {
+  kill: "Kill",
+  block_out: "Block Out",
+  tool: "Toque de bloqueo",
+  tip: "Finta",
+  line: "Línea",
+  cross: "Cruzado",
+};
+
 export interface PointEvent {
   id: string;
   /** Side that scored the point. */
@@ -201,7 +222,10 @@ export interface PointEvent {
   attackType?: import("@/lib/formations/attack-types").AttackType;
   /** Modo entrenador: dirección del ataque en la cancha rival (1..9). */
   attackDirection?: AttackDirection;
+  /** Coach Mode: tipo de finalización (kill/block out/tool/tip/line/cross). */
+  finishType?: AttackFinishType;
 }
+
 
 
 export interface SubstitutionEvent {
@@ -524,8 +548,10 @@ interface VolleyState {
     playerId: string | null,
     attackZone?: AttackZone,
     attackType?: import("@/lib/formations/attack-types").AttackType,
-    attackDirection?: AttackDirection
+    attackDirection?: AttackDirection,
+    finishType?: AttackFinishType
   ) => void;
+
 
   recordSubstitution: (
     matchId: string,
@@ -1002,7 +1028,7 @@ export const useVolley = create<VolleyState>()(
           ),
         })),
 
-      recordPoint: (matchId, playerSide, type, playerId, attackZone, attackType, attackDirection) => {
+      recordPoint: (matchId, playerSide, type, playerId, attackZone, attackType, attackDirection, finishType) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId || m.status === "finished") return m;
@@ -1022,7 +1048,9 @@ export const useVolley = create<VolleyState>()(
               ...(attackDirection !== undefined && (isAttackType(type) || type === "attack_error")
                 ? { attackDirection }
                 : {}),
+              ...(finishType !== undefined && isAttackType(type) ? { finishType } : {}),
             };
+
 
             const withEvent: Match = { ...m, events: [...m.events, ev] };
             const next = applyAutoLibero(withEvent, s.teams);
