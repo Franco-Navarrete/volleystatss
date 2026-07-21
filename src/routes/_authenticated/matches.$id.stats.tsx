@@ -416,6 +416,8 @@ function StatsPage() {
           <ReceptionTable team={teamB} recMap={computeReceptionStats(match.events, "B")} />
         </div>
       )}
+        </div>
+      </details>
 
     </AppShell>
   );
