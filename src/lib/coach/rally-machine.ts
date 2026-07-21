@@ -129,15 +129,16 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
     case "defensa":
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de defensa" };
       if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de defensa" };
-      // # + 0 - → nuevo ciclo: armado del mismo equipo
+      // # + 0 - → contraataque: armado del mismo equipo, luego ataque = contraataque
       return { state: "armado", side };
     case "contraataque":
-      // No usado en el ciclo v3, pero mantenido por compatibilidad.
-      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Contraataque punto" };
-      if (rating === "=" || rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
+      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de contraataque" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de contraataque" };
       return { state: "bloqueo", side: opposite(side) };
   }
 }
+
 
 /**
  * Persiste el rally al volley-store cuando termina (única vez).
@@ -163,14 +164,15 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, opposite(scoring), "serve_error", serve?.playerId ?? null);
     return;
   }
-  if (finisher.state === "ataque" && finisher.rating === "#") {
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.rating === "#") {
     store.recordPoint(matchId, scoring, "attack", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
-  if (finisher.state === "ataque" && (finisher.rating === "=" || finisher.rating === "≠")) {
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "attack_error", attack?.playerId ?? null);
     return;
   }
+
   if (finisher.state === "bloqueo" && finisher.rating === "#") {
     store.recordPoint(matchId, scoring, "block", block?.playerId ?? null);
     return;
@@ -289,7 +291,13 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       timestamp: Date.now(),
     };
     const nextHistory = [...get().history, step];
-    const t = transition(step);
+    let t = transition(step);
+
+    // Ciclo continuo: si venimos de una defensa, el próximo ataque es contraataque.
+    if (t.state === "ataque") {
+      const hasDefensa = nextHistory.some((h) => h.state === "defensa");
+      if (hasDefensa) t = { ...t, state: "contraataque" };
+    }
     (get() as unknown as { _pendingRating?: Rating })._pendingRating = undefined;
     set({ redoStack: [] });
 
@@ -316,6 +324,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       },
     });
   },
+
 
   back: () => {
     const { current, history } = get();
@@ -360,9 +369,13 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   },
 
   undoStep: () => {
-    const { history, redoStack, current } = get();
+    const { history, redoStack, current, state, matchId } = get();
+    // Si estamos en "fin", revertimos también el punto persistido.
+    if (state === "fin" && matchId) {
+      const match = useVolley.getState().matches.find((m) => m.id === matchId);
+      if (match && match.events.length > 0) useVolley.getState().undoLastEvent(matchId);
+    }
     if (history.length === 0) {
-      // Sin historia: sólo limpiamos el sub-paso actual.
       if (current) set({ current: { ...current, playerId: undefined, origin: undefined, target: undefined, sub: NEEDS_ORIGIN_BEFORE_PLAYER.includes(current.state) ? "origin" : "player" } });
       return;
     }
@@ -382,6 +395,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       },
     });
   },
+
 
   redoStep: () => {
     const { redoStack } = get();
@@ -426,5 +440,6 @@ export const STATE_LABEL: Record<RallyState, string> = {
 
 /** Orden canónico del flujo (para progress bar). */
 export const FLOW_STATES: RallyState[] = [
-  "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "fin",
+  "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "contraataque", "fin",
 ];
+
