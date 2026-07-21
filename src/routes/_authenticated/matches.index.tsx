@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { LiveMatchesFeed } from "@/components/LiveMatchesFeed";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, setsWon } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Plus, Radio, Trash2 } from "lucide-react";
-import { useCanCreateMatches } from "@/hooks/use-permissions";
+import { useCanCreateMatches, useCanDeleteMatches } from "@/hooks/use-permissions";
+import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +33,22 @@ function MatchesIndex() {
   const deleteMatch = useVolley((s) => s.deleteMatch);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const { allowed: canCreate } = useCanCreateMatches();
+  const { allowed: canDelete } = useCanDeleteMatches();
+  const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const [, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(matchId: string) {
+    setDeletingId(matchId);
+    try {
+      await deleteFn({ data: { matchId } });
+      deleteMatch(matchId);
+      toast.success("Partido eliminado");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No tienes permisos para eliminar partidos en vivo.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const groups = [
     { label: "En vivo", items: matches.filter((m) => m.status === "live"), addTo: "live" as const },
@@ -114,7 +133,7 @@ function MatchesIndex() {
                           </div>
                         )}
                       </Link>
-                      {canCreate && (
+                      {canDelete && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <button
@@ -136,7 +155,7 @@ function MatchesIndex() {
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => deleteMatch(m.id)}
+                                onClick={() => handleDelete(m.id)}
                               >
                                 Eliminar
                               </AlertDialogAction>

@@ -170,6 +170,39 @@ export type Database = {
         }
         Relationships: []
       }
+      match_deletion_audit: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string
+          reason: string | null
+          result: string
+          role: string
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id: string
+          reason?: string | null
+          result: string
+          role: string
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string
+          reason?: string | null
+          result?: string
+          role?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       match_events: {
         Row: {
           created_at: string
