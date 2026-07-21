@@ -321,17 +321,43 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       return;
     }
 
-    const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(t.state as Exclude<RallyState, "idle" | "fin">);
-    // Recepción: autoselección del receptor usando la zona destino del saque
-    // (misma formación efectiva del equipo receptor). El coach sólo valora.
+    // Autoselección del siguiente jugador según el fundamento y la formación efectiva.
+    const match = useVolley.getState().matches.find((m) => m.id === matchId);
+    const teamState = useVolley.getState();
     let nextPlayerId: string | null | undefined = undefined;
-    let nextSub: CurrentStep["sub"] = needsOriginFirst ? "origin" : "player";
-    if (t.state === "recepcion" && step.state === "saque" && step.target && step.target <= 6) {
-      const match = useVolley.getState().matches.find((m) => m.id === matchId);
-      const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
-      nextPlayerId = match ? playerAtZone(match, t.side, zone) : null;
-      nextSub = "rating";
+    let nextOrigin: 1 | 2 | 3 | 4 | 5 | 6 | undefined = undefined;
+    let nextSub: CurrentStep["sub"] = "player";
+
+    if (match) {
+      const team = t.side === "A"
+        ? teamState.teams.find((tm) => tm.id === match.teamAId)
+        : teamState.teams.find((tm) => tm.id === match.teamBId);
+
+      if (t.state === "recepcion" && step.state === "saque" && step.target && step.target <= 6) {
+        // Saque → Recepción: receptor = jugador en la zona destino del saque.
+        const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
+        nextPlayerId = playerAtZone(match, t.side, zone);
+        nextOrigin = zone;
+        nextSub = "rating";
+      } else if (t.state === "armado") {
+        // Recepción / Defensa → Armado: armador autodetectado; sólo falta distribución.
+        nextPlayerId = team ? findSetterOnCourt(match, team, t.side) : null;
+        nextSub = "target";
+      } else if ((t.state === "ataque" || t.state === "contraataque") && step.state === "armado" && step.target) {
+        // Armado → Ataque: atacante = jugador en la zona a la que distribuyó el armado.
+        const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
+        nextPlayerId = playerAtZone(match, t.side, zone);
+        nextOrigin = zone;
+        nextSub = "target";
+      } else if (t.state === "bloqueo") {
+        nextPlayerId = playerAtZone(match, t.side, 3);
+        nextSub = "rating";
+      } else if (t.state === "defensa") {
+        nextPlayerId = playerAtZone(match, t.side, 6);
+        nextSub = "rating";
+      }
     }
+
     set({
       state: t.state,
       history: nextHistory,
@@ -340,7 +366,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
         side: t.side,
         sub: nextSub,
         playerId: nextPlayerId,
-        origin: t.state === "recepcion" && step.target && step.target <= 6 ? (step.target as 1 | 2 | 3 | 4 | 5 | 6) : undefined,
+        origin: nextOrigin,
       },
     });
   },
