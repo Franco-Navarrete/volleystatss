@@ -133,7 +133,7 @@ function MatchesIndex() {
                           </div>
                         )}
                       </Link>
-                      {canCreate && (
+                      {canDelete && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <button
@@ -155,7 +155,7 @@ function MatchesIndex() {
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => deleteMatch(m.id)}
+                                onClick={() => handleDelete(m.id)}
                               >
                                 Eliminar
                               </AlertDialogAction>
