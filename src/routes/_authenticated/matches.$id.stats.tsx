@@ -201,6 +201,17 @@ function StatsPage() {
       )}
 
 
+      {/* Cockpit táctico en vivo para el entrenador */}
+      <div className="mb-6">
+        <CoachLiveDashboard match={match} teamA={teamA} teamB={teamB} coachSide="A" />
+      </div>
+
+      <details className="mb-6 rounded-2xl border border-border/60 bg-card">
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground flex items-center justify-between">
+          <span>Estadísticas detalladas y descarga</span>
+          <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground">Ver todo</span>
+        </summary>
+        <div className="p-4">
       <ShareMatchCard match={match} />
 
       {/* Final */}
