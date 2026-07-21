@@ -2531,6 +2531,14 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
           <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
         </div>
       )}
+      {isCoach && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+            Mapas de calor de saque
+          </p>
+          <ServeHeatmapPanel match={match} teamA={teamA} teamB={teamB} />
+        </div>
+      )}
     </div>
   );
 }
