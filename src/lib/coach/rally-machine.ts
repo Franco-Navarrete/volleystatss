@@ -63,6 +63,7 @@ interface CoachRallyState {
   matchId: string | null;
   state: RallyState;
   history: RallyStep[];
+  redoStack: RallyStep[];
   current: CurrentStep | null;
   /** Resultado del rally cuando `state === "fin"`. */
   outcome: { scoringSide: "A" | "B"; reason: string } | null;
@@ -75,6 +76,10 @@ interface CoachRallyState {
   back: () => void;
   cancel: () => void;
   reset: () => void;
+  /** Deshace la última acción registrada en el rally (Ctrl+Z). */
+  undoStep: () => void;
+  /** Rehace (Ctrl+Y). */
+  redoStep: () => void;
   /** Comitea la step actual y avanza al siguiente estado. */
   commit: () => void;
 }
