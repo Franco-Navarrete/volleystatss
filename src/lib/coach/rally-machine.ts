@@ -27,13 +27,13 @@ export const RATING_ORDER: Rating[] = ["#", "+", "0", "-", "=", "≠"];
 
 export const RATING_MEANING: Record<RallyState, Partial<Record<Rating, string>>> = {
   idle: {},
-  saque: { "#": "Ace (punto)", "+": "Positivo", "0": "Neutro", "-": "Presionado", "=": "Devuelto fácil", "≠": "Error de saque" },
-  recepcion: { "#": "Perfecta", "+": "Buena", "0": "Neutra", "-": "Mala", "=": "Punto rival", "≠": "Punto directo rival" },
-  armado: { "#": "Perfecto", "+": "Bueno", "0": "Neutro", "-": "Malo", "=": "Muy malo", "≠": "Error de armador" },
-  ataque: { "#": "Punto (Kill)", "+": "Fuerte", "0": "Continúa", "-": "Bloqueado / defendido", "=": "Muy defendido", "≠": "Error de ataque" },
-  bloqueo: { "#": "Punto de bloqueo", "+": "Toque positivo", "0": "Neutro", "-": "Deja abierto", "=": "Rebote fácil", "≠": "Error de bloqueo" },
-  defensa: { "#": "Perfecta", "+": "Buena", "0": "Continúa", "-": "Débil", "=": "Muy débil", "≠": "Error de defensa" },
-  contraataque: { "#": "Punto (Contra)", "+": "Fuerte", "0": "Continúa", "-": "Defendido", "=": "Muy defendido", "≠": "Error" },
+  saque: { "#": "Ace (punto)", "+": "Positivo", "0": "Neutro", "-": "Presionado", "=": "Error de saque", "≠": "Devuelto fácil" },
+  recepcion: { "#": "Perfecta", "+": "Buena", "0": "Neutra", "-": "Mala", "=": "Error de recepción", "≠": "Falta de recepción" },
+  armado: { "#": "Perfecto", "+": "Bueno", "0": "Neutro", "-": "Malo", "=": "Error de armado", "≠": "Doble / Retención" },
+  ataque: { "#": "Punto (Kill)", "+": "Fuerte", "0": "Continúa", "-": "Defendido", "=": "Error (out/red)", "≠": "Falta de ataque" },
+  bloqueo: { "#": "Punto de bloqueo", "+": "Toque positivo", "0": "Neutro", "-": "Deja abierto", "=": "Error de bloqueo", "≠": "Falta de bloqueo" },
+  defensa: { "#": "Perfecta", "+": "Buena", "0": "Continúa", "-": "Débil", "=": "Error de defensa", "≠": "Falta" },
+  contraataque: { "#": "Punto (Contra)", "+": "Fuerte", "0": "Continúa", "-": "Defendido", "=": "Error", "≠": "Falta" },
   fin: {},
 };
 
