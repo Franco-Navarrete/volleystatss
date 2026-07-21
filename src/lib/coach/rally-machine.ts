@@ -255,6 +255,11 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     const cur = get().current;
     if (!cur) return;
     set({ current: { ...cur, target: zone, sub: "rating" } });
+    // Armado: la distribución NO requiere valoración manual — se comitea
+    // con rating neutro y se avanza al ataque con el atacante autodetectado.
+    if (cur.state === "armado") {
+      get().setRating("0");
+    }
   },
 
   setRating: (rating) => {
