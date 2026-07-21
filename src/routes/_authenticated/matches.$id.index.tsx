@@ -26,6 +26,7 @@ import {
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
+import { ServeHeatmapPanel } from "@/components/serve/ServeHeatmapPanel";
 import { LiveStatsTable, type LiveStatsRow, type LiveStatsTeamSummary } from "@/components/LiveStatsTable";
 import { SettingDialog } from "@/components/scorer/SettingDialog";
 import { AttackTypeDialog } from "@/components/scorer/AttackTypeDialog";
@@ -2528,6 +2529,14 @@ function LiveStatsPanel({ match, teamA, teamB, isCoach }: { match: Match; teamA:
             Mapas de calor de ataque
           </p>
           <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
+        </div>
+      )}
+      {isCoach && (
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
+            Mapas de calor de saque
+          </p>
+          <ServeHeatmapPanel match={match} teamA={teamA} teamB={teamB} />
         </div>
       )}
     </div>
