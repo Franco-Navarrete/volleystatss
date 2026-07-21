@@ -16,6 +16,7 @@ import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
+import { ServeHeatmapPanel } from "@/components/serve/ServeHeatmapPanel";
 import { AttackTypesPanel } from "@/components/AttackTypesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
 import { SettingPanel } from "@/components/SettingPanel";
