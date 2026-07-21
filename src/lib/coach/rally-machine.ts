@@ -164,14 +164,15 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, opposite(scoring), "serve_error", serve?.playerId ?? null);
     return;
   }
-  if (finisher.state === "ataque" && finisher.rating === "#") {
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.rating === "#") {
     store.recordPoint(matchId, scoring, "attack", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
-  if (finisher.state === "ataque" && (finisher.rating === "=" || finisher.rating === "≠")) {
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "attack_error", attack?.playerId ?? null);
     return;
   }
+
   if (finisher.state === "bloqueo" && finisher.rating === "#") {
     store.recordPoint(matchId, scoring, "block", block?.playerId ?? null);
     return;
