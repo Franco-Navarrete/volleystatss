@@ -154,7 +154,7 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, scoring, "ace", serve?.playerId ?? null);
     return;
   }
-  if (finisher.state === "saque" && finisher.rating === "≠") {
+  if (finisher.state === "saque" && finisher.rating === "=") {
     store.recordPoint(matchId, opposite(scoring), "serve_error", serve?.playerId ?? null);
     return;
   }
@@ -162,19 +162,15 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, scoring, "attack", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
-  if (finisher.state === "ataque" && finisher.rating === "≠") {
+  if (finisher.state === "ataque" && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "attack_error", attack?.playerId ?? null);
-    return;
-  }
-  if (finisher.state === "contraataque" && finisher.rating === "#") {
-    store.recordPoint(matchId, scoring, "counter_attack", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
   if (finisher.state === "bloqueo" && finisher.rating === "#") {
     store.recordPoint(matchId, scoring, "block", block?.playerId ?? null);
     return;
   }
-  if (finisher.state === "bloqueo" && finisher.rating === "≠") {
+  if (finisher.state === "bloqueo" && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "block_error", block?.playerId ?? null);
     return;
   }
@@ -183,15 +179,16 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, scoring, "ace", serve?.playerId ?? null);
     return;
   }
-  if (finisher.state === "armado" && finisher.rating === "≠") {
+  if (finisher.state === "armado" && (finisher.rating === "=" || finisher.rating === "≠")) {
     store.recordPoint(matchId, opposite(scoring), "unforced_error", finisher.playerId ?? null);
     return;
   }
   if (finisher.state === "defensa") {
+    // Defensa fallida ⇒ el atacante rival ganó el punto.
     store.recordPoint(matchId, scoring, attack ? "attack" : "opponent_error", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
   }
-  // Fallback: punto al scoring
+  // Fallback
   store.recordPoint(matchId, scoring, "opponent_error", null);
 }
 
