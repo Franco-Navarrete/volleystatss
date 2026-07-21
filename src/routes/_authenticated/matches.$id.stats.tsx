@@ -372,11 +372,22 @@ function StatsPage() {
         </Tabs>
       </section>
 
-      {/* Mapas de calor de ataque (origen + destino, con filtros) */}
+      {/* Mapas de calor: Ataque + Saque (tabs) */}
       {isCoach && (
         <section className="mb-6">
-          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Mapas de calor de ataque</h2>
-          <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Mapas de calor</h2>
+          <Tabs defaultValue="ataque">
+            <TabsList className="mb-3">
+              <TabsTrigger value="ataque">Ataque</TabsTrigger>
+              <TabsTrigger value="saque">Saque</TabsTrigger>
+            </TabsList>
+            <TabsContent value="ataque">
+              <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
+            </TabsContent>
+            <TabsContent value="saque">
+              <ServeHeatmapPanel match={match} teamA={teamA} teamB={teamB} />
+            </TabsContent>
+          </Tabs>
         </section>
       )}
 
