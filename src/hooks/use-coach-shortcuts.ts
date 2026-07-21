@@ -16,15 +16,6 @@ export interface CoachSeqDetail {
   hint?: string;
 }
 
-const FUNDAMENTAL_TO_STATE: Partial<Record<CoachAction, "saque" | "recepcion" | "armado" | "ataque" | "bloqueo" | "defensa" | "contraataque">> = {
-  saque: "saque",
-  recepcion: "recepcion",
-  armado: "armado",
-  ataque: "ataque",
-  bloqueo: "bloqueo",
-  defensa: "defensa",
-  contraataque: "contraataque",
-};
 
 const ZONE_KEYS_QWE: Record<string, 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9> = {
   KeyQ: 5, KeyW: 6, KeyE: 1,
