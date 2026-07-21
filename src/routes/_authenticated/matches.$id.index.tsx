@@ -518,8 +518,7 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <CoachHUD />
-      <CoachAttackPanel match={match} teamA={teamA} teamB={teamB} />
+      <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />
       <div className="fixed top-2 right-2 z-[9998] pointer-events-none">
