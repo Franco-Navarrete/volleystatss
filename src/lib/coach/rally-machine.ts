@@ -439,5 +439,6 @@ export const STATE_LABEL: Record<RallyState, string> = {
 
 /** Orden canónico del flujo (para progress bar). */
 export const FLOW_STATES: RallyState[] = [
-  "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "fin",
+  "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "contraataque", "fin",
 ];
+
