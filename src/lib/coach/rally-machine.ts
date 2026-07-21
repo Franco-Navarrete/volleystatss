@@ -290,7 +290,13 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       timestamp: Date.now(),
     };
     const nextHistory = [...get().history, step];
-    const t = transition(step);
+    let t = transition(step);
+
+    // Ciclo continuo: si venimos de una defensa, el próximo ataque es contraataque.
+    if (t.state === "ataque") {
+      const hasDefensa = nextHistory.some((h) => h.state === "defensa");
+      if (hasDefensa) t = { ...t, state: "contraataque" };
+    }
     (get() as unknown as { _pendingRating?: Rating })._pendingRating = undefined;
     set({ redoStack: [] });
 
@@ -317,6 +323,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       },
     });
   },
+
 
   back: () => {
     const { current, history } = get();
