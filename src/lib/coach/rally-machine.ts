@@ -209,19 +209,27 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
 
   start: (matchId, entry, side) => {
     const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(entry);
+    // Saque: autoselección del sacador (Z1 de la formación efectiva del equipo con saque).
+    // El entrenador sólo indica destino + valoración.
+    let playerId: string | null | undefined = undefined;
+    let sub: CurrentStep["sub"] = needsOriginFirst ? "origin" : "player";
+    let origin: 1 | 2 | 3 | 4 | 5 | 6 | undefined = undefined;
+    if (entry === "saque") {
+      const match = useVolley.getState().matches.find((m) => m.id === matchId);
+      playerId = match ? playerAtZone(match, side, 1) : null;
+      origin = 1;
+      sub = "target";
+    }
     set({
       matchId,
       state: entry,
       history: [],
       redoStack: [],
       outcome: null,
-      current: {
-        state: entry,
-        side,
-        sub: needsOriginFirst ? "origin" : "player",
-      },
+      current: { state: entry, side, sub, playerId, origin },
     });
   },
+
 
   setPlayer: (playerId) => {
     const cur = get().current;
@@ -314,16 +322,29 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     }
 
     const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(t.state as Exclude<RallyState, "idle" | "fin">);
+    // Recepción: autoselección del receptor usando la zona destino del saque
+    // (misma formación efectiva del equipo receptor). El coach sólo valora.
+    let nextPlayerId: string | null | undefined = undefined;
+    let nextSub: CurrentStep["sub"] = needsOriginFirst ? "origin" : "player";
+    if (t.state === "recepcion" && step.state === "saque" && step.target && step.target <= 6) {
+      const match = useVolley.getState().matches.find((m) => m.id === matchId);
+      const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
+      nextPlayerId = match ? playerAtZone(match, t.side, zone) : null;
+      nextSub = "rating";
+    }
     set({
       state: t.state,
       history: nextHistory,
       current: {
         state: t.state as Exclude<RallyState, "idle" | "fin">,
         side: t.side,
-        sub: needsOriginFirst ? "origin" : "player",
+        sub: nextSub,
+        playerId: nextPlayerId,
+        origin: t.state === "recepcion" && step.target && step.target <= 6 ? (step.target as 1 | 2 | 3 | 4 | 5 | 6) : undefined,
       },
     });
   },
+
 
 
   back: () => {

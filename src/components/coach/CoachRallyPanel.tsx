@@ -222,9 +222,25 @@ function StepView({ current, match, teams, onPlayer, onOrigin, onTarget, onRatin
   }
 
   if (current.sub === "target") {
+    const auto = current.playerId ? team.players.find((p) => p.id === current.playerId) : null;
     return (
       <div>
-        <div className="text-xs text-muted-foreground mb-2">Zona destino en cancha rival</div>
+        {auto && (
+          <div className="mb-3 rounded-lg border-2 border-primary/30 bg-primary/5 px-3 py-2 flex items-center justify-between">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {current.state === "saque" ? "Sacador detectado" : "Jugador detectado"}
+              </div>
+              <div className="text-sm font-bold">#{auto.number} {auto.name}</div>
+            </div>
+            {current.origin && (
+              <div className="text-[10px] uppercase text-muted-foreground">Zona <span className="font-bold text-primary">Z{current.origin}</span></div>
+            )}
+          </div>
+        )}
+        <div className="text-xs text-muted-foreground mb-2">
+          {current.state === "saque" ? "Destino del saque en cancha rival" : "Zona destino en cancha rival"}
+        </div>
         <div className="grid grid-cols-3 gap-2 max-w-sm mx-auto">
           {[
             { z: 5 as const, k: "Q" }, { z: 6 as const, k: "W" }, { z: 1 as const, k: "E" },
@@ -244,12 +260,28 @@ function StepView({ current, match, teams, onPlayer, onOrigin, onTarget, onRatin
     );
   }
 
+
   // rating
+  const ratingPlayer = current.playerId ? team.players.find((p) => p.id === current.playerId) : null;
   return (
     <div>
+      {ratingPlayer && (
+        <div className="mb-3 rounded-lg border-2 border-primary/30 bg-primary/5 px-3 py-2 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              {current.state === "recepcion" ? "Receptor detectado" : "Jugador"}
+            </div>
+            <div className="text-sm font-bold">#{ratingPlayer.number} {ratingPlayer.name}</div>
+          </div>
+          {current.origin && (
+            <div className="text-[10px] uppercase text-muted-foreground">Zona <span className="font-bold text-primary">Z{current.origin}</span></div>
+          )}
+        </div>
+      )}
       <div className="text-xs text-muted-foreground mb-2">
         Valoración · {STATE_LABEL[current.state]}
       </div>
+
       <div className="grid grid-cols-6 gap-2">
         {RATING_ORDER.map((r) => (
           <button
