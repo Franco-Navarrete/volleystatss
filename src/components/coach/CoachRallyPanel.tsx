@@ -262,11 +262,26 @@ function StepView({ current, match, teams, onPlayer, onOrigin, onTarget, onRatin
 
 
   // rating
+  const ratingPlayer = current.playerId ? team.players.find((p) => p.id === current.playerId) : null;
   return (
     <div>
+      {ratingPlayer && (
+        <div className="mb-3 rounded-lg border-2 border-primary/30 bg-primary/5 px-3 py-2 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              {current.state === "recepcion" ? "Receptor detectado" : "Jugador"}
+            </div>
+            <div className="text-sm font-bold">#{ratingPlayer.number} {ratingPlayer.name}</div>
+          </div>
+          {current.origin && (
+            <div className="text-[10px] uppercase text-muted-foreground">Zona <span className="font-bold text-primary">Z{current.origin}</span></div>
+          )}
+        </div>
+      )}
       <div className="text-xs text-muted-foreground mb-2">
         Valoración · {STATE_LABEL[current.state]}
       </div>
+
       <div className="grid grid-cols-6 gap-2">
         {RATING_ORDER.map((r) => (
           <button
