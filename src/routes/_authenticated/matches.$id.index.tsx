@@ -48,6 +48,12 @@ import { RallyContextCards } from "@/components/scorer/RallyContextCards";
 import { computeRallyContext } from "@/lib/rally-phase";
 import { useIsMobileLayout } from "@/hooks/use-is-mobile-layout";
 import { MobileMatchShell } from "@/components/scorer/mobile/MobileMatchShell";
+import { useCoachShortcuts } from "@/hooks/use-coach-shortcuts";
+import { CoachHUD } from "@/components/coach/CoachHUD";
+import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
+import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
+import type { CoachAction } from "@/lib/coach-mode-store";
+import { useCoachMode } from "@/lib/coach-mode-store";
 
 
 
