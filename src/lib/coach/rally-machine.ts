@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useVolley, type AttackDirection, type AttackZone } from "@/lib/volley-store";
-import { playerAtZone, findSetterOnCourt, SET_DISTRIBUTION_TO_ZONE } from "./effective-lineup";
+import { playerAtZone, findSetterOnCourt } from "./effective-lineup";
 
 /**
  * Motor de estados de Coach Mode. Guía al entrenador durante un rally
