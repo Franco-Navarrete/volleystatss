@@ -322,16 +322,29 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     }
 
     const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(t.state as Exclude<RallyState, "idle" | "fin">);
+    // Recepción: autoselección del receptor usando la zona destino del saque
+    // (misma formación efectiva del equipo receptor). El coach sólo valora.
+    let nextPlayerId: string | null | undefined = undefined;
+    let nextSub: CurrentStep["sub"] = needsOriginFirst ? "origin" : "player";
+    if (t.state === "recepcion" && step.state === "saque" && step.target && step.target <= 6) {
+      const match = useVolley.getState().matches.find((m) => m.id === matchId);
+      const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
+      nextPlayerId = match ? playerAtZone(match, t.side, zone) : null;
+      nextSub = "rating";
+    }
     set({
       state: t.state,
       history: nextHistory,
       current: {
         state: t.state as Exclude<RallyState, "idle" | "fin">,
         side: t.side,
-        sub: needsOriginFirst ? "origin" : "player",
+        sub: nextSub,
+        playerId: nextPlayerId,
+        origin: t.state === "recepcion" && step.target && step.target <= 6 ? (step.target as 1 | 2 | 3 | 4 | 5 | 6) : undefined,
       },
     });
   },
+
 
 
   back: () => {
