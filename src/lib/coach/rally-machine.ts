@@ -351,11 +351,62 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   },
 
   cancel: () => {
-    set({ state: "idle", current: null, history: [], outcome: null, matchId: null });
+    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null, matchId: null });
   },
 
   reset: () => {
-    set({ state: "idle", current: null, history: [], outcome: null });
+    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null });
+  },
+
+  undoStep: () => {
+    const { history, redoStack, current } = get();
+    if (history.length === 0) {
+      // Sin historia: sólo limpiamos el sub-paso actual.
+      if (current) set({ current: { ...current, playerId: undefined, origin: undefined, target: undefined, sub: NEEDS_ORIGIN_BEFORE_PLAYER.includes(current.state) ? "origin" : "player" } });
+      return;
+    }
+    const last = history[history.length - 1];
+    set({
+      state: last.state,
+      history: history.slice(0, -1),
+      redoStack: [...redoStack, last],
+      outcome: null,
+      current: {
+        state: last.state,
+        side: last.side,
+        playerId: last.playerId,
+        origin: last.origin,
+        target: last.target,
+        sub: "rating",
+      },
+    });
+  },
+
+  redoStep: () => {
+    const { redoStack } = get();
+    if (redoStack.length === 0) return;
+    const step = redoStack[redoStack.length - 1];
+    const nextRedo = redoStack.slice(0, -1);
+    const nextHistory = [...get().history, step];
+    const t = transition(step);
+    if (t.state === "fin") {
+      const outcome = { scoringSide: t.scoringSide ?? step.side, reason: t.reason ?? "" };
+      const mid = get().matchId;
+      if (mid) persistToStore(mid, nextHistory, outcome);
+      set({ state: "fin", history: nextHistory, redoStack: nextRedo, current: null, outcome });
+      return;
+    }
+    const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(t.state as Exclude<RallyState, "idle" | "fin">);
+    set({
+      state: t.state,
+      history: nextHistory,
+      redoStack: nextRedo,
+      current: {
+        state: t.state as Exclude<RallyState, "idle" | "fin">,
+        side: t.side,
+        sub: needsOriginFirst ? "origin" : "player",
+      },
+    });
   },
 }));
 
