@@ -97,29 +97,39 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
   switch (state) {
     case "saque":
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Ace" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de saque" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de saque" };
+      // + 0 - ≠ → recepción del rival
       return { state: "recepcion", side: opposite(side) };
     case "recepcion":
-      if (rating === "=" || rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Recepción perdida" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de recepción" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de recepción" };
+      // # + 0 - → armado propio
       return { state: "armado", side };
     case "armado":
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de armado" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de armado" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de armado" };
       return { state: "ataque", side };
     case "ataque":
-      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Kill" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de ataque" };
-      if (rating === "-" || rating === "=") return { state: "bloqueo", side: opposite(side) };
+      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de ataque" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de ataque" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de ataque" };
+      // + 0 - → bloqueo rival
       return { state: "bloqueo", side: opposite(side) };
     case "bloqueo":
-      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Bloqueo punto" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de bloqueo" };
+      if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de bloqueo" };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de bloqueo" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de bloqueo" };
+      // + 0 - → defensa (mismo lado que bloqueó)
       return { state: "defensa", side };
     case "defensa":
-      if (rating === "≠" || rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Defensa perdida" };
-      return { state: "contraataque", side };
+      if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de defensa" };
+      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de defensa" };
+      // # + 0 - → nuevo ciclo: armado del mismo equipo
+      return { state: "armado", side };
     case "contraataque":
+      // No usado en el ciclo v3, pero mantenido por compatibilidad.
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Contraataque punto" };
-      if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
+      if (rating === "=" || rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
       return { state: "bloqueo", side: opposite(side) };
   }
 }
