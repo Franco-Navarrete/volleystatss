@@ -368,9 +368,13 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   },
 
   undoStep: () => {
-    const { history, redoStack, current } = get();
+    const { history, redoStack, current, state, matchId } = get();
+    // Si estamos en "fin", revertimos también el punto persistido.
+    if (state === "fin" && matchId) {
+      const match = useVolley.getState().matches.find((m) => m.id === matchId);
+      if (match && match.events.length > 0) useVolley.getState().undoLastEvent(matchId);
+    }
     if (history.length === 0) {
-      // Sin historia: sólo limpiamos el sub-paso actual.
       if (current) set({ current: { ...current, playerId: undefined, origin: undefined, target: undefined, sub: NEEDS_ORIGIN_BEFORE_PLAYER.includes(current.state) ? "origin" : "player" } });
       return;
     }
@@ -390,6 +394,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       },
     });
   },
+
 
   redoStep: () => {
     const { redoStack } = get();
