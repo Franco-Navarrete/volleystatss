@@ -39,16 +39,26 @@ export interface EnrichedServe {
 
 interface SideState {
   onCourt: string[];
-  rotation: number; // 1..6 (índice del jugador en pos1 dentro del lineup base + 1) — usamos un contador simple
+  rotation: number; // 1..6
+  libero: { liberoId: string; replacedId: string } | null;
 }
 
 function rotateClockwise(arr: string[]): string[] {
   return [arr[1], arr[2], arr[3], arr[4], arr[5], arr[0]];
 }
 
+// Debe coincidir EXACTAMENTE con volley-store.ts: el líbero cubre a la central
+// en toda la zaga (Z1/Z6/Z5) y sale al rotar a primera línea (Z2/Z3/Z4).
+// Índices oficiales en `onCourt`: 0=Z1, 1=Z2, 2=Z3, 3=Z4, 4=Z5, 5=Z6.
+const LIBERO_EXIT_INDEXES = new Set([1, 2, 3]);
+
 /**
- * Replay ligero. Reproduce onCourt y rotación por lado para poder, en cada
- * evento de recepción, ubicar la posición 1..6 del receptor.
+ * Replay ligero. Reproduce onCourt y rotación por lado con las MISMAS reglas
+ * que `replayMatch` en volley-store (subs, líbero manual + auto-out por
+ * rotación, lineupOverride, rotación en cambio de saque). Así el destino del
+ * saque se calcula sobre la formación efectiva idéntica a la que se ve en la
+ * cancha en ese instante — nunca la posición nominal, ni el rol, ni la
+ * formación inicial.
  */
 export function buildEnrichedServes(match: Match): EnrichedServe[] {
   const events = [...match.events].sort((a, b) => a.timestamp - b.timestamp);
@@ -56,13 +66,24 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
     match.lineupsBySet?.[setNum]?.[side] ?? (side === "A" ? match.startingLineupA : match.startingLineupB);
 
   let currentSet = 1;
-  const stA: SideState = { onCourt: [...lineupFor(1, "A")], rotation: 1 };
-  const stB: SideState = { onCourt: [...lineupFor(1, "B")], rotation: 1 };
+  const stA: SideState = { onCourt: [...lineupFor(1, "A")], rotation: 1, libero: null };
+  const stB: SideState = { onCourt: [...lineupFor(1, "B")], rotation: 1, libero: null };
   let servingSide: Side = match.initialServingSide;
 
   const out: EnrichedServe[] = [];
   const pendingServe: Record<Side, { serverId: string | null; serverRot: number; timestamp: number } | null> = {
     A: null, B: null,
+  };
+
+  const autoOutIfExit = (side: Side) => {
+    const st = side === "A" ? stA : stB;
+    if (!st.libero) return;
+    const idx = st.onCourt.indexOf(st.libero.liberoId);
+    if (LIBERO_EXIT_INDEXES.has(idx)) {
+      const replaced = st.libero.replacedId;
+      st.onCourt = st.onCourt.map((p, i) => (i === idx ? replaced : p));
+      st.libero = null;
+    }
   };
 
   const resetForSet = (setNum: number) => {
@@ -72,6 +93,8 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
     stB.onCourt = [...lineupFor(setNum, "B")];
     stA.rotation = 1;
     stB.rotation = 1;
+    stA.libero = null;
+    stB.libero = null;
     servingSide = setNum % 2 === 1 ? match.initialServingSide : (match.initialServingSide === "A" ? "B" : "A");
     pendingServe.A = null;
     pendingServe.B = null;
@@ -87,7 +110,6 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
     };
   };
 
-  // Inicial: hay un saque pendiente al comienzo de cada set.
   beginPendingServe();
 
   for (const ev of events) {
@@ -98,16 +120,22 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
       if (ev.kind === "sub") {
         const st = ev.side === "A" ? stA : stB;
         st.onCourt = st.onCourt.map((p) => (p === ev.playerOutId ? ev.playerInId : p));
+        autoOutIfExit(ev.side);
       } else if (ev.kind === "libero") {
         const st = ev.side === "A" ? stA : stB;
         if (ev.action === "in") {
           st.onCourt = st.onCourt.map((p) => (p === ev.replacedId ? ev.liberoId : p));
+          st.libero = { liberoId: ev.liberoId, replacedId: ev.replacedId };
         } else {
           st.onCourt = st.onCourt.map((p) => (p === ev.liberoId ? ev.replacedId : p));
+          st.libero = null;
         }
+        autoOutIfExit(ev.side);
       } else if (ev.kind === "lineupOverride") {
         const st = ev.side === "A" ? stA : stB;
         st.onCourt = [...ev.lineup];
+        st.libero = null;
+        autoOutIfExit(ev.side);
       } else if (ev.kind === "reception") {
         const rec = ev as ReceptionEvent;
         const receiverSide = rec.side;
@@ -118,12 +146,35 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
         const srvState = serverSide === "A" ? stA : stB;
         const pending = pendingServe[serverSide];
         const outcome: EnrichedServe["outcome"] = rec.rating === "overpass" ? "ace" : "in_play";
+        const serverId = pending?.serverId ?? srvState.onCourt[0] ?? null;
+
+        // Log de depuración (solo dev): sacador, receptor y zona efectiva.
+        if (
+          typeof window !== "undefined" &&
+          (import.meta as { env?: { DEV?: boolean } }).env?.DEV
+        ) {
+          // eslint-disable-next-line no-console
+          console.debug(
+            `[serve-heatmap] Sacador=${serverId ?? "?"} Receptor=${rec.playerId} ` +
+              `PosEnCancha=${zone ? `Z${zone}` : "?"} ZonaMapa=${zone ? `Z${zone}` : "?"} ` +
+              `Resultado=${zone ? "Correcto" : "SIN_POSICION"} ` +
+              `onCourt=[${rxState.onCourt.join(",")}]`,
+          );
+          if (zone === null) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              `[serve-heatmap] Receptor ${rec.playerId} NO está en onCourt del lado ` +
+                `${receiverSide}. Zona sin registrar. Revisar libero/subs previos.`,
+            );
+          }
+        }
+
         out.push({
           id: rec.id,
           timestamp: rec.timestamp,
           setNumber: rec.setNumber,
           serverSide,
-          serverId: pending?.serverId ?? srvState.onCourt[0] ?? null,
+          serverId,
           serverRotation: pending?.serverRot ?? srvState.rotation,
           receiverSide,
           receiverId: rec.playerId,
@@ -136,17 +187,14 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
       continue;
     }
 
-    // PointEvent
     const pe = ev as PointEvent;
 
-    // Ace directo o error de saque (sin recepción asociada previa).
     if (pe.type === "ace" || pe.type === "serve_error") {
       const serverSide: Side = pe.playerSide as Side;
       const receiverSide: Side = serverSide === "A" ? "B" : "A";
       const srvState = serverSide === "A" ? stA : stB;
       const rxState = receiverSide === "A" ? stA : stB;
       const pending = pendingServe[serverSide];
-      // Evitar duplicado con recepción overpass ya registrada muy cerca.
       const dup = out.find(
         (s) => Math.abs(s.timestamp - pe.timestamp) < 1500 &&
                s.serverSide === serverSide &&
@@ -170,7 +218,6 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
       }
     }
 
-    // Aplicar rotación (equipo que ganó punto y no sacaba).
     const winner = pe.scoringSide as Side;
     if (winner !== servingSide) {
       const st = winner === "A" ? stA : stB;
@@ -178,7 +225,8 @@ export function buildEnrichedServes(match: Match): EnrichedServe[] {
       st.rotation = (st.rotation % 6) + 1;
       servingSide = winner;
     }
-    // Después de cada punto se prepara el próximo saque.
+    autoOutIfExit("A");
+    autoOutIfExit("B");
     beginPendingServe();
   }
   return out;
