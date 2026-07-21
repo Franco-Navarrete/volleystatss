@@ -49,12 +49,11 @@ import { computeRallyContext } from "@/lib/rally-phase";
 import { useIsMobileLayout } from "@/hooks/use-is-mobile-layout";
 import { MobileMatchShell } from "@/components/scorer/mobile/MobileMatchShell";
 import { useCoachShortcuts } from "@/hooks/use-coach-shortcuts";
-import { CoachHUD } from "@/components/coach/CoachHUD";
 import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
 import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
 import { CoachHelpBar } from "@/components/coach/CoachHelpBar";
+import { CoachRallyPanel } from "@/components/coach/CoachRallyPanel";
 import { toast } from "sonner";
-import { CoachAttackPanel } from "@/components/coach/CoachAttackPanel";
 import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
 
@@ -254,22 +253,21 @@ function LiveMatch() {
     });
   };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
-  useCoachShortcuts({ active: coachOverride && !isMobile && match?.status === "live" });
+  useCoachShortcuts({
+    active: coachOverride && !isMobile && match?.status === "live",
+    matchId: match?.id ?? null,
+  });
 
-  // Dispatcher central: los atajos emiten `coach:action` con la acción y
-  // (opcional) número de jugador/zona/valoración. Aquí mapeamos a los
-  // handlers existentes para no duplicar lógica del store.
+  // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
+  // los maneja directamente la máquina de estados en CoachRallyPanel).
   useEffect(() => {
     if (!coachEnabled || !match) return;
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ action?: CoachAction; playerNumber?: number }>).detail;
+      const detail = (e as CustomEvent<{ action?: CoachAction }>).detail;
       const action = detail?.action;
       if (!action) return;
       const side = match.servingSide as "A" | "B";
       switch (action) {
-        case "undo":
-          if (match.events.length > 0) undo(match.id);
-          break;
         case "timeout":
           handleTimeout(side);
           break;
@@ -282,27 +280,11 @@ function LiveMatch() {
         case "sancion":
           setSanctionSide(side);
           break;
-        case "armado":
-          if (isCoach && isLive && !actionsDisabled) setShowSettingDialog(true);
-          break;
-        case "ataque":
-          // Coach Mode: el flujo de ataque lo maneja CoachAttackPanel
-          // con su propio panel flotante multi-paso. No abrimos el
-          // diálogo integrado para no duplicar la experiencia.
-          break;
-        case "saque":
-        case "recepcion":
-        case "bloqueo":
-        case "defensa":
-        case "contraataque":
-          setIntegratedRally({ side });
-          break;
       }
     };
 
     window.addEventListener("coach:action", handler as EventListener);
     return () => window.removeEventListener("coach:action", handler as EventListener);
-    // Los setters de useState son estables; el resto se lee desde `match` actualizado.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
 
@@ -536,8 +518,7 @@ function LiveMatch() {
 
   return (
     <CompactShell>
-      <CoachHUD />
-      <CoachAttackPanel match={match} teamA={teamA} teamB={teamB} />
+      <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />
       <div className="fixed top-2 right-2 z-[9998] pointer-events-none">
