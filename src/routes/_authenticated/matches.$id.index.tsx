@@ -52,6 +52,8 @@ import { useCoachShortcuts } from "@/hooks/use-coach-shortcuts";
 import { CoachHUD } from "@/components/coach/CoachHUD";
 import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
 import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
+import { CoachHelpBar } from "@/components/coach/CoachHelpBar";
+import { toast } from "sonner";
 import { CoachAttackPanel } from "@/components/coach/CoachAttackPanel";
 import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
