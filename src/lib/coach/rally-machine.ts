@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useVolley, type AttackDirection, type AttackZone } from "@/lib/volley-store";
-import { playerAtZone } from "./effective-lineup";
+import { playerAtZone, findSetterOnCourt } from "./effective-lineup";
 
 /**
  * Motor de estados de Coach Mode. Guía al entrenador durante un rally
@@ -85,9 +85,9 @@ interface CoachRallyState {
 }
 
 /** Estados que necesitan zona destino explícita. */
-const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "ataque", "contraataque"];
+const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "armado", "ataque", "contraataque"];
 /** Estados que necesitan zona de origen (el jugador se autodetecta desde ahí). */
-const NEEDS_ORIGIN_BEFORE_PLAYER: Exclude<RallyState, "idle" | "fin">[] = ["ataque", "contraataque"];
+const NEEDS_ORIGIN_BEFORE_PLAYER: Exclude<RallyState, "idle" | "fin">[] = [];
 
 function opposite(side: "A" | "B"): "A" | "B" { return side === "A" ? "B" : "A"; }
 
@@ -255,6 +255,11 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     const cur = get().current;
     if (!cur) return;
     set({ current: { ...cur, target: zone, sub: "rating" } });
+    // Armado: la distribución NO requiere valoración manual — se comitea
+    // con rating neutro y se avanza al ataque con el atacante autodetectado.
+    if (cur.state === "armado") {
+      get().setRating("0");
+    }
   },
 
   setRating: (rating) => {
@@ -321,17 +326,43 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       return;
     }
 
-    const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(t.state as Exclude<RallyState, "idle" | "fin">);
-    // Recepción: autoselección del receptor usando la zona destino del saque
-    // (misma formación efectiva del equipo receptor). El coach sólo valora.
+    // Autoselección del siguiente jugador según el fundamento y la formación efectiva.
+    const match = useVolley.getState().matches.find((m) => m.id === matchId);
+    const teamState = useVolley.getState();
     let nextPlayerId: string | null | undefined = undefined;
-    let nextSub: CurrentStep["sub"] = needsOriginFirst ? "origin" : "player";
-    if (t.state === "recepcion" && step.state === "saque" && step.target && step.target <= 6) {
-      const match = useVolley.getState().matches.find((m) => m.id === matchId);
-      const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
-      nextPlayerId = match ? playerAtZone(match, t.side, zone) : null;
-      nextSub = "rating";
+    let nextOrigin: 1 | 2 | 3 | 4 | 5 | 6 | undefined = undefined;
+    let nextSub: CurrentStep["sub"] = "player";
+
+    if (match) {
+      const team = t.side === "A"
+        ? teamState.teams.find((tm) => tm.id === match.teamAId)
+        : teamState.teams.find((tm) => tm.id === match.teamBId);
+
+      if (t.state === "recepcion" && step.state === "saque" && step.target && step.target <= 6) {
+        // Saque → Recepción: receptor = jugador en la zona destino del saque.
+        const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
+        nextPlayerId = playerAtZone(match, t.side, zone);
+        nextOrigin = zone;
+        nextSub = "rating";
+      } else if (t.state === "armado") {
+        // Recepción / Defensa → Armado: armador autodetectado; sólo falta distribución.
+        nextPlayerId = team ? findSetterOnCourt(match, team, t.side) : null;
+        nextSub = "target";
+      } else if ((t.state === "ataque" || t.state === "contraataque") && step.state === "armado" && step.target) {
+        // Armado → Ataque: atacante = jugador en la zona a la que distribuyó el armado.
+        const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
+        nextPlayerId = playerAtZone(match, t.side, zone);
+        nextOrigin = zone;
+        nextSub = "target";
+      } else if (t.state === "bloqueo") {
+        nextPlayerId = playerAtZone(match, t.side, 3);
+        nextSub = "rating";
+      } else if (t.state === "defensa") {
+        nextPlayerId = playerAtZone(match, t.side, 6);
+        nextSub = "rating";
+      }
     }
+
     set({
       state: t.state,
       history: nextHistory,
@@ -340,7 +371,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
         side: t.side,
         sub: nextSub,
         playerId: nextPlayerId,
-        origin: t.state === "recepcion" && step.target && step.target <= 6 ? (step.target as 1 | 2 | 3 | 4 | 5 | 6) : undefined,
+        origin: nextOrigin,
       },
     });
   },

@@ -145,6 +145,18 @@ export function useCoachShortcuts(options?: { active?: boolean; matchId?: string
         return;
       }
 
+      if (cur.sub === "target" && cur.state === "armado") {
+        // Distribución del armado: 1..5 → zonas de ataque (4, 3, 2, Pipe, Z1).
+        const SET_DIST: Record<string, 1 | 2 | 3 | 4 | 6> = {
+          Digit1: 4, Digit2: 3, Digit3: 2, Digit4: 6, Digit5: 1,
+        };
+        if (SET_DIST[e.code] != null) {
+          e.preventDefault();
+          rally.setTarget(SET_DIST[e.code]);
+          return;
+        }
+      }
+
       if (cur.sub === "target" && ZONE_KEYS_QWE[e.code] != null) {
         e.preventDefault();
         rally.setTarget(ZONE_KEYS_QWE[e.code]);
