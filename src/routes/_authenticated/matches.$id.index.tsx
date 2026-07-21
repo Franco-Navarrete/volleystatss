@@ -799,9 +799,27 @@ function LiveMatch() {
               <Users className="size-4" /> Formación
             </Button>
           )}
-          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
-            <Users className="size-4" /> Cancha 5-1
-          </Button>
+          {coachOverride ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className={`h-9 md:h-11 text-xs md:text-sm transition-all ${
+                coachEnabled
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 border border-primary shadow-glow animate-in fade-in"
+                  : "bg-secondary hover:bg-secondary/80 border border-border/60"
+              }`}
+              onClick={toggleCoachMode}
+              aria-pressed={coachEnabled}
+              title={coachEnabled ? "Desactivar Coach Mode" : "Activar Coach Mode (atajos de teclado)"}
+            >
+              <Keyboard className="size-4" />
+              {coachEnabled ? "Coach Mode Activo" : "Coach Mode"}
+            </Button>
+          ) : (
+            <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm bg-primary/10 hover:bg-primary/20 border border-primary/30" onClick={() => setShowFormationDialog(true)}>
+              <Users className="size-4" /> Cancha 5-1
+            </Button>
+          )}
           <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
             <ChartBarBig className="size-4" /> Stats vivo
           </Button>
@@ -827,7 +845,28 @@ function LiveMatch() {
               <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
                 <Hourglass className="size-4" /> Formato del partido
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {coachOverride && (
+                <DropdownMenuItem onSelect={() => setShowFormationDialog(true)}>
+                  <Users className="size-4" /> Cancha 5-1
+                </DropdownMenuItem>
+              )}
+              {coachOverride && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Coach Mode</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={toggleCoachMode}>
+                    <Keyboard className="size-4" /> {coachEnabled ? "Desactivar" : "Activar"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => window.dispatchEvent(new CustomEvent("coach:help:open"))}>
+                    <Keyboard className="size-4" /> Ayuda de atajos (F1)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings">
+                      <Settings2 className="size-4" /> Configuración
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuItem
                 disabled={match.status === "finished"}
                 onSelect={() => {
