@@ -201,6 +201,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   matchId: null,
   state: "idle",
   history: [],
+  redoStack: [],
   current: null,
   outcome: null,
 
@@ -210,6 +211,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
       matchId,
       state: entry,
       history: [],
+      redoStack: [],
       outcome: null,
       current: {
         state: entry,
