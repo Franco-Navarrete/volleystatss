@@ -1,85 +1,78 @@
-# Rally Coach — Rediseño de Estadísticas en Vivo
+## Módulo: Mapa de Calor de Saque (Rally Live Stats)
 
-Convertir la pantalla `matches.$id.stats` de una tabla exhaustiva a un **cockpit táctico** priorizado en 4 niveles, con IA que resalta patrones y recomienda acciones en tiempo real.
+Nuevo módulo táctico en tiempo real dentro de "Estadísticas en Vivo", con visualización dual (Equipo A / Equipo B), múltiples modos, filtros combinables, KPIs, mapa de receptores, patrones IA, predicción y recomendaciones.
 
-## Alcance
+---
 
-Rediseño de UI + nuevo motor de "coach insights" reutilizando los datos ya registrados. Sin cambios en el flujo de registro de rally, ni en Rally Intelligence (PDF/informes históricos).
+### 1. Motor de datos (`src/lib/coach/serve-heatmap.ts`)
 
-## Estructura de la nueva pantalla
+Función pura que consume los eventos del store (`match_events`) y produce:
+
+```ts
+type ServeZoneStats = {
+  zone: 1|2|3|4|5|6;
+  count: number;
+  pct: number;
+  aces: number;
+  errors: number;
+  efficacy: number;      // (aces - errors) / count
+  recNeg: number;        // recepciones -, =, ≠ generadas
+  recPerfect: number;    // # generados
+};
+
+type ServeAnalytics = {
+  byTeam: Record<'A'|'B', {
+    zones: ServeZoneStats[];
+    totals: { serves, aces, errors, efficacy };
+    topServer, topTarget, avoidedPlayer;
+    receivers: Array<{ playerId, name, pos, count, perfect, pos: '#'|'+'|'0'|'-'|'='|'≠' counts, quality }>;
+  }>;
+  patterns: Pattern[];    // detectadas por reglas deterministas
+  prediction: { zone, zoneConfidence, targetPlayerId, playerConfidence, explanation };
+  recommendations: Recommendation[];
+};
+```
+
+- Reglas de patrones: concentración >40% en una receptora, evasión del líbero, dominancia diagonal (Z1→Z5/Z5→Z1), cambio de objetivo por rotación (χ² simplificado), diferencia de zona en puntos clave (24+, iguales).
+- Predicción: markov de orden 1 sobre los últimos N saques del sacador actual + suavizado por frecuencia global. Confianza = max(prob) * (1 - entropía normalizada).
+
+### 2. Componentes UI
+
+- `src/components/serve/ServeHeatmapCourt.tsx` — cancha SVG con 6 zonas (usa el mismo layout que `AttackHeatmap` para consistencia visual). Modo controla el valor de color: frecuencia, eficacia, aces, errores, recNeg, recPerfect. Tooltip por zona.
+- `src/components/serve/ServeReceiversMap.tsx` — formación rival con círculos proporcionales; color = calidad de recepción.
+- `src/components/serve/ServeKpiCards.tsx` — 7 tarjetas.
+- `src/components/serve/ServePatterns.tsx` — lista compacta de patrones + predicción + recomendaciones (mismo estilo que `CoachLiveDashboard`).
+- `src/components/serve/ServeFilters.tsx` — set, rotación sacador, rotación receptor, jugador sacador, jugador receptor, tipo de saque, resultado, zona. Combinables (AND).
+- `src/components/serve/ServeHeatmapPanel.tsx` — orquesta filtros + memoiza `computeServeAnalytics`, renderiza dos canchas lado a lado + KPIs + receptores + patrones.
+
+### 3. Integración
+
+En `src/routes/_authenticated/matches.$id.stats.tsx`, dentro de "Estadísticas detalladas" (sección colapsable existente), agregar tabs debajo de los Mapas de Calor de Ataque:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  HEADER TÁCTICO (siempre visible, sin scroll)          │
-│  Marcador · Set · Saque · Rot A/B · Momentum · Racha   │
-│  Últimos 10 rallies · % victoria estimado              │
-├─────────────────────────────────────────────────────────┤
-│  IA — SITUACIÓN ACTUAL   │   ¿QUÉ HARÍA RALLY?          │
-│  (máx 3 alertas)         │   (máx 3 recomendaciones)   │
-├─────────────────────────────────────────────────────────┤
-│  TOP 3 PRIORIDADES · corregir ahora (impacto)          │
-├─────────────────────────────────────────────────────────┤
-│  MOMENTUM (gráfico 15 rallies + timeouts/cambios)      │
-├─────────────────────────────────────────────────────────┤
-│  ROTACIONES (panel visual con riesgo por color)        │
-│  Cancha saques · Cancha ataques · Mapa receptores      │
-├─────────────────────────────────────────────────────────┤
-│  TIMELINE del partido                                   │
-├─────────────────────────────────────────────────────────┤
-│  ▸ Estadísticas detalladas de jugadoras (colapsado)    │
-└─────────────────────────────────────────────────────────┘
+Tabs: [Ataque] [Saque]
 ```
 
-## Componentes y archivos
+En móvil (`MobileMatchShell`), agregar entrada en BottomNav → sección "Saque".
 
-### Motor táctico nuevo
-- `src/lib/coach/insights.ts` — reglas deterministas: detecta rachas, rotaciones críticas, patrones de saque/recepción/ataque en ventana reciente (últimos N rallies). Devuelve `Alert[]` y `Recommendation[]` con `impact: high|med|low`.
-- `src/lib/coach/momentum.ts` — serie de rally-wins, deltas y marcas (timeouts/cambios).
-- `src/lib/coach/priorities.ts` — combina motores y ordena por impacto → top 3.
-- `src/lib/coach/serve-heatmap.ts` — agregación de saques por zona destino (frecuencia, aces, errores, presión, recepción -/+).
-- `src/lib/coach/receiver-map.ts` — por receptora: saques recibidos, %+, %#, errores.
+Recalcula automáticamente vía `useMemo` sobre `events` del store — sin polling.
 
-### Componentes UI
-- `src/components/live/LiveCoachDashboard.tsx` — orquesta las secciones.
-- `src/components/live/TacticalHeader.tsx`
-- `src/components/live/AiAlertsPanel.tsx`
-- `src/components/live/RecommendationsPanel.tsx`
-- `src/components/live/TopPrioritiesCard.tsx`
-- `src/components/live/MomentumChart.tsx`
-- `src/components/live/RotationRiskBoard.tsx` (reemplaza tabla)
-- `src/components/live/ServeHeatmap.tsx`
-- `src/components/live/ReceiverMap.tsx`
-- `src/components/live/MatchTimeline.tsx`
-- `src/components/live/PlayerStatsCollapsible.tsx` — reusa `LiveStatsTable`, oculta jugadoras sin acción, con toggle "Mostrar todos".
+### 4. Detalles técnicos
 
-### Ruta
-- `src/routes/_authenticated/matches.$id.stats.tsx` — reemplaza el contenido actual por `<LiveCoachDashboard>`. La versión "tabla completa" queda accesible dentro del bloque colapsado.
+- Reutilizar paleta y componentes de `AttackHeatmap` para mantener el mismo estilo visual (gradiente por intensidad, badges, HoverCard).
+- Zonas se derivan del campo `serveZone` del evento `ServeEvent` (ya existe); si no existe en eventos antiguos, se toma `zone` del saque o se marca "sin zona".
+- Receptores: cruzar `ReceiveEvent` inmediato posterior a cada `ServeEvent` para atribuir zona + jugadora receptora.
+- Todo en cliente, sin cambios en Supabase.
 
-## Reglas de IA (deterministas, sin llamadas a LLM)
+### Archivos nuevos
+- `src/lib/coach/serve-heatmap.ts`
+- `src/components/serve/ServeHeatmapPanel.tsx`
+- `src/components/serve/ServeHeatmapCourt.tsx`
+- `src/components/serve/ServeReceiversMap.tsx`
+- `src/components/serve/ServeKpiCards.tsx`
+- `src/components/serve/ServePatterns.tsx`
+- `src/components/serve/ServeFilters.tsx`
 
-Ventana táctica = últimos 10-15 rallies del set actual. Ejemplos:
-- **Saque dirigido**: 3+ saques rivales a misma receptora → alerta.
-- **Recepción cayendo**: %+ de una receptora en set actual < 70% de su media histórica del partido.
-- **Rotación crítica**: parcial ≤ -3 en la rotación actual → prioridad alta.
-- **Zona de ataque saturada**: 3+ ataques consecutivos por misma zona origen.
-- **Bloqueo cerrando línea/diagonal**: >50% ataques bloqueados en misma dirección.
-- **Racha rival**: 3+ puntos consecutivos → alerta momentum.
-
-Cada regla genera texto en español, `impact`, y (cuando aplica) `recommendation` asociada.
-
-## Detalles técnicos
-
-- Todo el cálculo corre en el cliente sobre `match.events` ya en memoria (Zustand). Sin nuevos endpoints.
-- `useMemo` por sección + dependencia en `match.events.length` para no recalcular más de lo necesario.
-- Animación sutil `animate-fade-in` cuando entra una nueva alerta o llega un nuevo rally al momentum/heatmaps.
-- Mobile-first + tablet horizontal: grid `lg:grid-cols-2` para heatmaps, header sticky.
-- Alertas visuales inline (badge/toast discreto), nunca modal.
-- Se reusan `AttackHeatmap`, `computeRotationStats`, `buildEnrichedAttacks`.
-
-## Fuera de alcance (para no romper otras cosas)
-- No se toca el flujo de registro (`IntegratedRallyDialog`), Rally Intelligence, PDF, ni permisos.
-- No se agregan llamadas a IA gateway en esta iteración (todo determinista para respuesta instantánea).
-- La "probabilidad de victoria" será una estimación simple basada en diferencial y momentum; no un modelo entrenado.
-
-## Entrega en una sola tanda
-Se crea el motor + componentes + se reemplaza la ruta stats. El resto de la app queda intacta.
+### Archivos modificados
+- `src/routes/_authenticated/matches.$id.stats.tsx` (tabs Ataque/Saque)
+- `src/components/mobile/MobileMatchShell.tsx` (entrada nav)
