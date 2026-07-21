@@ -1557,8 +1557,50 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
   formationByTeam?: Partial<Record<"A" | "B", "reception" | "attack">>;
   activePlayerId?: string | null;
 }) {
-  const a = match.onCourtA;
-  const b = match.onCourtB;
+  // Formación efectiva: SIEMPRE 6 IDs únicos por equipo aplicando el swap
+  // automático del líbero (si liberoActive existe, la central reemplazada
+  // deja de renderizarse y el líbero ocupa su slot). Cualquier duplicado o
+  // exceso se descarta antes de llegar a la UI.
+  const buildEffective = (
+    side: "A" | "B",
+    raw: string[],
+    lineup: string[],
+    active: { liberoId: string; replacedId: string } | null | undefined,
+  ): string[] => {
+    let arr = raw.slice(0, 8);
+    if (active) {
+      // Garantiza swap: si la central sigue en cancha y el líbero también,
+      // sacamos la central del render (regla: nunca ambos a la vez).
+      const libIdx = arr.indexOf(active.liberoId);
+      arr = arr.filter((id, i) => id !== active.replacedId || i === libIdx);
+    }
+    const seen = new Set<string>();
+    const unique = arr.filter((id) => id && !seen.has(id) && seen.add(id));
+    // Completar hasta 6 con lineup si algo faltara.
+    if (unique.length < 6) {
+      for (const id of lineup) {
+        if (unique.length >= 6) break;
+        if (id && !seen.has(id) && (!active || id !== active.replacedId)) {
+          seen.add(id);
+          unique.push(id);
+        }
+      }
+    }
+    const effective = unique.slice(0, 6);
+    if (import.meta.env.DEV && effective.length !== 6) {
+      // eslint-disable-next-line no-console
+      console.warn(`[cancha] lado ${side}: efectivos=${effective.length}/6`, {
+        raw, active, effective,
+      });
+    }
+    if (import.meta.env.DEV && (raw.length !== 6 || raw.length !== effective.length)) {
+      // eslint-disable-next-line no-console
+      console.debug(`[cancha][libero] lado=${side} onCourt=${raw.length} efectivo=${effective.length} libero=${active?.liberoId ?? "—"} reemplaza=${active?.replacedId ?? "—"}`);
+    }
+    return effective;
+  };
+  const a = buildEffective("A", match.onCourtA, match.startingLineupA, match.liberoActiveA);
+  const b = buildEffective("B", match.onCourtB, match.startingLineupB, match.liberoActiveB);
   const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
   const phaseFor = (s: "A" | "B"): "reception" | "attack" => formationByTeam?.[s] ?? "attack";
