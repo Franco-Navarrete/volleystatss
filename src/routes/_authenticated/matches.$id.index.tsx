@@ -1775,7 +1775,10 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className={`live-court-surface relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-0 bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7 device-tablet:p-3 ${blockPickInfo ? "after:absolute after:inset-0 after:bg-black/50 after:z-[25] after:pointer-events-none" : ""}`}>
+    <div className={`live-court-surface relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-0 bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7 device-tablet:p-3`}>
+      {blockPickInfo && (
+        <div className="absolute inset-0 bg-black/55 z-[25] pointer-events-none animate-in fade-in-0 duration-150" />
+      )}
       {/* court inner (orange) with white perimeter line */}
       <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 device-tablet:inset-3 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — front-row band each side */}

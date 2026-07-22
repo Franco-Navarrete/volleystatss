@@ -660,3 +660,6 @@ export const FLOW_STATES: RallyState[] = [
   "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "contraataque", "fin",
 ];
 
+
+
+
