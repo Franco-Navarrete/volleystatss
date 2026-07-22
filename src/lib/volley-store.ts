@@ -224,6 +224,10 @@ export interface PointEvent {
   attackDirection?: AttackDirection;
   /** Coach Mode: tipo de finalización (kill/block out/tool/tip/line/cross). */
   finishType?: AttackFinishType;
+  /** Coach Mode bloqueo: IDs adicionales que participaron del bloqueo (doble/triple). */
+  blockAssistIds?: string[];
+  /** Coach Mode bloqueo: tipo de bloqueo (solo/double/triple). */
+  blockKind?: "solo" | "double" | "triple";
 }
 
 
@@ -550,6 +554,17 @@ interface VolleyState {
     attackType?: import("@/lib/formations/attack-types").AttackType,
     attackDirection?: AttackDirection,
     finishType?: AttackFinishType
+  ) => void;
+  /**
+   * Coach Mode: registra un punto de bloqueo con 1..3 bloqueadores.
+   * Emite un único PointEvent (type=block) con el jugador principal +
+   * `blockAssistIds` para los acompañantes. `blockKind` deriva de la
+   * cantidad de bloqueadores.
+   */
+  recordBlockPoint: (
+    matchId: string,
+    scoringSide: "A" | "B",
+    blockerIds: string[]
   ) => void;
 
 
@@ -1056,6 +1071,33 @@ export const useVolley = create<VolleyState>()(
             const next = applyAutoLibero(withEvent, s.teams);
             return next;
 
+          }),
+        }));
+      },
+
+      recordBlockPoint: (matchId, scoringSide, blockerIds) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId || m.status === "finished") return m;
+            const ids = blockerIds.filter(Boolean).slice(0, 3);
+            if (ids.length === 0) return m;
+            const primary = ids[0];
+            const assists = ids.slice(1);
+            const blockKind: "solo" | "double" | "triple" =
+              ids.length === 3 ? "triple" : ids.length === 2 ? "double" : "solo";
+            const ev: PointEvent = {
+              id: uid(),
+              scoringSide,
+              playerSide: scoringSide,
+              playerId: primary,
+              type: "block",
+              setNumber: m.currentSet,
+              timestamp: Date.now(),
+              blockKind,
+              ...(assists.length ? { blockAssistIds: assists } : {}),
+            };
+            const withEvent: Match = { ...m, events: [...m.events, ev] };
+            return applyAutoLibero(withEvent, s.teams);
           }),
         }));
       },

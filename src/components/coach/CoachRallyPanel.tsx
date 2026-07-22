@@ -9,6 +9,7 @@ import {
   type Rating,
   type RallyState,
   type AttackResultKind,
+  type BlockPickState,
 } from "@/lib/coach/rally-machine";
 import { useCoachMode } from "@/lib/coach-mode-store";
 import { SET_DISTRIBUTION_TO_ZONE, SET_DISTRIBUTION_LABEL } from "@/lib/coach/effective-lineup";
@@ -37,11 +38,13 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
   const state = useCoachRally((s) => s.state);
   const current = useCoachRally((s) => s.current);
   const outcome = useCoachRally((s) => s.outcome);
+  const blockPick = useCoachRally((s) => s.blockPick);
   const setPlayer = useCoachRally((s) => s.setPlayer);
   const setOrigin = useCoachRally((s) => s.setOrigin);
   const setTarget = useCoachRally((s) => s.setTarget);
   const setRating = useCoachRally((s) => s.setRating);
   const setAttackResult = useCoachRally((s) => s.setAttackResult);
+  const cancelBlockPick = useCoachRally((s) => s.cancelBlockPick);
   const back = useCoachRally((s) => s.back);
   const cancel = useCoachRally((s) => s.cancel);
   const reset = useCoachRally((s) => s.reset);
@@ -52,6 +55,7 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
 
   const activeSide = current?.side ?? outcome?.scoringSide ?? "A";
   const activeTeam = teams[activeSide];
+  const blockingTeam = blockPick ? teams[blockPick.blockingSide] : null;
 
   return (
     <div className="fixed top-1/2 -translate-y-1/2 right-3 z-[9998] w-[28vw] min-w-[280px] max-w-[380px] pointer-events-auto animate-in fade-in-0 slide-in-from-right-2 duration-200">
@@ -79,7 +83,9 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
 
         {/* Paso actual */}
         <section className="p-3">
-          {state === "fin" ? (
+          {blockPick && blockingTeam ? (
+            <BlockPickView blockPick={blockPick} team={blockingTeam} onCancel={cancelBlockPick} />
+          ) : state === "fin" ? (
             <FinPanel outcome={outcome} scoringTeam={teams[outcome?.scoringSide ?? "A"]} onNew={reset} />
           ) : current ? (
             <StepView
@@ -322,6 +328,58 @@ function FinPanel({ outcome, scoringTeam, onNew }: { outcome: { scoringSide: "A"
         className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90"
       >
         <Undo2 className="size-3.5" /> Nuevo rally (S)
+      </button>
+    </div>
+  );
+}
+
+function BlockPickView({ blockPick, team, onCancel }: { blockPick: BlockPickState; team: Team; onCancel: () => void }) {
+  const picks = blockPick.picks;
+  const label = picks.length === 0
+    ? "Click sobre el bloqueador rival"
+    : picks.length === 1
+      ? "Bloqueo individual — esperando 2do bloqueador…"
+      : picks.length === 2
+        ? "Bloqueo doble — esperando 3ro…"
+        : "Bloqueo triple";
+  return (
+    <div className="animate-in fade-in-0 duration-150">
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">Bloqueo rival</div>
+      <div className="text-sm font-bold mt-0.5 truncate">{team.name}</div>
+      <div className="mt-2 text-xs text-muted-foreground">{label}</div>
+
+      <div className="mt-3 flex gap-2">
+        {[0, 1, 2].map((i) => {
+          const pid = picks[i];
+          const p = pid ? team.players.find((x) => x.id === pid) : null;
+          return (
+            <div
+              key={i}
+              className={`flex-1 rounded-lg border-2 py-3 text-center transition-colors ${
+                p ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "border-dashed border-muted-foreground/30 text-muted-foreground/50"
+              }`}
+            >
+              {p ? (
+                <>
+                  <div className="text-lg font-black leading-none">#{p.number}</div>
+                  <div className="text-[10px] mt-0.5 truncate">{p.name.split(" ")[0]}</div>
+                </>
+              ) : (
+                <div className="text-[10px]">—</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 text-[10px] text-muted-foreground text-center">
+        Se registra automáticamente tras 0.8s
+      </div>
+      <button
+        onClick={onCancel}
+        className="mt-2 w-full text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+      >
+        ⌫ Cancelar bloqueo
       </button>
     </div>
   );

@@ -63,6 +63,19 @@ interface CurrentStep {
   target?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 }
 
+export interface BlockPickState {
+  /** Lado que ATACÓ (el bloqueo lo hace el rival). */
+  attackerSide: "A" | "B";
+  /** Lado que BLOQUEA (recibe el punto). */
+  blockingSide: "A" | "B";
+  /** IDs elegibles: delanteros (Z2/Z3/Z4) del lado que bloquea. */
+  eligible: string[];
+  /** IDs seleccionados en orden de click. */
+  picks: string[];
+  /** Step del ataque que originó el bloqueo (para persistencia). */
+  step: RallyStep;
+}
+
 interface CoachRallyState {
   matchId: string | null;
   state: RallyState;
@@ -71,6 +84,8 @@ interface CoachRallyState {
   current: CurrentStep | null;
   /** Resultado del rally cuando `state === "fin"`. */
   outcome: { scoringSide: "A" | "B"; reason: string } | null;
+  /** Modo bloqueo: selección de bloqueadores en la cancha. */
+  blockPick: BlockPickState | null;
 
   start: (matchId: string, entry: Exclude<RallyState, "idle" | "fin">, side: "A" | "B") => void;
   setPlayer: (playerId: string) => void;
@@ -79,6 +94,10 @@ interface CoachRallyState {
   setRating: (rating: Rating) => void;
   /** Resultado final del ataque (reemplaza el paso de destino + rating). */
   setAttackResult: (kind: AttackResultKind) => void;
+  /** Modo bloqueo: alterna un jugador en la selección; auto-cierra a los 800ms. */
+  toggleBlockerPick: (playerId: string) => void;
+  /** Modo bloqueo: cancela y vuelve al selector de resultado. */
+  cancelBlockPick: () => void;
   back: () => void;
   cancel: () => void;
   reset: () => void;
@@ -214,6 +233,35 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
   store.recordPoint(matchId, scoring, "opponent_error", null);
 }
 
+/** Temporizador global para auto-cierre del modo bloqueo (800ms). */
+let blockPickTimer: ReturnType<typeof setTimeout> | null = null;
+function clearBlockPickTimer() {
+  if (blockPickTimer) { clearTimeout(blockPickTimer); blockPickTimer = null; }
+}
+const BLOCK_PICK_DELAY_MS = 800;
+
+/** Finaliza el modo bloqueo: registra el punto y cierra el rally. */
+function finalizeBlockPick(
+  get: () => CoachRallyState,
+  set: (partial: Partial<CoachRallyState>) => void,
+) {
+  clearBlockPickTimer();
+  const bp = get().blockPick;
+  const matchId = get().matchId;
+  if (!bp || !matchId || bp.picks.length === 0) return;
+  const nextHistory = [...get().history, bp.step];
+  useVolley.getState().recordBlockPoint(matchId, bp.blockingSide, bp.picks);
+  const label = bp.picks.length === 3 ? "Bloqueo triple" : bp.picks.length === 2 ? "Bloqueo doble" : "Bloqueo individual";
+  set({
+    state: "fin",
+    history: nextHistory,
+    current: null,
+    outcome: { scoringSide: bp.blockingSide, reason: label },
+    redoStack: [],
+    blockPick: null,
+  });
+}
+
 export const useCoachRally = create<CoachRallyState>((set, get) => ({
   matchId: null,
   state: "idle",
@@ -221,6 +269,7 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   redoStack: [],
   current: null,
   outcome: null,
+  blockPick: null,
 
   start: (matchId, entry, side) => {
     const needsOriginFirst = NEEDS_ORIGIN_BEFORE_PLAYER.includes(entry);
@@ -296,30 +345,85 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     if (kind === "point") { get().setRating("#"); return; }
     if (kind === "continue") { get().setRating("0"); return; }
     if (kind === "error") { get().setRating("="); return; }
-    // Casos con finishKind explícito: se cierra el rally aquí mismo.
-    const rating: Rating = kind === "blocked" ? "=" : "≠";
+
+    // "blocked" → activar modo bloqueo: seleccionar bloqueador(es) en la cancha.
+    if (kind === "blocked") {
+      const match = useVolley.getState().matches.find((m) => m.id === matchId);
+      if (!match) return;
+      const blockingSide = opposite(cur.side);
+      // Delanteros del bloqueador = onCourt índices 1 (Z2), 2 (Z3), 3 (Z4).
+      const raw = blockingSide === "A" ? match.onCourtA : match.onCourtB;
+      const eligible = [raw[1], raw[2], raw[3]].filter(Boolean) as string[];
+      const step: RallyStep = {
+        state: cur.state,
+        side: cur.side,
+        playerId: cur.playerId,
+        origin: cur.origin,
+        target: cur.target,
+        rating: "=",
+        finishKind: "blocked",
+        timestamp: Date.now(),
+      };
+      clearBlockPickTimer();
+      set({
+        blockPick: { attackerSide: cur.side, blockingSide, eligible, picks: [], step },
+      });
+      return;
+    }
+
+    // "unforced": cierre inmediato.
     const step: RallyStep = {
       state: cur.state,
       side: cur.side,
       playerId: cur.playerId,
       origin: cur.origin,
       target: cur.target,
-      rating,
+      rating: "≠",
       finishKind: kind,
       timestamp: Date.now(),
     };
     const nextHistory = [...get().history, step];
     const scoringSide = opposite(cur.side);
-    const reason = kind === "blocked" ? "Bloqueo rival" : "Error no forzado";
-    persistToStore(matchId, nextHistory, { scoringSide, reason });
+    persistToStore(matchId, nextHistory, { scoringSide, reason: "Error no forzado" });
     set({
       state: "fin",
       history: nextHistory,
       current: null,
-      outcome: { scoringSide, reason },
+      outcome: { scoringSide, reason: "Error no forzado" },
       redoStack: [],
     });
   },
+
+  toggleBlockerPick: (playerId) => {
+    const bp = get().blockPick;
+    const matchId = get().matchId;
+    if (!bp || !matchId) return;
+    if (!bp.eligible.includes(playerId)) return;
+
+    let picks = bp.picks.includes(playerId)
+      ? bp.picks.filter((id) => id !== playerId)
+      : [...bp.picks, playerId];
+    if (picks.length > 3) picks = picks.slice(0, 3);
+
+    clearBlockPickTimer();
+    set({ blockPick: { ...bp, picks } });
+
+    // Triple: cierre inmediato.
+    if (picks.length === 3) {
+      finalizeBlockPick(get, set);
+      return;
+    }
+    // 1 o 2 seleccionados: esperar 800ms antes de cerrar.
+    if (picks.length >= 1) {
+      blockPickTimer = setTimeout(() => finalizeBlockPick(get, set), BLOCK_PICK_DELAY_MS);
+    }
+  },
+
+  cancelBlockPick: () => {
+    clearBlockPickTimer();
+    set({ blockPick: null });
+  },
+
 
   commit: () => {
     const cur = get().current;
@@ -436,7 +540,9 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
 
 
   back: () => {
-    const { current, history } = get();
+    const { current, history, blockPick } = get();
+    // Modo bloqueo: back sale del selector sin registrar el punto.
+    if (blockPick) { get().cancelBlockPick(); return; }
     if (current) {
       // Volver al sub-paso anterior dentro del estado actual.
       if (current.sub === "rating" && NEEDS_TARGET.includes(current.state)) {
@@ -470,11 +576,13 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
   },
 
   cancel: () => {
-    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null, matchId: null });
+    clearBlockPickTimer();
+    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null, matchId: null, blockPick: null });
   },
 
   reset: () => {
-    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null });
+    clearBlockPickTimer();
+    set({ state: "idle", current: null, history: [], redoStack: [], outcome: null, blockPick: null });
   },
 
   undoStep: () => {

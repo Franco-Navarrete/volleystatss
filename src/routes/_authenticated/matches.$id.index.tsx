@@ -54,6 +54,7 @@ import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
 import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
 import { CoachHelpBar } from "@/components/coach/CoachHelpBar";
 import { CoachRallyPanel } from "@/components/coach/CoachRallyPanel";
+import { useCoachRally } from "@/lib/coach/rally-machine";
 import { toast } from "sonner";
 import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
@@ -401,6 +402,16 @@ function LiveMatch() {
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
+    // Coach Mode — Modo bloqueo: la cancha es el selector. Interceptar clicks
+    // sobre delanteros elegibles del equipo bloqueador.
+    {
+      const bp = useCoachRally.getState().blockPick;
+      if (bp && side === bp.blockingSide && bp.eligible.includes(playerId)) {
+        useCoachRally.getState().toggleBlockerPick(playerId);
+        return;
+      }
+      if (bp) return; // Ignorar clicks en otros jugadores durante el modo bloqueo.
+    }
     if (needsLineup) {
       setShowLineupEditor(true);
       return;
@@ -1696,6 +1707,14 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
   formationByTeam?: Partial<Record<"A" | "B", "reception" | "attack">>;
   activePlayerId?: string | null;
 }) {
+  const blockPick = useCoachRally((s) => s.blockPick);
+  const blockPickInfo = blockPick
+    ? {
+        blockingSide: blockPick.blockingSide,
+        eligible: new Set(blockPick.eligible),
+        picks: new Set(blockPick.picks),
+      }
+    : null;
   // Formación efectiva: SIEMPRE 6 IDs únicos por equipo aplicando el swap
   // automático del líbero (si liberoActive existe, la central reemplazada
   // deja de renderizarse y el líbero ocupa su slot). Cualquier duplicado o
@@ -1756,7 +1775,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
     { side: rightSide, team: teamFor(rightSide), idxs: [0, 5, 4] },
   ];
   return (
-    <div className="live-court-surface relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-0 bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7 device-tablet:p-3">
+    <div className={`live-court-surface relative rounded-lg md:rounded-xl overflow-hidden h-full min-h-0 bg-[#1e5fa8] p-1.5 [@media(max-width:360px)]:p-1 sm:p-5 md:p-7 device-tablet:p-3 ${blockPickInfo ? "after:absolute after:inset-0 after:bg-black/50 after:z-[25] after:pointer-events-none" : ""}`}>
       {/* court inner (orange) with white perimeter line */}
       <div className="absolute inset-2 [@media(max-width:360px)]:inset-1.5 sm:inset-5 md:inset-7 device-tablet:inset-3 bg-[#f4a36a] border-2 border-white rounded-sm" />
       {/* attack zones (darker orange) — front-row band each side */}
@@ -1790,6 +1809,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 receiverIds={receiverIds}
                 onPlayerClick={onPlayerClick}
                 activePlayerId={activePlayerId ?? null}
+                blockPickInfo={blockPickInfo}
               />
             );
           }
@@ -1840,12 +1860,15 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       }
                       const isReceptionTarget = needsReception && col.side === receivingSide && !!pid;
                       const isReceiverHighlight = isReceptionTarget && receiverIds.has(pid);
+                      const bpEligible = !!blockPickInfo && pid && col.side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(pid);
+                      const bpPicked = !!blockPickInfo && pid && blockPickInfo.picks.has(pid);
+                      const bpDim = !!blockPickInfo && !bpEligible;
                       return (
                         <button
                           key={`${ci}-${idx}`}
                           onClick={() => p && onPlayerClick(col.side, p.id)}
                           disabled={!p}
-                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""}`}
+                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""} ${bpEligible ? "z-[30] ring-4 ring-emerald-400 animate-pulse cursor-pointer" : ""} ${bpPicked ? "z-[30] ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
                           style={isLibero
                             ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                             : { background: col.team.color, borderColor: pairColor ?? undefined }}
@@ -1883,7 +1906,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
 }
 
 function FormationSide({
-  side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId,
+  side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId, blockPickInfo,
 }: {
   side: "A" | "B"; team: Team; onCourt: string[];
   formation: ReturnType<typeof useFormation>;
@@ -1892,6 +1915,7 @@ function FormationSide({
   needsReception: boolean; receivingSide: "A" | "B"; receiverIds: Set<string>;
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   activePlayerId?: string | null;
+  blockPickInfo?: { blockingSide: "A" | "B"; eligible: Set<string>; picks: Set<string> } | null;
 }) {
   // Mapeo del slot (formation coords) → coords absolutas dentro de la mitad de cancha.
   //   formation.y: 0 = en la red, 100 = línea final
@@ -1997,12 +2021,15 @@ function FormationSide({
         const isLibero = designated.length > 0 ? designated.includes(p.id) : p.position === "libero";
         const isReceptionTarget = needsReception && side === receivingSide;
         const isReceiverHighlight = isReceptionTarget && receiverIds.has(p.id);
+        const bpEligible = !!blockPickInfo && side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(p.id);
+        const bpPicked = !!blockPickInfo && blockPickInfo.picks.has(p.id);
+        const bpDim = !!blockPickInfo && !bpEligible;
         const dx = projectX(slot.x, slot.y);
         const dy = projectY(slot.x, slot.y);
         return (
           <div
             key={slot.role}
-            className="absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square"
+            className={`absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
             <CourtPlayerBadge
@@ -2015,7 +2042,7 @@ function FormationSide({
               active={!!activePlayerId && activePlayerId === p.id}
               dimmed={!onCourtActive}
               onClick={() => onPlayerClick(side, p.id)}
-              className="w-full h-full"
+              className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full cursor-pointer" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
             />
           </div>
         );
