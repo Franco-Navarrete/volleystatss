@@ -247,6 +247,7 @@ function LiveMatch() {
 
   // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
+  const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
