@@ -84,7 +84,7 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         <FilterSelect
           label="Set"
           value={setFilter}
@@ -92,12 +92,23 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
           options={[{ value: "all", label: "Todo el partido" }, ...availableSets.map((n) => ({ value: String(n), label: `Set ${n}` }))]}
         />
         <FilterSelect
-          label="Rotación"
-          value={rotFilter}
-          onChange={setRotFilter}
+          label="Agrupar por"
+          value={groupMode}
+          onChange={(v) => { setGroupMode(v as GroupMode); setGroupValue("all"); }}
+          options={[
+            { value: "rotation", label: "Rotación" },
+            { value: "setter", label: "Pos. armadora" },
+          ]}
+        />
+        <FilterSelect
+          label={groupMode === "rotation" ? "Rotación" : "Pos. armadora"}
+          value={groupValue}
+          onChange={setGroupValue}
           options={[
             { value: "all", label: "Todas" },
-            ...[1, 2, 3, 4, 5, 6].map((r) => ({ value: String(r), label: `R${r}` })),
+            ...(groupMode === "rotation"
+              ? [1, 2, 3, 4, 5, 6].map((r) => ({ value: String(r), label: `R${r}` }))
+              : SETTER_ZONES.map((z) => ({ value: String(z), label: `A${z}` }))),
           ]}
         />
         <FilterSelect
@@ -119,6 +130,7 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
           ]}
         />
       </div>
+
 
       {/* Indicador zona predominante */}
       <div className="grid sm:grid-cols-2 gap-2">
