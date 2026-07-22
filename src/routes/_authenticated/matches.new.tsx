@@ -365,7 +365,7 @@ function NewMatch() {
                 mainRefereeName: mainReferee.trim(),
                 secondRefereeName: secondReferee.trim() || undefined,
                 scorekeeperName: scorekeeper.trim(),
-                statsAssistantName: statsAssistant.trim() || undefined,
+                
               });
               if (mode === "live") startMatch(id);
               navigate({ to: "/matches/$id", params: { id } });
