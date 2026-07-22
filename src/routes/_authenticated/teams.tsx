@@ -703,6 +703,18 @@ function TeamsPage() {
                   >
                     <List className="size-4" />
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("clubs")}
+                    className={`size-8 rounded-md flex items-center justify-center transition-colors ${
+                      viewMode === "clubs"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title="Vista por club"
+                    aria-label="Vista por club"
+                  >
+                    <Building2 className="size-4" />
                 </div>
               </div>
             </div>
