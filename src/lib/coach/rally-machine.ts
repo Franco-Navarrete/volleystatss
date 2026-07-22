@@ -124,8 +124,8 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de ataque" };
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de ataque" };
       if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de ataque" };
-      // + 0 - → bloqueo rival
-      return { state: "bloqueo", side: opposite(side) };
+      // + 0 - → el rival defiende directamente (sin paso de bloqueo)
+      return { state: "defensa", side: opposite(side) };
     case "bloqueo":
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de bloqueo" };
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de bloqueo" };
@@ -141,7 +141,7 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de contraataque" };
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
       if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de contraataque" };
-      return { state: "bloqueo", side: opposite(side) };
+      return { state: "defensa", side: opposite(side) };
   }
 }
 
