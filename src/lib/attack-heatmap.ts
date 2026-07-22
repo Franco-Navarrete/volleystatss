@@ -4,8 +4,11 @@ import {
   type SettingEvent,
   type SettingAttackZone,
   type AttackDirection,
+  type Team,
   isAttackType,
 } from "./volley-store";
+import { buildSetterZoneLookup, type SetterZone } from "./setter-position";
+
 
 /** Zonas de origen de ataque (formato oficial). */
 export type OriginZone = 1 | 2 | 3 | 4 | 5 | 6;
