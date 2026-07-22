@@ -4,8 +4,11 @@ import {
   type SettingEvent,
   type SettingAttackZone,
   type AttackDirection,
+  type Team,
   isAttackType,
 } from "./volley-store";
+import { buildSetterZoneLookup, type SetterZone } from "./setter-position";
+
 
 /** Zonas de origen de ataque (formato oficial). */
 export type OriginZone = 1 | 2 | 3 | 4 | 5 | 6;
@@ -52,18 +55,27 @@ export interface EnrichedAttack {
   direction: AttackDirection | null;
   result: "positive" | "neutral" | "negative";
   setNumber: number;
-  rotation: number; // 1..6
+  rotation: number; // 1..6 (rotación del equipo atacante)
+  setterZone: SetterZone | null; // 1..6 (posición de la armadora del equipo atacante)
   timestamp: number;
 }
+
 
 /**
  * Recorre los eventos del partido y devuelve la lista de ataques enriquecidos
  * con la rotación (1..6) del equipo atacante al momento del rally.
  */
-export function buildEnrichedAttacks(match: Match): EnrichedAttack[] {
+export function buildEnrichedAttacks(
+  match: Match,
+  teamA?: Team,
+  teamB?: Team,
+): EnrichedAttack[] {
   const events = [...match.events].sort((a, b) => a.timestamp - b.timestamp);
   const initial = match.initialServingSide;
   const out: EnrichedAttack[] = [];
+  const setterLookup =
+    teamA && teamB ? buildSetterZoneLookup(match, teamA, teamB) : null;
+
 
   // Estado por set: rotación 0..5 y equipo que saca.
   let currentSet = -1;
@@ -103,7 +115,9 @@ export function buildEnrichedAttacks(match: Match): EnrichedAttack[] {
         result,
         setNumber: se.setNumber,
         rotation: (se.side === "A" ? rotA : rotB) + 1,
+        setterZone: setterLookup ? setterLookup(se.side, se.timestamp, se.setNumber) : null,
         timestamp: se.timestamp,
+
       });
     } else if (!("kind" in ev)) {
       // PointEvent: si no hubo setting-event asociado pero tiene attackZone,
@@ -125,7 +139,9 @@ export function buildEnrichedAttacks(match: Match): EnrichedAttack[] {
             result: pe.type === "attack_error" ? "negative" : "positive",
             setNumber: pe.setNumber,
             rotation: (pe.playerSide === "A" ? rotA : rotB) + 1,
+            setterZone: setterLookup ? setterLookup(pe.playerSide, pe.timestamp, pe.setNumber) : null,
             timestamp: pe.timestamp,
+
           });
         }
       }
@@ -146,8 +162,10 @@ export function buildEnrichedAttacks(match: Match): EnrichedAttack[] {
 export interface HeatmapFilters {
   setNumber?: number | "all";
   rotation?: number | "all";
+  setterZone?: SetterZone | "all";
   playerId?: string | "all";
 }
+
 
 export interface HeatmapAgg {
   origin: Record<OriginZone, ZoneBucket>;
@@ -187,7 +205,9 @@ export function aggregateAttacks(
     if (a.side !== side) continue;
     if (filters.setNumber !== undefined && filters.setNumber !== "all" && a.setNumber !== filters.setNumber) continue;
     if (filters.rotation !== undefined && filters.rotation !== "all" && a.rotation !== filters.rotation) continue;
+    if (filters.setterZone !== undefined && filters.setterZone !== "all" && a.setterZone !== filters.setterZone) continue;
     if (filters.playerId !== undefined && filters.playerId !== "all" && a.playerId !== filters.playerId) continue;
+
 
     if (a.origin) {
       const b = agg.origin[a.origin];

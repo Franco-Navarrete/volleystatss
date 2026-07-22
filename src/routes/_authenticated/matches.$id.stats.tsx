@@ -16,6 +16,8 @@ import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
+import { SetterDistributionCard } from "@/components/SetterDistributionCard";
+
 import { ServeHeatmapPanel } from "@/components/serve/ServeHeatmapPanel";
 import { AttackTypesPanel } from "@/components/AttackTypesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
@@ -381,9 +383,11 @@ function StatsPage() {
               <TabsTrigger value="ataque">Ataque</TabsTrigger>
               <TabsTrigger value="saque">Saque</TabsTrigger>
             </TabsList>
-            <TabsContent value="ataque">
+            <TabsContent value="ataque" className="space-y-4">
               <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
+              <SetterDistributionCard match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
+
             <TabsContent value="saque">
               <ServeHeatmapPanel match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>

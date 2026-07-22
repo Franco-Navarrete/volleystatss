@@ -10,8 +10,10 @@ import {
   ORIGIN_ZONE_LABEL,
   type OriginZone,
   type HeatmapAgg,
+  type HeatmapFilters,
   type ZoneBucket,
 } from "@/lib/attack-heatmap";
+import { SETTER_ZONES, type SetterZone } from "@/lib/setter-position";
 import { Flame } from "lucide-react";
 
 interface Props {
@@ -19,6 +21,8 @@ interface Props {
   teamA: Team;
   teamB: Team;
 }
+
+type GroupMode = "rotation" | "setter";
 
 /** 3×3 destino: 4-3-2 pegado a la red, 5-6-1 al fondo. */
 const DEST_ROWS: number[][] = [
@@ -35,36 +39,40 @@ const ORIGIN_ROWS: OriginZone[][] = [
 
 function heatColor(count: number, max: number, teamColor: string): string {
   if (count === 0 || max === 0) return "transparent";
-  const intensity = 0.15 + (count / max) * 0.75; // 0.15 .. 0.90
+  const intensity = 0.15 + (count / max) * 0.75;
   return `color-mix(in oklch, ${teamColor} ${Math.round(intensity * 100)}%, transparent)`;
 }
 
 function efficiency(b: ZoneBucket): number {
-  // Positivos − Negativos / Total (norma FIVB simplificada)
   if (b.count === 0) return 0;
   return Math.round(((b.positives - b.negatives) / b.count) * 100);
 }
 
 export function AttackHeatmap({ match, teamA, teamB }: Props) {
-  const enriched = useMemo(() => buildEnrichedAttacks(match), [match]);
+  const enriched = useMemo(
+    () => buildEnrichedAttacks(match, teamA, teamB),
+    [match, teamA, teamB],
+  );
 
   const [setFilter, setSetFilter] = useState<string>("all");
-  const [rotFilter, setRotFilter] = useState<string>("all");
+  const [groupMode, setGroupMode] = useState<GroupMode>("rotation");
+  const [groupValue, setGroupValue] = useState<string>("all"); // "all" | "1".."6"
   const [playerA, setPlayerA] = useState<string>("all");
   const [playerB, setPlayerB] = useState<string>("all");
 
-  const filters = {
+  const filters: HeatmapFilters = {
     setNumber: setFilter === "all" ? "all" as const : Number(setFilter),
-    rotation: rotFilter === "all" ? "all" as const : Number(rotFilter),
+    rotation: groupMode === "rotation" && groupValue !== "all" ? Number(groupValue) : "all",
+    setterZone: groupMode === "setter" && groupValue !== "all" ? (Number(groupValue) as SetterZone) : "all",
   };
 
   const aggA = useMemo(
     () => aggregateAttacks(enriched, "A", { ...filters, playerId: playerA === "all" ? "all" : playerA }),
-    [enriched, filters.setNumber, filters.rotation, playerA],
+    [enriched, filters.setNumber, filters.rotation, filters.setterZone, playerA],
   );
   const aggB = useMemo(
     () => aggregateAttacks(enriched, "B", { ...filters, playerId: playerB === "all" ? "all" : playerB }),
-    [enriched, filters.setNumber, filters.rotation, playerB],
+    [enriched, filters.setNumber, filters.rotation, filters.setterZone, playerB],
   );
 
   const availableSets = useMemo(
@@ -72,10 +80,11 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
     [enriched],
   );
 
+
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         <FilterSelect
           label="Set"
           value={setFilter}
@@ -83,12 +92,23 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
           options={[{ value: "all", label: "Todo el partido" }, ...availableSets.map((n) => ({ value: String(n), label: `Set ${n}` }))]}
         />
         <FilterSelect
-          label="Rotación"
-          value={rotFilter}
-          onChange={setRotFilter}
+          label="Agrupar por"
+          value={groupMode}
+          onChange={(v) => { setGroupMode(v as GroupMode); setGroupValue("all"); }}
+          options={[
+            { value: "rotation", label: "Rotación" },
+            { value: "setter", label: "Pos. armadora" },
+          ]}
+        />
+        <FilterSelect
+          label={groupMode === "rotation" ? "Rotación" : "Pos. armadora"}
+          value={groupValue}
+          onChange={setGroupValue}
           options={[
             { value: "all", label: "Todas" },
-            ...[1, 2, 3, 4, 5, 6].map((r) => ({ value: String(r), label: `R${r}` })),
+            ...(groupMode === "rotation"
+              ? [1, 2, 3, 4, 5, 6].map((r) => ({ value: String(r), label: `R${r}` }))
+              : SETTER_ZONES.map((z) => ({ value: String(z), label: `A${z}` }))),
           ]}
         />
         <FilterSelect
@@ -110,6 +130,7 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
           ]}
         />
       </div>
+
 
       {/* Indicador zona predominante */}
       <div className="grid sm:grid-cols-2 gap-2">
