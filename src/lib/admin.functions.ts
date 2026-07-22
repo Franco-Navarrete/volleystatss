@@ -162,11 +162,12 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       if (accessErr) throw accessErr;
     }
 
-    if (data.extraRole) {
+    const uniqueExtra = Array.from(new Set(data.extraRoles ?? []));
+    if (uniqueExtra.length > 0) {
       const { error: roleErr } = await supabaseAdmin
         .from("user_roles")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert({ user_id: newUserId, role: data.extraRole as any });
+        .insert(uniqueExtra.map((role) => ({ user_id: newUserId, role: role as any })));
       if (roleErr) throw roleErr;
     }
 
