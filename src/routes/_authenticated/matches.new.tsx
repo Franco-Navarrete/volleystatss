@@ -22,6 +22,12 @@ function NewMatch() {
   const navigate = useNavigate();
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
+  const matchCategories = useVolley((s) => s.matchCategories);
+  const referees = useVolley((s) => s.referees);
+  const scorekeepers = useVolley((s) => s.scorekeepers);
+  const addMatchCategory = useVolley((s) => s.addMatchCategory);
+  const addReferee = useVolley((s) => s.addReferee);
+  const addScorekeeper = useVolley((s) => s.addScorekeeper);
   const createMatch = useVolley((s) => s.createMatch);
   const startMatch = useVolley((s) => s.startMatch);
   const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
