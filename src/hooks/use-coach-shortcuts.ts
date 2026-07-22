@@ -4,7 +4,7 @@ import {
   bindingMatches,
   type CoachAction,
 } from "@/lib/coach-mode-store";
-import { useCoachRally, type Rating } from "@/lib/coach/rally-machine";
+import { useCoachRally, type Rating, type AttackResultKind } from "@/lib/coach/rally-machine";
 import { useVolley } from "@/lib/volley-store";
 
 export interface CoachSeqDetail {
