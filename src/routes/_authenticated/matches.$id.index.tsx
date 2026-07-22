@@ -1707,6 +1707,14 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
   formationByTeam?: Partial<Record<"A" | "B", "reception" | "attack">>;
   activePlayerId?: string | null;
 }) {
+  const blockPick = useCoachRally((s) => s.blockPick);
+  const blockPickInfo = blockPick
+    ? {
+        blockingSide: blockPick.blockingSide,
+        eligible: new Set(blockPick.eligible),
+        picks: new Set(blockPick.picks),
+      }
+    : null;
   // Formación efectiva: SIEMPRE 6 IDs únicos por equipo aplicando el swap
   // automático del líbero (si liberoActive existe, la central reemplazada
   // deja de renderizarse y el líbero ocupa su slot). Cualquier duplicado o
