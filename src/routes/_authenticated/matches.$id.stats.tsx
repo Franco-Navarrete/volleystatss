@@ -381,9 +381,11 @@ function StatsPage() {
               <TabsTrigger value="ataque">Ataque</TabsTrigger>
               <TabsTrigger value="saque">Saque</TabsTrigger>
             </TabsList>
-            <TabsContent value="ataque">
+            <TabsContent value="ataque" className="space-y-4">
               <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
+              <SetterDistributionCard match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
+
             <TabsContent value="saque">
               <ServeHeatmapPanel match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
