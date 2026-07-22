@@ -1809,6 +1809,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 receiverIds={receiverIds}
                 onPlayerClick={onPlayerClick}
                 activePlayerId={activePlayerId ?? null}
+                blockPickInfo={blockPickInfo}
               />
             );
           }
