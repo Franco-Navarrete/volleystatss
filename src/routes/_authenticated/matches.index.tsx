@@ -8,6 +8,8 @@ import { useVolley, setsWon } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Plus, Radio, Trash2 } from "lucide-react";
 import { useCanCreateMatches, useCanDeleteMatches } from "@/hooks/use-permissions";
+import { useIsAdmin } from "@/hooks/use-auth";
+import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
 import { toast } from "sonner";
 import {
@@ -28,9 +30,23 @@ export const Route = createFileRoute("/_authenticated/matches/")({
 });
 
 function MatchesIndex() {
-  const matches = useVolley((s) => s.matches);
-  const teams = useVolley((s) => s.teams);
+  const localMatches = useVolley((s) => s.matches);
+  const localTeams = useVolley((s) => s.teams);
   const deleteMatch = useVolley((s) => s.deleteMatch);
+  const { isAdmin } = useIsAdmin();
+  const adminAll = useAllUsersAppState();
+  const matches = useMemo(() => {
+    if (!isAdmin || !adminAll.data) return localMatches;
+    const byId = new Map(localMatches.map((m) => [m.id, m]));
+    for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
+    return [...byId.values()];
+  }, [isAdmin, adminAll.data, localMatches]);
+  const teams = useMemo(() => {
+    if (!isAdmin || !adminAll.data) return localTeams;
+    const byId = new Map(localTeams.map((t) => [t.id, t]));
+    for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
+    return [...byId.values()];
+  }, [isAdmin, adminAll.data, localTeams]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
