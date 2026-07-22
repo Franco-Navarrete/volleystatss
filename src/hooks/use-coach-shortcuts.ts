@@ -174,6 +174,15 @@ export function useCoachShortcuts(options?: { active?: boolean; matchId?: string
         }
       }
 
+      if (cur.sub === "rating" && cur.state === "defensa") {
+        const DEF_MAP: Record<string, Rating> = { Digit1: "#", Digit2: "0", Digit3: "-" };
+        if (DEF_MAP[e.code] != null) {
+          e.preventDefault();
+          rally.setRating(DEF_MAP[e.code]);
+          return;
+        }
+      }
+
       if (cur.sub === "rating" && RATING_KEYS[e.key] != null) {
         e.preventDefault();
         rally.setRating(RATING_KEYS[e.key]);
