@@ -61,15 +61,27 @@ function NewMatch() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   });
 
+  // Información oficial del partido
+  const [category, setCategory] = useState<string>("");
+  const [mainReferee, setMainReferee] = useState<string>("");
+  const [secondReferee, setSecondReferee] = useState<string>("");
+  const [scorekeeper, setScorekeeper] = useState<string>("");
+  const [statsAssistant, setStatsAssistant] = useState<string>("");
+
   const teamA = useMemo(() => teams.find((t) => t.id === teamAId), [teams, teamAId]);
   const teamB = useMemo(() => teams.find((t) => t.id === teamBId), [teams, teamBId]);
 
   const lineupAFull = lineupA.every((x): x is string => !!x);
   const lineupBFull = lineupB.every((x): x is string => !!x);
 
+  const categoryValid = category.trim().length > 0;
+  const mainRefValid = mainReferee.trim().length > 0;
+  const scorekeeperValid = scorekeeper.trim().length > 0;
+
   const canStart =
     teamAId && teamBId && teamAId !== teamBId &&
-    lineupAFull && lineupBFull && !!scheduledAt;
+    lineupAFull && lineupBFull && !!scheduledAt &&
+    categoryValid && mainRefValid && scorekeeperValid;
 
   const assignSlot = (lineup: Slot[], setLineup: (v: Slot[]) => void, slotIdx: number, playerId: string | null) => {
     const next = [...lineup];
