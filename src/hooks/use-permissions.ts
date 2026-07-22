@@ -5,7 +5,7 @@ import { useCoachAccess } from "@/hooks/use-coach-access";
 
 /**
  * Devuelve si el usuario actual puede crear partidos.
- * Los admins siempre pueden. El resto depende de `user_permissions.can_create_matches`.
+ * Pueden: admins, entrenadores, planilleros, o usuarios con `user_permissions.can_create_matches`.
  */
 export function useCanCreateMatches() {
   const { user, loading: userLoading } = useAuthUser();
@@ -28,30 +28,33 @@ export function useCanCreateMatches() {
       return;
     }
     setLoading(true);
-    // Si la consulta falla o tarda demasiado, asumimos NO permitido
-    // (sólo admins, entrenadores o usuarios con permiso explícito pueden crear).
     const timeout = setTimeout(() => {
       if (!cancelled) {
         setAllowed(false);
         setLoading(false);
       }
     }, 4000);
-    supabase
-      .from("user_permissions")
-      .select("can_create_matches")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        clearTimeout(timeout);
-        if (error) {
-          console.warn("[useCanCreateMatches] error:", error.message);
-          setAllowed(false);
-        } else {
-          setAllowed(!!data?.can_create_matches);
-        }
-        setLoading(false);
-      });
+    (async () => {
+      const [rolesRes, permRes] = await Promise.all([
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "planillero"),
+        supabase
+          .from("user_permissions")
+          .select("can_create_matches")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      clearTimeout(timeout);
+      if (rolesRes.error) console.warn("[useCanCreateMatches] role error:", rolesRes.error.message);
+      if (permRes.error) console.warn("[useCanCreateMatches] perm error:", permRes.error.message);
+      const isPlanillero = !!rolesRes.data && rolesRes.data.length > 0;
+      setAllowed(isPlanillero || !!permRes.data?.can_create_matches);
+      setLoading(false);
+    })();
     return () => {
       cancelled = true;
       clearTimeout(timeout);
