@@ -163,6 +163,17 @@ export function useCoachShortcuts(options?: { active?: boolean; matchId?: string
         return;
       }
 
+      if (cur.sub === "rating" && (cur.state === "ataque" || cur.state === "contraataque")) {
+        const RESULT_MAP: Record<string, AttackResultKind> = {
+          Digit1: "point", Digit2: "continue", Digit3: "blocked", Digit4: "error", Digit5: "unforced",
+        };
+        if (RESULT_MAP[e.code] != null) {
+          e.preventDefault();
+          rally.setAttackResult(RESULT_MAP[e.code]);
+          return;
+        }
+      }
+
       if (cur.sub === "rating" && RATING_KEYS[e.key] != null) {
         e.preventDefault();
         rally.setRating(RATING_KEYS[e.key]);
