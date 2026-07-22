@@ -524,6 +524,18 @@ interface VolleyState {
   matches: Match[];
   leagues: League[];
   customReceptionFormations?: CustomReceptionFormations;
+  /** Categorías de partido configurables (Sub 12, Sub 14, Primera, etc.). */
+  matchCategories: string[];
+  /** Árbitros registrados para autocompletado. */
+  referees: string[];
+  /** Planilleros registrados para autocompletado. */
+  scorekeepers: string[];
+  addMatchCategory: (name: string) => void;
+  removeMatchCategory: (name: string) => void;
+  addReferee: (name: string) => void;
+  removeReferee: (name: string) => void;
+  addScorekeeper: (name: string) => void;
+  removeScorekeeper: (name: string) => void;
   setReceptionSlot: (
     rotation: import("@/lib/formations/types").Rotation,
     role: import("@/lib/formations/types").TacticalRole,
