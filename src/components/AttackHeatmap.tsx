@@ -10,8 +10,10 @@ import {
   ORIGIN_ZONE_LABEL,
   type OriginZone,
   type HeatmapAgg,
+  type HeatmapFilters,
   type ZoneBucket,
 } from "@/lib/attack-heatmap";
+import { SETTER_ZONES, type SetterZone } from "@/lib/setter-position";
 import { Flame } from "lucide-react";
 
 interface Props {
@@ -19,6 +21,8 @@ interface Props {
   teamA: Team;
   teamB: Team;
 }
+
+type GroupMode = "rotation" | "setter";
 
 /** 3×3 destino: 4-3-2 pegado a la red, 5-6-1 al fondo. */
 const DEST_ROWS: number[][] = [
@@ -35,42 +39,47 @@ const ORIGIN_ROWS: OriginZone[][] = [
 
 function heatColor(count: number, max: number, teamColor: string): string {
   if (count === 0 || max === 0) return "transparent";
-  const intensity = 0.15 + (count / max) * 0.75; // 0.15 .. 0.90
+  const intensity = 0.15 + (count / max) * 0.75;
   return `color-mix(in oklch, ${teamColor} ${Math.round(intensity * 100)}%, transparent)`;
 }
 
 function efficiency(b: ZoneBucket): number {
-  // Positivos − Negativos / Total (norma FIVB simplificada)
   if (b.count === 0) return 0;
   return Math.round(((b.positives - b.negatives) / b.count) * 100);
 }
 
 export function AttackHeatmap({ match, teamA, teamB }: Props) {
-  const enriched = useMemo(() => buildEnrichedAttacks(match), [match]);
+  const enriched = useMemo(
+    () => buildEnrichedAttacks(match, teamA, teamB),
+    [match, teamA, teamB],
+  );
 
   const [setFilter, setSetFilter] = useState<string>("all");
-  const [rotFilter, setRotFilter] = useState<string>("all");
+  const [groupMode, setGroupMode] = useState<GroupMode>("rotation");
+  const [groupValue, setGroupValue] = useState<string>("all"); // "all" | "1".."6"
   const [playerA, setPlayerA] = useState<string>("all");
   const [playerB, setPlayerB] = useState<string>("all");
 
-  const filters = {
+  const filters: HeatmapFilters = {
     setNumber: setFilter === "all" ? "all" as const : Number(setFilter),
-    rotation: rotFilter === "all" ? "all" as const : Number(rotFilter),
+    rotation: groupMode === "rotation" && groupValue !== "all" ? Number(groupValue) : "all",
+    setterZone: groupMode === "setter" && groupValue !== "all" ? (Number(groupValue) as SetterZone) : "all",
   };
 
   const aggA = useMemo(
     () => aggregateAttacks(enriched, "A", { ...filters, playerId: playerA === "all" ? "all" : playerA }),
-    [enriched, filters.setNumber, filters.rotation, playerA],
+    [enriched, filters.setNumber, filters.rotation, filters.setterZone, playerA],
   );
   const aggB = useMemo(
     () => aggregateAttacks(enriched, "B", { ...filters, playerId: playerB === "all" ? "all" : playerB }),
-    [enriched, filters.setNumber, filters.rotation, playerB],
+    [enriched, filters.setNumber, filters.rotation, filters.setterZone, playerB],
   );
 
   const availableSets = useMemo(
     () => [...new Set(enriched.map((a) => a.setNumber))].sort((a, b) => a - b),
     [enriched],
   );
+
 
   return (
     <div className="space-y-4">
