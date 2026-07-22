@@ -66,7 +66,7 @@ function NewMatch() {
   const [mainReferee, setMainReferee] = useState<string>("");
   const [secondReferee, setSecondReferee] = useState<string>("");
   const [scorekeeper, setScorekeeper] = useState<string>("");
-  const [statsAssistant, setStatsAssistant] = useState<string>("");
+  
 
   const teamA = useMemo(() => teams.find((t) => t.id === teamAId), [teams, teamAId]);
   const teamB = useMemo(() => teams.find((t) => t.id === teamBId), [teams, teamBId]);
@@ -263,8 +263,8 @@ function NewMatch() {
           </FieldLabel>
         </div>
 
-        {/* Fila 2: Árbitro principal · Segundo · Planillero · Asistente */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        {/* Fila 2: Árbitro principal · Segundo · Planillero */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           <FieldLabel label="Árbitro principal" required>
             <AutocompleteInput
               value={mainReferee}
@@ -294,16 +294,8 @@ function NewMatch() {
               listId="scorekeeper-list"
             />
           </FieldLabel>
-          <FieldLabel label="Asistente / estadístico" hint="Opcional">
-            <input
-              type="text"
-              value={statsAssistant}
-              onChange={(e) => setStatsAssistant(e.target.value)}
-              placeholder="Nombre del asistente"
-              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
-            />
-          </FieldLabel>
         </div>
+
 
         {/* Fila 3: Saque inicial · Local · Visitante */}
         <div className="grid sm:grid-cols-3 gap-4 mt-4">
@@ -373,7 +365,7 @@ function NewMatch() {
                 mainRefereeName: mainReferee.trim(),
                 secondRefereeName: secondReferee.trim() || undefined,
                 scorekeeperName: scorekeeper.trim(),
-                statsAssistantName: statsAssistant.trim() || undefined,
+                
               });
               if (mode === "live") startMatch(id);
               navigate({ to: "/matches/$id", params: { id } });
