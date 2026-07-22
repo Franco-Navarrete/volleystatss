@@ -1183,7 +1183,7 @@ function TeamsPage() {
                               <div className="text-sm font-medium truncate">{p.name}</div>
                               <div className="text-[11px] text-muted-foreground">
                                 #{p.number}
-                                {p.position ? ` · ${PLAYER_POSITION_LABEL[p.position]}` : ""}
+                                {p.position ? ` · ${PLAYER_POSITION_LABEL[p.position as PlayerPosition] ?? p.position}` : ""}
                               </div>
                             </div>
                           </li>
