@@ -700,19 +700,23 @@ function CreateUserDialog({
               El usuario la podrá cambiar después.
             </p>
           </div>
-          <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
-            <div>
-              <Label>Rol Administrador</Label>
-              <p className="text-xs text-muted-foreground">Acceso total a todo.</p>
-            </div>
-            <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
+          <div>
+            <Label className="mb-1.5 block">Rol</Label>
+            <RoleSelector
+              value={isAdmin ? "admin" : extraRole}
+              onChange={(v) => {
+                if (v === "admin") {
+                  setIsAdmin(true);
+                  setExtraRole(null);
+                } else {
+                  setIsAdmin(false);
+                  setExtraRole(v);
+                }
+              }}
+            />
           </div>
           {!isAdmin && (
             <>
-              <div>
-                <Label className="mb-1.5 block">Rol</Label>
-                <ExtraRoleSelector value={extraRole} onChange={setExtraRole} />
-              </div>
               <div className="flex items-center justify-between gap-2">
                 <Label>Puede crear partidos</Label>
                 <Switch checked={canCreate} onCheckedChange={setCanCreate} />
