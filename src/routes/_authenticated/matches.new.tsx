@@ -213,49 +213,128 @@ function NewMatch() {
         />
       </div>
 
-      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <label className="text-sm">
-          <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Fecha y hora</span>
-          <input
-            type="datetime-local"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            className="w-full bg-background border border-input rounded-md px-3 py-2"
-          />
-        </label>
-        <label className="text-sm">
-          <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Sets para ganar</span>
-          <select value={setsToWin} onChange={(e) => setSetsToWin(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2">
-            <option value={2}>Al mejor de 3 (2)</option>
-            <option value={3}>Al mejor de 5 (3)</option>
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Puntos por set</span>
-          <select value={pointsPerSet} onChange={(e) => setPointsPerSet(Number(e.target.value))} className="w-full bg-background border border-input rounded-md px-3 py-2">
-            <option value={25}>25 puntos</option>
-            <option value={21}>21 puntos</option>
-            <option value={15}>15 puntos</option>
-          </select>
-        </label>
-        <div className="text-sm">
-          <span className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Saque inicial</span>
-          <div className="grid grid-cols-2 gap-2">
-            {(["A", "B"] as const).map((side) => {
-              const t = side === "A" ? teamA : teamB;
-              const active = servingSide === side;
-              return (
-                <button
-                  key={side}
-                  type="button"
-                  onClick={() => setServingSide(side)}
-                  className={`px-2 py-2 rounded-md border-2 text-xs font-semibold truncate transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
-                >
-                  {t?.shortName ?? (side === "A" ? "Local" : "Visitante")}
-                </button>
-              );
-            })}
-          </div>
+      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Info className="size-4 text-primary" />
+          <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold">
+            Información del partido
+          </h2>
+        </div>
+
+        {/* Fila 1: Fecha · Categoría · Sets · Puntos */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <FieldLabel label="Fecha y hora" required>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+            />
+          </FieldLabel>
+          <FieldLabel label="Categoría" required>
+            <CategoryPicker
+              value={category}
+              onChange={setCategory}
+              options={matchCategories}
+              onAddOption={addMatchCategory}
+              invalid={!categoryValid}
+            />
+          </FieldLabel>
+          <FieldLabel label="Sets para ganar" required>
+            <select
+              value={setsToWin}
+              onChange={(e) => setSetsToWin(Number(e.target.value))}
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+            >
+              <option value={2}>Al mejor de 3 (2)</option>
+              <option value={3}>Al mejor de 5 (3)</option>
+            </select>
+          </FieldLabel>
+          <FieldLabel label="Puntos por set" required>
+            <select
+              value={pointsPerSet}
+              onChange={(e) => setPointsPerSet(Number(e.target.value))}
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+            >
+              <option value={25}>25 puntos</option>
+              <option value={21}>21 puntos</option>
+              <option value={15}>15 puntos</option>
+            </select>
+          </FieldLabel>
+        </div>
+
+        {/* Fila 2: Árbitro principal · Segundo · Planillero · Asistente */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <FieldLabel label="Árbitro principal" required>
+            <AutocompleteInput
+              value={mainReferee}
+              onChange={setMainReferee}
+              options={referees}
+              placeholder="Seleccionar o escribir árbitro"
+              invalid={!mainRefValid}
+              listId="referee-list-main"
+            />
+          </FieldLabel>
+          <FieldLabel label="Segundo árbitro" hint="Opcional">
+            <AutocompleteInput
+              value={secondReferee}
+              onChange={setSecondReferee}
+              options={referees}
+              placeholder="Segundo árbitro"
+              listId="referee-list-second"
+            />
+          </FieldLabel>
+          <FieldLabel label="Planillero" required>
+            <AutocompleteInput
+              value={scorekeeper}
+              onChange={setScorekeeper}
+              options={scorekeepers}
+              placeholder="Seleccionar planillero"
+              invalid={!scorekeeperValid}
+              listId="scorekeeper-list"
+            />
+          </FieldLabel>
+          <FieldLabel label="Asistente / estadístico" hint="Opcional">
+            <input
+              type="text"
+              value={statsAssistant}
+              onChange={(e) => setStatsAssistant(e.target.value)}
+              placeholder="Nombre del asistente"
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+            />
+          </FieldLabel>
+        </div>
+
+        {/* Fila 3: Saque inicial · Local · Visitante */}
+        <div className="grid sm:grid-cols-3 gap-4 mt-4">
+          <FieldLabel label="Saque inicial">
+            <div className="grid grid-cols-2 gap-2">
+              {(["A", "B"] as const).map((side) => {
+                const t = side === "A" ? teamA : teamB;
+                const active = servingSide === side;
+                return (
+                  <button
+                    key={side}
+                    type="button"
+                    onClick={() => setServingSide(side)}
+                    className={`px-2 py-2 rounded-md border-2 text-xs font-semibold truncate transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
+                  >
+                    {t?.shortName ?? (side === "A" ? "Local" : "Visitante")}
+                  </button>
+                );
+              })}
+            </div>
+          </FieldLabel>
+          <FieldLabel label="Equipo local">
+            <div className="w-full bg-background/60 border border-border/40 rounded-md px-3 py-2 text-sm truncate">
+              {teamA?.name ?? <span className="text-muted-foreground">Sin seleccionar</span>}
+            </div>
+          </FieldLabel>
+          <FieldLabel label="Equipo visitante">
+            <div className="w-full bg-background/60 border border-border/40 rounded-md px-3 py-2 text-sm truncate">
+              {teamB?.name ?? <span className="text-muted-foreground">Sin seleccionar</span>}
+            </div>
+          </FieldLabel>
         </div>
       </section>
 
@@ -268,6 +347,14 @@ function NewMatch() {
             disabled={!canStart}
             className={mode === "live" ? "bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow" : ""}
             onClick={() => {
+              if (!categoryValid) { toast.error("Elegí una categoría."); return; }
+              if (!mainRefValid) { toast.error("Falta el árbitro principal."); return; }
+              if (!scorekeeperValid) { toast.error("Falta el planillero."); return; }
+              // Auto-registrar nombres nuevos para futuros autocompletados
+              addMatchCategory(category);
+              addReferee(mainReferee);
+              if (secondReferee.trim()) addReferee(secondReferee);
+              addScorekeeper(scorekeeper);
               const ts = new Date(scheduledAt).getTime();
               const id = createMatch({
                 teamAId, teamBId,
@@ -282,6 +369,11 @@ function NewMatch() {
                 liberoA2Id: liberoA2 || null,
                 liberoB1Id: liberoB1 || null,
                 liberoB2Id: liberoB2 || null,
+                category: category.trim(),
+                mainRefereeName: mainReferee.trim(),
+                secondRefereeName: secondReferee.trim() || undefined,
+                scorekeeperName: scorekeeper.trim(),
+                statsAssistantName: statsAssistant.trim() || undefined,
               });
               if (mode === "live") startMatch(id);
               navigate({ to: "/matches/$id", params: { id } });
@@ -294,6 +386,120 @@ function NewMatch() {
     </AppShell>
   );
 }
+
+function FieldLabel({
+  label, required, hint, children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="text-sm block">
+      <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5 flex items-center gap-1.5">
+        {label}
+        {required && <span className="text-destructive">*</span>}
+        {hint && <span className="normal-case tracking-normal text-[10px] text-muted-foreground/70 font-normal">({hint})</span>}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function CategoryPicker({
+  value, onChange, options, onAddOption, invalid,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  onAddOption: (v: string) => void;
+  invalid?: boolean;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  if (adding) {
+    return (
+      <div className="flex gap-1">
+        <input
+          autoFocus
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Nueva categoría"
+          className="flex-1 bg-background border border-input rounded-md px-2 py-2 text-sm"
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            const v = draft.trim();
+            if (!v) { setAdding(false); return; }
+            onAddOption(v);
+            onChange(v);
+            setDraft("");
+            setAdding(false);
+          }}
+        >
+          OK
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft(""); }}>
+          <X className="size-3.5" />
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-1">
+      <select
+        value={value}
+        onChange={(e) => {
+          if (e.target.value === "__new__") { setAdding(true); return; }
+          onChange(e.target.value);
+        }}
+        className={`flex-1 bg-background border rounded-md px-2 py-2 text-sm ${invalid ? "border-destructive/60" : "border-input"}`}
+      >
+        <option value="">— Seleccionar —</option>
+        {options.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+        <option value="__new__">＋ Otra…</option>
+      </select>
+    </div>
+  );
+}
+
+function AutocompleteInput({
+  value, onChange, options, placeholder, invalid, listId,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+  invalid?: boolean;
+  listId: string;
+}) {
+  return (
+    <>
+      <input
+        type="text"
+        list={listId}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full bg-background border rounded-md px-3 py-2 text-sm ${invalid ? "border-destructive/60" : "border-input"}`}
+        autoComplete="off"
+      />
+      <datalist id={listId}>
+        {options.map((o) => (
+          <option key={o} value={o} />
+        ))}
+      </datalist>
+    </>
+  );
+}
+
 
 
 function TeamPicker({
