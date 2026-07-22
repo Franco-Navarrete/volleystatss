@@ -282,6 +282,25 @@ function TeamsPage() {
   // ============ Club drill-down (view mode: "clubs") ============
   const [openClubKey, setOpenClubKey] = useState<string | null>(null);
   const [openClubCategory, setOpenClubCategory] = useState<string | null>(null);
+  const [quickAddByTeam, setQuickAddByTeam] = useState<
+    Record<string, { name: string; num: string; pos: PlayerPosition | "" }>
+  >({});
+  const getQuickAdd = (id: string) =>
+    quickAddByTeam[id] ?? { name: "", num: "", pos: "" as PlayerPosition | "" };
+  const patchQuickAdd = (
+    id: string,
+    patch: Partial<{ name: string; num: string; pos: PlayerPosition | "" }>,
+  ) =>
+    setQuickAddByTeam((s) => ({
+      ...s,
+      [id]: { ...getQuickAdd(id), ...patch },
+    }));
+  const resetQuickAdd = (id: string) =>
+    setQuickAddByTeam((s) => {
+      const n = { ...s };
+      delete n[id];
+      return n;
+    });
 
   // ============ Browsing controls ============
   const [query, setQuery] = useState("");
