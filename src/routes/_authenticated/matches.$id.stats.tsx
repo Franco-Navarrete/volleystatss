@@ -385,7 +385,6 @@ function StatsPage() {
             </TabsList>
             <TabsContent value="ataque" className="space-y-4">
               <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
-              <SetterDistributionCard match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
 
             <TabsContent value="saque">
@@ -403,11 +402,11 @@ function StatsPage() {
         </section>
       )}
 
-      {/* Armado · Modo Entrenador */}
+      {/* Distribución · K1 (Ataque de Rotación) / K2 (Contraataque) */}
       {isCoach && (
         <section className="mb-6">
-          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Armado · Distribución y eficiencia</h2>
-          <SettingPanel match={match} teamA={teamA} teamB={teamB} />
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-bold mb-3">Distribución</h2>
+          <DistributionPanel match={match} teamA={teamA} teamB={teamB} />
         </section>
       )}
 
