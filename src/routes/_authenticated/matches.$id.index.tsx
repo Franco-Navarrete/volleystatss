@@ -1859,12 +1859,15 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       }
                       const isReceptionTarget = needsReception && col.side === receivingSide && !!pid;
                       const isReceiverHighlight = isReceptionTarget && receiverIds.has(pid);
+                      const bpEligible = !!blockPickInfo && pid && col.side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(pid);
+                      const bpPicked = !!blockPickInfo && pid && blockPickInfo.picks.has(pid);
+                      const bpDim = !!blockPickInfo && !bpEligible;
                       return (
                         <button
                           key={`${ci}-${idx}`}
                           onClick={() => p && onPlayerClick(col.side, p.id)}
                           disabled={!p}
-                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""}`}
+                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""} ${bpEligible ? "z-[30] ring-4 ring-emerald-400 animate-pulse cursor-pointer" : ""} ${bpPicked ? "z-[30] ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
                           style={isLibero
                             ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                             : { background: col.team.color, borderColor: pairColor ?? undefined }}
