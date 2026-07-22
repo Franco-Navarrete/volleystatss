@@ -23,6 +23,8 @@ import { Input } from "@/components/ui/input";
 import {
   Tabs, TabsContent, TabsList, TabsTrigger,
 } from "@/components/ui/tabs";
+import { useAllUsersAppState } from "@/hooks/use-all-app-state";
+import { useIsAdmin } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/stats-combinadas")({
   head: () => ({ meta: [{ title: "Estadísticas combinadas · RALLY" }] }),
@@ -57,9 +59,32 @@ function fmtDate(ms: number) {
 }
 
 function StatsCombinadasPage() {
-  const matches = useVolley((s) => s.matches);
-  const teams = useVolley((s) => s.teams);
-  const leagues = useVolley((s) => s.leagues);
+  const localMatches = useVolley((s) => s.matches);
+  const localTeams = useVolley((s) => s.teams);
+  const localLeagues = useVolley((s) => s.leagues);
+  const { isAdmin } = useIsAdmin();
+  const adminAll = useAllUsersAppState();
+
+  const matches = useMemo(() => {
+    if (!isAdmin || !adminAll.data) return localMatches;
+    const byId = new Map(localMatches.map((m) => [m.id, m]));
+    for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
+    return [...byId.values()];
+  }, [isAdmin, adminAll.data, localMatches]);
+
+  const teams = useMemo(() => {
+    if (!isAdmin || !adminAll.data) return localTeams;
+    const byId = new Map(localTeams.map((t) => [t.id, t]));
+    for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
+    return [...byId.values()];
+  }, [isAdmin, adminAll.data, localTeams]);
+
+  const leagues = useMemo(() => {
+    if (!isAdmin || !adminAll.data) return localLeagues;
+    const byId = new Map(localLeagues.map((l) => [l.id, l]));
+    for (const l of adminAll.data.leagues) if (!byId.has(l.id)) byId.set(l.id, l);
+    return [...byId.values()];
+  }, [isAdmin, adminAll.data, localLeagues]);
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const playerById = useMemo(() => {
