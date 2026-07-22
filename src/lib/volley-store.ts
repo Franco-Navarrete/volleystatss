@@ -479,7 +479,27 @@ export interface Match {
   /** Líbero actualmente en cancha (computado por replayMatch). */
   liberoActiveA?: { liberoId: string; replacedId: string } | null;
   liberoActiveB?: { liberoId: string; replacedId: string } | null;
+  /** Información oficial del encuentro. */
+  category?: string;
+  mainRefereeName?: string;
+  secondRefereeName?: string;
+  scorekeeperName?: string;
+  statsAssistantName?: string;
+  venue?: string;
 }
+
+/** Semilla de categorías sugeridas para partidos (editable en Ajustes). */
+export const DEFAULT_MATCH_CATEGORIES: string[] = [
+  "Sub 12",
+  "Sub 14",
+  "Sub 16",
+  "Sub 18",
+  "Sub 21",
+  "Primera",
+  "Maxi",
+  "Mixto",
+  "Libre",
+];
 export function matchGender(match: Match, teamById: Map<string, Team>): TeamGender | null {
   const a = teamById.get(match.teamAId);
   const b = teamById.get(match.teamBId);
@@ -504,6 +524,18 @@ interface VolleyState {
   matches: Match[];
   leagues: League[];
   customReceptionFormations?: CustomReceptionFormations;
+  /** Categorías de partido configurables (Sub 12, Sub 14, Primera, etc.). */
+  matchCategories: string[];
+  /** Árbitros registrados para autocompletado. */
+  referees: string[];
+  /** Planilleros registrados para autocompletado. */
+  scorekeepers: string[];
+  addMatchCategory: (name: string) => void;
+  removeMatchCategory: (name: string) => void;
+  addReferee: (name: string) => void;
+  removeReferee: (name: string) => void;
+  addScorekeeper: (name: string) => void;
+  removeScorekeeper: (name: string) => void;
   setReceptionSlot: (
     rotation: import("@/lib/formations/types").Rotation,
     role: import("@/lib/formations/types").TacticalRole,
@@ -887,6 +919,38 @@ export const useVolley = create<VolleyState>()(
       matches: [],
       leagues: [],
       customReceptionFormations: {},
+      matchCategories: [...DEFAULT_MATCH_CATEGORIES],
+      referees: [],
+      scorekeepers: [],
+
+      addMatchCategory: (name) =>
+        set((s) => {
+          const v = name.trim();
+          if (!v) return {};
+          const exists = s.matchCategories.some((c) => c.toLowerCase() === v.toLowerCase());
+          return exists ? {} : { matchCategories: [...s.matchCategories, v] };
+        }),
+      removeMatchCategory: (name) =>
+        set((s) => ({ matchCategories: s.matchCategories.filter((c) => c !== name) })),
+      addReferee: (name) =>
+        set((s) => {
+          const v = name.trim();
+          if (!v) return {};
+          const exists = s.referees.some((r) => r.toLowerCase() === v.toLowerCase());
+          return exists ? {} : { referees: [...s.referees, v].sort((a, b) => a.localeCompare(b)) };
+        }),
+      removeReferee: (name) =>
+        set((s) => ({ referees: s.referees.filter((r) => r !== name) })),
+      addScorekeeper: (name) =>
+        set((s) => {
+          const v = name.trim();
+          if (!v) return {};
+          const exists = s.scorekeepers.some((r) => r.toLowerCase() === v.toLowerCase());
+          return exists ? {} : { scorekeepers: [...s.scorekeepers, v].sort((a, b) => a.localeCompare(b)) };
+        }),
+      removeScorekeeper: (name) =>
+        set((s) => ({ scorekeepers: s.scorekeepers.filter((r) => r !== name) })),
+
 
       setReceptionSlot: (rotation, role, pos) =>
         set((s) => {

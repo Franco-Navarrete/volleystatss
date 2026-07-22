@@ -13,6 +13,9 @@ type CloudData = {
   matches?: Match[];
   leagues?: League[];
   customReceptionFormations?: CustomReceptionFormations;
+  matchCategories?: string[];
+  referees?: string[];
+  scorekeepers?: string[];
 };
 
 
@@ -68,6 +71,17 @@ async function saveToCloud(userId: string) {
       : team;
   const teams = mergeById(s.teams.map(cleanTeamLeague), cloud?.teams).map(cleanTeamLeague);
 
+  const dedupCI = (arr: string[]) => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const v of arr) {
+      const k = v.trim().toLowerCase();
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      out.push(v.trim());
+    }
+    return out;
+  };
   const data = {
     teams,
     matches: mergeById(s.matches, cloud?.matches),
@@ -76,6 +90,9 @@ async function saveToCloud(userId: string) {
       ...(cloud?.customReceptionFormations ?? {}),
       ...s.customReceptionFormations,
     },
+    matchCategories: dedupCI([...(s.matchCategories ?? []), ...(cloud?.matchCategories ?? [])]),
+    referees: dedupCI([...(s.referees ?? []), ...(cloud?.referees ?? [])]).sort((a, b) => a.localeCompare(b)),
+    scorekeepers: dedupCI([...(s.scorekeepers ?? []), ...(cloud?.scorekeepers ?? [])]).sort((a, b) => a.localeCompare(b)),
   };
   const updatedAt = new Date().toISOString();
   const { error } = await supabase.from("app_state").upsert({
@@ -143,6 +160,9 @@ export async function startCloudSync(userId: string, email: string | null) {
       matches: cloud.matches ?? [],
       leagues: cloud.leagues ?? [],
       customReceptionFormations: cloud.customReceptionFormations ?? {},
+      ...(cloud.matchCategories ? { matchCategories: cloud.matchCategories } : {}),
+      ...(cloud.referees ? { referees: cloud.referees } : {}),
+      ...(cloud.scorekeepers ? { scorekeepers: cloud.scorekeepers } : {}),
     });
     setLocalTs(cloudTs);
   } else if (!cloud && hasLocal) {
@@ -231,6 +251,9 @@ export async function forceReloadFromCloud(userId: string): Promise<{
     matches,
     leagues,
     customReceptionFormations: cloud.customReceptionFormations ?? {},
+    ...(cloud.matchCategories ? { matchCategories: cloud.matchCategories } : {}),
+    ...(cloud.referees ? { referees: cloud.referees } : {}),
+    ...(cloud.scorekeepers ? { scorekeepers: cloud.scorekeepers } : {}),
   });
 
   const cloudTs = row?.updated_at ? Date.parse(row.updated_at) : Date.now();
