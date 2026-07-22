@@ -726,17 +726,18 @@ function CreateUserDialog({
             </p>
           </div>
           <div>
-            <Label className="mb-1.5 block">Rol</Label>
+            <Label className="mb-1.5 block">Roles</Label>
             <RoleSelector
-              value={isAdmin ? "admin" : extraRole}
-              onChange={(v) => {
-                if (v === "admin") {
-                  setIsAdmin(true);
-                  setExtraRole(null);
-                } else {
-                  setIsAdmin(false);
-                  setExtraRole(v);
-                }
+              isAdmin={isAdmin}
+              extraRoles={extraRoles}
+              onToggleAdmin={setIsAdmin}
+              onToggleExtra={(role, on) => {
+                setExtraRoles((prev) => {
+                  const next = new Set(prev);
+                  if (on) next.add(role);
+                  else next.delete(role);
+                  return next;
+                });
               }}
             />
           </div>
