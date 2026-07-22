@@ -22,6 +22,7 @@ import { ServeHeatmapPanel } from "@/components/serve/ServeHeatmapPanel";
 import { AttackTypesPanel } from "@/components/AttackTypesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { CoachLiveDashboard } from "@/components/live/CoachLiveDashboard";
 import { toast } from "sonner";
 
@@ -46,7 +47,19 @@ function StatsPage() {
   const leagues = useVolley((s) => s.leagues);
   const statsMode = useMemo(() => getMatchStatsMode(match, teams, leagues), [match, teams, leagues]);
   const { hasAccess: coachOverride } = useCoachAccess();
+  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isCoach = statsMode === "entrenador" || coachOverride;
+
+  if (!checkingPlanillero && isPlanilleroOnly) {
+    return (
+      <AppShell>
+        <div className="text-center py-20 space-y-4">
+          <p className="text-muted-foreground">Las estadísticas completas no están disponibles para tu rol.</p>
+          <Button asChild><Link to="/matches">Volver a partidos</Link></Button>
+        </div>
+      </AppShell>
+    );
+  }
 
   const teamA = useMemo(() => teams.find((t) => t.id === match?.teamAId), [teams, match]);
   const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);

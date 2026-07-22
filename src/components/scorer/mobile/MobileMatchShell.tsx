@@ -52,6 +52,7 @@ interface Props {
   onOpenFormation: () => void;
   onOpenLineup: () => void;
   onOpenLiveStats: () => void;
+  hideStats?: boolean;
   onOpenFormat: () => void;
   onOpenScore: () => void;
   onOpenRotate: () => void;
@@ -95,6 +96,7 @@ export function MobileMatchShell(p: Props) {
     onOpenFormation,
     onOpenLineup,
     onOpenLiveStats,
+    hideStats = false,
     onOpenFormat,
     onOpenScore,
     onOpenRotate,
@@ -306,7 +308,7 @@ export function MobileMatchShell(p: Props) {
         </button>
 
         {/* Chip flotante "última acción" (auto-hide) */}
-        {rallyCtx.lastActionLabel && chipVisible && (
+        {rallyCtx.lastActionLabel && chipVisible && !hideStats && (
           <button
             type="button"
             onClick={(e) => {
@@ -359,7 +361,7 @@ export function MobileMatchShell(p: Props) {
           navVisible ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="grid grid-cols-4 gap-0.5 h-14">
+        <div className={`grid gap-0.5 h-14 ${hideStats ? "grid-cols-3" : "grid-cols-4"}`}>
           <NavBtn
             icon={<Target className="size-5" />}
             label="Armado"
@@ -372,11 +374,13 @@ export function MobileMatchShell(p: Props) {
             label="Cancha"
             onClick={onOpenFormation}
           />
-          <NavBtn
-            icon={<ChartBarBig className="size-5" />}
-            label="Stats"
-            onClick={onOpenLiveStats}
-          />
+          {!hideStats && (
+            <NavBtn
+              icon={<ChartBarBig className="size-5" />}
+              label="Stats"
+              onClick={onOpenLiveStats}
+            />
+          )}
           <NavBtn
             icon={<MoreVertical className="size-5" />}
             label="Menú"
@@ -502,20 +506,22 @@ export function MobileMatchShell(p: Props) {
                 }}
                 disabled={match.status === "finished"}
               />
-              <MenuBtn
-                icon={<ChartBarBig className="size-4" />}
-                label="Estadísticas completas"
-                asChild
-              >
-                <Link
-                  to="/matches/$id/stats"
-                  params={{ id: match.id }}
-                  onClick={() => setMoreOpen(false)}
-                  className="w-full h-11 rounded-md border border-border/60 hover:bg-secondary flex items-center gap-2 px-3 text-sm"
+              {!hideStats && (
+                <MenuBtn
+                  icon={<ChartBarBig className="size-4" />}
+                  label="Estadísticas completas"
+                  asChild
                 >
-                  <ChartBarBig className="size-4" /> Estadísticas completas
-                </Link>
-              </MenuBtn>
+                  <Link
+                    to="/matches/$id/stats"
+                    params={{ id: match.id }}
+                    onClick={() => setMoreOpen(false)}
+                    className="w-full h-11 rounded-md border border-border/60 hover:bg-secondary flex items-center gap-2 px-3 text-sm"
+                  >
+                    <ChartBarBig className="size-4" /> Estadísticas completas
+                  </Link>
+                </MenuBtn>
+              )}
               <MenuBtn
                 icon={<Flag className="size-4" />}
                 label="Finalizar partido"

@@ -38,6 +38,7 @@ import {
   settingZoneToAttackZone,
 } from "@/components/scorer/IntegratedRallyDialog";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
@@ -246,6 +247,7 @@ function LiveMatch() {
 
   // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
+  const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
@@ -581,6 +583,7 @@ function LiveMatch() {
           onOpenFormation={() => setShowFormationDialog(true)}
           onOpenLineup={() => setShowLineupEditor(true)}
           onOpenLiveStats={() => setShowLiveStats(true)}
+          hideStats={isPlanilleroOnly}
           onOpenFormat={() => setShowFormatDialog(true)}
           onOpenScore={() => setShowScoreDialog(true)}
           onOpenRotate={() => setShowRotateDialog(true)}
@@ -829,9 +832,11 @@ function LiveMatch() {
               <Users className="size-4" /> Cancha 5-1
             </Button>
           )}
-          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
-            <ChartBarBig className="size-4" /> Stats vivo
-          </Button>
+          {!isPlanilleroOnly && (
+            <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
+              <ChartBarBig className="size-4" /> Stats vivo
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -846,11 +851,13 @@ function LiveMatch() {
                   <Users className="size-4" /> Formación
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem asChild>
-                <Link to="/matches/$id/stats" params={{ id: match.id }}>
-                  <ChartBarBig className="size-4" /> Estadísticas completas
-                </Link>
-              </DropdownMenuItem>
+              {!isPlanilleroOnly && (
+                <DropdownMenuItem asChild>
+                  <Link to="/matches/$id/stats" params={{ id: match.id }}>
+                    <ChartBarBig className="size-4" /> Estadísticas completas
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
                 <Hourglass className="size-4" /> Formato del partido
               </DropdownMenuItem>
