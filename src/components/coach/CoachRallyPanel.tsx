@@ -81,6 +81,7 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
               onOrigin={setOrigin}
               onTarget={setTarget}
               onRating={setRating}
+              onAttackResult={setAttackResult}
             />
           ) : null}
         </section>
