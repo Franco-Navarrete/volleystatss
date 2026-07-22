@@ -13,6 +13,14 @@ import {
 import { useCoachMode } from "@/lib/coach-mode-store";
 import { SET_DISTRIBUTION_TO_ZONE, SET_DISTRIBUTION_LABEL } from "@/lib/coach/effective-lineup";
 
+const ATTACK_RESULTS: { kind: AttackResultKind; label: string; cls: string }[] = [
+  { kind: "point", label: "Punto", cls: "border-emerald-500/60 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+  { kind: "continue", label: "Continúa el rally", cls: "border-amber-500/60 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  { kind: "blocked", label: "Bloqueo rival", cls: "border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400" },
+  { kind: "error", label: "Error de ataque", cls: "border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400" },
+  { kind: "unforced", label: "Error no forzado", cls: "border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400" },
+];
+
 interface Props {
   match: Match;
   teamA: Team;
