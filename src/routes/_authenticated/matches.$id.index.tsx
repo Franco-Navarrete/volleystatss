@@ -2021,12 +2021,15 @@ function FormationSide({
         const isLibero = designated.length > 0 ? designated.includes(p.id) : p.position === "libero";
         const isReceptionTarget = needsReception && side === receivingSide;
         const isReceiverHighlight = isReceptionTarget && receiverIds.has(p.id);
+        const bpEligible = !!blockPickInfo && side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(p.id);
+        const bpPicked = !!blockPickInfo && blockPickInfo.picks.has(p.id);
+        const bpDim = !!blockPickInfo && !bpEligible;
         const dx = projectX(slot.x, slot.y);
         const dy = projectY(slot.x, slot.y);
         return (
           <div
             key={slot.role}
-            className="absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square"
+            className={`absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
             <CourtPlayerBadge
@@ -2039,7 +2042,7 @@ function FormationSide({
               active={!!activePlayerId && activePlayerId === p.id}
               dimmed={!onCourtActive}
               onClick={() => onPlayerClick(side, p.id)}
-              className="w-full h-full"
+              className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full cursor-pointer" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
             />
           </div>
         );
