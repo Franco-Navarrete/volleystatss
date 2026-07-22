@@ -22,6 +22,7 @@ import { ServeHeatmapPanel } from "@/components/serve/ServeHeatmapPanel";
 import { AttackTypesPanel } from "@/components/AttackTypesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { CoachLiveDashboard } from "@/components/live/CoachLiveDashboard";
 import { toast } from "sonner";
 
