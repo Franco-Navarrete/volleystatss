@@ -250,6 +250,7 @@ export function aggregateAttacks(
     if (filters.rotation !== undefined && filters.rotation !== "all" && a.rotation !== filters.rotation) continue;
     if (filters.setterZone !== undefined && filters.setterZone !== "all" && a.setterZone !== filters.setterZone) continue;
     if (filters.playerId !== undefined && filters.playerId !== "all" && a.playerId !== filters.playerId) continue;
+    if (filters.phase !== undefined && filters.phase !== "all" && a.phase !== filters.phase) continue;
 
 
     if (a.origin) {
