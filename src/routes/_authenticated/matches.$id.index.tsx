@@ -401,6 +401,16 @@ function LiveMatch() {
 
   const onPlayerClick = (side: "A" | "B", playerId: string) => {
     if (!isLive) return;
+    // Coach Mode — Modo bloqueo: la cancha es el selector. Interceptar clicks
+    // sobre delanteros elegibles del equipo bloqueador.
+    {
+      const bp = useCoachRally.getState().blockPick;
+      if (bp && side === bp.blockingSide && bp.eligible.includes(playerId)) {
+        useCoachRally.getState().toggleBlockerPick(playerId);
+        return;
+      }
+      if (bp) return; // Ignorar clicks en otros jugadores durante el modo bloqueo.
+    }
     if (needsLineup) {
       setShowLineupEditor(true);
       return;
