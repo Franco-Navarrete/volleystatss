@@ -47,25 +47,29 @@ import {
 } from "@/lib/admin.functions";
 import { adminListPublicMatches } from "@/lib/public-match.functions";
 
-const EXTRA_ROLE_OPTIONS: { value: ExtraRole | null; label: string; hint: string }[] = [
+type RoleValue = "admin" | ExtraRole | null;
+
+const ROLE_OPTIONS: { value: RoleValue; label: string; hint: string }[] = [
   { value: null, label: "Sin rol", hint: "Solo permisos por liga" },
   { value: "entrenador", label: "Entrenador", hint: "Acceso a estadísticas avanzadas" },
   { value: "planillero", label: "Planillero", hint: "Carga rápida modo liga" },
+  { value: "admin", label: "Admin", hint: "Acceso total al sistema" },
 ];
 
-function ExtraRoleSelector({
+function RoleSelector({
   value,
   onChange,
   disabled,
 }: {
-  value: ExtraRole | null;
-  onChange: (v: ExtraRole | null) => void;
+  value: RoleValue;
+  onChange: (v: RoleValue) => void;
   disabled?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-1.5">
-      {EXTRA_ROLE_OPTIONS.map((opt) => {
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+      {ROLE_OPTIONS.map((opt) => {
         const active = value === opt.value;
+        const isAdminOpt = opt.value === "admin";
         return (
           <button
             key={opt.label}
@@ -73,7 +77,11 @@ function ExtraRoleSelector({
             disabled={disabled}
             onClick={() => onChange(opt.value)}
             className={`text-left rounded-md border px-2.5 py-2 transition-colors ${
-              active ? "border-primary bg-primary/10" : "border-border/60 bg-card hover:bg-secondary/50"
+              active
+                ? isAdminOpt
+                  ? "border-primary bg-primary/20"
+                  : "border-primary bg-primary/10"
+                : "border-border/60 bg-card hover:bg-secondary/50"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <div className="text-xs font-bold">{opt.label}</div>
@@ -84,6 +92,7 @@ function ExtraRoleSelector({
     </div>
   );
 }
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Administración · vstats" }] }),
