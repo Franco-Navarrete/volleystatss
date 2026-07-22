@@ -831,9 +831,11 @@ function LiveMatch() {
               <Users className="size-4" /> Cancha 5-1
             </Button>
           )}
-          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
-            <ChartBarBig className="size-4" /> Stats vivo
-          </Button>
+          {!isPlanilleroOnly && (
+            <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" onClick={() => setShowLiveStats(true)}>
+              <ChartBarBig className="size-4" /> Stats vivo
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
