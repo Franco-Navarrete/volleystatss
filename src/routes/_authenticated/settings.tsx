@@ -173,6 +173,10 @@ function SettingsPage() {
 
         {coachAccess && <CoachModeSettings />}
 
+        <OfficialListsSection />
+
+
+
 
 
 
