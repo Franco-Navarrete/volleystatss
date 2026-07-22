@@ -660,10 +660,6 @@ export const FLOW_STATES: RallyState[] = [
   "saque", "recepcion", "armado", "ataque", "bloqueo", "defensa", "contraataque", "fin",
 ];
 
-// DEV: expose store for browser debugging.
-if (typeof window !== "undefined") {
-  (window as unknown as { __coach?: unknown }).__coach = useCoachRally;
-}
 
 
 
