@@ -7,7 +7,7 @@ import type { Database } from "@/integrations/supabase/types";
 const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const passwordSchema = z.string().min(8).max(72);
 const uuidSchema = z.string().uuid();
-const extraRoleSchema = z.enum(["entrenador", "planillero"]).nullable();
+
 export type ExtraRole = "entrenador" | "planillero";
 
 type AuthCtx = { supabase: SupabaseClient<Database>; userId: string };
@@ -39,10 +39,12 @@ export const adminListUsers = createServerFn({ method: "GET" })
     if (profilesRes.error) throw profilesRes.error;
 
     const admins = new Set((rolesRes.data ?? []).filter((r) => r.role === "admin").map((r) => r.user_id));
-    const extraRoleByUser = new Map<string, ExtraRole>();
+    const extraRolesByUser = new Map<string, ExtraRole[]>();
     for (const r of rolesRes.data ?? []) {
       if (r.role === "entrenador" || r.role === "planillero") {
-        extraRoleByUser.set(r.user_id, r.role as ExtraRole);
+        const arr = extraRolesByUser.get(r.user_id) ?? [];
+        arr.push(r.role as ExtraRole);
+        extraRolesByUser.set(r.user_id, arr);
       }
     }
     const permsByUser = new Map((permsRes.data ?? []).map((p) => [p.user_id, p]));
@@ -58,7 +60,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
       email: p.email,
       createdAt: p.created_at,
       isAdmin: admins.has(p.id),
-      extraRole: extraRoleByUser.get(p.id) ?? null,
+      extraRoles: extraRolesByUser.get(p.id) ?? [],
       canCreateMatches: permsByUser.get(p.id)?.can_create_matches ?? false,
       canManageTeams: permsByUser.get(p.id)?.can_manage_teams ?? false,
       leagueIds: accessByUser.get(p.id) ?? [],
@@ -74,7 +76,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     password: string;
     leagueIds: string[];
     canCreateMatches: boolean;
-    extraRole?: ExtraRole | null;
+    extraRoles?: ExtraRole[];
   }) =>
     z
       .object({
@@ -82,7 +84,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         password: passwordSchema,
         leagueIds: z.array(uuidSchema).max(200),
         canCreateMatches: z.boolean(),
-        extraRole: extraRoleSchema.optional().default(null),
+        extraRoles: z.array(z.enum(["entrenador", "planillero"])).max(2).optional().default([]),
       })
       .parse(input),
   )
@@ -160,11 +162,12 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       if (accessErr) throw accessErr;
     }
 
-    if (data.extraRole) {
+    const uniqueExtra = Array.from(new Set(data.extraRoles ?? []));
+    if (uniqueExtra.length > 0) {
       const { error: roleErr } = await supabaseAdmin
         .from("user_roles")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert({ user_id: newUserId, role: data.extraRole as any });
+        .insert(uniqueExtra.map((role) => ({ user_id: newUserId, role: role as any })));
       if (roleErr) throw roleErr;
     }
 
@@ -175,8 +178,13 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
 export const adminSetExtraRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { userId: string; role: ExtraRole | null }) =>
-    z.object({ userId: uuidSchema, role: extraRoleSchema }).parse(input),
+  .inputValidator((input: { userId: string; roles: ExtraRole[] }) =>
+    z
+      .object({
+        userId: uuidSchema,
+        roles: z.array(z.enum(["entrenador", "planillero"])).max(2),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -190,11 +198,12 @@ export const adminSetExtraRole = createServerFn({ method: "POST" })
       .in("role", ["entrenador", "planillero"]);
     if (delErr) throw delErr;
 
-    if (data.role) {
+    const unique = Array.from(new Set(data.roles));
+    if (unique.length > 0) {
       const { error: insErr } = await supabaseAdmin
         .from("user_roles")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert({ user_id: data.userId, role: data.role as any });
+        .insert(unique.map((role) => ({ user_id: data.userId, role: role as any })));
       if (insErr) throw insErr;
     }
     return { ok: true };

@@ -47,35 +47,40 @@ import {
 } from "@/lib/admin.functions";
 import { adminListPublicMatches } from "@/lib/public-match.functions";
 
-type RoleValue = "admin" | ExtraRole | null;
-
-const ROLE_OPTIONS: { value: RoleValue; label: string; hint: string }[] = [
-  { value: null, label: "Sin rol", hint: "Solo permisos por liga" },
+const ROLE_OPTIONS: { value: "admin" | ExtraRole; label: string; hint: string }[] = [
   { value: "entrenador", label: "Entrenador", hint: "Acceso a estadísticas avanzadas" },
   { value: "planillero", label: "Planillero", hint: "Carga rápida modo liga" },
   { value: "admin", label: "Admin", hint: "Acceso total al sistema" },
 ];
 
 function RoleSelector({
-  value,
-  onChange,
+  isAdmin,
+  extraRoles,
+  onToggleAdmin,
+  onToggleExtra,
   disabled,
 }: {
-  value: RoleValue;
-  onChange: (v: RoleValue) => void;
+  isAdmin: boolean;
+  extraRoles: Set<ExtraRole>;
+  onToggleAdmin: (v: boolean) => void;
+  onToggleExtra: (role: ExtraRole, on: boolean) => void;
   disabled?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
       {ROLE_OPTIONS.map((opt) => {
-        const active = value === opt.value;
+        const active =
+          opt.value === "admin" ? isAdmin : extraRoles.has(opt.value as ExtraRole);
         const isAdminOpt = opt.value === "admin";
         return (
           <button
-            key={opt.label}
+            key={opt.value}
             type="button"
             disabled={disabled}
-            onClick={() => onChange(opt.value)}
+            onClick={() => {
+              if (isAdminOpt) onToggleAdmin(!active);
+              else onToggleExtra(opt.value as ExtraRole, !active);
+            }}
             className={`text-left rounded-md border px-2.5 py-2 transition-colors ${
               active
                 ? isAdminOpt
@@ -84,14 +89,25 @@ function RoleSelector({
                 : "border-border/60 bg-card hover:bg-secondary/50"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <div className="text-xs font-bold">{opt.label}</div>
-            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{opt.hint}</div>
+            <div className="text-xs font-bold flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className={`inline-block size-3 rounded-sm border ${
+                  active ? "bg-primary border-primary" : "border-border"
+                }`}
+              />
+              {opt.label}
+            </div>
+            <div className="text-[10px] text-muted-foreground leading-tight mt-1">
+              {opt.hint}
+            </div>
           </button>
         );
       })}
     </div>
   );
 }
+
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -226,27 +242,34 @@ function UserRow({
   const [selected, setSelected] = useState<Set<string>>(new Set(user.leagueIds));
   const [canCreate, setCanCreate] = useState(user.canCreateMatches);
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
-  const [extraRole, setExtraRoleState] = useState<ExtraRole | null>(user.extraRole);
+  const [extraRoles, setExtraRolesState] = useState<Set<ExtraRole>>(
+    new Set(user.extraRoles),
+  );
   const [open, setOpen] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
 
+  const extraRolesEqual = (a: Set<ExtraRole>, b: ExtraRole[]) => {
+    if (a.size !== b.length) return false;
+    for (const r of b) if (!a.has(r)) return false;
+    return true;
+  };
+
   const dirty = useMemo(() => {
     if (isAdmin !== user.isAdmin) return true;
-    if (extraRole !== user.extraRole) return true;
+    if (!extraRolesEqual(extraRoles, user.extraRoles)) return true;
     const orig = new Set(user.leagueIds);
     if (selected.size !== orig.size) return true;
     for (const id of selected) if (!orig.has(id)) return true;
     return canCreate !== user.canCreateMatches;
-  }, [selected, canCreate, isAdmin, extraRole, user]);
+  }, [selected, canCreate, isAdmin, extraRoles, user]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      // Role change first, since it changes downstream meaning
       if (isAdmin !== user.isAdmin) {
         await setRole({ data: { userId: user.id, isAdmin } });
       }
-      if (extraRole !== user.extraRole) {
-        await setExtraRole({ data: { userId: user.id, role: extraRole } });
+      if (!extraRolesEqual(extraRoles, user.extraRoles)) {
+        await setExtraRole({ data: { userId: user.id, roles: Array.from(extraRoles) } });
       }
       if (!isAdmin) {
         await Promise.all([
@@ -287,14 +310,16 @@ function UserRow({
         onClick={() => setOpen((v) => !v)}
       >
         <div className="min-w-0">
-          <div className="font-medium text-sm truncate flex items-center gap-2">
+          <div className="font-medium text-sm truncate flex items-center gap-2 flex-wrap">
             {user.email}
             {isAdmin && (
               <Badge variant="secondary" className="text-[10px]">Admin</Badge>
             )}
-            {!isAdmin && extraRole && (
-              <Badge variant="outline" className="text-[10px] capitalize">{extraRole}</Badge>
-            )}
+            {Array.from(extraRoles).map((r) => (
+              <Badge key={r} variant="outline" className="text-[10px] capitalize">
+                {r}
+              </Badge>
+            ))}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
             {isAdmin
@@ -305,26 +330,26 @@ function UserRow({
       </button>
       {open && (
         <div className="border-t border-border/60 px-4 py-4 space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <Label className="text-sm">Rol del usuario</Label>
-              <p className="text-xs text-muted-foreground">
-                Elegí un rol. El rol Admin da acceso total.
-              </p>
-            </div>
+          <div>
+            <Label className="text-sm">Roles del usuario</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Podés combinar varios roles. Admin da acceso total.
+            </p>
+            <RoleSelector
+              isAdmin={isAdmin}
+              extraRoles={extraRoles}
+              onToggleAdmin={setIsAdmin}
+              onToggleExtra={(role, on) => {
+                setExtraRolesState((prev) => {
+                  const next = new Set(prev);
+                  if (on) next.add(role);
+                  else next.delete(role);
+                  return next;
+                });
+              }}
+            />
           </div>
-          <RoleSelector
-            value={isAdmin ? "admin" : extraRole}
-            onChange={(v) => {
-              if (v === "admin") {
-                setIsAdmin(true);
-                setExtraRoleState(null);
-              } else {
-                setIsAdmin(false);
-                setExtraRoleState(v);
-              }
-            }}
-          />
+
 
           {isAdmin ? (
             <p className="text-xs text-muted-foreground">
@@ -620,7 +645,7 @@ function CreateUserDialog({
   const [password, setPassword] = useState("");
   const [canCreate, setCanCreate] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [extraRole, setExtraRole] = useState<ExtraRole | null>(null);
+  const [extraRoles, setExtraRoles] = useState<Set<ExtraRole>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const reset = () => {
@@ -628,7 +653,7 @@ function CreateUserDialog({
     setPassword("");
     setCanCreate(false);
     setIsAdmin(false);
-    setExtraRole(null);
+    setExtraRoles(new Set());
     setSelected(new Set());
   };
 
@@ -640,7 +665,7 @@ function CreateUserDialog({
           password,
           canCreateMatches: isAdmin ? false : canCreate,
           leagueIds: isAdmin ? [] : Array.from(selected),
-          extraRole: isAdmin ? null : extraRole,
+          extraRoles: Array.from(extraRoles),
         },
       });
       if (isAdmin && res?.id) {
@@ -701,17 +726,18 @@ function CreateUserDialog({
             </p>
           </div>
           <div>
-            <Label className="mb-1.5 block">Rol</Label>
+            <Label className="mb-1.5 block">Roles</Label>
             <RoleSelector
-              value={isAdmin ? "admin" : extraRole}
-              onChange={(v) => {
-                if (v === "admin") {
-                  setIsAdmin(true);
-                  setExtraRole(null);
-                } else {
-                  setIsAdmin(false);
-                  setExtraRole(v);
-                }
+              isAdmin={isAdmin}
+              extraRoles={extraRoles}
+              onToggleAdmin={setIsAdmin}
+              onToggleExtra={(role, on) => {
+                setExtraRoles((prev) => {
+                  const next = new Set(prev);
+                  if (on) next.add(role);
+                  else next.delete(role);
+                  return next;
+                });
               }}
             />
           </div>
