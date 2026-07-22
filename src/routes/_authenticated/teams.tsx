@@ -89,7 +89,7 @@ type SortKey =
   | "league"
   | "created"
   | "activity";
-type ViewMode = "grid" | "list";
+type ViewMode = "grid" | "list" | "clubs";
 type GenderChip = "all" | "F" | "M";
 type StatusChip = "all" | "active" | "no_league";
 
