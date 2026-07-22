@@ -308,7 +308,7 @@ export function MobileMatchShell(p: Props) {
         </button>
 
         {/* Chip flotante "última acción" (auto-hide) */}
-        {rallyCtx.lastActionLabel && chipVisible && (
+        {rallyCtx.lastActionLabel && chipVisible && !hideStats && (
           <button
             type="button"
             onClick={(e) => {
