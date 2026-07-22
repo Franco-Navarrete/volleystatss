@@ -583,6 +583,7 @@ function LiveMatch() {
           onOpenFormation={() => setShowFormationDialog(true)}
           onOpenLineup={() => setShowLineupEditor(true)}
           onOpenLiveStats={() => setShowLiveStats(true)}
+          hideStats={isPlanilleroOnly}
           onOpenFormat={() => setShowFormatDialog(true)}
           onOpenScore={() => setShowScoreDialog(true)}
           onOpenRotate={() => setShowRotateDialog(true)}
