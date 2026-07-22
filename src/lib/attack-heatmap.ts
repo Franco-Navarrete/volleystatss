@@ -139,7 +139,9 @@ export function buildEnrichedAttacks(
             result: pe.type === "attack_error" ? "negative" : "positive",
             setNumber: pe.setNumber,
             rotation: (pe.playerSide === "A" ? rotA : rotB) + 1,
+            setterZone: setterLookup ? setterLookup(pe.playerSide, pe.timestamp, pe.setNumber) : null,
             timestamp: pe.timestamp,
+
           });
         }
       }
