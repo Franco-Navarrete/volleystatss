@@ -365,6 +365,8 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
         timestamp: Date.now(),
       };
       clearBlockPickTimer();
+      // eslint-disable-next-line no-console
+      console.log("[block-pick] activado", { blockingSide, eligible, raw });
       set({
         blockPick: { attackerSide: cur.side, blockingSide, eligible, picks: [], step },
       });
