@@ -439,16 +439,22 @@ function TeamsPage() {
   const openClub = openClubKey ? clubGroups.find((c) => c.key === openClubKey) ?? null : null;
   const openClubCategories = useMemo(() => {
     if (!openClub) return [] as { key: string; label: string; count: number }[];
-    const m = new Map<string, { key: string; label: string; count: number }>();
+    const counts = new Map<string, number>();
     for (const t of openClub.teams) {
       const key = t.category ?? "__none__";
-      const label = t.category ? TEAM_CATEGORY_LABEL[t.category] : "Sin categoría";
-      const cur = m.get(key);
-      if (cur) cur.count++;
-      else m.set(key, { key, label, count: 1 });
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    return Array.from(m.values());
+    const all: { key: string; label: string; count: number }[] = TEAM_CATEGORIES.map((c) => ({
+      key: c,
+      label: TEAM_CATEGORY_LABEL[c],
+      count: counts.get(c) ?? 0,
+    }));
+    if ((counts.get("__none__") ?? 0) > 0) {
+      all.push({ key: "__none__", label: "Sin categoría", count: counts.get("__none__") ?? 0 });
+    }
+    return all;
   }, [openClub]);
+
   const openClubCategoryTeams = useMemo(() => {
     if (!openClub || !openClubCategory) return [] as CloudTeam[];
     return openClub.teams.filter(
@@ -1261,7 +1267,49 @@ function TeamsPage() {
                   })()}
                 </div>
               ))}
-              {openClubCategoryTeams.length === 0 && null}
+              {openClubCategoryTeams.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border/60 bg-card/30 px-4 py-6 text-center space-y-3">
+                  <div className="text-sm text-muted-foreground">
+                    No hay equipos en esta categoría.
+                  </div>
+                  {canCreate && openClub && openClubCategory && openClubCategory !== "__none__" && (
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        if (!openClub || !openClubCategory) return;
+                        const cat = openClubCategory as TeamCategory;
+                        const label = TEAM_CATEGORY_LABEL[cat];
+                        const baseColor = openClub.teams[0]?.color ?? "#3b82f6";
+                        const secondary = openClub.teams[0]?.secondaryColor ?? null;
+                        const gender = openClub.teams[0]?.gender ?? null;
+                        const leagueId = openClub.teams[0]?.leagueId ?? null;
+                        try {
+                          await mut.createTeam.mutateAsync({
+                            name: `${openClub.name} ${label}`.slice(0, 80),
+                            shortName: label.slice(0, 8),
+                            color: baseColor,
+                            secondaryColor: secondary,
+                            category: cat,
+                            gender,
+                            leagueId,
+                          });
+                        } catch {
+                          /* handled globally */
+                        }
+                      }}
+                      disabled={mut.createTeam.isPending}
+                    >
+                      {mut.createTeam.isPending ? (
+                        <Loader2 className="size-4 animate-spin mr-1" />
+                      ) : (
+                        <UserPlus className="size-4 mr-1" />
+                      )}
+                      Crear equipo {TEAM_CATEGORY_LABEL[openClubCategory as TeamCategory]}
+                    </Button>
+                  )}
+                </div>
+              )}
+
             </div>
           )}
         </DialogContent>
