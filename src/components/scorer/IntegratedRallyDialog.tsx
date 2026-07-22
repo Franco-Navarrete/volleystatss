@@ -68,7 +68,7 @@ export type RallyAction =
   | "unforced_error";
 
 type AttackResult = "point" | "continue" | "block" | "attack_error" | "unforced";
-type Step = "reception" | "defense" | "zone" | "direction" | "action" | "rating";
+type Step = "reception" | "defense" | "zone" | "direction" | "action";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "reception", label: "Recepción" },
@@ -92,7 +92,6 @@ const CURRENT_ACTION_TEXT: Record<Step, string> = {
   zone: "Esperando zona del armado",
   direction: "Esperando zona destino",
   action: "Esperando resultado del ataque",
-  rating: "Esperando resultado",
 };
 
 interface DefenseOption {
@@ -189,7 +188,7 @@ function resolveAction(kind: AttackResult, isCounter: boolean): RallyAction {
 }
 
 /**
- * Panel único del rally. Recorre Recepción → Armado → Zona → Ataque → Resultado
+ * Panel único del rally. Recorre Recepción/Defensa → Armado → Zona destino → Resultado del ataque.
  * sin cerrar el diálogo entre pasos: cambia el contenido con fade y ofrece
  * barra de progreso, resumen en vivo, teclas rápidas y "paso anterior".
  */
@@ -314,8 +313,7 @@ export function IntegratedRallyDialog({
   }, [finalize, isCounterFlow]);
 
   const goBack = useCallback(() => {
-    if (step === "rating") setStep("action");
-    else if (step === "action") setStep("direction");
+    if (step === "action") setStep("direction");
     else if (step === "direction") setStep("zone");
     else if (step === "zone" && defenseStep) setStep("defense");
     else if (step === "zone" && receptionStep) setStep("reception");
@@ -345,9 +343,6 @@ export function IntegratedRallyDialog({
       } else if (step === "action") {
         const opt = ATTACK_RESULT_OPTIONS.find((o) => o.hotkey === ev.key);
         if (opt) { ev.preventDefault(); pickActionKind(opt.key); }
-      } else if (step === "rating") {
-        if (ev.key === "Enter") { ev.preventDefault(); pickActionKind("point"); }
-        if (ev.key === " ") { ev.preventDefault(); pickActionKind("continue"); }
       }
     };
     window.addEventListener("keydown", handler);
@@ -552,33 +547,6 @@ export function IntegratedRallyDialog({
               </div>
             )}
 
-            {step === "rating" && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => pickActionKind("point")}
-                    className="relative min-h-[80px] rounded-lg bg-success text-success-foreground font-black text-lg active:scale-95 transition"
-                  >
-                    🟢 Punto
-                    <span className="block text-[10px] font-normal opacity-90 mt-1">Cerró el rally</span>
-                    <span className="absolute top-1 right-2 text-[9px] font-bold opacity-70">Enter</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => pickActionKind("continue")}
-                    className="relative min-h-[80px] rounded-lg bg-secondary text-secondary-foreground font-black text-lg active:scale-95 transition"
-                  >
-                    ⚪ Continúa
-                    <span className="block text-[10px] font-normal opacity-90 mt-1">Rally continuó</span>
-                    <span className="absolute top-1 right-2 text-[9px] font-bold opacity-70">Espacio</span>
-                  </button>
-                </div>
-                <p className="text-[11px] text-center text-muted-foreground">
-                  Continúa suma al total de ataques pero no cambia el marcador.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Resumen lateral */}
