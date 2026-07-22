@@ -67,7 +67,6 @@ export type RallyAction =
   | "block"
   | "unforced_error";
 
-type ActionKind = "attack" | "counter" | "block" | "attack_error" | "unforced";
 type AttackResult = "point" | "continue" | "block" | "attack_error" | "unforced";
 type Step = "reception" | "defense" | "zone" | "direction" | "action" | "rating";
 
