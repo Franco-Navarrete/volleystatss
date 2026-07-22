@@ -33,6 +33,7 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
   const setOrigin = useCoachRally((s) => s.setOrigin);
   const setTarget = useCoachRally((s) => s.setTarget);
   const setRating = useCoachRally((s) => s.setRating);
+  const setAttackResult = useCoachRally((s) => s.setAttackResult);
   const back = useCoachRally((s) => s.back);
   const cancel = useCoachRally((s) => s.cancel);
   const reset = useCoachRally((s) => s.reset);
