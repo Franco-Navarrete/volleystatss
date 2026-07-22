@@ -37,6 +37,8 @@ export const RATING_MEANING: Record<RallyState, Partial<Record<Rating, string>>>
   fin: {},
 };
 
+export type AttackResultKind = "point" | "continue" | "blocked" | "error" | "unforced";
+
 export interface RallyStep {
   state: Exclude<RallyState, "idle" | "fin">;
   side: "A" | "B";
@@ -46,6 +48,8 @@ export interface RallyStep {
   /** Zona destino de la cancha rival (para saque/ataque/contraataque). */
   target?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   rating?: Rating;
+  /** Marca cómo terminó un ataque cuando el resultado no cabe en el rating. */
+  finishKind?: AttackResultKind;
   timestamp: number;
 }
 
