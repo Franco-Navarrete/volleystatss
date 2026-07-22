@@ -47,6 +47,9 @@ function emptyBucket(): ZoneBucket {
   return { count: 0, positives: 0, neutrals: 0, negatives: 0 };
 }
 
+/** Fase del ataque dentro del rally: K1 (después de recepción) / K2 (después de defensa). */
+export type AttackPhase = "K1" | "K2";
+
 /** Un ataque enriquecido con rotación al momento y metadatos filtrables. */
 export interface EnrichedAttack {
   side: "A" | "B";
@@ -57,8 +60,10 @@ export interface EnrichedAttack {
   setNumber: number;
   rotation: number; // 1..6 (rotación del equipo atacante)
   setterZone: SetterZone | null; // 1..6 (posición de la armadora del equipo atacante)
+  phase: AttackPhase | null;
   timestamp: number;
 }
+
 
 
 /**
