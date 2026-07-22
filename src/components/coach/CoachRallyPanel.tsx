@@ -105,6 +105,7 @@ interface StepViewProps {
   onOrigin: (z: 1 | 2 | 3 | 4 | 5 | 6) => void;
   onTarget: (z: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9) => void;
   onRating: (r: Rating) => void;
+  onAttackResult: (kind: AttackResultKind) => void;
 }
 
 function detectedLabel(state: RallyState): string {
