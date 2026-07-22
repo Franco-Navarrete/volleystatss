@@ -279,6 +279,10 @@ function TeamsPage() {
   const [editTeamShort, setEditTeamShort] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
+  // ============ Club drill-down (view mode: "clubs") ============
+  const [openClubKey, setOpenClubKey] = useState<string | null>(null);
+  const [openClubCategory, setOpenClubCategory] = useState<string | null>(null);
+
   // ============ Browsing controls ============
   const [query, setQuery] = useState("");
   const [filterLeague, setFilterLeague] = useState<string>(() => {
