@@ -76,7 +76,6 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "zone", label: "Armado" },
   { key: "direction", label: "Zona" },
   { key: "action", label: "Ataque" },
-  { key: "rating", label: "Resultado" },
 ];
 
 const ACTION_KIND_LABEL: Record<AttackResult, string> = {

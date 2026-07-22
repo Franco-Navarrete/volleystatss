@@ -403,11 +403,11 @@ export interface AttackAttemptEvent {
 export type DefenseRating = "excellent" | "positive" | "controlled" | "weak" | "error";
 
 export const DEFENSE_RATING_LABEL: Record<DefenseRating, string> = {
-  excellent: "Excelente",
+  excellent: "Doble positivo",
   positive: "Positiva",
-  controlled: "Controlada",
+  controlled: "Neutro",
   weak: "Débil",
-  error: "Error",
+  error: "Doble negativo",
 };
 
 /**
