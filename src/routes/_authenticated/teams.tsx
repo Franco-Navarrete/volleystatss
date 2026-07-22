@@ -1178,11 +1178,7 @@ function TeamsPage() {
                       Abrir
                     </Button>
                   </div>
-                  {t.players.length === 0 ? (
-                    <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-                      Sin jugadoras cargadas.
-                    </div>
-                  ) : (
+                  {t.players.length > 0 && (
                     <ul className="divide-y divide-border/30">
                       {[...t.players]
                         .sort((a, b) => a.number - b.number)
@@ -1209,8 +1205,63 @@ function TeamsPage() {
                         ))}
                     </ul>
                   )}
+                  {canManage(t) && (() => {
+                    const qa = getQuickAdd(t.id);
+                    const canSubmit = !!qa.name.trim() && !!qa.num && !mut.createPlayer.isPending;
+                    const submit = async () => {
+                      if (!canSubmit) return;
+                      try {
+                        await mut.createPlayer.mutateAsync({
+                          teamId: t.id,
+                          name: qa.name.trim(),
+                          number: Number(qa.num),
+                          position: qa.pos || null,
+                        });
+                        resetQuickAdd(t.id);
+                      } catch {
+                        /* handled globally */
+                      }
+                    };
+                    return (
+                      <div className="px-3 py-2 border-t border-border/40 bg-secondary/20 grid grid-cols-[1fr_64px_110px_auto] gap-2 items-center">
+                        <Input
+                          placeholder="Nombre"
+                          value={qa.name}
+                          onChange={(e) => patchQuickAdd(t.id, { name: e.target.value.slice(0, 60) })}
+                          className="h-8 text-sm"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="#"
+                          value={qa.num}
+                          onChange={(e) => patchQuickAdd(t.id, { num: e.target.value })}
+                          className="h-8 text-sm"
+                        />
+                        <select
+                          value={qa.pos}
+                          onChange={(e) => patchQuickAdd(t.id, { pos: e.target.value as PlayerPosition | "" })}
+                          className="bg-background border border-input rounded-md px-2 h-8 text-sm"
+                        >
+                          <option value="">Posición</option>
+                          {PLAYER_POSITIONS.map((pos) => (
+                            <option key={pos} value={pos}>
+                              {PLAYER_POSITION_LABEL[pos]}
+                            </option>
+                          ))}
+                        </select>
+                        <Button size="sm" onClick={submit} disabled={!canSubmit} title="Agregar jugadora">
+                          {mut.createPlayer.isPending ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <UserPlus className="size-4" />
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
+              {openClubCategoryTeams.length === 0 && null}
             </div>
           )}
         </DialogContent>
