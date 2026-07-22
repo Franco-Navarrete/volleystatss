@@ -479,7 +479,27 @@ export interface Match {
   /** Líbero actualmente en cancha (computado por replayMatch). */
   liberoActiveA?: { liberoId: string; replacedId: string } | null;
   liberoActiveB?: { liberoId: string; replacedId: string } | null;
+  /** Información oficial del encuentro. */
+  category?: string;
+  mainRefereeName?: string;
+  secondRefereeName?: string;
+  scorekeeperName?: string;
+  statsAssistantName?: string;
+  venue?: string;
 }
+
+/** Semilla de categorías sugeridas para partidos (editable en Ajustes). */
+export const DEFAULT_MATCH_CATEGORIES: string[] = [
+  "Sub 12",
+  "Sub 14",
+  "Sub 16",
+  "Sub 18",
+  "Sub 21",
+  "Primera",
+  "Maxi",
+  "Mixto",
+  "Libre",
+];
 export function matchGender(match: Match, teamById: Map<string, Team>): TeamGender | null {
   const a = teamById.get(match.teamAId);
   const b = teamById.get(match.teamBId);
