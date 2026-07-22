@@ -47,6 +47,9 @@ function emptyBucket(): ZoneBucket {
   return { count: 0, positives: 0, neutrals: 0, negatives: 0 };
 }
 
+/** Fase del ataque dentro del rally: K1 (después de recepción) / K2 (después de defensa). */
+export type AttackPhase = "K1" | "K2";
+
 /** Un ataque enriquecido con rotación al momento y metadatos filtrables. */
 export interface EnrichedAttack {
   side: "A" | "B";
@@ -57,8 +60,10 @@ export interface EnrichedAttack {
   setNumber: number;
   rotation: number; // 1..6 (rotación del equipo atacante)
   setterZone: SetterZone | null; // 1..6 (posición de la armadora del equipo atacante)
+  phase: AttackPhase | null;
   timestamp: number;
 }
+
 
 
 /**
@@ -82,6 +87,8 @@ export function buildEnrichedAttacks(
   let rotA = 0;
   let rotB = 0;
   let serving: "A" | "B" = initial;
+  /** Última fase de origen dentro del rally para cada equipo: "K1" tras recepción, "K2" tras defensa. */
+  const lastPhase: { A: AttackPhase | null; B: AttackPhase | null } = { A: null, B: null };
 
   const setStateFor = (setNum: number) => {
     if (setNum !== currentSet) {
@@ -89,12 +96,28 @@ export function buildEnrichedAttacks(
       rotA = 0;
       rotB = 0;
       serving = setNum % 2 === 1 ? initial : initial === "A" ? "B" : "A";
+      lastPhase.A = null;
+      lastPhase.B = null;
     }
   };
 
   for (const ev of events) {
     if (!("setNumber" in ev)) continue;
     setStateFor(ev.setNumber);
+
+    if ("kind" in ev && ev.kind === "reception") {
+      lastPhase[ev.side] = "K1";
+      continue;
+    }
+    if ("kind" in ev && ev.kind === "defense") {
+      // El equipo que defiende pasa a atacar en contraataque.
+      const attacker = ev.side === "A" ? "B" : "A";
+      // El defensor recupera balón: su próximo ataque será K2.
+      lastPhase[ev.side] = "K2";
+      // El equipo que estaba atacando pierde la iniciativa de este rally.
+      lastPhase[attacker] = null;
+      continue;
+    }
 
     if ("kind" in ev && ev.kind === "setting") {
       const se = ev as SettingEvent;
@@ -116,16 +139,31 @@ export function buildEnrichedAttacks(
         setNumber: se.setNumber,
         rotation: (se.side === "A" ? rotA : rotB) + 1,
         setterZone: setterLookup ? setterLookup(se.side, se.timestamp, se.setNumber) : null,
+        phase: lastPhase[se.side],
         timestamp: se.timestamp,
-
       });
+    } else if ("kind" in ev && ev.kind === "attackAttempt") {
+      // Los intentos neutros ya cargan la fase explícita vía isCounter.
+      const ae = ev;
+      if (ae.attackZone !== undefined) {
+        out.push({
+          side: ae.side,
+          playerId: ae.playerId,
+          origin: ae.attackZone as OriginZone,
+          direction: (ae.attackDirection ?? null) as AttackDirection | null,
+          result: "neutral",
+          setNumber: ae.setNumber,
+          rotation: (ae.side === "A" ? rotA : rotB) + 1,
+          setterZone: setterLookup ? setterLookup(ae.side, ae.timestamp, ae.setNumber) : null,
+          phase: ae.isCounter ? "K2" : (lastPhase[ae.side] ?? "K1"),
+          timestamp: ae.timestamp,
+        });
+      }
     } else if (!("kind" in ev)) {
       // PointEvent: si no hubo setting-event asociado pero tiene attackZone,
       // registramos el ataque igual (evita perder datos del flujo rápido).
       const pe = ev as PointEvent;
       if (pe.playerSide && (isAttackType(pe.type) || pe.type === "attack_error")) {
-        // Sólo si hay attackZone real y NO existe ya un setting-event en la
-        // misma marca temporal (mismo rally) para evitar duplicar.
         const near = out.find(
           (a) => Math.abs(a.timestamp - pe.timestamp) < 1500 && a.side === pe.playerSide,
         );
@@ -140,8 +178,8 @@ export function buildEnrichedAttacks(
             setNumber: pe.setNumber,
             rotation: (pe.playerSide === "A" ? rotA : rotB) + 1,
             setterZone: setterLookup ? setterLookup(pe.playerSide, pe.timestamp, pe.setNumber) : null,
+            phase: lastPhase[pe.playerSide] ?? "K1",
             timestamp: pe.timestamp,
-
           });
         }
       }
@@ -153,8 +191,12 @@ export function buildEnrichedAttacks(
         else rotB = (rotB + 1) % 6;
         serving = winner;
       }
+      // Reset de fases al terminar el rally.
+      lastPhase.A = null;
+      lastPhase.B = null;
     }
   }
+
 
   return out;
 }
@@ -164,6 +206,7 @@ export interface HeatmapFilters {
   rotation?: number | "all";
   setterZone?: SetterZone | "all";
   playerId?: string | "all";
+  phase?: AttackPhase | "all";
 }
 
 
@@ -207,6 +250,7 @@ export function aggregateAttacks(
     if (filters.rotation !== undefined && filters.rotation !== "all" && a.rotation !== filters.rotation) continue;
     if (filters.setterZone !== undefined && filters.setterZone !== "all" && a.setterZone !== filters.setterZone) continue;
     if (filters.playerId !== undefined && filters.playerId !== "all" && a.playerId !== filters.playerId) continue;
+    if (filters.phase !== undefined && filters.phase !== "all" && a.phase !== filters.phase) continue;
 
 
     if (a.origin) {
