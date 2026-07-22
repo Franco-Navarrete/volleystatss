@@ -170,6 +170,15 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
     store.recordPoint(matchId, opposite(scoring), "serve_error", serve?.playerId ?? null);
     return;
   }
+  // Resultado de ataque con finishKind explícito (bloqueo rival / error no forzado).
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.finishKind === "blocked") {
+    store.recordPoint(matchId, scoring, "block", null);
+    return;
+  }
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.finishKind === "unforced") {
+    store.recordPoint(matchId, scoring, "unforced_error", attack?.playerId ?? null);
+    return;
+  }
   if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.rating === "#") {
     store.recordPoint(matchId, scoring, "attack", attack?.playerId ?? null, attack?.origin as AttackZone | undefined, undefined, attack?.target as AttackDirection | undefined);
     return;
