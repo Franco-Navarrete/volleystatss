@@ -11,7 +11,7 @@ import {
   Tablet,
   Trash2,
   Wand2,
-  Whistle,
+  Users,
   Tag,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
