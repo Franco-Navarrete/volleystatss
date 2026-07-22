@@ -177,8 +177,13 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
 export const adminSetExtraRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { userId: string; role: ExtraRole | null }) =>
-    z.object({ userId: uuidSchema, role: extraRoleSchema }).parse(input),
+  .inputValidator((input: { userId: string; roles: ExtraRole[] }) =>
+    z
+      .object({
+        userId: uuidSchema,
+        roles: z.array(z.enum(["entrenador", "planillero"])).max(2),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -192,11 +197,12 @@ export const adminSetExtraRole = createServerFn({ method: "POST" })
       .in("role", ["entrenador", "planillero"]);
     if (delErr) throw delErr;
 
-    if (data.role) {
+    const unique = Array.from(new Set(data.roles));
+    if (unique.length > 0) {
       const { error: insErr } = await supabaseAdmin
         .from("user_roles")
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert({ user_id: data.userId, role: data.role as any });
+        .insert(unique.map((role) => ({ user_id: data.userId, role: role as any })));
       if (insErr) throw insErr;
     }
     return { ok: true };
