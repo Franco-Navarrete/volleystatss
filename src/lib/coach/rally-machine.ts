@@ -77,6 +77,8 @@ interface CoachRallyState {
   setOrigin: (zone: 1 | 2 | 3 | 4 | 5 | 6) => void;
   setTarget: (zone: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9) => void;
   setRating: (rating: Rating) => void;
+  /** Resultado final del ataque (reemplaza el paso de destino + rating). */
+  setAttackResult: (kind: AttackResultKind) => void;
   back: () => void;
   cancel: () => void;
   reset: () => void;
