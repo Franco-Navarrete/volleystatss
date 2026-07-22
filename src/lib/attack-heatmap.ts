@@ -65,10 +65,17 @@ export interface EnrichedAttack {
  * Recorre los eventos del partido y devuelve la lista de ataques enriquecidos
  * con la rotación (1..6) del equipo atacante al momento del rally.
  */
-export function buildEnrichedAttacks(match: Match): EnrichedAttack[] {
+export function buildEnrichedAttacks(
+  match: Match,
+  teamA?: Team,
+  teamB?: Team,
+): EnrichedAttack[] {
   const events = [...match.events].sort((a, b) => a.timestamp - b.timestamp);
   const initial = match.initialServingSide;
   const out: EnrichedAttack[] = [];
+  const setterLookup =
+    teamA && teamB ? buildSetterZoneLookup(match, teamA, teamB) : null;
+
 
   // Estado por set: rotación 0..5 y equipo que saca.
   let currentSet = -1;
