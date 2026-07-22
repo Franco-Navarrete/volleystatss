@@ -7,7 +7,7 @@ import type { Database } from "@/integrations/supabase/types";
 const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const passwordSchema = z.string().min(8).max(72);
 const uuidSchema = z.string().uuid();
-const extraRoleSchema = z.enum(["entrenador", "planillero"]).nullable();
+
 export type ExtraRole = "entrenador" | "planillero";
 
 type AuthCtx = { supabase: SupabaseClient<Database>; userId: string };
