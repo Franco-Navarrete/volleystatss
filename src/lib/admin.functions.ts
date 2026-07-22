@@ -39,10 +39,12 @@ export const adminListUsers = createServerFn({ method: "GET" })
     if (profilesRes.error) throw profilesRes.error;
 
     const admins = new Set((rolesRes.data ?? []).filter((r) => r.role === "admin").map((r) => r.user_id));
-    const extraRoleByUser = new Map<string, ExtraRole>();
+    const extraRolesByUser = new Map<string, ExtraRole[]>();
     for (const r of rolesRes.data ?? []) {
       if (r.role === "entrenador" || r.role === "planillero") {
-        extraRoleByUser.set(r.user_id, r.role as ExtraRole);
+        const arr = extraRolesByUser.get(r.user_id) ?? [];
+        arr.push(r.role as ExtraRole);
+        extraRolesByUser.set(r.user_id, arr);
       }
     }
     const permsByUser = new Map((permsRes.data ?? []).map((p) => [p.user_id, p]));
@@ -58,7 +60,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
       email: p.email,
       createdAt: p.created_at,
       isAdmin: admins.has(p.id),
-      extraRole: extraRoleByUser.get(p.id) ?? null,
+      extraRoles: extraRolesByUser.get(p.id) ?? [],
       canCreateMatches: permsByUser.get(p.id)?.can_create_matches ?? false,
       canManageTeams: permsByUser.get(p.id)?.can_manage_teams ?? false,
       leagueIds: accessByUser.get(p.id) ?? [],
