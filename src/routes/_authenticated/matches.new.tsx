@@ -5,8 +5,9 @@ import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, PLAYER_POSITION_LABEL } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, X, Info } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/matches/new")({
   head: () => ({ meta: [{ title: "Nuevo partido · RALLY" }] }),
