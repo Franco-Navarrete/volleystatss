@@ -663,8 +663,9 @@ export const FLOW_STATES: RallyState[] = [
 ];
 
 // DEV: expose store for browser debugging.
-if (typeof window !== "undefined" && import.meta.env.DEV) {
+if (typeof window !== "undefined") {
   (window as unknown as { __coach?: unknown }).__coach = useCoachRally;
 }
+
 
 
