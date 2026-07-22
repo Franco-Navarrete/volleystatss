@@ -171,6 +171,36 @@ function StepView({ current, teams, onPlayer, onTarget, onRating, onAttackResult
     );
   }
 
+  // Defensa: sólo 3 opciones (doble positivo / neutro / doble negativo).
+  if (current.state === "defensa" && current.sub === "rating") {
+    const opts: { rating: Rating; label: string; cls: string; key: string }[] = [
+      { rating: "#", label: "Doble positivo", key: "1", cls: "border-emerald-500/60 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+      { rating: "0", label: "Neutro", key: "2", cls: "border-amber-500/60 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+      { rating: "-", label: "Doble negativo", key: "3", cls: "border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400" },
+    ];
+    return (
+      <div>
+        <PlayerCard team={team} playerId={current.playerId} state="defensa" origin={current.origin} />
+        <div className="text-xs text-muted-foreground mb-2">Valoración de la defensa</div>
+        <div className="grid grid-cols-1 gap-1.5">
+          {opts.map((o) => (
+            <button
+              key={o.rating}
+              onClick={() => onRating(o.rating)}
+              className={`flex items-center gap-2 rounded-lg border-2 py-2 px-3 text-left font-bold text-sm transition-colors ${o.cls}`}
+            >
+              <span className="inline-flex size-5 items-center justify-center rounded bg-background/60 border font-mono text-[10px]">
+                {o.key}
+              </span>
+              <span className="flex-1 truncate">{o.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+
   // Selección manual de jugador (sólo si Coach Mode no pudo autodetectar).
   if (current.sub === "player") {
     const onCourt = current.side === "A" ? null : null; // fallback: rara vez ocurre

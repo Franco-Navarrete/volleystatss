@@ -91,7 +91,7 @@ interface CoachRallyState {
 }
 
 /** Estados que necesitan zona destino explícita. */
-const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "armado"];
+const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "armado", "ataque", "contraataque"];
 /** Estados que necesitan zona de origen (el jugador se autodetecta desde ahí). */
 const NEEDS_ORIGIN_BEFORE_PLAYER: Exclude<RallyState, "idle" | "fin">[] = [];
 
@@ -124,8 +124,8 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de ataque" };
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de ataque" };
       if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de ataque" };
-      // + 0 - → bloqueo rival
-      return { state: "bloqueo", side: opposite(side) };
+      // + 0 - → el rival defiende directamente (sin paso de bloqueo)
+      return { state: "defensa", side: opposite(side) };
     case "bloqueo":
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de bloqueo" };
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de bloqueo" };
@@ -141,7 +141,7 @@ function transition(step: RallyStep): { state: RallyState; side: "A" | "B"; scor
       if (rating === "#") return { state: "fin", side, scoringSide: side, reason: "Punto de contraataque" };
       if (rating === "=") return { state: "fin", side, scoringSide: opposite(side), reason: "Error de contraataque" };
       if (rating === "≠") return { state: "fin", side, scoringSide: opposite(side), reason: "Falta de contraataque" };
-      return { state: "bloqueo", side: opposite(side) };
+      return { state: "defensa", side: opposite(side) };
   }
 }
 
@@ -399,17 +399,23 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
         nextSub = "target";
       } else if ((t.state === "ataque" || t.state === "contraataque") && step.state === "armado" && step.target) {
         // Armado → Ataque: atacante = jugador en la zona a la que distribuyó el armado.
-        // El tipo de ataque queda implícito por esa zona; saltamos el paso de destino
-        // y vamos directo al resultado del ataque.
+        // El entrenador ahora indica el destino del ataque antes del resultado.
         const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
         nextPlayerId = playerAtZone(match, t.side, zone);
         nextOrigin = zone;
-        nextSub = "rating";
+        nextSub = "target";
       } else if (t.state === "bloqueo") {
         nextPlayerId = playerAtZone(match, t.side, 3);
         nextSub = "rating";
       } else if (t.state === "defensa") {
-        nextPlayerId = playerAtZone(match, t.side, 6);
+        // Ataque → Defensa: defensor = jugador en la zona destino del ataque, lado opuesto.
+        if ((step.state === "ataque" || step.state === "contraataque") && step.target && step.target <= 6) {
+          const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
+          nextPlayerId = playerAtZone(match, t.side, zone);
+          nextOrigin = zone;
+        } else {
+          nextPlayerId = playerAtZone(match, t.side, 6);
+        }
         nextSub = "rating";
       }
     }
