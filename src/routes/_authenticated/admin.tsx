@@ -307,25 +307,30 @@ function UserRow({
         <div className="border-t border-border/60 px-4 py-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <Label className="text-sm">Rol Administrador</Label>
+              <Label className="text-sm">Rol del usuario</Label>
               <p className="text-xs text-muted-foreground">
-                Acceso total: ligas, partidos, equipos y panel admin.
+                Elegí un rol. El rol Admin da acceso total.
               </p>
             </div>
-            <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
           </div>
-
-          <div>
-            <Label className="text-sm mb-1.5 block">Rol</Label>
-            <ExtraRoleSelector value={extraRole} onChange={setExtraRoleState} disabled={isAdmin} />
-            {isAdmin && (
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                Los administradores no necesitan rol adicional.
-              </p>
-            )}
-          </div>
+          <RoleSelector
+            value={isAdmin ? "admin" : extraRole}
+            onChange={(v) => {
+              if (v === "admin") {
+                setIsAdmin(true);
+                setExtraRoleState(null);
+              } else {
+                setIsAdmin(false);
+                setExtraRoleState(v);
+              }
+            }}
+          />
 
           {isAdmin ? (
+            <p className="text-xs text-muted-foreground">
+              Los administradores tienen acceso total. No hay permisos individuales que editar.
+            </p>
+          ) : (
             <p className="text-xs text-muted-foreground">
               Los administradores tienen acceso total. No hay permisos individuales que editar.
             </p>
