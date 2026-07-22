@@ -317,6 +317,18 @@ function TeamsPage() {
     setPage(1);
   }, [query, filterLeague, filterGender, filterCategory, filterStatus, sortBy]);
 
+  // Auto-scroll to detail panel when a team is selected, so the user doesn't
+  // have to manually scroll past the grid to see the team's contents.
+  useEffect(() => {
+    if (!selected) return;
+    if (typeof window === "undefined") return;
+    const id = window.requestAnimationFrame(() => {
+      const el = document.getElementById("team-detail");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [selected]);
+
   const leagueById = useMemo(() => new Map(leagues.map((l) => [l.id, l])), [leagues]);
 
   // Team counts per league (for the filter panel)
