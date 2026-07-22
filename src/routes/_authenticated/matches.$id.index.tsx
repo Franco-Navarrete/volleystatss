@@ -1552,10 +1552,12 @@ function LiveMatch() {
               setIntegratedRally(defenderId ? { side: defenseSide, defenderId } : null);
               return !!defenderId;
             }
-            const type: PointType =
-              payload.action === "block"
-                ? "attack_error"
-                : (payload.action as PointType);
+            if (payload.action === "block") {
+              recordPoint(match.id, oppositeSide(integratedRally.side), "block", null);
+              setIntegratedRally(null);
+              return;
+            }
+            const type: PointType = payload.action as PointType;
             recordPoint(
               match.id,
               integratedRally.side,
