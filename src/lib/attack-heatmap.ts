@@ -55,9 +55,11 @@ export interface EnrichedAttack {
   direction: AttackDirection | null;
   result: "positive" | "neutral" | "negative";
   setNumber: number;
-  rotation: number; // 1..6
+  rotation: number; // 1..6 (rotación del equipo atacante)
+  setterZone: SetterZone | null; // 1..6 (posición de la armadora del equipo atacante)
   timestamp: number;
 }
+
 
 /**
  * Recorre los eventos del partido y devuelve la lista de ataques enriquecidos
