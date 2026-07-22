@@ -189,3 +189,118 @@ function SettingsPage() {
     </AppShell>
   );
 }
+
+function OfficialListsSection() {
+  const matchCategories = useVolley((s) => s.matchCategories);
+  const referees = useVolley((s) => s.referees);
+  const scorekeepers = useVolley((s) => s.scorekeepers);
+  const addMatchCategory = useVolley((s) => s.addMatchCategory);
+  const removeMatchCategory = useVolley((s) => s.removeMatchCategory);
+  const addReferee = useVolley((s) => s.addReferee);
+  const removeReferee = useVolley((s) => s.removeReferee);
+  const addScorekeeper = useVolley((s) => s.addScorekeeper);
+  const removeScorekeeper = useVolley((s) => s.removeScorekeeper);
+
+  return (
+    <section className="rounded-xl border border-border/60 bg-card/40 p-4 space-y-4">
+      <div>
+        <h2 className="font-semibold text-sm flex items-center gap-2">
+          <Tag className="size-4 text-primary" />
+          Información oficial del partido
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          Categorías, árbitros y planilleros disponibles al crear un partido.
+          También se agregan automáticamente cuando se escribe un nombre nuevo.
+        </p>
+      </div>
+      <ListEditor
+        title="Categorías"
+        icon={<Tag className="size-3.5" />}
+        items={matchCategories}
+        onAdd={addMatchCategory}
+        onRemove={removeMatchCategory}
+        placeholder="Ej: Sub 18 · Femenino"
+      />
+      <ListEditor
+        title="Árbitros"
+        icon={<Users className="size-3.5" />}
+        items={referees}
+        onAdd={addReferee}
+        onRemove={removeReferee}
+        placeholder="Nombre y apellido"
+      />
+      <ListEditor
+        title="Planilleros"
+        icon={<Users className="size-3.5" />}
+        items={scorekeepers}
+        onAdd={addScorekeeper}
+        onRemove={removeScorekeeper}
+        placeholder="Nombre y apellido"
+      />
+    </section>
+  );
+}
+
+function ListEditor({
+  title, icon, items, onAdd, onRemove, placeholder,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  items: string[];
+  onAdd: (v: string) => void;
+  onRemove: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [draft, setDraft] = useState("");
+  const submit = () => {
+    const v = draft.trim();
+    if (!v) return;
+    onAdd(v);
+    setDraft("");
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground font-bold">
+        {icon}
+        {title}
+        <span className="text-muted-foreground/60 normal-case tracking-normal font-normal">({items.length})</span>
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
+          placeholder={placeholder}
+          className="flex-1 bg-background border border-input rounded-md px-3 py-2 text-sm"
+        />
+        <Button type="button" size="sm" variant="secondary" onClick={submit}>
+          <Plus className="size-3.5" /> Agregar
+        </Button>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">Sin registros.</p>
+      ) : (
+        <ul className="flex flex-wrap gap-1.5">
+          {items.map((it) => (
+            <li
+              key={it}
+              className="inline-flex items-center gap-1.5 rounded-md bg-secondary/60 border border-border/60 pl-2 pr-1 py-1 text-xs"
+            >
+              <span>{it}</span>
+              <button
+                type="button"
+                onClick={() => onRemove(it)}
+                className="text-muted-foreground hover:text-destructive p-0.5 rounded"
+                title={`Quitar ${it}`}
+              >
+                <Trash2 className="size-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
