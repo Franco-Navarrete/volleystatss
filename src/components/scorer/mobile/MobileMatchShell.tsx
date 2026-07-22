@@ -96,6 +96,7 @@ export function MobileMatchShell(p: Props) {
     onOpenFormation,
     onOpenLineup,
     onOpenLiveStats,
+    hideStats = false,
     onOpenFormat,
     onOpenScore,
     onOpenRotate,
