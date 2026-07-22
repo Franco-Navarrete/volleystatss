@@ -8,9 +8,18 @@ import {
   STATE_LABEL,
   type Rating,
   type RallyState,
+  type AttackResultKind,
 } from "@/lib/coach/rally-machine";
 import { useCoachMode } from "@/lib/coach-mode-store";
 import { SET_DISTRIBUTION_TO_ZONE, SET_DISTRIBUTION_LABEL } from "@/lib/coach/effective-lineup";
+
+const ATTACK_RESULTS: { kind: AttackResultKind; label: string; cls: string }[] = [
+  { kind: "point", label: "Punto", cls: "border-emerald-500/60 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+  { kind: "continue", label: "Continúa el rally", cls: "border-amber-500/60 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  { kind: "blocked", label: "Bloqueo rival", cls: "border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400" },
+  { kind: "error", label: "Error de ataque", cls: "border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400" },
+  { kind: "unforced", label: "Error no forzado", cls: "border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400" },
+];
 
 interface Props {
   match: Match;
@@ -32,6 +41,7 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
   const setOrigin = useCoachRally((s) => s.setOrigin);
   const setTarget = useCoachRally((s) => s.setTarget);
   const setRating = useCoachRally((s) => s.setRating);
+  const setAttackResult = useCoachRally((s) => s.setAttackResult);
   const back = useCoachRally((s) => s.back);
   const cancel = useCoachRally((s) => s.cancel);
   const reset = useCoachRally((s) => s.reset);
@@ -79,6 +89,7 @@ export function CoachRallyPanel({ match, teamA, teamB }: Props) {
               onOrigin={setOrigin}
               onTarget={setTarget}
               onRating={setRating}
+              onAttackResult={setAttackResult}
             />
           ) : null}
         </section>
@@ -102,6 +113,7 @@ interface StepViewProps {
   onOrigin: (z: 1 | 2 | 3 | 4 | 5 | 6) => void;
   onTarget: (z: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9) => void;
   onRating: (r: Rating) => void;
+  onAttackResult: (kind: AttackResultKind) => void;
 }
 
 function detectedLabel(state: RallyState): string {
@@ -132,8 +144,32 @@ function PlayerCard({ team, playerId, state, origin }: { team: Team; playerId: s
   );
 }
 
-function StepView({ current, teams, onPlayer, onTarget, onRating }: StepViewProps) {
+function StepView({ current, teams, onPlayer, onTarget, onRating, onAttackResult }: StepViewProps) {
   const team = teams[current.side];
+
+  // Ataque / Contraataque: nueva pantalla de "Resultado del ataque" (reemplaza destino + rating).
+  if ((current.state === "ataque" || current.state === "contraataque") && current.sub === "rating") {
+    return (
+      <div>
+        <PlayerCard team={team} playerId={current.playerId} state={current.state} origin={current.origin} />
+        <div className="text-xs text-muted-foreground mb-2">Resultado del ataque</div>
+        <div className="grid grid-cols-1 gap-1.5">
+          {ATTACK_RESULTS.map((r, i) => (
+            <button
+              key={r.kind}
+              onClick={() => onAttackResult(r.kind)}
+              className={`flex items-center gap-2 rounded-lg border-2 py-2 px-3 text-left font-bold text-sm transition-colors ${r.cls}`}
+            >
+              <span className="inline-flex size-5 items-center justify-center rounded bg-background/60 border font-mono text-[10px]">
+                {i + 1}
+              </span>
+              <span className="flex-1 truncate">{r.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Selección manual de jugador (sólo si Coach Mode no pudo autodetectar).
   if (current.sub === "player") {

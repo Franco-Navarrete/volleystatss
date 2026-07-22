@@ -4,7 +4,7 @@ import {
   bindingMatches,
   type CoachAction,
 } from "@/lib/coach-mode-store";
-import { useCoachRally, type Rating } from "@/lib/coach/rally-machine";
+import { useCoachRally, type Rating, type AttackResultKind } from "@/lib/coach/rally-machine";
 import { useVolley } from "@/lib/volley-store";
 
 export interface CoachSeqDetail {
@@ -161,6 +161,17 @@ export function useCoachShortcuts(options?: { active?: boolean; matchId?: string
         e.preventDefault();
         rally.setTarget(ZONE_KEYS_QWE[e.code]);
         return;
+      }
+
+      if (cur.sub === "rating" && (cur.state === "ataque" || cur.state === "contraataque")) {
+        const RESULT_MAP: Record<string, AttackResultKind> = {
+          Digit1: "point", Digit2: "continue", Digit3: "blocked", Digit4: "error", Digit5: "unforced",
+        };
+        if (RESULT_MAP[e.code] != null) {
+          e.preventDefault();
+          rally.setAttackResult(RESULT_MAP[e.code]);
+          return;
+        }
       }
 
       if (cur.sub === "rating" && RATING_KEYS[e.key] != null) {

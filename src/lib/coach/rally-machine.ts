@@ -37,6 +37,8 @@ export const RATING_MEANING: Record<RallyState, Partial<Record<Rating, string>>>
   fin: {},
 };
 
+export type AttackResultKind = "point" | "continue" | "blocked" | "error" | "unforced";
+
 export interface RallyStep {
   state: Exclude<RallyState, "idle" | "fin">;
   side: "A" | "B";
@@ -46,6 +48,8 @@ export interface RallyStep {
   /** Zona destino de la cancha rival (para saque/ataque/contraataque). */
   target?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   rating?: Rating;
+  /** Marca cómo terminó un ataque cuando el resultado no cabe en el rating. */
+  finishKind?: AttackResultKind;
   timestamp: number;
 }
 
@@ -73,6 +77,8 @@ interface CoachRallyState {
   setOrigin: (zone: 1 | 2 | 3 | 4 | 5 | 6) => void;
   setTarget: (zone: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9) => void;
   setRating: (rating: Rating) => void;
+  /** Resultado final del ataque (reemplaza el paso de destino + rating). */
+  setAttackResult: (kind: AttackResultKind) => void;
   back: () => void;
   cancel: () => void;
   reset: () => void;
@@ -85,7 +91,7 @@ interface CoachRallyState {
 }
 
 /** Estados que necesitan zona destino explícita. */
-const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "armado", "ataque", "contraataque"];
+const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "armado"];
 /** Estados que necesitan zona de origen (el jugador se autodetecta desde ahí). */
 const NEEDS_ORIGIN_BEFORE_PLAYER: Exclude<RallyState, "idle" | "fin">[] = [];
 
@@ -162,6 +168,15 @@ function persistToStore(matchId: string, history: RallyStep[], outcome: { scorin
   }
   if (finisher.state === "saque" && finisher.rating === "=") {
     store.recordPoint(matchId, opposite(scoring), "serve_error", serve?.playerId ?? null);
+    return;
+  }
+  // Resultado de ataque con finishKind explícito (bloqueo rival / error no forzado).
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.finishKind === "blocked") {
+    store.recordPoint(matchId, scoring, "block", null);
+    return;
+  }
+  if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.finishKind === "unforced") {
+    store.recordPoint(matchId, scoring, "unforced_error", attack?.playerId ?? null);
     return;
   }
   if ((finisher.state === "ataque" || finisher.state === "contraataque") && finisher.rating === "#") {
@@ -272,6 +287,40 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     setTimeout(() => get().commit(), 0);
   },
 
+  setAttackResult: (kind) => {
+    const cur = get().current;
+    const matchId = get().matchId;
+    if (!cur || !matchId) return;
+    if (cur.state !== "ataque" && cur.state !== "contraataque") return;
+    // Mapeo simple → rating universal (reutiliza el commit estándar).
+    if (kind === "point") { get().setRating("#"); return; }
+    if (kind === "continue") { get().setRating("0"); return; }
+    if (kind === "error") { get().setRating("="); return; }
+    // Casos con finishKind explícito: se cierra el rally aquí mismo.
+    const rating: Rating = kind === "blocked" ? "=" : "≠";
+    const step: RallyStep = {
+      state: cur.state,
+      side: cur.side,
+      playerId: cur.playerId,
+      origin: cur.origin,
+      target: cur.target,
+      rating,
+      finishKind: kind,
+      timestamp: Date.now(),
+    };
+    const nextHistory = [...get().history, step];
+    const scoringSide = opposite(cur.side);
+    const reason = kind === "blocked" ? "Bloqueo rival" : "Error no forzado";
+    persistToStore(matchId, nextHistory, { scoringSide, reason });
+    set({
+      state: "fin",
+      history: nextHistory,
+      current: null,
+      outcome: { scoringSide, reason },
+      redoStack: [],
+    });
+  },
+
   commit: () => {
     const cur = get().current;
     const matchId = get().matchId;
@@ -350,10 +399,12 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
         nextSub = "target";
       } else if ((t.state === "ataque" || t.state === "contraataque") && step.state === "armado" && step.target) {
         // Armado → Ataque: atacante = jugador en la zona a la que distribuyó el armado.
+        // El tipo de ataque queda implícito por esa zona; saltamos el paso de destino
+        // y vamos directo al resultado del ataque.
         const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
         nextPlayerId = playerAtZone(match, t.side, zone);
         nextOrigin = zone;
-        nextSub = "target";
+        nextSub = "rating";
       } else if (t.state === "bloqueo") {
         nextPlayerId = playerAtZone(match, t.side, 3);
         nextSub = "rating";
