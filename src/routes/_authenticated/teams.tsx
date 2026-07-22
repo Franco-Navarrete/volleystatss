@@ -1267,7 +1267,49 @@ function TeamsPage() {
                   })()}
                 </div>
               ))}
-              {openClubCategoryTeams.length === 0 && null}
+              {openClubCategoryTeams.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border/60 bg-card/30 px-4 py-6 text-center space-y-3">
+                  <div className="text-sm text-muted-foreground">
+                    No hay equipos en esta categoría.
+                  </div>
+                  {canCreate && openClub && openClubCategory && openClubCategory !== "__none__" && (
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        if (!openClub || !openClubCategory) return;
+                        const cat = openClubCategory as TeamCategory;
+                        const label = TEAM_CATEGORY_LABEL[cat];
+                        const baseColor = openClub.teams[0]?.color ?? "#3b82f6";
+                        const secondary = openClub.teams[0]?.secondaryColor ?? null;
+                        const gender = openClub.teams[0]?.gender ?? null;
+                        const leagueId = openClub.teams[0]?.leagueId ?? null;
+                        try {
+                          await mut.createTeam.mutateAsync({
+                            name: `${openClub.name} ${label}`.slice(0, 80),
+                            shortName: label.slice(0, 8),
+                            color: baseColor,
+                            secondaryColor: secondary,
+                            category: cat,
+                            gender,
+                            leagueId,
+                          });
+                        } catch {
+                          /* handled globally */
+                        }
+                      }}
+                      disabled={mut.createTeam.isPending}
+                    >
+                      {mut.createTeam.isPending ? (
+                        <Loader2 className="size-4 animate-spin mr-1" />
+                      ) : (
+                        <UserPlus className="size-4 mr-1" />
+                      )}
+                      Crear equipo {TEAM_CATEGORY_LABEL[openClubCategory as TeamCategory]}
+                    </Button>
+                  )}
+                </div>
+              )}
+
             </div>
           )}
         </DialogContent>
