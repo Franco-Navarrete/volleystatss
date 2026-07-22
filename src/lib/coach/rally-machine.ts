@@ -399,10 +399,12 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
         nextSub = "target";
       } else if ((t.state === "ataque" || t.state === "contraataque") && step.state === "armado" && step.target) {
         // Armado → Ataque: atacante = jugador en la zona a la que distribuyó el armado.
+        // El tipo de ataque queda implícito por esa zona; saltamos el paso de destino
+        // y vamos directo al resultado del ataque.
         const zone = step.target as 1 | 2 | 3 | 4 | 5 | 6;
         nextPlayerId = playerAtZone(match, t.side, zone);
         nextOrigin = zone;
-        nextSub = "target";
+        nextSub = "rating";
       } else if (t.state === "bloqueo") {
         nextPlayerId = playerAtZone(match, t.side, 3);
         nextSub = "rating";
