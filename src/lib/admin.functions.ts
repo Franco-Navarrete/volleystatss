@@ -76,7 +76,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     password: string;
     leagueIds: string[];
     canCreateMatches: boolean;
-    extraRole?: ExtraRole | null;
+    extraRoles?: ExtraRole[];
   }) =>
     z
       .object({
@@ -84,7 +84,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         password: passwordSchema,
         leagueIds: z.array(uuidSchema).max(200),
         canCreateMatches: z.boolean(),
-        extraRole: extraRoleSchema.optional().default(null),
+        extraRoles: z.array(z.enum(["entrenador", "planillero"])).max(2).optional().default([]),
       })
       .parse(input),
   )
