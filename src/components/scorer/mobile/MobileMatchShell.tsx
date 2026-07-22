@@ -361,7 +361,7 @@ export function MobileMatchShell(p: Props) {
           navVisible ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="grid grid-cols-4 gap-0.5 h-14">
+        <div className={`grid gap-0.5 h-14 ${hideStats ? "grid-cols-3" : "grid-cols-4"}`}>
           <NavBtn
             icon={<Target className="size-5" />}
             label="Armado"
@@ -374,11 +374,13 @@ export function MobileMatchShell(p: Props) {
             label="Cancha"
             onClick={onOpenFormation}
           />
-          <NavBtn
-            icon={<ChartBarBig className="size-5" />}
-            label="Stats"
-            onClick={onOpenLiveStats}
-          />
+          {!hideStats && (
+            <NavBtn
+              icon={<ChartBarBig className="size-5" />}
+              label="Stats"
+              onClick={onOpenLiveStats}
+            />
+          )}
           <NavBtn
             icon={<MoreVertical className="size-5" />}
             label="Menú"
