@@ -54,6 +54,7 @@ import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
 import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
 import { CoachHelpBar } from "@/components/coach/CoachHelpBar";
 import { CoachRallyPanel } from "@/components/coach/CoachRallyPanel";
+import { useCoachRally } from "@/lib/coach/rally-machine";
 import { toast } from "sonner";
 import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
