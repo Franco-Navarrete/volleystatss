@@ -8,6 +8,7 @@ import {
   STATE_LABEL,
   type Rating,
   type RallyState,
+  type AttackResultKind,
 } from "@/lib/coach/rally-machine";
 import { useCoachMode } from "@/lib/coach-mode-store";
 import { SET_DISTRIBUTION_TO_ZONE, SET_DISTRIBUTION_LABEL } from "@/lib/coach/effective-lineup";
