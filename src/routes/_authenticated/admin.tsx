@@ -47,25 +47,29 @@ import {
 } from "@/lib/admin.functions";
 import { adminListPublicMatches } from "@/lib/public-match.functions";
 
-const EXTRA_ROLE_OPTIONS: { value: ExtraRole | null; label: string; hint: string }[] = [
+type RoleValue = "admin" | ExtraRole | null;
+
+const ROLE_OPTIONS: { value: RoleValue; label: string; hint: string }[] = [
   { value: null, label: "Sin rol", hint: "Solo permisos por liga" },
   { value: "entrenador", label: "Entrenador", hint: "Acceso a estadísticas avanzadas" },
   { value: "planillero", label: "Planillero", hint: "Carga rápida modo liga" },
+  { value: "admin", label: "Admin", hint: "Acceso total al sistema" },
 ];
 
-function ExtraRoleSelector({
+function RoleSelector({
   value,
   onChange,
   disabled,
 }: {
-  value: ExtraRole | null;
-  onChange: (v: ExtraRole | null) => void;
+  value: RoleValue;
+  onChange: (v: RoleValue) => void;
   disabled?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-1.5">
-      {EXTRA_ROLE_OPTIONS.map((opt) => {
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+      {ROLE_OPTIONS.map((opt) => {
         const active = value === opt.value;
+        const isAdminOpt = opt.value === "admin";
         return (
           <button
             key={opt.label}
@@ -73,7 +77,11 @@ function ExtraRoleSelector({
             disabled={disabled}
             onClick={() => onChange(opt.value)}
             className={`text-left rounded-md border px-2.5 py-2 transition-colors ${
-              active ? "border-primary bg-primary/10" : "border-border/60 bg-card hover:bg-secondary/50"
+              active
+                ? isAdminOpt
+                  ? "border-primary bg-primary/20"
+                  : "border-primary bg-primary/10"
+                : "border-border/60 bg-card hover:bg-secondary/50"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <div className="text-xs font-bold">{opt.label}</div>
@@ -84,6 +92,7 @@ function ExtraRoleSelector({
     </div>
   );
 }
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Administración · vstats" }] }),
@@ -298,23 +307,24 @@ function UserRow({
         <div className="border-t border-border/60 px-4 py-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <Label className="text-sm">Rol Administrador</Label>
+              <Label className="text-sm">Rol del usuario</Label>
               <p className="text-xs text-muted-foreground">
-                Acceso total: ligas, partidos, equipos y panel admin.
+                Elegí un rol. El rol Admin da acceso total.
               </p>
             </div>
-            <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
           </div>
-
-          <div>
-            <Label className="text-sm mb-1.5 block">Rol</Label>
-            <ExtraRoleSelector value={extraRole} onChange={setExtraRoleState} disabled={isAdmin} />
-            {isAdmin && (
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                Los administradores no necesitan rol adicional.
-              </p>
-            )}
-          </div>
+          <RoleSelector
+            value={isAdmin ? "admin" : extraRole}
+            onChange={(v) => {
+              if (v === "admin") {
+                setIsAdmin(true);
+                setExtraRoleState(null);
+              } else {
+                setIsAdmin(false);
+                setExtraRoleState(v);
+              }
+            }}
+          />
 
           {isAdmin ? (
             <p className="text-xs text-muted-foreground">
@@ -690,19 +700,23 @@ function CreateUserDialog({
               El usuario la podrá cambiar después.
             </p>
           </div>
-          <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
-            <div>
-              <Label>Rol Administrador</Label>
-              <p className="text-xs text-muted-foreground">Acceso total a todo.</p>
-            </div>
-            <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
+          <div>
+            <Label className="mb-1.5 block">Rol</Label>
+            <RoleSelector
+              value={isAdmin ? "admin" : extraRole}
+              onChange={(v) => {
+                if (v === "admin") {
+                  setIsAdmin(true);
+                  setExtraRole(null);
+                } else {
+                  setIsAdmin(false);
+                  setExtraRole(v);
+                }
+              }}
+            />
           </div>
           {!isAdmin && (
             <>
-              <div>
-                <Label className="mb-1.5 block">Rol</Label>
-                <ExtraRoleSelector value={extraRole} onChange={setExtraRole} />
-              </div>
               <div className="flex items-center justify-between gap-2">
                 <Label>Puede crear partidos</Label>
                 <Switch checked={canCreate} onCheckedChange={setCanCreate} />
