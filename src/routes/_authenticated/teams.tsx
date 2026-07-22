@@ -715,6 +715,7 @@ function TeamsPage() {
                     aria-label="Vista por club"
                   >
                     <Building2 className="size-4" />
+                  </button>
                 </div>
               </div>
             </div>
