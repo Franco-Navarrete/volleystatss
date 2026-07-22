@@ -394,6 +394,49 @@ function TeamsPage() {
   const currentPage = Math.min(page, totalPages);
   const pagedTeams = filteredTeams.slice(0, currentPage * PAGE_SIZE);
 
+  // Group filtered teams by club (fallback to team.club string or "Sin club")
+  type ClubGroup = {
+    key: string;
+    name: string;
+    logoUrl?: string;
+    teams: CloudTeam[];
+  };
+  const clubGroups = useMemo<ClubGroup[]>(() => {
+    const map = new Map<string, ClubGroup>();
+    for (const t of filteredTeams) {
+      const key = t.clubId ?? `name:${(t.clubName ?? t.club ?? "").trim().toLowerCase() || `team:${t.id}`}`;
+      const name = t.clubName ?? t.club ?? (t.clubId ? "Club" : "Sin club");
+      const g = map.get(key);
+      if (g) {
+        g.teams.push(t);
+        if (!g.logoUrl && t.clubLogoUrl) g.logoUrl = t.clubLogoUrl;
+      } else {
+        map.set(key, { key, name, logoUrl: t.clubLogoUrl, teams: [t] });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [filteredTeams]);
+
+  const openClub = openClubKey ? clubGroups.find((c) => c.key === openClubKey) ?? null : null;
+  const openClubCategories = useMemo(() => {
+    if (!openClub) return [] as { key: string; label: string; count: number }[];
+    const m = new Map<string, { key: string; label: string; count: number }>();
+    for (const t of openClub.teams) {
+      const key = t.category ?? "__none__";
+      const label = t.category ? TEAM_CATEGORY_LABEL[t.category] : "Sin categoría";
+      const cur = m.get(key);
+      if (cur) cur.count++;
+      else m.set(key, { key, label, count: 1 });
+    }
+    return Array.from(m.values());
+  }, [openClub]);
+  const openClubCategoryTeams = useMemo(() => {
+    if (!openClub || !openClubCategory) return [] as CloudTeam[];
+    return openClub.teams.filter(
+      (t) => (t.category ?? "__none__") === openClubCategory,
+    );
+  }, [openClub, openClubCategory]);
+
   const activeTeam: CloudTeam | undefined =
     teams.find((t) => t.id === selected) ?? undefined;
   const deletingTeam = teams.find((t) => t.id === deleteTarget) ?? null;
