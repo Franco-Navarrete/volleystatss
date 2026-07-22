@@ -287,6 +287,40 @@ export const useCoachRally = create<CoachRallyState>((set, get) => ({
     setTimeout(() => get().commit(), 0);
   },
 
+  setAttackResult: (kind) => {
+    const cur = get().current;
+    const matchId = get().matchId;
+    if (!cur || !matchId) return;
+    if (cur.state !== "ataque" && cur.state !== "contraataque") return;
+    // Mapeo simple → rating universal (reutiliza el commit estándar).
+    if (kind === "point") { get().setRating("#"); return; }
+    if (kind === "continue") { get().setRating("0"); return; }
+    if (kind === "error") { get().setRating("="); return; }
+    // Casos con finishKind explícito: se cierra el rally aquí mismo.
+    const rating: Rating = kind === "blocked" ? "=" : "≠";
+    const step: RallyStep = {
+      state: cur.state,
+      side: cur.side,
+      playerId: cur.playerId,
+      origin: cur.origin,
+      target: cur.target,
+      rating,
+      finishKind: kind,
+      timestamp: Date.now(),
+    };
+    const nextHistory = [...get().history, step];
+    const scoringSide = opposite(cur.side);
+    const reason = kind === "blocked" ? "Bloqueo rival" : "Error no forzado";
+    persistToStore(matchId, nextHistory, { scoringSide, reason });
+    set({
+      state: "fin",
+      history: nextHistory,
+      current: null,
+      outcome: { scoringSide, reason },
+      redoStack: [],
+    });
+  },
+
   commit: () => {
     const cur = get().current;
     const matchId = get().matchId;
