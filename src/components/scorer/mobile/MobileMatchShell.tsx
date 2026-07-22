@@ -506,20 +506,22 @@ export function MobileMatchShell(p: Props) {
                 }}
                 disabled={match.status === "finished"}
               />
-              <MenuBtn
-                icon={<ChartBarBig className="size-4" />}
-                label="Estadísticas completas"
-                asChild
-              >
-                <Link
-                  to="/matches/$id/stats"
-                  params={{ id: match.id }}
-                  onClick={() => setMoreOpen(false)}
-                  className="w-full h-11 rounded-md border border-border/60 hover:bg-secondary flex items-center gap-2 px-3 text-sm"
+              {!hideStats && (
+                <MenuBtn
+                  icon={<ChartBarBig className="size-4" />}
+                  label="Estadísticas completas"
+                  asChild
                 >
-                  <ChartBarBig className="size-4" /> Estadísticas completas
-                </Link>
-              </MenuBtn>
+                  <Link
+                    to="/matches/$id/stats"
+                    params={{ id: match.id }}
+                    onClick={() => setMoreOpen(false)}
+                    className="w-full h-11 rounded-md border border-border/60 hover:bg-secondary flex items-center gap-2 px-3 text-sm"
+                  >
+                    <ChartBarBig className="size-4" /> Estadísticas completas
+                  </Link>
+                </MenuBtn>
+              )}
               <MenuBtn
                 icon={<Flag className="size-4" />}
                 label="Finalizar partido"
