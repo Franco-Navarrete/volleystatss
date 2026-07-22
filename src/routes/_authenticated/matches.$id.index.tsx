@@ -1715,6 +1715,10 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
         picks: new Set(blockPick.picks),
       }
     : null;
+  if (import.meta.env.DEV && blockPick) {
+    // eslint-disable-next-line no-console
+    console.log("[CourtView] render con blockPick", blockPick);
+  }
   // Formación efectiva: SIEMPRE 6 IDs únicos por equipo aplicando el swap
   // automático del líbero (si liberoActive existe, la central reemplazada
   // deja de renderizarse y el líbero ocupa su slot). Cualquier duplicado o
