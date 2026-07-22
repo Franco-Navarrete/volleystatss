@@ -47,35 +47,40 @@ import {
 } from "@/lib/admin.functions";
 import { adminListPublicMatches } from "@/lib/public-match.functions";
 
-type RoleValue = "admin" | ExtraRole | null;
-
-const ROLE_OPTIONS: { value: RoleValue; label: string; hint: string }[] = [
-  { value: null, label: "Sin rol", hint: "Solo permisos por liga" },
+const ROLE_OPTIONS: { value: "admin" | ExtraRole; label: string; hint: string }[] = [
   { value: "entrenador", label: "Entrenador", hint: "Acceso a estadísticas avanzadas" },
   { value: "planillero", label: "Planillero", hint: "Carga rápida modo liga" },
   { value: "admin", label: "Admin", hint: "Acceso total al sistema" },
 ];
 
 function RoleSelector({
-  value,
-  onChange,
+  isAdmin,
+  extraRoles,
+  onToggleAdmin,
+  onToggleExtra,
   disabled,
 }: {
-  value: RoleValue;
-  onChange: (v: RoleValue) => void;
+  isAdmin: boolean;
+  extraRoles: Set<ExtraRole>;
+  onToggleAdmin: (v: boolean) => void;
+  onToggleExtra: (role: ExtraRole, on: boolean) => void;
   disabled?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
       {ROLE_OPTIONS.map((opt) => {
-        const active = value === opt.value;
+        const active =
+          opt.value === "admin" ? isAdmin : extraRoles.has(opt.value as ExtraRole);
         const isAdminOpt = opt.value === "admin";
         return (
           <button
-            key={opt.label}
+            key={opt.value}
             type="button"
             disabled={disabled}
-            onClick={() => onChange(opt.value)}
+            onClick={() => {
+              if (isAdminOpt) onToggleAdmin(!active);
+              else onToggleExtra(opt.value as ExtraRole, !active);
+            }}
             className={`text-left rounded-md border px-2.5 py-2 transition-colors ${
               active
                 ? isAdminOpt
@@ -84,14 +89,25 @@ function RoleSelector({
                 : "border-border/60 bg-card hover:bg-secondary/50"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <div className="text-xs font-bold">{opt.label}</div>
-            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{opt.hint}</div>
+            <div className="text-xs font-bold flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className={`inline-block size-3 rounded-sm border ${
+                  active ? "bg-primary border-primary" : "border-border"
+                }`}
+              />
+              {opt.label}
+            </div>
+            <div className="text-[10px] text-muted-foreground leading-tight mt-1">
+              {opt.hint}
+            </div>
           </button>
         );
       })}
     </div>
   );
 }
+
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
