@@ -226,27 +226,34 @@ function UserRow({
   const [selected, setSelected] = useState<Set<string>>(new Set(user.leagueIds));
   const [canCreate, setCanCreate] = useState(user.canCreateMatches);
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
-  const [extraRole, setExtraRoleState] = useState<ExtraRole | null>(user.extraRole);
+  const [extraRoles, setExtraRolesState] = useState<Set<ExtraRole>>(
+    new Set(user.extraRoles),
+  );
   const [open, setOpen] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
 
+  const extraRolesEqual = (a: Set<ExtraRole>, b: ExtraRole[]) => {
+    if (a.size !== b.length) return false;
+    for (const r of b) if (!a.has(r)) return false;
+    return true;
+  };
+
   const dirty = useMemo(() => {
     if (isAdmin !== user.isAdmin) return true;
-    if (extraRole !== user.extraRole) return true;
+    if (!extraRolesEqual(extraRoles, user.extraRoles)) return true;
     const orig = new Set(user.leagueIds);
     if (selected.size !== orig.size) return true;
     for (const id of selected) if (!orig.has(id)) return true;
     return canCreate !== user.canCreateMatches;
-  }, [selected, canCreate, isAdmin, extraRole, user]);
+  }, [selected, canCreate, isAdmin, extraRoles, user]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      // Role change first, since it changes downstream meaning
       if (isAdmin !== user.isAdmin) {
         await setRole({ data: { userId: user.id, isAdmin } });
       }
-      if (extraRole !== user.extraRole) {
-        await setExtraRole({ data: { userId: user.id, role: extraRole } });
+      if (!extraRolesEqual(extraRoles, user.extraRoles)) {
+        await setExtraRole({ data: { userId: user.id, roles: Array.from(extraRoles) } });
       }
       if (!isAdmin) {
         await Promise.all([
