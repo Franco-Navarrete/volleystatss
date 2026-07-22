@@ -16,12 +16,11 @@ import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
-import { SetterDistributionCard } from "@/components/SetterDistributionCard";
+import { DistributionPanel } from "@/components/DistributionPanel";
 
 import { ServeHeatmapPanel } from "@/components/serve/ServeHeatmapPanel";
 import { AttackTypesPanel } from "@/components/AttackTypesPanel";
 import { ShareMatchCard } from "@/components/ShareMatchCard";
-import { SettingPanel } from "@/components/SettingPanel";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 import { CoachLiveDashboard } from "@/components/live/CoachLiveDashboard";
 import { toast } from "sonner";
