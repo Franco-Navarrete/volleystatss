@@ -91,7 +91,7 @@ interface CoachRallyState {
 }
 
 /** Estados que necesitan zona destino explícita. */
-const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "armado", "ataque", "contraataque"];
+const NEEDS_TARGET: Exclude<RallyState, "idle" | "fin">[] = ["saque", "armado"];
 /** Estados que necesitan zona de origen (el jugador se autodetecta desde ahí). */
 const NEEDS_ORIGIN_BEFORE_PLAYER: Exclude<RallyState, "idle" | "fin">[] = [];
 
