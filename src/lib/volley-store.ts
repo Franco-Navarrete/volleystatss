@@ -919,6 +919,38 @@ export const useVolley = create<VolleyState>()(
       matches: [],
       leagues: [],
       customReceptionFormations: {},
+      matchCategories: [...DEFAULT_MATCH_CATEGORIES],
+      referees: [],
+      scorekeepers: [],
+
+      addMatchCategory: (name) =>
+        set((s) => {
+          const v = name.trim();
+          if (!v) return {};
+          const exists = s.matchCategories.some((c) => c.toLowerCase() === v.toLowerCase());
+          return exists ? {} : { matchCategories: [...s.matchCategories, v] };
+        }),
+      removeMatchCategory: (name) =>
+        set((s) => ({ matchCategories: s.matchCategories.filter((c) => c !== name) })),
+      addReferee: (name) =>
+        set((s) => {
+          const v = name.trim();
+          if (!v) return {};
+          const exists = s.referees.some((r) => r.toLowerCase() === v.toLowerCase());
+          return exists ? {} : { referees: [...s.referees, v].sort((a, b) => a.localeCompare(b)) };
+        }),
+      removeReferee: (name) =>
+        set((s) => ({ referees: s.referees.filter((r) => r !== name) })),
+      addScorekeeper: (name) =>
+        set((s) => {
+          const v = name.trim();
+          if (!v) return {};
+          const exists = s.scorekeepers.some((r) => r.toLowerCase() === v.toLowerCase());
+          return exists ? {} : { scorekeepers: [...s.scorekeepers, v].sort((a, b) => a.localeCompare(b)) };
+        }),
+      removeScorekeeper: (name) =>
+        set((s) => ({ scorekeepers: s.scorekeepers.filter((r) => r !== name) })),
+
 
       setReceptionSlot: (rotation, role, pos) =>
         set((s) => {
