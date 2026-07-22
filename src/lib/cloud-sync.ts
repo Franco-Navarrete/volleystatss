@@ -13,6 +13,9 @@ type CloudData = {
   matches?: Match[];
   leagues?: League[];
   customReceptionFormations?: CustomReceptionFormations;
+  matchCategories?: string[];
+  referees?: string[];
+  scorekeepers?: string[];
 };
 
 
