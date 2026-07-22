@@ -850,11 +850,13 @@ function LiveMatch() {
                   <Users className="size-4" /> Formación
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem asChild>
-                <Link to="/matches/$id/stats" params={{ id: match.id }}>
-                  <ChartBarBig className="size-4" /> Estadísticas completas
-                </Link>
-              </DropdownMenuItem>
+              {!isPlanilleroOnly && (
+                <DropdownMenuItem asChild>
+                  <Link to="/matches/$id/stats" params={{ id: match.id }}>
+                    <ChartBarBig className="size-4" /> Estadísticas completas
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
                 <Hourglass className="size-4" /> Formato del partido
               </DropdownMenuItem>
