@@ -162,8 +162,10 @@ export function buildEnrichedAttacks(
 export interface HeatmapFilters {
   setNumber?: number | "all";
   rotation?: number | "all";
+  setterZone?: SetterZone | "all";
   playerId?: string | "all";
 }
+
 
 export interface HeatmapAgg {
   origin: Record<OriginZone, ZoneBucket>;
