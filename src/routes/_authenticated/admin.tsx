@@ -310,14 +310,16 @@ function UserRow({
         onClick={() => setOpen((v) => !v)}
       >
         <div className="min-w-0">
-          <div className="font-medium text-sm truncate flex items-center gap-2">
+          <div className="font-medium text-sm truncate flex items-center gap-2 flex-wrap">
             {user.email}
             {isAdmin && (
               <Badge variant="secondary" className="text-[10px]">Admin</Badge>
             )}
-            {!isAdmin && extraRole && (
-              <Badge variant="outline" className="text-[10px] capitalize">{extraRole}</Badge>
-            )}
+            {Array.from(extraRoles).map((r) => (
+              <Badge key={r} variant="outline" className="text-[10px] capitalize">
+                {r}
+              </Badge>
+            ))}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
             {isAdmin
@@ -328,26 +330,26 @@ function UserRow({
       </button>
       {open && (
         <div className="border-t border-border/60 px-4 py-4 space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <Label className="text-sm">Rol del usuario</Label>
-              <p className="text-xs text-muted-foreground">
-                Elegí un rol. El rol Admin da acceso total.
-              </p>
-            </div>
+          <div>
+            <Label className="text-sm">Roles del usuario</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Podés combinar varios roles. Admin da acceso total.
+            </p>
+            <RoleSelector
+              isAdmin={isAdmin}
+              extraRoles={extraRoles}
+              onToggleAdmin={setIsAdmin}
+              onToggleExtra={(role, on) => {
+                setExtraRolesState((prev) => {
+                  const next = new Set(prev);
+                  if (on) next.add(role);
+                  else next.delete(role);
+                  return next;
+                });
+              }}
+            />
           </div>
-          <RoleSelector
-            value={isAdmin ? "admin" : extraRole}
-            onChange={(v) => {
-              if (v === "admin") {
-                setIsAdmin(true);
-                setExtraRoleState(null);
-              } else {
-                setIsAdmin(false);
-                setExtraRoleState(v);
-              }
-            }}
-          />
+
 
           {isAdmin ? (
             <p className="text-xs text-muted-foreground">
