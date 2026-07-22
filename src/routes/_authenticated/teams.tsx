@@ -439,16 +439,22 @@ function TeamsPage() {
   const openClub = openClubKey ? clubGroups.find((c) => c.key === openClubKey) ?? null : null;
   const openClubCategories = useMemo(() => {
     if (!openClub) return [] as { key: string; label: string; count: number }[];
-    const m = new Map<string, { key: string; label: string; count: number }>();
+    const counts = new Map<string, number>();
     for (const t of openClub.teams) {
       const key = t.category ?? "__none__";
-      const label = t.category ? TEAM_CATEGORY_LABEL[t.category] : "Sin categoría";
-      const cur = m.get(key);
-      if (cur) cur.count++;
-      else m.set(key, { key, label, count: 1 });
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    return Array.from(m.values());
+    const all: { key: string; label: string; count: number }[] = TEAM_CATEGORIES.map((c) => ({
+      key: c,
+      label: TEAM_CATEGORY_LABEL[c],
+      count: counts.get(c) ?? 0,
+    }));
+    if ((counts.get("__none__") ?? 0) > 0) {
+      all.push({ key: "__none__", label: "Sin categoría", count: counts.get("__none__") ?? 0 });
+    }
+    return all;
   }, [openClub]);
+
   const openClubCategoryTeams = useMemo(() => {
     if (!openClub || !openClubCategory) return [] as CloudTeam[];
     return openClub.teams.filter(
