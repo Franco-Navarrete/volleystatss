@@ -52,6 +52,7 @@ interface Props {
   onOpenFormation: () => void;
   onOpenLineup: () => void;
   onOpenLiveStats: () => void;
+  hideStats?: boolean;
   onOpenFormat: () => void;
   onOpenScore: () => void;
   onOpenRotate: () => void;
