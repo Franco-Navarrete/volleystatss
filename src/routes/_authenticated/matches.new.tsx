@@ -66,7 +66,7 @@ function NewMatch() {
   const [mainReferee, setMainReferee] = useState<string>("");
   const [secondReferee, setSecondReferee] = useState<string>("");
   const [scorekeeper, setScorekeeper] = useState<string>("");
-  const [statsAssistant, setStatsAssistant] = useState<string>("");
+  
 
   const teamA = useMemo(() => teams.find((t) => t.id === teamAId), [teams, teamAId]);
   const teamB = useMemo(() => teams.find((t) => t.id === teamBId), [teams, teamBId]);
