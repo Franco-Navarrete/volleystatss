@@ -5,10 +5,14 @@ import {
   CloudDownload,
   Loader2,
   Monitor,
+  Plus,
   Settings as SettingsIcon,
   Smartphone,
   Tablet,
+  Trash2,
   Wand2,
+  Whistle,
+  Tag,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -19,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { FormationEditor } from "@/components/court/FormationEditor";
 import { CoachModeSettings } from "@/components/coach/CoachModeSettings";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useVolley } from "@/lib/volley-store";
 
 
 export const Route = createFileRoute("/_authenticated/settings")({
