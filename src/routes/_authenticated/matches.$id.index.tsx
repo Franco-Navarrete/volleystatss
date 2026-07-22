@@ -38,6 +38,7 @@ import {
   settingZoneToAttackZone,
 } from "@/components/scorer/IntegratedRallyDialog";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { isTabletHardware } from "@/hooks/use-device-mode";
 import { useFormation } from "@/hooks/use-formation";
 import { CourtFormation } from "@/components/court/CourtFormation";
