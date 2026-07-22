@@ -331,10 +331,6 @@ function UserRow({
               Los administradores tienen acceso total. No hay permisos individuales que editar.
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground">
-              Los administradores tienen acceso total. No hay permisos individuales que editar.
-            </p>
-          ) : (
             <>
               <div className="flex items-center justify-between gap-3">
                 <div>
