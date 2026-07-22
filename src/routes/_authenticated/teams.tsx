@@ -1024,7 +1024,7 @@ function TeamsPage() {
             />
           ))}
         </ul>
-      ) : (
+      ) : viewMode === "list" ? (
         <ul className="rounded-2xl bg-card border border-border/60 divide-y divide-border/40 overflow-hidden">
           {pagedTeams.map((t) => (
             <TeamListRow
@@ -1037,7 +1037,166 @@ function TeamsPage() {
             />
           ))}
         </ul>
+      ) : (
+        <ul className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {clubGroups.map((g) => (
+            <li key={g.key}>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenClubKey(g.key);
+                  setOpenClubCategory(null);
+                }}
+                className="w-full text-left rounded-2xl bg-card border border-border/60 p-4 hover:border-primary/50 hover:bg-secondary/30 transition-colors flex items-center gap-3"
+              >
+                <div className="size-12 rounded-xl overflow-hidden bg-secondary flex items-center justify-center shrink-0 ring-1 ring-white/10">
+                  {g.logoUrl ? (
+                    <img src={g.logoUrl} alt={g.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Building2 className="size-6 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold truncate">{g.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {g.teams.length} {g.teams.length === 1 ? "equipo" : "equipos"}
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+          {clubGroups.length === 0 && (
+            <li className="col-span-full text-center text-sm text-muted-foreground py-8">
+              No hay clubes que coincidan con los filtros.
+            </li>
+          )}
+        </ul>
       )}
+
+      {/* ========== Club drill-down Dialog ========== */}
+      <Dialog
+        open={!!openClubKey}
+        onOpenChange={(o) => {
+          if (!o) {
+            setOpenClubKey(null);
+            setOpenClubCategory(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {openClubCategory && (
+                <button
+                  type="button"
+                  onClick={() => setOpenClubCategory(null)}
+                  className="size-7 rounded-md hover:bg-secondary flex items-center justify-center"
+                  aria-label="Volver"
+                >
+                  <ArrowLeft className="size-4" />
+                </button>
+              )}
+              <span className="truncate">
+                {openClub?.name ?? "Club"}
+                {openClubCategory && openClubCategory !== "__none__"
+                  ? ` · ${TEAM_CATEGORY_LABEL[openClubCategory as TeamCategory] ?? openClubCategory}`
+                  : openClubCategory === "__none__"
+                    ? " · Sin categoría"
+                    : ""}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {!openClubCategory ? (
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                Categorías
+              </div>
+              {openClubCategories.length === 0 ? (
+                <div className="text-sm text-muted-foreground py-4 text-center">
+                  Este club no tiene equipos.
+                </div>
+              ) : (
+                <ul className="grid gap-2">
+                  {openClubCategories.map((c) => (
+                    <li key={c.key}>
+                      <button
+                        type="button"
+                        onClick={() => setOpenClubCategory(c.key)}
+                        className="w-full text-left rounded-xl border border-border/60 bg-card/50 px-4 py-3 hover:border-primary/50 hover:bg-secondary/40 flex items-center justify-between gap-3"
+                      >
+                        <span className="font-medium">{c.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {c.count} {c.count === 1 ? "equipo" : "equipos"}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {openClubCategoryTeams.map((t) => (
+                <div key={t.id} className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-border/40">
+                    <TeamBadge team={t} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold truncate">{t.name}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {t.players.length} {t.players.length === 1 ? "jugadora" : "jugadoras"}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelected(t.id);
+                        setOpenClubKey(null);
+                        setOpenClubCategory(null);
+                      }}
+                    >
+                      Abrir
+                    </Button>
+                  </div>
+                  {t.players.length === 0 ? (
+                    <div className="px-3 py-4 text-xs text-muted-foreground text-center">
+                      Sin jugadoras cargadas.
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-border/30">
+                      {[...t.players]
+                        .sort((a, b) => a.number - b.number)
+                        .map((p) => (
+                          <li key={p.id} className="flex items-center gap-3 px-3 py-2">
+                            <div
+                              className="size-8 rounded-full overflow-hidden flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                              style={{ background: t.color }}
+                            >
+                              {p.photoUrl ? (
+                                <img src={p.photoUrl} alt={p.name} className="size-full object-cover" />
+                              ) : (
+                                <span>#{p.number}</span>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">{p.name}</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                #{p.number}
+                                {p.position ? ` · ${PLAYER_POSITION_LABEL[p.position]}` : ""}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       {/* Pagination — load more */}
       {pagedTeams.length < filteredTeams.length && (
