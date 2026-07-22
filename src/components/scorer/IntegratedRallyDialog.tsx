@@ -55,7 +55,7 @@ interface Props {
     receptionQuality?: SettingQuality;
     /** true si el flujo fue disparado tras una defensa (contraataque). */
     isCounter?: boolean;
-  }) => void;
+  }) => boolean | void;
 }
 
 export type RallyAction =
@@ -67,9 +67,8 @@ export type RallyAction =
   | "block"
   | "unforced_error";
 
-type ActionKind = "attack" | "counter" | "block" | "attack_error" | "unforced";
-type Rating = "point" | "neutral";
-type Step = "reception" | "defense" | "zone" | "direction" | "action" | "rating";
+type AttackResult = "point" | "continue" | "block" | "attack_error" | "unforced";
+type Step = "reception" | "defense" | "zone" | "direction" | "action";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "reception", label: "Recepción" },
@@ -77,12 +76,11 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "zone", label: "Armado" },
   { key: "direction", label: "Zona" },
   { key: "action", label: "Ataque" },
-  { key: "rating", label: "Resultado" },
 ];
 
-const ACTION_KIND_LABEL: Record<ActionKind, string> = {
-  attack: "Ataque de rotación",
-  counter: "Contraataque",
+const ACTION_KIND_LABEL: Record<AttackResult, string> = {
+  point: "Punto",
+  continue: "Continúa el punto",
   block: "Bloqueo rival",
   attack_error: "Error de ataque",
   unforced: "Error no forzado",
@@ -93,8 +91,7 @@ const CURRENT_ACTION_TEXT: Record<Step, string> = {
   defense: "Esperando valoración de la defensa",
   zone: "Esperando zona del armado",
   direction: "Esperando zona destino",
-  action: "Esperando tipo de acción",
-  rating: "Esperando resultado",
+  action: "Esperando resultado del ataque",
 };
 
 interface DefenseOption {
@@ -106,11 +103,9 @@ interface DefenseOption {
   desc: string;
 }
 const DEFENSE_OPTIONS: DefenseOption[] = [
-  { key: "excellent", label: "#", hotkey: "1", className: "bg-success text-success-foreground", quality: "++", desc: "Excelente" },
-  { key: "positive", label: "+", hotkey: "2", className: "bg-success/80 text-success-foreground", quality: "+", desc: "Positiva" },
-  { key: "controlled", label: "0", hotkey: "3", className: "bg-yellow-400 text-black", quality: "!", desc: "Controlada" },
-  { key: "weak", label: "−", hotkey: "4", className: "bg-yellow-500 text-black", quality: "-", desc: "Débil" },
-  { key: "error", label: "=", hotkey: "5", className: "bg-destructive text-destructive-foreground", desc: "Error" },
+  { key: "excellent", label: "Doble positivo", hotkey: "1", className: "bg-success text-success-foreground", quality: "++", desc: "Doble positivo" },
+  { key: "controlled", label: "Neutro", hotkey: "2", className: "bg-yellow-400 text-black", quality: "!", desc: "Neutro" },
+  { key: "error", label: "Doble negativo", hotkey: "3", className: "bg-destructive text-destructive-foreground", desc: "Doble negativo" },
 ];
 
 interface ReceptionOption {
@@ -130,9 +125,9 @@ const RECEPTION_OPTIONS: ReceptionOption[] = [
   { key: "overpass", label: "≠", hotkey: "6", className: "bg-destructive/80 text-destructive-foreground", desc: "Punto saque" },
 ];
 
-const ATTACK_KIND_OPTIONS: { key: ActionKind; label: string; hotkey: string }[] = [
-  { key: "attack", label: "Alta", hotkey: "1" },
-  { key: "counter", label: "Contra", hotkey: "2" },
+const ATTACK_RESULT_OPTIONS: { key: AttackResult; label: string; hotkey: string }[] = [
+  { key: "point", label: "Punto", hotkey: "1" },
+  { key: "continue", label: "Continúa el punto", hotkey: "2" },
   { key: "block", label: "Bloqueo rival", hotkey: "3" },
   { key: "attack_error", label: "Error de ataque", hotkey: "4" },
   { key: "unforced", label: "Error no forzado", hotkey: "5" },
@@ -184,16 +179,16 @@ export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | unde
   }
 }
 
-function resolveAction(kind: ActionKind, rating: Rating | null): RallyAction {
+function resolveAction(kind: AttackResult, isCounter: boolean): RallyAction {
   if (kind === "block") return "block";
   if (kind === "unforced") return "unforced_error";
   if (kind === "attack_error") return "attack_error";
-  if (kind === "attack") return rating === "neutral" ? "attack_neutral" : "rotation_attack";
-  return rating === "neutral" ? "counter_neutral" : "counter_attack";
+  if (kind === "continue") return isCounter ? "counter_neutral" : "attack_neutral";
+  return isCounter ? "counter_attack" : "rotation_attack";
 }
 
 /**
- * Panel único del rally. Recorre Recepción → Armado → Zona → Ataque → Resultado
+ * Panel único del rally. Recorre Recepción/Defensa → Armado → Zona destino → Resultado del ataque.
  * sin cerrar el diálogo entre pasos: cambia el contenido con fade y ofrece
  * barra de progreso, resumen en vivo, teclas rápidas y "paso anterior".
  */
@@ -232,7 +227,7 @@ export function IntegratedRallyDialog({
   const [zone, setZone] = useState<SettingAttackZone | null>(null);
   const [attackerId, setAttackerId] = useState<string | null>(null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
-  const [actionKind, setActionKind] = useState<ActionKind | null>(null);
+  const [actionKind, setActionKind] = useState<AttackResult | null>(null);
   const [receptionValue, setReceptionValue] = useState<ReceptionRating | null>(null);
   const [defenseValue, setDefenseValue] = useState<DefenseRating | null>(null);
   const [effectiveQuality, setEffectiveQuality] = useState<SettingQuality | undefined>(receptionQuality);
@@ -241,17 +236,15 @@ export function IntegratedRallyDialog({
   useEffect(() => { setFadeKey((k) => k + 1); }, [step]);
 
   useEffect(() => {
-    if (!open) {
-      setStep(initialStep);
-      setZone(null);
-      setAttackerId(null);
-      setDirection(null);
-      setActionKind(null);
-      setReceptionValue(null);
-      setDefenseValue(null);
-      setEffectiveQuality(receptionQuality);
-    }
-  }, [open, initialStep, receptionQuality]);
+    setStep(initialStep);
+    setZone(null);
+    setAttackerId(null);
+    setDirection(null);
+    setActionKind(null);
+    setReceptionValue(null);
+    setDefenseValue(null);
+    setEffectiveQuality(receptionQuality);
+  }, [open, initialStep, receptionQuality, receptionStep?.playerId, defenseStep?.playerId]);
 
   const zoneAssignments = useMemo(
     () => computeZoneAssignments(onCourt, team.players),
@@ -300,7 +293,7 @@ export function IntegratedRallyDialog({
 
   const finalize = useCallback((a: RallyAction) => {
     if (!attackerId || !setter || !zone) return;
-    onSubmit({
+    const keepOpen = onSubmit({
       setterId: setter.id,
       setterQuality: "!",
       attackZone: zone,
@@ -311,26 +304,16 @@ export function IntegratedRallyDialog({
       isCounter: isCounterFlow,
     });
     toast.success("✓ Rally registrado", { duration: 900 });
-    onClose();
+    if (!keepOpen) onClose();
   }, [attackerId, setter, zone, direction, effectiveQuality, onSubmit, onClose, isCounterFlow]);
 
-  const pickActionKind = useCallback((k: ActionKind) => {
+  const pickActionKind = useCallback((k: AttackResult) => {
     setActionKind(k);
-    if (k === "attack" || k === "counter") {
-      setStep("rating");
-    } else {
-      finalize(resolveAction(k, null));
-    }
-  }, [finalize]);
-
-  const pickRating = useCallback((r: Rating) => {
-    if (!actionKind) return;
-    finalize(resolveAction(actionKind, r));
-  }, [actionKind, finalize]);
+    finalize(resolveAction(k, isCounterFlow));
+  }, [finalize, isCounterFlow]);
 
   const goBack = useCallback(() => {
-    if (step === "rating") setStep("action");
-    else if (step === "action") setStep("direction");
+    if (step === "action") setStep("direction");
     else if (step === "direction") setStep("zone");
     else if (step === "zone" && defenseStep) setStep("defense");
     else if (step === "zone" && receptionStep) setStep("reception");
@@ -358,16 +341,13 @@ export function IntegratedRallyDialog({
         const n = Number(ev.key);
         if (n >= 1 && n <= 9) { ev.preventDefault(); pickDirection(n as AttackDirection); }
       } else if (step === "action") {
-        const opt = ATTACK_KIND_OPTIONS.find((o) => o.hotkey === ev.key);
+        const opt = ATTACK_RESULT_OPTIONS.find((o) => o.hotkey === ev.key);
         if (opt) { ev.preventDefault(); pickActionKind(opt.key); }
-      } else if (step === "rating") {
-        if (ev.key === "Enter") { ev.preventDefault(); pickRating("point"); }
-        if (ev.key === " ") { ev.preventDefault(); pickRating("neutral"); }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, pickActionKind, pickRating, goBack]);
+  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, pickActionKind, goBack]);
 
   const activeSteps: { key: Step; label: string }[] = useMemo(
     () => STEPS.filter((s) => {
@@ -487,13 +467,13 @@ export function IntegratedRallyDialog({
                   <div className="scoreboard-digit text-2xl font-black">#{defensePlayer.number}</div>
                   <div className="text-xs text-muted-foreground truncate">{defensePlayer.name}</div>
                 </div>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {DEFENSE_OPTIONS.map((o) => (
                     <button
                       key={o.key}
                       type="button"
                       onClick={() => pickDefense(o.key)}
-                      className={`relative min-h-16 rounded-lg font-black text-3xl active:scale-95 transition ${o.className}`}
+                      className={`relative min-h-16 rounded-lg px-2 font-black text-sm active:scale-95 transition ${o.className}`}
                       title={`${o.desc} · ${o.hotkey}`}
                     >
                       {o.label}
@@ -502,7 +482,7 @@ export function IntegratedRallyDialog({
                   ))}
                 </div>
                 <p className="text-[10px] text-center text-muted-foreground">
-                  1# · 2+ · 30 · 4− · 5= — “Error” cierra el rally
+                  1 doble positivo · 2 neutro · 3 doble negativo
                 </p>
               </div>
             )}
@@ -546,9 +526,11 @@ export function IntegratedRallyDialog({
 
             {step === "action" && (
               <div className="flex flex-wrap gap-2">
-                {ATTACK_KIND_OPTIONS.map((o) => {
-                  const tone = o.key === "attack" || o.key === "counter"
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                {ATTACK_RESULT_OPTIONS.map((o) => {
+                  const tone = o.key === "point"
+                    ? "bg-success text-success-foreground hover:bg-success/90"
+                    : o.key === "continue"
+                    ? "bg-secondary text-secondary-foreground hover:bg-secondary/90"
                     : "bg-destructive/90 text-destructive-foreground hover:bg-destructive";
                   return (
                     <button
@@ -565,33 +547,6 @@ export function IntegratedRallyDialog({
               </div>
             )}
 
-            {step === "rating" && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => pickRating("point")}
-                    className="relative min-h-[80px] rounded-lg bg-success text-success-foreground font-black text-lg active:scale-95 transition"
-                  >
-                    🟢 Punto
-                    <span className="block text-[10px] font-normal opacity-90 mt-1">Cerró el rally</span>
-                    <span className="absolute top-1 right-2 text-[9px] font-bold opacity-70">Enter</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => pickRating("neutral")}
-                    className="relative min-h-[80px] rounded-lg bg-secondary text-secondary-foreground font-black text-lg active:scale-95 transition"
-                  >
-                    ⚪ Continúa
-                    <span className="block text-[10px] font-normal opacity-90 mt-1">Rally continuó</span>
-                    <span className="absolute top-1 right-2 text-[9px] font-bold opacity-70">Espacio</span>
-                  </button>
-                </div>
-                <p className="text-[11px] text-center text-muted-foreground">
-                  Continúa suma al total de ataques pero no cambia el marcador.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Resumen lateral */}

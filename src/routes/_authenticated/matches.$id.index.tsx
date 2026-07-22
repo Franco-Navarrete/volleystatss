@@ -21,6 +21,7 @@ import {
   type Team,
   type Match,
   type AttackZone,
+  type AttackDirection,
   ATTACK_ZONE_LABEL,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
@@ -144,6 +145,22 @@ function useForceLandscape(active: boolean) {
       if (orientationLocked) so?.unlock?.();
     };
   }, [active]);
+}
+
+function oppositeSide(side: "A" | "B"): "A" | "B" {
+  return side === "A" ? "B" : "A";
+}
+
+function attackDirectionToDefenseZone(direction: AttackDirection | undefined): 1 | 2 | 3 | 4 | 5 | 6 {
+  if (direction === 7) return 5;
+  if (direction === 8) return 6;
+  if (direction === 9) return 1;
+  if (direction && direction >= 1 && direction <= 6) return direction;
+  return 6;
+}
+
+function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string | undefined {
+  return onCourt[zone - 1];
 }
 
 function LiveMatch() {
@@ -1528,13 +1545,19 @@ function LiveMatch() {
                 payload.attackerId,
                 { attackZone, attackDirection: payload.attackDirection, isCounter },
               );
+              const defenseSide = oppositeSide(integratedRally.side);
+              const defenseOnCourt = defenseSide === "A" ? match.onCourtA : match.onCourtB;
+              const defenderZone = attackDirectionToDefenseZone(payload.attackDirection);
+              const defenderId = playerIdAtZone(defenseOnCourt, defenderZone);
+              setIntegratedRally(defenderId ? { side: defenseSide, defenderId } : null);
+              return !!defenderId;
+            }
+            if (payload.action === "block") {
+              recordPoint(match.id, oppositeSide(integratedRally.side), "block", null);
               setIntegratedRally(null);
               return;
             }
-            const type: PointType =
-              payload.action === "block"
-                ? "attack_error"
-                : (payload.action as PointType);
+            const type: PointType = payload.action as PointType;
             recordPoint(
               match.id,
               integratedRally.side,
