@@ -206,6 +206,7 @@ export interface HeatmapFilters {
   rotation?: number | "all";
   setterZone?: SetterZone | "all";
   playerId?: string | "all";
+  phase?: AttackPhase | "all";
 }
 
 
