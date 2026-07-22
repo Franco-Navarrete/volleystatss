@@ -115,7 +115,9 @@ export function buildEnrichedAttacks(
         result,
         setNumber: se.setNumber,
         rotation: (se.side === "A" ? rotA : rotB) + 1,
+        setterZone: setterLookup ? setterLookup(se.side, se.timestamp, se.setNumber) : null,
         timestamp: se.timestamp,
+
       });
     } else if (!("kind" in ev)) {
       // PointEvent: si no hubo setting-event asociado pero tiene attackZone,
