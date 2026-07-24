@@ -101,9 +101,9 @@ function VideoLibrary() {
           {rows.map(({ m, v }) => {
             const a = teamById.get(m.teamAId);
             const b = teamById.get(m.teamBId);
-            const league = leagueById.get(m.league_id_placeholder as never) ?? null;
-            const setsA = m.sets.reduce((n, s) => n + setsWon([s], "A"), 0);
-            const setsB = m.sets.reduce((n, s) => n + setsWon([s], "B"), 0);
+            const league = null;
+            const { a: setsA, b: setsB } = setsWon(m);
+            void league;
             const finished = m.sets.filter((s) => s.finished).length > 0;
             const status = !v ? "Sin video" : v.sync_offset_ms === 0 ? "Sin sincronizar" : "Sincronizado";
             const statusColor = !v ? "bg-muted text-muted-foreground" : v.sync_offset_ms === 0 ? "bg-warning/20 text-warning" : "bg-success/20 text-success";
