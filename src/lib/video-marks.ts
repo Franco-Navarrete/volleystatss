@@ -160,14 +160,15 @@ export function buildVideoMarks(
       team: p?.team ?? (side === "A" ? teamA?.name ?? null : side === "B" ? teamB?.name ?? null : null),
     };
 
-    if (ev.kind === "point") {
-      const c = classifyPoint(ev.kind, ev);
+    if (!("kind" in ev)) {
+      // PointEvent (no `kind` field)
+      const c = classifyPoint(ev);
       marks.push({
         ...base,
         ...common,
         kind: c.markKind,
         fundamento: c.fundamento,
-        zone: ev.attackZone ?? null,
+        zone: (ev as { attackZone?: number }).attackZone ?? null,
         result: c.result,
       });
     } else if (ev.kind === "reception") {
@@ -246,7 +247,7 @@ export function buildVideoMarks(
         ...base,
         ...common,
         kind: "other",
-        fundamento: ev.kind,
+        fundamento: String(ev.kind ?? "otro"),
         zone: null,
         result: null,
       });
