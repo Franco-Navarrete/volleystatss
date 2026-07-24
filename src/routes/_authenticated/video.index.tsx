@@ -116,7 +116,7 @@ function VideoLibrary() {
                 className="group bg-card border border-border rounded-lg p-4 hover:border-primary/60 hover:shadow-glow transition-all flex flex-col gap-3"
               >
                 <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-                  <span>{m.category ?? "Sin categoría"}{league ? ` · ${league.name}` : ""}</span>
+                  <span>{m.category ?? "Sin categoría"}</span>
                   <span className={`px-1.5 py-0.5 rounded ${statusColor}`}>{status}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
