@@ -1,0 +1,1 @@
+ALTER TABLE public.match_videos ADD COLUMN IF NOT EXISTS last_position_sec numeric;

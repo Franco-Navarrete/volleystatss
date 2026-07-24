@@ -1,67 +1,84 @@
+# Modo Scouting en Vivo — Plan de construcción
 
-# Video Analysis — plan de construcción
+Es un módulo grande. Lo construyo sobre lo ya hecho en Tanda 1 (`/video/$matchId`, `VideoPlayer`, `use-match-video`, `video-marks`) y lo divido en 3 tandas para poder validar rápido cada bloque.
 
-Este es un módulo enorme (16 secciones). Lo entrego en **3 tandas** dentro del mismo proyecto para que veas cada capa funcionando antes de que crezca la deuda técnica. Todo va bajo `/_authenticated/video`, reutilizando el scout, jugadoras, rotaciones y eventos que Rally ya tiene.
+## Alcance y decisiones clave
 
-## Tanda 1 — Núcleo interactivo (esta iteración)
+- **Fuente de verdad**: cada acción de scouting es un `MatchEvent` del `volley-store` existente, con un campo nuevo `videoTMs` (ms desde el inicio del video). Esto reutiliza todas las estadísticas, heatmaps, rotaciones y Rally Intelligence sin duplicar lógica.
+- **Autoguardado**: se guarda en `zustand` + `cloud-sync` (ya operativo). Nada de diálogos de confirmación.
+- **Modo Rápido vs Completo**: un toggle global. En Rápido el video nunca se pausa; en Completo se pausa 1.5 s tras cada registro.
+- **Atajos**: se reutiliza la infraestructura de Coach Mode (`coach-mode-store` + `bindingMatches`) para que sean configurables desde Ajustes.
 
-Lo diferencial del pedido: **una estadística → un click → el video se reproduce en el instante exacto**.
+## Tanda 1 — Layout de 5 paneles + registro rápido (esta iteración)
 
-1. **Backend (Cloud)**
-   - Tabla `match_videos` (uno-a-uno con `matches`): `source` (`upload` | `url`), `url`, `duration_sec`, `sync_offset_ms`, `fps`, `status` (`unsynced` | `synced`), `favorite`, `tags[]`, `created_at`, `updated_at`, RLS por owner del partido.
-   - Tabla `event_video_marks` (opcional por evento): `event_id`, `match_id`, `t_ms` (timestamp calculado o manual override), `kind` (saque/ataque/bloqueo/recepción/error/punto), `color`. Se puede derivar en vivo desde `match_events.timestamp + sync_offset`, pero la tabla permite override manual.
-   - Bucket privado `match-videos` (Cloud Storage) con política de lectura por owner + signed URLs. Para URLs externas solo guardamos el link.
-   - Server fns: `upsertMatchVideo`, `setSyncOffset`, `setEventMark`, `listMatchVideos`, `getSignedVideoUrl`.
+Objetivo: entrenador puede mirar el video y registrar acciones en ≤ 2 s por acción, con timestamp automático y timeline clickeable.
 
-2. **Ruta `/_authenticated/video`** — Biblioteca
-   - Grid de tarjetas por partido con: competencia, fecha, equipo, rival, resultado, duración, estado (Sin sync / Sincronizado), estrella favorito, chips de etiquetas.
-   - Buscador + filtros (liga, estado, favoritos, etiquetas, fecha) y orden.
+1. **Nueva ruta** `/video/$matchId/scout` (deja intacta la actual `video.$matchId` como "análisis"). Layout de 5 zonas con CSS grid:
+   ```text
+   ┌──────────┬─────────────────────────┬──────────┐
+   │ Info     │ Video (60%)             │ Registro │
+   │ (equipo, │ Play / velocidad / FPS  │ Rápido   │
+   │ titular, │ Tiempo / set / score    │ (equipo→ │
+   │ líbero,  │                         │ jugador→ │
+   │ rotación)│                         │ fund→res)│
+   │          ├─────────────────────────┤          │
+   │          │ Timeline con marcas     │          │
+   │          ├─────────────────────────┤          │
+   │          │ Tabla acciones tiempo real         │
+   └──────────┴────────────────────────────────────┘
+   ```
+2. **`ScoutPanel`** (derecha): flujo Equipo → Jugador → Fundamento → Resultado con botones grandes tocables y atajos (S/R/A/F/B/D + 1..6 jugadora + !/+/0/-/=/≠). Cada confirmación:
+   - Toma `player.currentTime * 1000 - syncOffsetMs` como `videoTMs`.
+   - Emite el evento correcto en el `volley-store` (recepción/ataque/bloqueo/defensa/punto).
+   - Muestra un toast fantasma en la esquina (200 ms) — sin modales.
+3. **`ScoutInfoPanel`** (izquierda): titulares, líbero, rotación actual, marcador, set, tiempo del partido, botón "rotar" rápido.
+4. **`VideoPlayer` mejorado**: velocidad 0.25×–2×, frame-step con `Ctrl+←/→` (a 30 fps), toggle pantalla completa, atajos J/K/L. Ya existe la base.
+5. **`ScoutTimeline`**: marcas por evento, color por fundamento (saque naranja, recepción azul, ataque rojo, bloqueo violeta, defensa verde, error gris), tooltip con jugador/acción/resultado/tiempo, click salta al video.
+6. **`ScoutActionsTable`**: virtualizada, columnas Tiempo / Jugador / Fund / Resultado / Zona / Set / Score / Rot / Equipo. Doble click abre popover inline para editar jugador/resultado/zona/observaciones (no el timestamp). Ordenable y filtrable.
+7. **Modos Rápido/Completo**: toggle en la topbar. Rápido = nunca pausa. Completo = pausa 1.5 s y reanuda al confirmar.
+8. **Persistencia**: reutilizo `startCloudSync` (ya persiste eventos). Al recargar, el usuario continúa exactamente donde estaba: `video.currentTime` se guarda en `match_videos.last_position_sec`.
 
-3. **Ruta `/_authenticated/video/$matchId`** — Workspace
-   - Layout 3 zonas (responsive):
-     - **Player** (React Player, HTML5 video, keyboard shortcuts, frame-step con `requestVideoFrameCallback`).
-     - **Timeline de rallies** debajo del player: cada rally = un bloque proporcional a su duración, click salta.
-     - **Panel de acciones** lateral (tabla virtualizada con `@tanstack/react-virtual`): Tiempo · Jugadora · Fundamento · Zona · Resultado · Rotación · Set · Marcador · Equipo. Click en fila → salta al t_ms.
-   - Barra de marcadores encima del timeline nativo con puntos coloreados por tipo (saque/ataque/etc.) y tooltip con jugadora/acción/resultado/tiempo.
-   - **Sincronización**: botón "Marcar primer saque" (captura `currentTime` y lo iguala al timestamp del primer evento) + slider de ajuste fino ±5s en pasos de 10ms. Todos los marks se recalculan en vivo.
+## Tanda 2 — Detalles finos y edición (siguiente iteración)
 
-4. **Filtros inteligentes** (compuestos)
-   - Set, rotación, jugadora, fundamento, zona, resultado, calidad de recepción previa. Se aplican al panel de acciones, a los marcadores del timeline y a los "clips virtuales" (Tanda 2 los exporta).
+- Zona origen/destino con mini-cancha 6 zonas en el `ScoutPanel`.
+- Tipos de golpe/saque/ataque, altura del armado, observaciones (todos opcionales).
+- Doble click en la tabla → edición inline con undo/redo global (`Ctrl+Z / Ctrl+Y`).
+- Configurador visual de atajos en Ajustes (reutiliza UI de Coach Mode).
+- Cursor teclado-first: `Tab`/`Shift+Tab` mueve foco entre paneles.
 
-5. **Estadística clickeable**
-   - Los paneles existentes de stats en `/matches/$id/stats` reciben un botón "Ver en video" por celda/fila que abre `/video/$matchId?filter=...&autoplay=1`. Esto ya cumple el punto 14 (función diferencial) sin reescribir stats.
+## Tanda 3 — Analítica ligada al video y export
 
-6. **UX**
-   - Atajos: Space (play/pause), ← → (±5s), , . (frame-step), J/L (velocidad), F (fullscreen), 1..6 (velocidades), C (clip), M (marcador).
-   - Estado del workspace (layout, filtros activos, panel abierto) se guarda en `localStorage` por usuario.
+- Cada barra/celda de las stats existentes (`LiveStatsTable`, heatmaps, Rally Intelligence) se vuelve clickeable → salta al video en ese evento.
+- Vista "Rallies" filtrable (side-out, break, ganados por rot).
+- Export de clips por selección (usa ffmpeg.wasm ya planificado en Tanda 2 del módulo video).
 
-## Tanda 2 — Clips, dashboard interactivo, editor básico
+## Detalles técnicos (referencia)
 
-7. **Clips automáticos**: crear listas guardadas ("Todos los aces", "Errores de #12") desde los filtros. Reproducción en secuencia dentro del player (playlist virtual sin cortar el archivo).
-8. **Exportar MP4** con `ffmpeg.wasm` en el browser cuando el video vive en Storage/URL directa (no funciona con YouTube). Cola visible, progreso, descarga.
-9. **Dashboard interactivo**: Recharts + heatmap (reusamos `AttackHeatmap`). Cada barra/celda → aplica filtro al workspace, no abre otra pantalla.
-10. **Editor overlay** (canvas encima del video, no re-encode): flechas, texto, freeze, zoom, líneas, resaltar jugadora, logo, marcador. Se guarda como "anotaciones" por t_ms. Exportar con overlay = ffmpeg.wasm (Tanda 3 si es muy costoso).
+- **Nuevos archivos**
+  - `src/routes/_authenticated/video.$matchId.scout.tsx` — ruta principal del modo scouting.
+  - `src/components/video/scout/ScoutPanel.tsx` — flujo 4-pasos + atajos.
+  - `src/components/video/scout/ScoutInfoPanel.tsx` — sidebar izquierdo.
+  - `src/components/video/scout/ScoutTimeline.tsx` — marcas + tooltip + seek.
+  - `src/components/video/scout/ScoutActionsTable.tsx` — tabla en vivo + edición inline.
+  - `src/lib/video-scout-store.ts` — modo Rápido/Completo, atajos, foco de fundamento.
+  - `src/lib/video-scout-events.ts` — helpers que traducen selecciones a `addEvent` del `volley-store` inyectando `videoTMs`.
+- **Cambios de tipos** — extender `MatchEvent` con `videoTMs?: number` (opcional, no rompe eventos previos). Persiste automáticamente por `cloud-sync`.
+- **Cambios de DB** — añadir columna `last_position_sec numeric` a `match_videos` para reanudar sesión.
+- **Video sync** — `t = videoTMs / 1000 + offset` para saltar; el offset ya vive en `match_videos.sync_offset_ms`.
+- **Atajos** — nuevo namespace en `coach-mode-store` `bindings.scout.{saque,recepcion,armado,ataque,bloqueo,defensa,confirmar,cancelar,undo,redo,frameNext,framePrev}`.
 
-## Tanda 3 — Rendimiento, IA-ready, pulido
+## Rendimiento y UX
 
-11. Streaming HLS opcional (transcoding fuera de Lovable — solo dejamos hooks).
-12. Virtualización de listas grandes, precarga del siguiente clip, cache de URLs firmadas.
-13. Arquitectura IA-ready: interfaz `VideoAIDetector` con métodos `detectRallyBoundaries`, `detectAction`, `detectPlayers`; provider stub local + slot para llamar a un endpoint externo (OpenCV/YOLO/MediaPipe cuando lo integres). Nada de IA real en esta fase, solo los contratos y el UI para revisar/aceptar detecciones.
-14. Editor avanzado, plantillas de reportes en video, comparativa de dos rallies lado a lado.
+- Animaciones ≤ 200 ms (`transition-all duration-150`).
+- Tabla virtualizada con `@tanstack/react-virtual`.
+- Marcas del timeline memoizadas por rango visible.
+- Toasts fantasma no bloqueantes.
+- Modo oscuro heredado del theme actual, sin regresiones.
 
-## Detalles técnicos
+## Fuera de alcance en Tanda 1 (para no bloquear)
 
-- **Storage**: bucket privado `match-videos` en Cloud. Uploads con `supabase.storage.upload` desde el browser (chunked, hasta 5 GB por el límite práctico de Cloud). Para archivos más grandes, el entrenador pega una URL (HTTPS directa, Bunny, Cloudflare Stream, YouTube — YouTube reproduce vía iframe embed y pierde frame-step preciso; lo marcamos en el UI).
-- **Sincronización**: `t_ms(event) = event.timestamp - match.startTs + sync_offset_ms`. El offset vive en `match_videos`; cualquier cambio invalida el memo de marcadores (React Query key incluye el offset).
-- **Marcadores de timeline**: canvas sobre el `<video>` para pintar hasta ~5000 puntos sin costo de DOM.
-- **RLS**: `match_videos` y `event_video_marks` heredan permisos del partido (owner, admin, planillero según `match-permissions.functions.ts` existente).
-- **Rutas nuevas**: `src/routes/_authenticated/video.index.tsx`, `src/routes/_authenticated/video.$matchId.tsx`.
-- **Nada de edge functions nuevas**: todo va con `createServerFn` y consultas cliente (Storage signed URLs).
+- Editor de clips con ffmpeg.
+- Reconocimiento de acciones por IA.
+- Multi-usuario en tiempo real (mismo partido, dos scouters).
 
-## Fuera de alcance explícito de la Tanda 1
-
-Editor de video, exportación MP4, clips en cola, dashboard clickeable global, IA. Todo eso viene en Tanda 2/3 con la base ya funcionando.
-
-## Confirmación
-
-¿Arranco con la Tanda 1 tal cual está descrita? Si querés priorizar algo distinto dentro de las 16 secciones (por ejemplo, saltar editor y empezar por clips automáticos), decime antes de que abra la migración.
+¿Arranco directo con la Tanda 1 tal cual está o querés priorizar algo puntual (por ejemplo, empezar por atajos y tabla en la ruta actual sin crear `.scout`)?
