@@ -24,7 +24,7 @@ export function useMatchVideo(matchId: string | null | undefined) {
     if (!matchId) return;
     setLoading(true);
     const { data, error } = await supabase
-      .from("match_videos" as never)
+      .from("match_videos")
       .select("*")
       .eq("match_id", matchId)
       .maybeSingle();
@@ -40,7 +40,7 @@ export function useMatchVideo(matchId: string | null | undefined) {
 
 export async function upsertMatchVideoUrl(matchId: string, url: string) {
   const { data, error } = await supabase
-    .from("match_videos" as never)
+    .from("match_videos")
     .upsert(
       { match_id: matchId, source: "url", external_url: url, storage_path: null },
       { onConflict: "match_id" },
@@ -53,7 +53,7 @@ export async function upsertMatchVideoUrl(matchId: string, url: string) {
 
 export async function upsertMatchVideoUpload(matchId: string, storagePath: string) {
   const { data, error } = await supabase
-    .from("match_videos" as never)
+    .from("match_videos")
     .upsert(
       { match_id: matchId, source: "upload", storage_path: storagePath, external_url: null },
       { onConflict: "match_id" },
@@ -66,7 +66,7 @@ export async function upsertMatchVideoUpload(matchId: string, storagePath: strin
 
 export async function updateSyncOffset(matchId: string, offsetMs: number) {
   const { data, error } = await supabase
-    .from("match_videos" as never)
+    .from("match_videos")
     .update({ sync_offset_ms: Math.round(offsetMs) })
     .eq("match_id", matchId)
     .select("*")
@@ -77,7 +77,7 @@ export async function updateSyncOffset(matchId: string, offsetMs: number) {
 
 export async function updateVideoMeta(matchId: string, patch: Partial<Pick<MatchVideoRow, "duration_sec" | "favorite" | "tags" | "fps">>) {
   const { data, error } = await supabase
-    .from("match_videos" as never)
+    .from("match_videos")
     .update(patch)
     .eq("match_id", matchId)
     .select("*")
@@ -90,12 +90,12 @@ export async function deleteMatchVideo(matchId: string, storagePath: string | nu
   if (storagePath) {
     await supabase.storage.from("match-videos").remove([storagePath]).catch(() => undefined);
   }
-  const { error } = await supabase.from("match_videos" as never).delete().eq("match_id", matchId);
+  const { error } = await supabase.from("match_videos").delete().eq("match_id", matchId);
   if (error) throw error;
 }
 
 export async function listMatchVideos(): Promise<MatchVideoRow[]> {
-  const { data, error } = await supabase.from("match_videos" as never).select("*");
+  const { data, error } = await supabase.from("match_videos").select("*");
   if (error) {
     console.warn("[listMatchVideos]", error.message);
     return [];
