@@ -82,9 +82,13 @@ function playerLookup(teamA: Team | undefined, teamB: Team | undefined) {
   return map;
 }
 
-function classifyPoint(kind: MatchEvent extends { kind: infer K } ? K : never, ev: MatchEvent): { markKind: VideoMarkKind; fundamento: string; result: string } {
-  if (ev.kind !== "point") return { markKind: "other", fundamento: "-", result: "-" };
-  const t = ev.type;
+function isPoint(ev: MatchEvent): ev is Extract<MatchEvent, { type: unknown; scoringSide: unknown }> {
+  return "type" in ev && "scoringSide" in ev;
+}
+
+function classifyPoint(ev: MatchEvent): { markKind: VideoMarkKind; fundamento: string; result: string } {
+  if (!isPoint(ev)) return { markKind: "other", fundamento: "-", result: "-" };
+  const t = (ev as { type: string }).type;
   const map: Record<string, { k: VideoMarkKind; f: string; r: string }> = {
     ace: { k: "serve", f: "Saque", r: "Ace" },
     service_error: { k: "error", f: "Saque", r: "Error de saque" },
@@ -111,9 +115,9 @@ function buildScoreMap(match: Match): Map<string, { a: number; b: number; setNum
   for (const ev of match.events) {
     const s = perSet.get(ev.setNumber) ?? { a: 0, b: 0 };
     map.set(ev.id, { a: s.a, b: s.b, setNumber: ev.setNumber });
-    if (ev.kind === "point") {
-      if (ev.scoringSide === "A") s.a += 1;
-      else s.b += 1;
+    if (isPoint(ev)) {
+      const side = (ev as { scoringSide: "A" | "B" }).scoringSide;
+      if (side === "A") s.a += 1; else s.b += 1;
     }
     perSet.set(ev.setNumber, s);
   }
