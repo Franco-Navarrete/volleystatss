@@ -20,7 +20,7 @@ import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, Star, Trash2, Upload, Link2, Crosshair, Video as VideoIcon } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/video/$matchId")({
+export const Route = createFileRoute("/_authenticated/video/$matchId/")({
   head: () => ({
     meta: [
       { title: "Workspace de video — RALLY" },
