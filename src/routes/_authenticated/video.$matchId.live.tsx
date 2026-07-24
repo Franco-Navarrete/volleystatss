@@ -104,43 +104,51 @@ function LiveRoute() {
     if (!match || !side || !fund) return;
     const v = useVolley.getState();
     const tMs = videoTMsNow();
-    const meta = tMs != null ? { videoTMs: tMs } : {};
     switch (fund) {
       case "saque": {
         const pt = pointTypeForServe(result);
-        if (pt) v.recordPoint(match.id, side, pt, playerId, meta);
+        if (pt) v.recordPoint(match.id, side, pt, playerId);
         else showGhost(`Saque ${RESULT_LABEL[result]} sin punto`);
         break;
       }
       case "recepcion":
-        if (playerId) v.recordReception(match.id, side, playerId, ratingForReception(result), meta);
+        if (playerId) v.recordReception(match.id, side, playerId, ratingForReception(result));
         break;
       case "defensa":
-        if (playerId) v.recordDefense(match.id, side, playerId, ratingForDefense(result), meta);
+        if (playerId) v.recordDefense(match.id, side, playerId, ratingForDefense(result));
         break;
       case "ataque": {
         const pt = pointTypeForAttack(result);
-        if (pt) v.recordPoint(match.id, side, pt, playerId, meta);
-        else if (playerId) v.recordAttackAttempt(match.id, side, playerId, meta);
+        if (pt) v.recordPoint(match.id, side, pt, playerId);
+        else if (playerId) v.recordAttackAttempt(match.id, side, playerId, {});
         break;
       }
       case "bloqueo": {
         const pt = pointTypeForBlock(result);
-        if (pt) v.recordPoint(match.id, side, pt, playerId, meta);
+        if (pt) v.recordPoint(match.id, side, pt, playerId);
         break;
       }
       case "armado":
       case "freeball":
       case "cobertura":
       case "pase":
-        if (playerId) v.recordAttackAttempt(match.id, side, playerId, meta);
+        if (playerId) v.recordAttackAttempt(match.id, side, playerId, {});
         break;
       case "error":
-        v.recordPoint(match.id, side, "unforced_error", playerId, meta);
+        v.recordPoint(match.id, side, "unforced_error", playerId);
         break;
       case "punto":
-        v.recordPoint(match.id, side, "opponent_error", playerId, meta);
+        v.recordPoint(match.id, side, "opponent_error", playerId);
         break;
+    }
+    // Anclar videoTMs al último evento agregado (mismo store, mismo tick).
+    if (tMs != null) {
+      const state = useVolley.getState();
+      const m = state.matches.find((mm) => mm.id === match.id);
+      const last = m?.events[m.events.length - 1];
+      if (last && last.videoTMs == null) {
+        (last as { videoTMs?: number }).videoTMs = tMs;
+      }
     }
     const team = side === "A" ? teamA : teamB;
     const p = team?.players.find((pp) => pp.id === playerId);
@@ -148,6 +156,7 @@ function LiveRoute() {
     resetStep();
     if (mode === "completo") setOverlayUntil(Date.now() + autoPauseMs);
   }, [match, side, fund, playerId, teamA, teamB, mode, autoPauseMs, resetStep, videoTMsNow, showGhost]);
+
 
   // Atajos
   useEffect(() => {
