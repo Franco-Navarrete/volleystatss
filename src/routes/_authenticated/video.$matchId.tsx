@@ -197,13 +197,19 @@ function VideoWorkspace() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link to="/video/$matchId/live" params={{ matchId }}>
+              <Button size="sm" variant="default" className="bg-red-600 hover:bg-red-700 text-white" title="Grabar con cámara en tiempo real">
+                <Crosshair className="size-4 mr-1" /> Scouting en Vivo (cámara)
+              </Button>
+            </Link>
             {video && (
               <>
                 <Link to="/video/$matchId/scout" params={{ matchId }}>
-                  <Button size="sm" variant="default" title="Scouting en vivo">
-                    <Crosshair className="size-4 mr-1" /> Scouting en vivo
+                  <Button size="sm" variant="outline" title="Scouting sobre video pregrabado">
+                    <Crosshair className="size-4 mr-1" /> Scouting sobre video
                   </Button>
                 </Link>
+
                 <Button size="sm" variant="ghost" onClick={toggleFav} title="Favorito">
                   <Star className={`size-4 ${video.favorite ? "fill-primary text-primary" : ""}`} />
                 </Button>
