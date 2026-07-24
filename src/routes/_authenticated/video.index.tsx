@@ -5,7 +5,7 @@ import { useVolley, setsWon } from "@/lib/volley-store";
 import { listMatchVideos, type MatchVideoRow } from "@/hooks/use-match-video";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Star, Video, VideoOff, Search, Filter, Clock, Plus, Radio } from "lucide-react";
+import { Star, Video, VideoOff, Search, Filter, Clock, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/video/")({
   head: () => ({
