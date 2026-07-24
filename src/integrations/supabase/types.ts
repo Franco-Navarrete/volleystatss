@@ -323,6 +323,7 @@ export type Database = {
           favorite: boolean
           fps: number | null
           id: string
+          last_position_sec: number | null
           match_id: string
           source: string
           storage_path: string | null
@@ -338,6 +339,7 @@ export type Database = {
           favorite?: boolean
           fps?: number | null
           id?: string
+          last_position_sec?: number | null
           match_id: string
           source: string
           storage_path?: string | null
@@ -353,6 +355,7 @@ export type Database = {
           favorite?: boolean
           fps?: number | null
           id?: string
+          last_position_sec?: number | null
           match_id?: string
           source?: string
           storage_path?: string | null
