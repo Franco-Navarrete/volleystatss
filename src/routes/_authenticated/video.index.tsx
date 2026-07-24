@@ -64,18 +64,11 @@ function VideoLibrary() {
               Sincronizá el video del partido con el scout y navegá cada acción con un click.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link to="/matches/new">
-              <Button variant="outline" className="gap-2">
-                <Plus className="size-4" /> Nuevo partido
-              </Button>
-            </Link>
-            <Link to="/matches/new" search={{ live: 1 } as never}>
-              <Button className="gap-2">
-                <Radio className="size-4" /> Empezar partido en vivo
-              </Button>
-            </Link>
-          </div>
+          <Link to="/matches/new">
+            <Button className="gap-2">
+              <Plus className="size-4" /> Empezar partido de 0
+            </Button>
+          </Link>
         </header>
 
         <div className="flex flex-wrap items-center gap-2 bg-card/40 border border-border rounded-lg p-3">
