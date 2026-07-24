@@ -145,11 +145,10 @@ function LiveRoute() {
     if (tMs != null) {
       const state = useVolley.getState();
       const m = state.matches.find((mm) => mm.id === match.id);
-      const last = m?.events[m.events.length - 1];
-      if (last && last.videoTMs == null) {
-        (last as { videoTMs?: number }).videoTMs = tMs;
-      }
+      const last = m?.events[m.events.length - 1] as unknown as { videoTMs?: number } | undefined;
+      if (last && last.videoTMs == null) last.videoTMs = tMs;
     }
+
     const team = side === "A" ? teamA : teamB;
     const p = team?.players.find((pp) => pp.id === playerId);
     showGhost(`${FUND_LABEL[fund]} · ${RESULT_LABEL[result]} · ${p ? `#${p.number} ${p.name}` : team?.name ?? side}${tMs != null ? ` · ${(tMs/1000).toFixed(1)}s` : ""}`);
