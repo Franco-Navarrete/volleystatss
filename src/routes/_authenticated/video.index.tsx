@@ -5,7 +5,7 @@ import { useVolley, setsWon } from "@/lib/volley-store";
 import { listMatchVideos, type MatchVideoRow } from "@/hooks/use-match-video";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Star, Video, VideoOff, Search, Filter, Clock } from "lucide-react";
+import { Star, Video, VideoOff, Search, Filter, Clock, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/video/")({
   head: () => ({
@@ -64,6 +64,11 @@ function VideoLibrary() {
               Sincronizá el video del partido con el scout y navegá cada acción con un click.
             </p>
           </div>
+          <Link to="/matches/new">
+            <Button className="gap-2">
+              <Plus className="size-4" /> Empezar partido de 0
+            </Button>
+          </Link>
         </header>
 
         <div className="flex flex-wrap items-center gap-2 bg-card/40 border border-border rounded-lg p-3">
