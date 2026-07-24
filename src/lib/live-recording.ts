@@ -171,10 +171,11 @@ export class LiveRecorder {
           .update({
             chunk_count: this.chunks.length,
             duration_ms: totalMs,
-            chunk_manifest: this.chunks,
+            chunk_manifest: this.chunks as unknown as Record<string, unknown>[],
           })
           .eq("id", this.session.id);
         this.cb.onChunkUploaded?.(chunk, totalMs);
+
       } catch (err) {
         console.error("[LiveRecorder] upload chunk failed", err);
         this.cb.onError?.(err as Error);
@@ -209,9 +210,10 @@ export class LiveRecorder {
         ended_at: new Date().toISOString(),
         duration_ms: totalMs,
         chunk_count: this.chunks.length,
-        chunk_manifest: this.chunks,
+        chunk_manifest: this.chunks as unknown as Record<string, unknown>[],
       })
       .eq("id", this.session.id);
+
 
     // Registrar como video del partido apuntando al primer chunk (Tanda 2: reproducción concatenada).
     if (mainPath) {
