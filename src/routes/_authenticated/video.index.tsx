@@ -154,10 +154,3 @@ function formatDur(sec: number) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-// Keep TS happy for league_id lookup: matches from volley-store don't carry league_id on Match.
-// We simply ignore league mapping when the shape doesn't match.
-declare module "@/lib/volley-store" {
-  interface Match {
-    league_id_placeholder?: never;
-  }
-}
