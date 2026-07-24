@@ -1,84 +1,65 @@
-# Modo Scouting en Vivo — Plan de construcción
+# Modo Scouting en Vivo (cámara en tiempo real)
 
-Es un módulo grande. Lo construyo sobre lo ya hecho en Tanda 1 (`/video/$matchId`, `VideoPlayer`, `use-match-video`, `video-marks`) y lo divido en 3 tandas para poder validar rápido cada bloque.
+Extiende el Modo Scouting actual (`/video/$matchId/scout`) para trabajar sin video pregrabado: el entrenador conecta una cámara (webcam, IP o capturadora HDMI vía WebRTC/`getUserMedia`), registra acciones mientras se juega y al terminar queda un video sincronizado con todos los eventos, listo para reproducir jugada por jugada y generar clips.
 
-## Alcance y decisiones clave
+Divido en **3 tandas** para poder validar cada bloque.
 
-- **Fuente de verdad**: cada acción de scouting es un `MatchEvent` del `volley-store` existente, con un campo nuevo `videoTMs` (ms desde el inicio del video). Esto reutiliza todas las estadísticas, heatmaps, rotaciones y Rally Intelligence sin duplicar lógica.
-- **Autoguardado**: se guarda en `zustand` + `cloud-sync` (ya operativo). Nada de diálogos de confirmación.
-- **Modo Rápido vs Completo**: un toggle global. En Rápido el video nunca se pausa; en Completo se pausa 1.5 s tras cada registro.
-- **Atajos**: se reutiliza la infraestructura de Coach Mode (`coach-mode-store` + `bindingMatches`) para que sean configurables desde Ajustes.
+## Tanda 1 — Captura en vivo + registro sincronizado (esta iteración)
 
-## Tanda 1 — Layout de 5 paneles + registro rápido (esta iteración)
+Objetivo: abrir cámara, ver la transmisión, registrar acciones con timestamp real, y al finalizar quedarse con un `.webm` subido a `match-videos` con todos los eventos anclados.
 
-Objetivo: entrenador puede mirar el video y registrar acciones en ≤ 2 s por acción, con timestamp automático y timeline clickeable.
+1. **Nueva ruta** `/video/$matchId/live` (paralela a `.scout`). Layout de 3 columnas idéntico al scouting actual, pero el panel central es la cámara en vivo en lugar del `<video>` pregrabado.
+2. **`LiveCameraPanel`**:
+   - Selector de fuente: webcam integrada, cámara USB, cámara IP (URL RTSP/HLS via `<video src>` cuando el navegador lo soporte) o capturadora HDMI (aparecen como `videoinput` en `enumerateDevices`).
+   - `navigator.mediaDevices.getUserMedia({ video: { deviceId }, audio: true })` y `MediaRecorder` a `video/webm;codecs=vp9,opus` en chunks de 5 s.
+   - Botones **REC / Pausa / Stop**. Indicador rojo + cronómetro.
+   - Al pulsar REC guardo `recordingStartedAt = performance.now()` y `wallClockStart = Date.now()` — es el origen de tiempo del video.
+3. **Registro sincronizado**: cada acción del `ScoutPanel` calcula `videoTMs = performance.now() - recordingStartedAt` y se guarda en el evento (`MatchEvent.videoTMs`, ya soportado). Modo Rápido nunca pausa; modo Completo hace un `overlay` de 1.5 s (no se puede pausar la cámara real).
+4. **Autoguardado del video** (baja latencia, sin perder nada si se cae el navegador):
+   - Cada chunk del `MediaRecorder` se sube en paralelo a `match-videos/live/{matchId}/{index}.webm` usando uploads independientes.
+   - Metadata en tabla nueva `live_recordings` con `match_id`, `session_id`, `chunk_count`, `started_at`, `ended_at`, `status`.
+   - Al pulsar Stop: server function `finalizeLiveRecording` concatena refs (guarda un manifiesto JSON `chunks[]`) y hace `upsertMatchVideoUpload` apuntando al primer chunk como fuente principal; el `VideoPlayer` reproduce la lista secuencialmente.
+5. **Timeline y tabla en vivo**: reutilizo `ScoutTimeline` y `ScoutActionsTable` que ya leen `videoTMs`. Aparecen marcas mientras se registra.
+6. **Reanudación**: si el usuario recarga con una grabación activa, el manifiesto en `live_recordings` permite continuar (nuevo `session_id` si prefiere, o append al actual).
+7. **UX detalles**:
+   - Aviso permisos de cámara/micrófono con fallback claro.
+   - Detección de desconexión de dispositivo → toast + pausa automática.
+   - Warning si batería < 20% o almacenamiento < 500 MB (via `navigator.storage.estimate`).
 
-1. **Nueva ruta** `/video/$matchId/scout` (deja intacta la actual `video.$matchId` como "análisis"). Layout de 5 zonas con CSS grid:
-   ```text
-   ┌──────────┬─────────────────────────┬──────────┐
-   │ Info     │ Video (60%)             │ Registro │
-   │ (equipo, │ Play / velocidad / FPS  │ Rápido   │
-   │ titular, │ Tiempo / set / score    │ (equipo→ │
-   │ líbero,  │                         │ jugador→ │
-   │ rotación)│                         │ fund→res)│
-   │          ├─────────────────────────┤          │
-   │          │ Timeline con marcas     │          │
-   │          ├─────────────────────────┤          │
-   │          │ Tabla acciones tiempo real         │
-   └──────────┴────────────────────────────────────┘
-   ```
-2. **`ScoutPanel`** (derecha): flujo Equipo → Jugador → Fundamento → Resultado con botones grandes tocables y atajos (S/R/A/F/B/D + 1..6 jugadora + !/+/0/-/=/≠). Cada confirmación:
-   - Toma `player.currentTime * 1000 - syncOffsetMs` como `videoTMs`.
-   - Emite el evento correcto en el `volley-store` (recepción/ataque/bloqueo/defensa/punto).
-   - Muestra un toast fantasma en la esquina (200 ms) — sin modales.
-3. **`ScoutInfoPanel`** (izquierda): titulares, líbero, rotación actual, marcador, set, tiempo del partido, botón "rotar" rápido.
-4. **`VideoPlayer` mejorado**: velocidad 0.25×–2×, frame-step con `Ctrl+←/→` (a 30 fps), toggle pantalla completa, atajos J/K/L. Ya existe la base.
-5. **`ScoutTimeline`**: marcas por evento, color por fundamento (saque naranja, recepción azul, ataque rojo, bloqueo violeta, defensa verde, error gris), tooltip con jugador/acción/resultado/tiempo, click salta al video.
-6. **`ScoutActionsTable`**: virtualizada, columnas Tiempo / Jugador / Fund / Resultado / Zona / Set / Score / Rot / Equipo. Doble click abre popover inline para editar jugador/resultado/zona/observaciones (no el timestamp). Ordenable y filtrable.
-7. **Modos Rápido/Completo**: toggle en la topbar. Rápido = nunca pausa. Completo = pausa 1.5 s y reanuda al confirmar.
-8. **Persistencia**: reutilizo `startCloudSync` (ya persiste eventos). Al recargar, el usuario continúa exactamente donde estaba: `video.currentTime` se guarda en `match_videos.last_position_sec`.
+## Tanda 2 — Post-partido: clips + reproducción unificada
 
-## Tanda 2 — Detalles finos y edición (siguiente iteración)
+- `VideoPlayer` acepta lista de chunks y los reproduce como uno solo (Media Source Extensions o `<video>` con `src` rotativo).
+- Botón "generar clips" por acción/rally usando `ffmpeg.wasm` (ya planificado) sobre los chunks concatenados.
+- Descarga del video completo concatenado en un solo `.mp4` (server function con ffmpeg vía worker externo si excede el runtime de Cloudflare).
+- Vista "highlights" filtrable por resultado (puntos, errores, aces, bloqueos).
 
-- Zona origen/destino con mini-cancha 6 zonas en el `ScoutPanel`.
-- Tipos de golpe/saque/ataque, altura del armado, observaciones (todos opcionales).
-- Doble click en la tabla → edición inline con undo/redo global (`Ctrl+Z / Ctrl+Y`).
-- Configurador visual de atajos en Ajustes (reutiliza UI de Coach Mode).
-- Cursor teclado-first: `Tab`/`Shift+Tab` mueve foco entre paneles.
+## Tanda 3 — IA (detección automática)
 
-## Tanda 3 — Analítica ligada al video y export
-
-- Cada barra/celda de las stats existentes (`LiveStatsTable`, heatmaps, Rally Intelligence) se vuelve clickeable → salta al video en ese evento.
-- Vista "Rallies" filtrable (side-out, break, ganados por rot).
-- Export de clips por selección (usa ffmpeg.wasm ya planificado en Tanda 2 del módulo video).
+- Arquitectura preparada: los chunks quedan en storage con timestamps precisos y un manifiesto que un job externo puede consumir.
+- Pipeline propuesto: worker externo (Cloud Run / Modal) que corra YOLOv8 para detectar jugadoras/balón y un clasificador (MMAction2 o similar) para acciones. Escribe a `ai_detections(match_id, video_time_ms, kind, payload jsonb)`.
+- UI: overlay opcional sobre el reproductor mostrando bounding boxes, y sugerencias de eventos ("¿Registrar ataque de #7?") que el entrenador confirma con un clic.
+- Este plan **no ejecuta** la IA todavía; sólo dejamos los ganchos: tabla `ai_detections`, botón "Analizar con IA" deshabilitado y documentación del contrato.
 
 ## Detalles técnicos (referencia)
 
-- **Nuevos archivos**
-  - `src/routes/_authenticated/video.$matchId.scout.tsx` — ruta principal del modo scouting.
-  - `src/components/video/scout/ScoutPanel.tsx` — flujo 4-pasos + atajos.
-  - `src/components/video/scout/ScoutInfoPanel.tsx` — sidebar izquierdo.
-  - `src/components/video/scout/ScoutTimeline.tsx` — marcas + tooltip + seek.
-  - `src/components/video/scout/ScoutActionsTable.tsx` — tabla en vivo + edición inline.
-  - `src/lib/video-scout-store.ts` — modo Rápido/Completo, atajos, foco de fundamento.
-  - `src/lib/video-scout-events.ts` — helpers que traducen selecciones a `addEvent` del `volley-store` inyectando `videoTMs`.
-- **Cambios de tipos** — extender `MatchEvent` con `videoTMs?: number` (opcional, no rompe eventos previos). Persiste automáticamente por `cloud-sync`.
-- **Cambios de DB** — añadir columna `last_position_sec numeric` a `match_videos` para reanudar sesión.
-- **Video sync** — `t = videoTMs / 1000 + offset` para saltar; el offset ya vive en `match_videos.sync_offset_ms`.
-- **Atajos** — nuevo namespace en `coach-mode-store` `bindings.scout.{saque,recepcion,armado,ataque,bloqueo,defensa,confirmar,cancelar,undo,redo,frameNext,framePrev}`.
+**Nuevos archivos**
+- `src/routes/_authenticated/video.$matchId.live.tsx` — ruta principal del modo en vivo.
+- `src/components/video/live/LiveCameraPanel.tsx` — captura, `MediaRecorder`, controles REC.
+- `src/components/video/live/LiveDeviceSelector.tsx` — selector de fuentes.
+- `src/lib/live-recording.ts` — cliente para chunks + manifiesto + `videoTMs`.
+- `src/lib/live-recording.functions.ts` — `startLiveRecording`, `appendChunk`, `finalizeLiveRecording` (usan `requireSupabaseAuth` + `supabaseAdmin` sólo para escribir manifiesto).
 
-## Rendimiento y UX
+**Cambios DB (una migración)**
+- Tabla `live_recordings(match_id uuid, session_id uuid, started_at, ended_at, status, chunk_manifest jsonb, owner_id uuid)` con RLS por `owner_id` + `can_manage_teams`.
+- Bucket `match-videos` ya existe; se reutiliza con prefijo `live/`.
+- (Preparación Tanda 3) Tabla `ai_detections` — se crea recién en Tanda 3.
 
-- Animaciones ≤ 200 ms (`transition-all duration-150`).
-- Tabla virtualizada con `@tanstack/react-virtual`.
-- Marcas del timeline memoizadas por rango visible.
-- Toasts fantasma no bloqueantes.
-- Modo oscuro heredado del theme actual, sin regresiones.
+**Rendimiento**
+- Chunks de 5 s → subida progresiva, no bloquea UI.
+- `MediaRecorder` en Web Worker no es posible, pero el encoding es nativo (GPU-accelerated en Chrome).
+- Timeline y tabla ya están memoizadas.
 
-## Fuera de alcance en Tanda 1 (para no bloquear)
+## Preguntas antes de arrancar
 
-- Editor de clips con ffmpeg.
-- Reconocimiento de acciones por IA.
-- Multi-usuario en tiempo real (mismo partido, dos scouters).
-
-¿Arranco directo con la Tanda 1 tal cual está o querés priorizar algo puntual (por ejemplo, empezar por atajos y tabla en la ruta actual sin crear `.scout`)?
+1. ¿Empiezo por **Tanda 1 completa** (captura + registro + subida en chunks) o querés primero un MVP más chico (sólo cámara + registro sin subida, para probar UX)?
+2. ¿La cámara IP/HDMI es prioridad ahora o alcanza con webcam en esta primera versión?
