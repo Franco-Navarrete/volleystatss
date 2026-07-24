@@ -82,7 +82,9 @@ import {
   ArrowLeftRight,
   ChartBarBig,
   Check,
+  Crosshair,
   Edit3,
+  Film,
   Flag,
   Hourglass,
   Keyboard,
@@ -858,6 +860,23 @@ function LiveMatch() {
                   </Link>
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Video</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link to="/video/$matchId/live" params={{ matchId: match.id }}>
+                  <Crosshair className="size-4" /> Scouting en vivo (cámara)
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/video/$matchId/scout" params={{ matchId: match.id }}>
+                  <Film className="size-4" /> Scouting con video
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/video/$matchId" params={{ matchId: match.id }}>
+                  <Film className="size-4" /> Ver / cargar video
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
                 <Hourglass className="size-4" /> Formato del partido
               </DropdownMenuItem>
