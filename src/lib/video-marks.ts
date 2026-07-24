@@ -277,7 +277,7 @@ export function buildRallyBlocks(marks: VideoMark[]): RallyBlock[] {
   let currentSet = marks[0]!.setNumber;
   for (const m of marks) {
     count += 1;
-    if (m.event.kind === "point") {
+    if (!("kind" in m.event)) {
       blocks.push({
         index: idx++,
         setNumber: currentSet,
