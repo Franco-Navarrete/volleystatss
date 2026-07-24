@@ -170,6 +170,54 @@ export type Database = {
         }
         Relationships: []
       }
+      live_recordings: {
+        Row: {
+          chunk_count: number
+          chunk_manifest: Json
+          created_at: string
+          duration_ms: number
+          ended_at: string | null
+          id: string
+          match_id: string
+          owner_id: string
+          session_id: string
+          started_at: string
+          status: string
+          storage_prefix: string
+          updated_at: string
+        }
+        Insert: {
+          chunk_count?: number
+          chunk_manifest?: Json
+          created_at?: string
+          duration_ms?: number
+          ended_at?: string | null
+          id?: string
+          match_id: string
+          owner_id: string
+          session_id?: string
+          started_at?: string
+          status?: string
+          storage_prefix: string
+          updated_at?: string
+        }
+        Update: {
+          chunk_count?: number
+          chunk_manifest?: Json
+          created_at?: string
+          duration_ms?: number
+          ended_at?: string | null
+          id?: string
+          match_id?: string
+          owner_id?: string
+          session_id?: string
+          started_at?: string
+          status?: string
+          storage_prefix?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       match_deletion_audit: {
         Row: {
           created_at: string
