@@ -1,134 +1,67 @@
-# Coach Mode v2 — Motor de Estados Guiado
 
-Rediseñamos Coach Mode: dejar de ser "atajos + panel de ataque suelto" para convertirse en un **motor de estados** que guía el rally completo dentro de **un único panel flotante**, con selección automática de jugador desde la formación efectiva y valoración universal.
+# Video Analysis — plan de construcción
 
-## 1. Motor de estados (nuevo)
+Este es un módulo enorme (16 secciones). Lo entrego en **3 tandas** dentro del mismo proyecto para que veas cada capa funcionando antes de que crezca la deuda técnica. Todo va bajo `/_authenticated/video`, reutilizando el scout, jugadoras, rotaciones y eventos que Rally ya tiene.
 
-Archivo: `src/lib/coach/rally-machine.ts`
+## Tanda 1 — Núcleo interactivo (esta iteración)
 
-Máquina de estados desacoplada del `volley-store` (todavía comitea vía sus acciones existentes al confirmar cada fundamento):
+Lo diferencial del pedido: **una estadística → un click → el video se reproduce en el instante exacto**.
 
-```text
-IDLE → SAQUE → RECEPCION → ARMADO → ATAQUE
-              ↑ (según valoración)   ↓
-              └── BLOQUEO ← DEFENSA ← CONTRAATAQUE
-                       ↓
-                     FIN_RALLY
-```
+1. **Backend (Cloud)**
+   - Tabla `match_videos` (uno-a-uno con `matches`): `source` (`upload` | `url`), `url`, `duration_sec`, `sync_offset_ms`, `fps`, `status` (`unsynced` | `synced`), `favorite`, `tags[]`, `created_at`, `updated_at`, RLS por owner del partido.
+   - Tabla `event_video_marks` (opcional por evento): `event_id`, `match_id`, `t_ms` (timestamp calculado o manual override), `kind` (saque/ataque/bloqueo/recepción/error/punto), `color`. Se puede derivar en vivo desde `match_events.timestamp + sync_offset`, pero la tabla permite override manual.
+   - Bucket privado `match-videos` (Cloud Storage) con política de lectura por owner + signed URLs. Para URLs externas solo guardamos el link.
+   - Server fns: `upsertMatchVideo`, `setSyncOffset`, `setEventMark`, `listMatchVideos`, `getSignedVideoUrl`.
 
-Elementos:
+2. **Ruta `/_authenticated/video`** — Biblioteca
+   - Grid de tarjetas por partido con: competencia, fecha, equipo, rival, resultado, duración, estado (Sin sync / Sincronizado), estrella favorito, chips de etiquetas.
+   - Buscador + filtros (liga, estado, favoritos, etiquetas, fecha) y orden.
 
-- `RallyState = 'idle' | 'saque' | 'recepcion' | 'armado' | 'ataque' | 'bloqueo' | 'defensa' | 'contraataque' | 'fin'`
-- `RallyStep = { state, side: 'A'|'B', playerId?, zone?, origin?, target?, rating? }`
-- Store zustand `useCoachRally`:
-  - `history: RallyStep[]`, `redo: RallyStep[]`, `current: PartialStep | null`
-  - `start(state, side)`, `setPlayer(id)`, `setZone(z)`, `setOrigin/Target(z)`, `setRating(r)`, `commit()`, `back()`, `cancel()`, `undo()`, `redo()`
-- `nextState(step)`: función pura que decide el próximo fundamento según la valoración universal (`# + 0 - = ≠`). Ej: recepción `=`/`≠` → `fin` (punto rival); saque `#` → `fin`; ataque `#` → `fin`; ataque `-` → `defensa` del otro lado; etc.
-- `commit()` mapea la step a llamadas del `volley-store` (recycleando `recordPoint`, `recordPass`, `recordSet`, `recordAttack`, `recordBlock`, `recordDig`) sin duplicar reglas.
+3. **Ruta `/_authenticated/video/$matchId`** — Workspace
+   - Layout 3 zonas (responsive):
+     - **Player** (React Player, HTML5 video, keyboard shortcuts, frame-step con `requestVideoFrameCallback`).
+     - **Timeline de rallies** debajo del player: cada rally = un bloque proporcional a su duración, click salta.
+     - **Panel de acciones** lateral (tabla virtualizada con `@tanstack/react-virtual`): Tiempo · Jugadora · Fundamento · Zona · Resultado · Rotación · Set · Marcador · Equipo. Click en fila → salta al t_ms.
+   - Barra de marcadores encima del timeline nativo con puntos coloreados por tipo (saque/ataque/etc.) y tooltip con jugadora/acción/resultado/tiempo.
+   - **Sincronización**: botón "Marcar primer saque" (captura `currentTime` y lo iguala al timestamp del primer evento) + slider de ajuste fino ±5s en pasos de 10ms. Todos los marks se recalculan en vivo.
 
-Universal rating: `# + 0 - = ≠`. Cada fundamento tiene su propio `meaningOfRating` (recibido / punto / continúa / etc.), pero UI y teclas son idénticas.
+4. **Filtros inteligentes** (compuestos)
+   - Set, rotación, jugadora, fundamento, zona, resultado, calidad de recepción previa. Se aplican al panel de acciones, a los marcadores del timeline y a los "clips virtuales" (Tanda 2 los exporta).
 
-## 2. Selección automática (fuente de verdad: formación efectiva)
+5. **Estadística clickeable**
+   - Los paneles existentes de stats en `/matches/$id/stats` reciben un botón "Ver en video" por celda/fila que abre `/video/$matchId?filter=...&autoplay=1`. Esto ya cumple el punto 14 (función diferencial) sin reescribir stats.
 
-Archivo: `src/lib/coach/effective-lineup.ts`
+6. **UX**
+   - Atajos: Space (play/pause), ← → (±5s), , . (frame-step), J/L (velocidad), F (fullscreen), 1..6 (velocidades), C (clip), M (marcador).
+   - Estado del workspace (layout, filtros activos, panel abierto) se guarda en `localStorage` por usuario.
 
-- `getEffectiveOnCourt(match, side)` — usa `match.onCourtA/B` (ya refleja rotaciones, líbero, sustituciones) + `buildEffective` compartido con `CourtView`.
-- `playerAtZone(match, side, zone)` — mapea Z1..Z6 al índice correcto del array efectivo.
-- Reglas:
-  - Saque → jugador en Z1 del equipo que saca.
-  - Recepción → si se conoce `target` del saque, receptor = jugador en esa zona del lado receptor.
-  - Armado → armadora si está en cancha; si no, jugador en Z2/Z3 más cercano.
-  - Ataque → jugador en zona origen elegida (Z4/Z3/Z2/Pipe(Z6)/Z1).
-  - Bloqueo/Defensa → jugador en la zona destino del ataque previo.
-- Nunca preguntar al usuario un dato deducible: sólo pedir manual si `playerAtZone` devuelve `null` o ambiguo.
+## Tanda 2 — Clips, dashboard interactivo, editor básico
 
-## 3. Panel único (state machine UI)
+7. **Clips automáticos**: crear listas guardadas ("Todos los aces", "Errores de #12") desde los filtros. Reproducción en secuencia dentro del player (playlist virtual sin cortar el archivo).
+8. **Exportar MP4** con `ffmpeg.wasm` en el browser cuando el video vive en Storage/URL directa (no funciona con YouTube). Cola visible, progreso, descarga.
+9. **Dashboard interactivo**: Recharts + heatmap (reusamos `AttackHeatmap`). Cada barra/celda → aplica filtro al workspace, no abre otra pantalla.
+10. **Editor overlay** (canvas encima del video, no re-encode): flechas, texto, freeze, zoom, líneas, resaltar jugadora, logo, marcador. Se guarda como "anotaciones" por t_ms. Exportar con overlay = ffmpeg.wasm (Tanda 3 si es muy costoso).
 
-Componente: `src/components/coach/CoachRallyPanel.tsx`
+## Tanda 3 — Rendimiento, IA-ready, pulido
 
-Un solo `<div>` flotante (fixed, centro-inferior, ~420px). NO usar Radix `Dialog` (romperá con tablet forzado + evita focus trap que corrompe hotkeys). Estructura:
+11. Streaming HLS opcional (transcoding fuera de Lovable — solo dejamos hooks).
+12. Virtualización de listas grandes, precarga del siguiente clip, cache de URLs firmadas.
+13. Arquitectura IA-ready: interfaz `VideoAIDetector` con métodos `detectRallyBoundaries`, `detectAction`, `detectPlayers`; provider stub local + slot para llamar a un endpoint externo (OpenCV/YOLO/MediaPipe cuando lo integres). Nada de IA real en esta fase, solo los contratos y el UI para revisar/aceptar detecciones.
+14. Editor avanzado, plantillas de reportes en video, comparativa de dos rallies lado a lado.
 
-```text
-┌────────────────────────────────────────┐
-│ ⌨ Coach Mode · Equipo A · ATAQUE  [×] │  ← Cabecera
-├────────────────────────────────────────┤
-│ SAQUE › REC › ARM › ATA · BLQ · DEF ·  │  ← Progress bar
-├─────────────────────────┬──────────────┤
-│ Paso actual (contenido) │ Resumen del  │
-│ dinámico por estado)    │ rally lateral│
-│                         │              │
-│ [Esc] cancelar          │              │
-│ [⌫] volver              │              │
-└─────────────────────────┴──────────────┘
-```
+## Detalles técnicos
 
-Sub-componentes reutilizables por estado (renderizan sólo su input y consumen la machine):
+- **Storage**: bucket privado `match-videos` en Cloud. Uploads con `supabase.storage.upload` desde el browser (chunked, hasta 5 GB por el límite práctico de Cloud). Para archivos más grandes, el entrenador pega una URL (HTTPS directa, Bunny, Cloudflare Stream, YouTube — YouTube reproduce vía iframe embed y pierde frame-step preciso; lo marcamos en el UI).
+- **Sincronización**: `t_ms(event) = event.timestamp - match.startTs + sync_offset_ms`. El offset vive en `match_videos`; cualquier cambio invalida el memo de marcadores (React Query key incluye el offset).
+- **Marcadores de timeline**: canvas sobre el `<video>` para pintar hasta ~5000 puntos sin costo de DOM.
+- **RLS**: `match_videos` y `event_video_marks` heredan permisos del partido (owner, admin, planillero según `match-permissions.functions.ts` existente).
+- **Rutas nuevas**: `src/routes/_authenticated/video.index.tsx`, `src/routes/_authenticated/video.$matchId.tsx`.
+- **Nada de edge functions nuevas**: todo va con `createServerFn` y consultas cliente (Storage signed URLs).
 
-- `StepPickPlayer` — grilla con onCourt efectivo, resalta autopickeado; teclas 0-9 (buffer 350ms).
-- `StepPickZone` — grilla 3×3 QWE/ASD (Z5 Z6 Z1 / Z4 Z3 Z2) reutilizando teclas actuales.
-- `StepPickOriginZone` — 1..5 (Z4/Z3/Z2/Pipe/Zag) para ataque.
-- `StepPickRating` — 6 botones con teclas `# + 0 - = ≠`. Confirm automático (sin Enter).
-- `StepSummary` — al FIN, muestra resultado + [Enter] nuevo rally.
+## Fuera de alcance explícito de la Tanda 1
 
-Transiciones con `data-[state]` y `animate-in fade-in-0 slide-in-from-bottom-1 duration-200`.
+Editor de video, exportación MP4, clips en cola, dashboard clickeable global, IA. Todo eso viene en Tanda 2/3 con la base ya funcionando.
 
-**Resumen del rally lateral**: componente `CoachRallySummary.tsx` recorre `history` y renderiza tarjetas por fundamento con `{estado, #jugador, zona/dest, rating}`.
+## Confirmación
 
-## 4. Cabecera con equipo activo
-
-- Se calcula desde la máquina: equipo que saca en `saque`, receptor en `recepcion`, etc.
-- Botón `[×]` (Esc) descarta la rally-in-progress sin comitear al store.
-
-## 5. Hook integrador de teclado
-
-Ampliar `src/hooks/use-coach-shortcuts.ts` para que:
-
-- Cuando la máquina está `idle`, teclas `S R L A B D C` → `start(state, sideAutodetectado)`.
-- Cuando NO está idle: teclas dispatch al step actual (número→jugador, QWE/ASD→zona, `# + 0 - = ≠`→rating).
-- `Esc` → `cancel()`, `Backspace` → `back()`, `Ctrl+Z/Y` → volley-store `undo/redo`.
-- `T` timeout, `M` cambio, `I` líbero (llaman handlers existentes; no entran a la máquina).
-- Se ignora si `document.activeElement` es INPUT/TEXTAREA/SELECT/contentEditable o `body[data-coach-input=lock]`.
-
-## 6. Barra de progreso + secuencia visible
-
-Extraer del panel: `CoachStateProgress.tsx` — chips SAQUE › REC › ARM › ATA › BLQ › DEF › FIN. El fundamento activo se resalta (`bg-primary`), los completados marcados con check (`bg-primary/20`), los pendientes en gris.
-
-## 7. Extensibilidad
-
-- Añadir un fundamento nuevo (`FreeBall`, `Challenge`) = registrar entry en el enum + step component + regla en `nextState`. Nada más se toca.
-- Hook `registerRallyExtension({state, keyBinding, stepComponent, transitions})` opcional para features futuras.
-
-## 8. Compatibilidad con Coach Mode actual
-
-- Conservamos `CoachHelpDialog`, `CoachHelpBar`, `CoachModeBadge`, toggle inferior en `matches.$id.index.tsx` y settings.
-- Reemplazamos el flujo suelto de `CoachAttackPanel.tsx` (queda deprecado; borrar tras verificar).
-- El HUD viejo (`CoachHUD.tsx`) se retira porque el nuevo panel único cubre su función.
-
-## 9. Archivos
-
-**Nuevos**
-- `src/lib/coach/rally-machine.ts` — store + `nextState` + commit al volley-store.
-- `src/lib/coach/effective-lineup.ts` — helpers `playerAtZone`, `getEffectiveOnCourt`.
-- `src/components/coach/CoachRallyPanel.tsx` — panel único.
-- `src/components/coach/CoachRallySummary.tsx` — tarjeta lateral.
-- `src/components/coach/CoachStateProgress.tsx` — progress bar de estados.
-- `src/components/coach/steps/StepPickPlayer.tsx`
-- `src/components/coach/steps/StepPickZone.tsx`
-- `src/components/coach/steps/StepPickOriginZone.tsx`
-- `src/components/coach/steps/StepPickRating.tsx`
-- `src/components/coach/steps/StepSummary.tsx`
-
-**Modificados**
-- `src/hooks/use-coach-shortcuts.ts` — dispatch a la máquina en vez de emitir eventos sueltos.
-- `src/routes/_authenticated/matches.$id.index.tsx` — monta `<CoachRallyPanel/>`, retira `CoachAttackPanel` y `CoachHUD`.
-- `src/components/coach/CoachHelpDialog.tsx` — actualiza tabla con nuevos comandos y flujo.
-
-**Deprecados** (borrar al final)
-- `src/components/coach/CoachAttackPanel.tsx`
-- `src/components/coach/CoachHUD.tsx`
-
-## 10. No cambia
-
-- No se toca el `volley-store` (sólo se consumen sus acciones existentes).
-- No hay cambios en Supabase ni RLS.
-- Solo escritorio (mismo gate actual con `useCoachAccess` + no mobile/tablet).
+¿Arranco con la Tanda 1 tal cual está descrita? Si querés priorizar algo distinto dentro de las 16 secciones (por ejemplo, saltar editor y empezar por clips automáticos), decime antes de que abra la migración.

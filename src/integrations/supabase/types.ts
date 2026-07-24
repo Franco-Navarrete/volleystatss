@@ -314,6 +314,62 @@ export type Database = {
           },
         ]
       }
+      match_videos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_sec: number | null
+          external_url: string | null
+          favorite: boolean
+          fps: number | null
+          id: string
+          match_id: string
+          source: string
+          storage_path: string | null
+          sync_offset_ms: number
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number | null
+          external_url?: string | null
+          favorite?: boolean
+          fps?: number | null
+          id?: string
+          match_id: string
+          source: string
+          storage_path?: string | null
+          sync_offset_ms?: number
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number | null
+          external_url?: string | null
+          favorite?: boolean
+          fps?: number | null
+          id?: string
+          match_id?: string
+          source?: string
+          storage_path?: string | null
+          sync_offset_ms?: number
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_videos_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           captain_a_id: string | null
