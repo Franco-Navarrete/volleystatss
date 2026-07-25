@@ -17,7 +17,7 @@ interface Props {
 const KINDS: CustomMarkerKind[] = ["star", "fire", "warn", "note"];
 
 export function CustomMarkersPanel({ matchId, currentMs, onSeek }: Props) {
-  const markers = useAnalysisStore((s) => s.markersByMatch[matchId] ?? []);
+  const markers = useAnalysisStore((s) => s.markersByMatch[matchId]) ?? EMPTY_MARKERS;
   const addMarker = useAnalysisStore((s) => s.addMarker);
   const removeMarker = useAnalysisStore((s) => s.removeMarker);
   const [text, setText] = useState("");
