@@ -83,6 +83,8 @@ function LiveRoute() {
 
   // Estado de grabación
   const recordingStartedRef = useRef<number | null>(null);
+  const numberBufferRef = useRef<string>("");
+  const numberBufferTimerRef = useRef<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [recording, setRecording] = useState(false);
   const [recorder, setRecorder] = useState<LiveRecorder | null>(null);
