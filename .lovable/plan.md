@@ -1,86 +1,94 @@
+# Plan: Match Session unificada
+
 ## Objetivo
+Envolver todo el ciclo de vida de un partido en una única entidad `MatchSession` con 5 estados. El usuario crea la sesión, presiona "Iniciar Partido" y todo (video, scouting, clips, análisis) sucede dentro del mismo flujo, reutilizando los componentes ya existentes (`VideoPlayer`, `AnalysisPanel`, `AnalysisTimeline`, `VideoSource`, `ClipsPanel`, `useAnalysisStore`, `video-scout-store`, `volley-store`, `live-recording`, etc.).
 
-Refactorizar el reproductor de video del módulo Scouting en Vivo para que parezca software profesional tipo Data Volley: una única fuente conmutable en caliente (archivo, ventana, pantalla, cámara), HUD con estado en tiempo real, y recuperación automática si el usuario corta la compartición — sin tocar registro, timeline, marcador ni sincronización.
+## Alcance (qué se agrega, qué NO se toca)
+- **No** se elimina ni reemplaza `VideoPlayer`, `AnalysisPanel`, `ClipsPanel`, stores existentes, rutas `matches.*`, `video.$matchId.*`, coach mode, intelligence, etc.
+- Se agrega una **capa orquestadora** encima que referencia al match existente por `matchId` y agrega el resto por composición.
+- Rutas nuevas conviven con las viejas; las viejas siguen accesibles como "modo avanzado".
 
-## 1. Nueva arquitectura de proveedores
+## Cambios
 
-Crear `src/lib/video/providers/` con una interfaz común:
+### 1. Store nuevo: `src/lib/match-session/store.ts`
+Zustand store persistente que representa la sesión y su estado. No duplica datos: guarda **referencias**.
 
-```text
-VideoSource (interfaz)
-  ├─ id: "file" | "window" | "screen" | "camera"
-  ├─ label: string        // "Archivo local", "Google Chrome — YouTube", "Cámara Logitech C920"
-  ├─ kind: "media" | "stream"
-  ├─ src?: string          // object URL para archivo
-  ├─ stream?: MediaStream  // para captura
-  ├─ meta: { width, height, frameRate, deviceLabel?, displaySurface? }
-  ├─ onEnded: (cb) => void // ventana/pantalla cortada
-  └─ stop(): void
+```ts
+type SessionStatus = "preparation" | "live" | "processing" | "analysis" | "finished";
 
-Providers concretos:
-  - LocalFileProvider   → <input type=file> + URL.createObjectURL
-  - WindowProvider      → getDisplayMedia({ video:{ displaySurface:"window" }})
-  - ScreenProvider      → getDisplayMedia({ video:{ displaySurface:"monitor" }})
-  - CameraProvider      → getUserMedia({ video:{ deviceId? }})
+interface MatchSession {
+  id: string;              // = matchId del volley-store
+  status: SessionStatus;
+  createdAt: number; startedAt?: number; endedAt?: number;
+  competition?: string; category?: string;
+  teamAId: string; teamBId: string;
+  videoSourceHint?: { kind: "file"|"camera"|"window"|"screen"|"youtube"; label?: string };
+  recordingPath?: string;      // handle name del FS API
+  processingSteps?: Record<string, "pending"|"done">;
+}
+```
+Acciones: `create`, `setStatus`, `advance`, `attachVideo`, `finish`. Selectores derivan datos vivos desde los stores existentes (`useVolleyStore`, `useAnalysisStore`, `useVideoScoutStore`) por `matchId` — nada se duplica.
+
+### 2. Servicios (`src/lib/match-session/services/`)
+Módulos delgados que envuelven lo que ya existe:
+- `match-session-service.ts` — CRUD de sesiones + transiciones de estado.
+- `recording-service.ts` — wrapper de `LiveRecorder` (ya existe en `src/lib/live-recording.ts`).
+- `video-service.ts` — wrapper de `useVideoSource` + `providers.ts`.
+- `clip-service.ts`, `analysis-service.ts`, `statistics-service.ts`, `playlist-service.ts` — re-exports desde `src/lib/analysis/*` y `src/lib/clips.ts` para dar un punto de entrada único.
+- `processing-service.ts` — orquesta la fase Procesando (build de marks, índices de rally, precálculo de stats — todo ya existe en `video-marks.ts`, `analysis/statistics-service.ts`).
+
+### 3. Rutas nuevas bajo `/_authenticated/session/`
+- `session.new.tsx` — Preparación: elige equipos/roster (`use-cloud-teams`), competencia, categoría, fuente de video (`VideoSourcePicker`), atajos (reutiliza panel existente), botón "Iniciar Partido" → crea el `Match` en volley-store + `MatchSession` y navega a `/session/$id/live`.
+- `session.$id.tsx` — layout que lee `status` y renderiza:
+  - `live` → `<LiveView>` (video + marcador + registro rápido + timeline compacto; reusa `MobileMatchShell`/`LiveCameraPanel`/`ScoutTimeline`).
+  - `processing` → `<ProcessingView>` con checklist animado.
+  - `analysis` / `finished` → `<AnalysisView>` (reusa `VideoPlayer` + `AnalysisPanel` + `ClipsPanel` + dashboard existente).
+- El **mismo** `VideoPlayer` se pasa por `ref` a las 3 vistas.
+
+### 4. Transiciones
+- Botón "Terminar partido" en Live → `status = processing` → corre `processing-service.run()` (async, muestra pasos: sincronizar → índices → stats → clips → análisis) → `status = analysis`.
+- Botón "Finalizar" en Análisis → `status = finished` (read-only).
+
+### 5. Persistencia
+El store se sincroniza a `app_state` vía `cloud-sync.ts` (agregar campo `matchSessions` al blob JSON existente — no requiere migración SQL).
+
+### 6. Navegación sincronizada
+Ya existe: click en timeline/tabla/rally/clip → `useAnalysisStore.setSelectedMarkId` → `VideoPlayer.seek`. Nada que cambiar; sólo verificar que las 3 vistas usen el mismo `playerRef` provisto por `session.$id.tsx`.
+
+### 7. Entrada al flujo
+- Añadir en `matches.index.tsx` un botón "Nueva sesión" que va a `/session/new` (además del botón viejo de "Nuevo partido", que sigue funcionando).
+- Un match existente puede "adoptarse" como sesión: botón "Abrir en Session" en `matches.$id.index.tsx` que crea una `MatchSession` con `status = analysis` apuntando al mismo id.
+
+## Compatibilidad
+- `matches.*`, `video.$matchId.*`, `coach mode`, `intelligence`, scouting actual → intactos.
+- El nuevo flujo es opcional y aditivo. Todo lo que hoy funciona sigue funcionando por su propia ruta.
+
+## Archivos que se crean
+```
+src/lib/match-session/
+  store.ts
+  types.ts
+  services/{match-session,recording,video,clip,analysis,statistics,playlist,processing}-service.ts
+src/routes/_authenticated/
+  session.new.tsx
+  session.$id.tsx
+src/components/session/
+  PreparationView.tsx
+  LiveView.tsx
+  ProcessingView.tsx
+  AnalysisView.tsx
+  SessionStatusBadge.tsx
 ```
 
-Cada provider expone `open()` que devuelve un `VideoSource` ya listo, extrae el label real desde `track.getSettings()` / `track.label` (nombre de ventana o modelo de cámara) y engancha `track.onended` para disparar el evento de interrupción.
+## Archivos que se editan (mínimo)
+- `src/lib/cloud-sync.ts` — agregar `matchSessions` al blob.
+- `src/routes/_authenticated/matches.index.tsx` — botón "Nueva sesión".
+- `src/routes/_authenticated/matches.$id.index.tsx` — botón "Abrir en Session".
 
-## 2. Nuevo selector unificado
+## Fuera de alcance (para esta iteración)
+- IA de video (bboxes/tracking) — la estructura `VideoMarkAI` ya está lista.
+- Colaboración multiusuario en vivo.
+- Grabación en la nube (se mantiene File System Access API tal cual).
 
-Reemplazar `VideoSourceSwitcher.tsx` y los botones "Cámara"/"Pantalla" de `LiveCameraPanel.tsx` por un único componente `<VideoSourcePicker />`:
-
-- Botón principal: **📹 Cambiar fuente**.
-- Abre un `DropdownMenu` con: **📁 Archivo local**, **🖥 Compartir ventana**, **🖥 Compartir pantalla**, **📷 Cámara** (submenú con dispositivos si hay más de uno).
-- Bajo el reproductor, un chip siempre visible: **🟢 Fuente: {label}** (por ejemplo `🟢 Fuente: Google Chrome — Volleyball TV` o `🟢 Fuente: Cámara Logitech C920`).
-- Reemplaza "Cambiar (en vivo)" por **🔄 Cambiar fuente** dentro del mismo panel; funciona igual mientras está grabando.
-
-## 3. HUD del reproductor
-
-Ampliar `VideoPlayer.tsx` con una barra superior semitransparente que muestre:
-
-- Fuente activa (icono + label truncado).
-- Badge **REC** rojo pulsante cuando la grabación está corriendo (el estado ya lo maneja `LiveRecorder`; se propaga vía prop `recStatus`).
-- Estado **Reproduciendo / Pausado**.
-- Tiempo transcurrido de reproducción o de grabación.
-- Resolución de captura `1280×720` y `fps` leídos de `track.getSettings()`.
-- Calidad detectada (si `videoHeight >= 1080` → HD, si no SD).
-
-Nada de esto altera la máquina del scout: el HUD lee del `<video>` y del `VideoSource` activo, no despacha eventos al store.
-
-## 4. Recuperación automática
-
-Cuando el track de una ventana/pantalla dispara `ended` (usuario cerró la compartición desde el chip del navegador):
-
-- **No** se resetea la sesión de scout, ni el cronómetro, ni las acciones registradas.
-- El player muestra overlay: **"⚠ Captura interrumpida"** + botón **"Reconectar"** que reabre `getDisplayMedia` con el mismo tipo (window/screen).
-- Si la grabación estaba activa, `LiveRecorder` se pausa automáticamente y se reanuda al reconectar el stream (se anexa un nuevo segmento al mismo archivo destino).
-- Toast informativo `"Captura interrumpida — reconectá para continuar"`.
-
-## 5. Integración
-
-- `video.$matchId.live.tsx`: reemplaza el bloque cámara/pantalla de `LiveCameraPanel` por el nuevo `VideoSourcePicker` + `VideoPlayer` con `stream`. Mantiene `recordingStartedRef`, `videoTMsNow` y el resto igual — la sincronización de timestamps sigue anclada a `performance.now()` desde el inicio de grabación.
-- `video.$matchId.scout.tsx`: sustituye `VideoSourceSwitcher` por `VideoSourcePicker`, pasando `hasLinked` para exponer también el video vinculado.
-- `LiveCameraPanel.tsx` queda como envoltorio delgado alrededor de `VideoPlayer` + `VideoSourcePicker` + controles REC.
-
-## 6. Invariantes
-
-Sin cambios en:
-
-- `video-scout-store` / `useVolley` (registro de acciones, marcador, cronómetro).
-- `ScoutTimeline`, `ClipsPanel`, `buildVideoMarks`.
-- `LiveRecorder` (sólo se le enchufa la reanudación de segmento en el punto 4).
-- Sincronización `tMs`: los eventos siguen anclados a `videoTMsNow()` / `player.currentTime`.
-
-## Detalles técnicos
-
-- Los providers viven en `src/lib/video/providers/{local,window,screen,camera}.ts` con una fábrica `openVideoSource(kind, opts)` en `src/lib/video/index.ts`.
-- Label de ventana/pantalla: `track.label` en Chromium devuelve `"web-contents-media-stream://…"` como fallback; usamos `track.getSettings().displaySurface` + un heurístico "Ventana compartida" cuando no hay título expuesto (limitación del navegador — se documenta en el chip).
-- `VideoPlayer` acepta ahora `source?: VideoSource` (además de `src`/`stream` legacy para no romper la ruta index).
-- Detección de interrupción centralizada en el hook `useVideoSource()` que envuelve el provider actual y expone `{ source, status, reconnect, change }`.
-
-## Archivos afectados
-
-- Nuevos: `src/lib/video/index.ts`, `src/lib/video/providers/*.ts`, `src/hooks/use-video-source.ts`, `src/components/video/VideoSourcePicker.tsx`, `src/components/video/VideoHUD.tsx`.
-- Modificados: `src/components/video/VideoPlayer.tsx`, `src/components/video/live/LiveCameraPanel.tsx`, `src/routes/_authenticated/video.$matchId.live.tsx`, `src/routes/_authenticated/video.$matchId.scout.tsx`.
-- Reemplazado: `src/components/video/VideoSourceSwitcher.tsx` (se conserva como shim que reexporta `VideoSourcePicker` para no romper imports).
+## Nota técnica
+Los servicios son **wrappers finos** sobre código existente; el objetivo es dar un punto de entrada único (`MatchSessionService`), no reescribir la lógica. Esto minimiza riesgo de regresión y mantiene la promesa de "no romper nada".
