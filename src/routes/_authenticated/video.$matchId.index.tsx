@@ -211,6 +211,12 @@ function VideoWorkspace() {
                     <Crosshair className="size-4 mr-1" /> Scouting sobre video
                   </Button>
                 </Link>
+                <Link to="/video/$matchId/analysis" params={{ matchId }}>
+                  <Button size="sm" variant="outline" title="Biblioteca de clips, filtros, playlists y estadísticas">
+                    <BarChart3 className="size-4 mr-1" /> Análisis Post-Partido
+                  </Button>
+                </Link>
+
 
                 <Button size="sm" variant="ghost" onClick={toggleFav} title="Favorito">
                   <Star className={`size-4 ${video.favorite ? "fill-primary text-primary" : ""}`} />
