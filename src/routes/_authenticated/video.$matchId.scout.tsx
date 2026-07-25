@@ -428,6 +428,8 @@ function ScoutRoute() {
                   selectMark(m.id);
                   playerRef.current?.seekMs(Math.max(0, m.inicioClipMs));
                 }}
+                playerRef={playerRef}
+                isPlaying={isPlaying}
               />
             </div>
 
