@@ -421,7 +421,9 @@ function ScoutRoute() {
               )}
             </aside>
           </div>
-        )}
+          );
+        })()}
+
 
         {/* Ghost toast */}
         {ghost && (
