@@ -15,9 +15,11 @@ interface Props {
   src: string;
   marks: VideoMark[];
   isYouTube?: boolean;
+  stream?: MediaStream | null;
   onTimeUpdate?: (ms: number) => void;
   onDurationChange?: (sec: number) => void;
 }
+
 
 const SPEEDS = [0.25, 0.5, 1, 1.25, 1.5, 2];
 
