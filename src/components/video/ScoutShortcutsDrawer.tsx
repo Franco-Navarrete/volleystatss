@@ -5,7 +5,7 @@
  * Se abre con el botón o la tecla "?" y se cierra con Esc.
  */
 import { useEffect, useState } from "react";
-import { Keyboard, ChevronRight } from "lucide-react";
+import { Keyboard } from "lucide-react";
 
 const GROUPS: { title: string; items: [string, string][] }[] = [
   {
