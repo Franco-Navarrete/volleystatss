@@ -19,7 +19,7 @@ import { ClipsPanel } from "@/components/video/ClipsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Star, Trash2, Upload, Link2, Crosshair, Video as VideoIcon, BarChart3 } from "lucide-react";
+import { ArrowLeft, Star, Trash2, Upload, Link2, Crosshair, Video as VideoIcon, BarChart3, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/")({
@@ -214,6 +214,11 @@ function VideoWorkspace() {
                 <Link to="/video/$matchId/analysis" params={{ matchId }}>
                   <Button size="sm" variant="outline" title="Biblioteca de clips, filtros, playlists y estadísticas">
                     <BarChart3 className="size-4 mr-1" /> Análisis Post-Partido
+                  </Button>
+                </Link>
+                <Link to="/intelligence">
+                  <Button size="sm" variant="outline" title="Generar informe táctico con IA (Rally Intelligence)">
+                    <Sparkles className="size-4 mr-1" /> Rally Intelligence
                   </Button>
                 </Link>
 

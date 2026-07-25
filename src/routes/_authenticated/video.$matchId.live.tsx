@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useVolley, type PointType, type ReceptionRating, type DefenseRating } from "@/lib/volley-store";
@@ -16,9 +16,10 @@ import {
   type ScoutFundamento,
   type ScoutResultado,
 } from "@/lib/video-scout-store";
-import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film } from "lucide-react";
+import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film, Flag } from "lucide-react";
 import type { LiveRecorder } from "@/lib/live-recording";
 import { RecordingReviewDialog } from "@/components/video/live/RecordingReviewDialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/live")({
   head: () => ({
@@ -68,8 +69,10 @@ function pointTypeForBlock(r: ScoutResultado): PointType | null {
 
 function LiveRoute() {
   const { matchId } = Route.useParams();
+  const navigate = useNavigate();
   const match = useVolley((s) => s.matches.find((m) => m.id === matchId));
   const teams = useVolley((s) => s.teams);
+  const [finalizing, setFinalizing] = useState(false);
   const teamA = teams.find((t) => t.id === match?.teamAId);
   const teamB = teams.find((t) => t.id === match?.teamBId);
 
@@ -193,6 +196,31 @@ function LiveRoute() {
     return () => window.removeEventListener("keydown", onKey);
   }, [side, fund, match, teamA, teamB, commit, resetStep, showGhost]);
 
+  const finishAndAnalyze = useCallback(async () => {
+    if (!match) return;
+    const ok = window.confirm(
+      "¿Finalizar el partido y pasar al modo Análisis?\n\n" +
+      "• Se detendrá la grabación (si está activa) y se guardará el archivo.\n" +
+      "• El video quedará auto-vinculado al partido.\n" +
+      "• Serás redirigido al Análisis Post-Partido."
+    );
+    if (!ok) return;
+    setFinalizing(true);
+    try {
+      if (recorder && recorder.getStatus() !== "idle") {
+        toast.info("Deteniendo grabación y subiendo chunks…");
+        await recorder.stop();
+      }
+      useVolley.getState().finishMatch(match.id);
+      toast.success("Partido finalizado. Abriendo Análisis…");
+      await navigate({ to: "/video/$matchId/analysis", params: { matchId: match.id } });
+    } catch (e) {
+      toast.error("No se pudo finalizar: " + (e as Error).message);
+    } finally {
+      setFinalizing(false);
+    }
+  }, [match, recorder, navigate]);
+
   const marks = useMemo(() => {
     if (!match) return [] as VideoMark[];
     return buildVideoMarks(match, teamA, teamB, 0);
@@ -254,6 +282,16 @@ function LiveRoute() {
             </Button>
             <Button size="sm" variant="ghost" onClick={() => { useVolley.getState().undoLastEvent(match.id); showGhost("Deshecho"); }}>
               <Undo2 className="size-4 mr-1" /> Deshacer
+            </Button>
+            <Button
+              size="sm"
+              variant="default"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => void finishAndAnalyze()}
+              disabled={finalizing}
+              title="Cerrar el partido, guardar la grabación y abrir el Análisis Post-Partido"
+            >
+              <Flag className="size-4 mr-1" /> {finalizing ? "Finalizando…" : "Finalizar y Analizar"}
             </Button>
           </div>
         </header>

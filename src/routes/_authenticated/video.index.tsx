@@ -5,7 +5,7 @@ import { useVolley, setsWon } from "@/lib/volley-store";
 import { listMatchVideos, type MatchVideoRow } from "@/hooks/use-match-video";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Star, Video, VideoOff, Search, Filter, Clock, Plus } from "lucide-react";
+import { Star, Video, VideoOff, Search, Filter, Clock, Plus, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/video/")({
   head: () => ({
@@ -113,18 +113,23 @@ function VideoLibrary() {
             const status = !v ? "Sin video" : v.sync_offset_ms === 0 ? "Sin sincronizar" : "Sincronizado";
             const statusColor = !v ? "bg-muted text-muted-foreground" : v.sync_offset_ms === 0 ? "bg-warning/20 text-warning" : "bg-success/20 text-success";
             const dur = v?.duration_sec ? formatDur(v.duration_sec) : "—";
+            const readyToAnalyze = !!v && finished;
             return (
-              <Link
+              <div
                 key={m.id}
-                to="/video/$matchId"
-                params={{ matchId: m.id }}
-                className="group bg-card border border-border rounded-lg p-4 hover:border-primary/60 hover:shadow-glow transition-all flex flex-col gap-3"
+                className="group relative bg-card border border-border rounded-lg p-4 hover:border-primary/60 hover:shadow-glow transition-all flex flex-col gap-3"
               >
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+                <Link
+                  to="/video/$matchId"
+                  params={{ matchId: m.id }}
+                  className="absolute inset-0 rounded-lg"
+                  aria-label={`Abrir workspace de ${a?.name ?? ""} vs ${b?.name ?? ""}`}
+                />
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground relative pointer-events-none">
                   <span>{m.category ?? "Sin categoría"}</span>
                   <span className={`px-1.5 py-0.5 rounded ${statusColor}`}>{status}</span>
                 </div>
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2 relative pointer-events-none">
                   <div className="min-w-0 flex-1">
                     <div className="font-bold truncate">{a?.name ?? "—"}</div>
                     <div className="text-xs text-muted-foreground truncate">vs {b?.name ?? "—"}</div>
@@ -134,12 +139,26 @@ function VideoLibrary() {
                     <div className="text-[10px] text-muted-foreground">{finished ? "Finalizado" : m.status === "live" ? "En vivo" : "Programado"}</div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground relative pointer-events-none">
                   <span>{new Date(m.scheduledAt).toLocaleDateString()}</span>
                   <span className="flex items-center gap-1"><Clock className="size-3" /> {dur}</span>
                   {v ? <Video className="size-3.5 text-primary" /> : <VideoOff className="size-3.5" />}
                 </div>
-              </Link>
+                {readyToAnalyze && (
+                  <div className="relative flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+                    <span className="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-success/20 text-success font-semibold">
+                      Listo para analizar
+                    </span>
+                    <Link
+                      to="/video/$matchId/analysis"
+                      params={{ matchId: m.id }}
+                      className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 relative z-10"
+                    >
+                      <BarChart3 className="size-3.5" /> Analizar →
+                    </Link>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
