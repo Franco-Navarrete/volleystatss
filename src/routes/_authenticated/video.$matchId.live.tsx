@@ -374,6 +374,16 @@ function LiveRoute() {
           </div>
         )}
       </div>
+      <RecordingReviewDialog
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        recorder={recorder}
+        matchId={matchId}
+        marks={marks}
+        liveElapsedMs={elapsedMs}
+        bufferedMs={bufferedMs}
+        bufferedBytes={bufferedBytes}
+      />
     </AppShell>
   );
 }
