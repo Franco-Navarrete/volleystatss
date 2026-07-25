@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useVolley, type PointType, type ReceptionRating, type DefenseRating } from "@/lib/volley-store";
@@ -16,9 +16,10 @@ import {
   type ScoutFundamento,
   type ScoutResultado,
 } from "@/lib/video-scout-store";
-import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film } from "lucide-react";
+import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film, Flag } from "lucide-react";
 import type { LiveRecorder } from "@/lib/live-recording";
 import { RecordingReviewDialog } from "@/components/video/live/RecordingReviewDialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/live")({
   head: () => ({
