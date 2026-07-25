@@ -110,7 +110,7 @@ export class LiveRecorder {
     const storagePrefix = `live/${matchId}/${sessionId}`;
     const startedWallClock = Date.now();
     let ownerId = "local";
-    let rowId = sessionId;
+    let rowId: string = sessionId;
 
     // Cloud session (best-effort — si falla, seguimos grabando local)
     try {
