@@ -7,6 +7,7 @@ import { buildVideoMarks, type VideoMark } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
 import { VideoSourceSwitcher, type VideoSourceKind } from "@/components/video/VideoSourceSwitcher";
 import { AnalysisPanel } from "@/components/video/analysis/AnalysisPanel";
+import { KeyboardShortcutsPanel } from "@/components/video/analysis/KeyboardShortcutsPanel";
 import { useAnalysisStore } from "@/lib/video/analysis-store";
 
 import { Button } from "@/components/ui/button";
@@ -443,6 +444,7 @@ function ScoutRoute() {
                 playerRef={playerRef}
                 isPlaying={isPlaying}
               />
+              <KeyboardShortcutsPanel active={analysisMode} />
             </div>
 
 
