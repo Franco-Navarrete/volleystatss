@@ -256,6 +256,7 @@ function LiveRoute() {
 
   return (
     <AppShell>
+      <ScoutShortcutsDrawer />
       <div className="flex flex-col gap-3">
         <header className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
