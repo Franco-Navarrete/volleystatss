@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Circle, Square, Pause, Play, Camera, RefreshCcw } from "lucide-react";
+import { Circle, Square, Pause, Play, Camera, RefreshCcw, MonitorUp } from "lucide-react";
 import { LiveRecorder, listVideoInputDevices, openStream, type LiveStatus, type LiveChunk } from "@/lib/live-recording";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string | undefined>(undefined);
   const [audio, setAudio] = useState(true);
+  const [source, setSource] = useState<"camera" | "screen">("camera");
   const [status, setStatus] = useState<LiveStatus>("idle");
   const [elapsedMs, setElapsedMs] = useState(0);
   const [chunkCount, setChunkCount] = useState(0);
@@ -36,7 +37,16 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
   const attachPreview = useCallback(async () => {
     try {
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      const s = await openStream({ deviceId, audio });
+      let s: MediaStream;
+      if (source === "screen") {
+        s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio });
+        // If user stops sharing via browser UI, revert to camera
+        s.getVideoTracks()[0]?.addEventListener("ended", () => {
+          setSource("camera");
+        });
+      } else {
+        s = await openStream({ deviceId, audio });
+      }
       streamRef.current = s;
       if (videoRef.current) {
         videoRef.current.srcObject = s;
@@ -44,16 +54,16 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       }
     } catch (e) {
       console.error(e);
-      toast.error("No se pudo acceder a la cámara. Revisa permisos.");
+      toast.error(source === "screen" ? "No se pudo capturar la pantalla." : "No se pudo acceder a la cámara. Revisa permisos.");
     }
-  }, [deviceId, audio]);
+  }, [deviceId, audio, source]);
 
   useEffect(() => {
-    if (status === "idle") void attachPreview();
+    if (status === "idle" && source === "camera") void attachPreview();
     return () => {
       if (status === "idle") streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [deviceId, audio, status, attachPreview]);
+  }, [deviceId, audio, status, source, attachPreview]);
 
   // Elapsed ticker
   useEffect(() => {
@@ -131,29 +141,50 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       </div>
 
       <div className="p-2 flex flex-wrap items-center gap-2 bg-card/40">
-        <div className="flex items-center gap-1 min-w-0 flex-1">
-          <Camera className="size-4 text-muted-foreground" />
-          <select
-            value={deviceId ?? ""}
-            onChange={(e) => setDeviceId(e.target.value || undefined)}
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant={source === "camera" ? "default" : "outline"}
+            onClick={() => { setSource("camera"); }}
             disabled={isRec}
-            className="text-xs bg-background border border-border rounded px-2 py-1 flex-1 min-w-0 truncate"
+            title="Usar cámara"
           >
-            {devices.length === 0 && <option value="">Sin cámaras detectadas</option>}
-            {devices.map((d, i) => (
-              <option key={d.deviceId || i} value={d.deviceId}>
-                {d.label || `Cámara ${i + 1}`}
-              </option>
-            ))}
-          </select>
-          <Button size="sm" variant="ghost" onClick={() => void listVideoInputDevices().then(setDevices)} title="Actualizar dispositivos">
-            <RefreshCcw className="size-3" />
+            <Camera className="size-3 mr-1" /> Cámara
           </Button>
-          <label className="text-[11px] flex items-center gap-1 text-muted-foreground">
-            <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} disabled={isRec} />
-            Audio
-          </label>
+          <Button
+            size="sm"
+            variant={source === "screen" ? "default" : "outline"}
+            onClick={async () => { setSource("screen"); /* trigger picker immediately */ setTimeout(() => { void attachPreview(); }, 0); }}
+            disabled={isRec}
+            title="Compartir pantalla / pestaña (YouTube, HDMI, etc.)"
+          >
+            <MonitorUp className="size-3 mr-1" /> Pantalla
+          </Button>
         </div>
+        {source === "camera" && (
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <select
+              value={deviceId ?? ""}
+              onChange={(e) => setDeviceId(e.target.value || undefined)}
+              disabled={isRec}
+              className="text-xs bg-background border border-border rounded px-2 py-1 flex-1 min-w-0 truncate"
+            >
+              {devices.length === 0 && <option value="">Sin cámaras detectadas</option>}
+              {devices.map((d, i) => (
+                <option key={d.deviceId || i} value={d.deviceId}>
+                  {d.label || `Cámara ${i + 1}`}
+                </option>
+              ))}
+            </select>
+            <Button size="sm" variant="ghost" onClick={() => void listVideoInputDevices().then(setDevices)} title="Actualizar dispositivos">
+              <RefreshCcw className="size-3" />
+            </Button>
+          </div>
+        )}
+        <label className="text-[11px] flex items-center gap-1 text-muted-foreground ml-auto">
+          <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} disabled={isRec} />
+          Audio
+        </label>
 
         {!isRec ? (
           <Button size="sm" onClick={start} className="bg-red-600 hover:bg-red-700 text-white">
