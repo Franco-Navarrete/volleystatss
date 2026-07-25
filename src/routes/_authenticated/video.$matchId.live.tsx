@@ -206,18 +206,27 @@ function LiveRoute() {
     );
     if (!ok) return;
     setFinalizing(true);
+    const target = `/video/${match.id}/analysis`;
     try {
       if (recorder && recorder.getStatus() !== "idle") {
         toast.info("Deteniendo grabación y subiendo chunks…");
-        await recorder.stop();
+        try { await recorder.stop(); }
+        catch (e) { console.error("[finish] recorder.stop falló", e); toast.warning("La grabación no cerró limpio, continuando…"); }
       }
-      useVolley.getState().finishMatch(match.id);
+      try { useVolley.getState().finishMatch(match.id); }
+      catch (e) { console.error("[finish] finishMatch falló", e); }
       toast.success("Partido finalizado. Abriendo Análisis…");
-      await navigate({ to: "/video/$matchId/analysis", params: { matchId: match.id } });
     } catch (e) {
-      toast.error("No se pudo finalizar: " + (e as Error).message);
+      console.error("[finish] error", e);
+      toast.error("Error al finalizar: " + (e as Error).message);
     } finally {
       setFinalizing(false);
+      try {
+        await navigate({ to: "/video/$matchId/analysis", params: { matchId: match.id } });
+      } catch (e) {
+        console.error("[finish] navigate falló, usando window.location", e);
+        window.location.assign(target);
+      }
     }
   }, [match, recorder, navigate]);
 
