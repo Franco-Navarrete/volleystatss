@@ -258,12 +258,19 @@ export class LiveRecorder {
 
 
     // Registrar como video del partido apuntando al primer chunk (Tanda 2: reproducción concatenada).
-    if (mainPath) {
+    if (mainPath && this.cloudEnabled) {
       try { await upsertMatchVideoUpload(this.session.matchId, mainPath); }
       catch (e) { console.warn("[LiveRecorder] upsertMatchVideoUpload", e); }
     }
 
-    // Descargar copia local (guardar en la PC del entrenador)
+    // Cerrar archivo local (si el usuario eligió ubicación con showSaveFilePicker)
+    if (this.fileWriter) {
+      try { await this.fileWriter.close(); }
+      catch (e) { console.warn("[LiveRecorder] close writer local falló", e); }
+      this.fileWriter = null;
+    }
+
+    // Fallback: descargar copia si NO usamos File System Access API
     if (this.saveLocal && this.localBlobs.length > 0) {
       try {
         const ext = this.mime.includes("mp4") ? "mp4" : "webm";
