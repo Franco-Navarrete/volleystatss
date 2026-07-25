@@ -504,12 +504,16 @@ function TeamOnCourt({ team, label, side, currentSide, onPickSide, onCourtIds, o
         <span className="text-[10px] text-muted-foreground">{label}</span>
       </button>
       <div className="grid grid-cols-3 gap-1">
-        {(team?.players ?? []).filter((p) => onCourtIds.includes(p.id)).map((p) => {
+        {onCourtIds.map((id, idx) => {
+          const p = team?.players.find((pp) => pp.id === id);
+          if (!p) return null;
           const sel = selectedId === p.id;
+          const zone = idx + 1; // Z1..Z6 según orden de rotación
           return (
             <button key={p.id} onClick={() => { if (!active) onPickSide(); onPickPlayer(p.id); }}
-              className={`rounded border py-1 text-center text-xs ${sel ? "border-primary bg-primary/20" : "border-border bg-background/40"}`}
-              title={p.name}>
+              className={`relative rounded border py-1 text-center text-xs ${sel ? "border-primary bg-primary/20" : "border-border bg-background/40"}`}
+              title={`${p.name} · Z${zone}`}>
+              <span className="absolute top-0 left-1 text-[8px] text-muted-foreground font-bold">Z{zone}</span>
               <div className="font-black scoreboard-digit">{p.number ?? "?"}</div>
             </button>
           );
