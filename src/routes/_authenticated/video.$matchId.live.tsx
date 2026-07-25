@@ -83,6 +83,8 @@ function LiveRoute() {
 
   // Estado de grabación
   const recordingStartedRef = useRef<number | null>(null);
+  const numberBufferRef = useRef<string>("");
+  const numberBufferTimerRef = useRef<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [recording, setRecording] = useState(false);
   const [recorder, setRecorder] = useState<LiveRecorder | null>(null);
@@ -184,13 +186,40 @@ function LiveRoute() {
       if (rk && side && fund) { e.preventDefault(); commit(rk); return; }
       if (e.key === "y") { e.preventDefault(); setSide("A"); return; }
       if (e.key === "x") { e.preventDefault(); setSide("B"); return; }
-      if (/^[1-9]$/.test(e.key) && side) {
+      if (/^[0-9]$/.test(e.key) && side) {
         e.preventDefault();
-        const n = Number(e.key);
         const team = side === "A" ? teamA : teamB;
         const onCourt = side === "A" ? match?.onCourtA : match?.onCourtB;
-        const found = (team?.players ?? []).filter((p) => onCourt?.includes(p.id)).find((p) => p.number === n);
-        if (found) setPlayerId(found.id);
+        const roster = (team?.players ?? []).filter((p) => onCourt?.includes(p.id));
+        const buf = numberBufferRef.current + e.key;
+        numberBufferRef.current = buf;
+        const bufNum = Number(buf);
+        // Coincidencias con el número acumulado (prefijo)
+        const prefixMatches = roster.filter((p) => String(p.number).startsWith(buf));
+        const exact = roster.find((p) => p.number === bufNum);
+        if (numberBufferTimerRef.current) window.clearTimeout(numberBufferTimerRef.current);
+        // Si solo hay una jugadora cuyo dorsal empieza así, o solo hay una coincidencia exacta, resolvemos ya
+        if (exact && prefixMatches.length <= 1) {
+          setPlayerId(exact.id);
+          numberBufferRef.current = "";
+        } else if (prefixMatches.length === 1 && buf.length >= 2) {
+          setPlayerId(prefixMatches[0].id);
+          numberBufferRef.current = "";
+        } else if (prefixMatches.length === 0) {
+          // sin coincidencias: reiniciamos con este dígito
+          numberBufferRef.current = e.key;
+          const single = roster.find((p) => p.number === Number(e.key));
+          if (single) setPlayerId(single.id);
+        } else {
+          // esperamos otro dígito hasta 700ms; si no llega, resolvemos con lo acumulado
+          numberBufferTimerRef.current = window.setTimeout(() => {
+            const finalRoster = ((side === "A" ? teamA : teamB)?.players ?? [])
+              .filter((p) => (side === "A" ? match?.onCourtA : match?.onCourtB)?.includes(p.id));
+            const finalMatch = finalRoster.find((p) => p.number === Number(numberBufferRef.current));
+            if (finalMatch) setPlayerId(finalMatch.id);
+            numberBufferRef.current = "";
+          }, 700);
+        }
       }
     };
     window.addEventListener("keydown", onKey);
