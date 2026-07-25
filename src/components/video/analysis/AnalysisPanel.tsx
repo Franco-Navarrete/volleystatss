@@ -52,6 +52,16 @@ export function AnalysisPanel({ matchId, marks, currentMs, totalMs, onSeek, onSe
 
   return (
     <div className="flex flex-col gap-2">
+      {playerRef && (
+        <PlaybackControls
+          playerRef={playerRef}
+          marks={enriched}
+          currentMs={currentMs}
+          isPlaying={!!isPlaying}
+        />
+      )}
+      {playerRef && <SelectedActionCard marks={enriched} playerRef={playerRef} />}
+
       <AnalysisTimeline
         marks={enriched}
         currentMs={currentMs}
