@@ -62,6 +62,7 @@ export async function openStream(opts: { deviceId?: string; audio: boolean }): P
 
 export interface LiveRecorderCallbacks {
   onChunkUploaded?: (chunk: LiveChunk, totalMs: number) => void;
+  onChunkRecorded?: (bufferedBytes: number, bufferedMs: number) => void;
   onError?: (err: Error) => void;
   onStatusChange?: (status: LiveStatus) => void;
 }
