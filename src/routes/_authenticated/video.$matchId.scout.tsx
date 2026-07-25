@@ -5,6 +5,8 @@ import { useVolley, POINT_TYPE_LABEL, type PointType, type ReceptionRating, type
 import { useMatchVideo, getSignedVideoUrl } from "@/hooks/use-match-video";
 import { buildVideoMarks, type VideoMark } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
+import { VideoSourceSwitcher, type VideoSourceKind } from "@/components/video/VideoSourceSwitcher";
+
 import { Button } from "@/components/ui/button";
 import {
   useScoutStore,
