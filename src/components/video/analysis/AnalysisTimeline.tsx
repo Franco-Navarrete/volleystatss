@@ -21,6 +21,8 @@ interface Props {
   onSeek: (ms: number) => void;
 }
 
+const TIMELINE_EMPTY_MARKERS: CustomMarker[] = [];
+
 export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }: Props) {
   const zoom = useAnalysisStore((s) => s.zoom);
   const centerMs = useAnalysisStore((s) => s.centerMs);
@@ -29,7 +31,7 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
   const resetView = useAnalysisStore((s) => s.resetView);
   const selectedMarkId = useAnalysisStore((s) => s.selectedMarkId);
   const selectMark = useAnalysisStore((s) => s.selectMark);
-  const markers = useAnalysisStore((s) => s.markersByMatch[matchId] ?? []);
+  const markers = useAnalysisStore((s) => s.markersByMatch[matchId]) ?? TIMELINE_EMPTY_MARKERS;
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(800);
