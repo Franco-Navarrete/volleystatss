@@ -237,21 +237,24 @@ export class LiveRecorder {
       if (this.mr!.state !== "inactive") this.mr!.stop();
       else resolve();
     });
-    // Wait for pending uploads
+    // Wait for pending uploads y writes locales
     await this.uploadQueue;
+    await this.writeQueue;
 
     const totalMs = Math.max(...this.chunks.map((c) => c.startedAtMs + c.durationMs), 0);
     const mainPath = this.chunks[0]?.path ?? null;
 
-    await supabase.from("live_recordings")
-      .update({
-        status: "finalized",
-        ended_at: new Date().toISOString(),
-        duration_ms: totalMs,
-        chunk_count: this.chunks.length,
-        chunk_manifest: this.chunks as never,
-      })
-      .eq("id", this.session.id);
+    if (this.cloudEnabled) {
+      await supabase.from("live_recordings")
+        .update({
+          status: "finalized",
+          ended_at: new Date().toISOString(),
+          duration_ms: totalMs,
+          chunk_count: this.chunks.length,
+          chunk_manifest: this.chunks as never,
+        })
+        .eq("id", this.session.id);
+    }
 
 
     // Registrar como video del partido apuntando al primer chunk (Tanda 2: reproducción concatenada).
