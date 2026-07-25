@@ -78,12 +78,17 @@ export class LiveRecorder {
   private status: LiveStatus = "idle";
   private cb: LiveRecorderCallbacks;
   private saveLocal: boolean;
+  private fileHandle: FileSystemFileHandle | null = null;
+  private fileWriter: FileSystemWritableFileStream | null = null;
+  private writeQueue: Promise<void> = Promise.resolve();
+  private cloudEnabled = true;
 
-  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}, opts: { saveLocal?: boolean } = {}) {
+  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}, opts: { saveLocal?: boolean; fileHandle?: FileSystemFileHandle | null } = {}) {
     this.stream = stream;
     this.cb = cb;
     this.mime = pickMime();
     this.saveLocal = opts.saveLocal ?? true;
+    this.fileHandle = opts.fileHandle ?? null;
   }
 
   getStatus() { return this.status; }
