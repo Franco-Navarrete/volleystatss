@@ -6,8 +6,11 @@ import { useMatchVideo, getSignedVideoUrl } from "@/hooks/use-match-video";
 import { buildVideoMarks, type VideoMark } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
 import { VideoSourceSwitcher, type VideoSourceKind } from "@/components/video/VideoSourceSwitcher";
+import { AnalysisPanel } from "@/components/video/analysis/AnalysisPanel";
+import { useAnalysisStore } from "@/lib/video/analysis-store";
 
 import { Button } from "@/components/ui/button";
+
 import {
   useScoutStore,
   FUND_LABEL,
@@ -78,9 +81,17 @@ function ScoutRoute() {
   const playerRef = useRef<VideoPlayerHandle | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [currentMs, setCurrentMs] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
   const [sourceKind, setSourceKind] = useState<VideoSourceKind>("linked");
   const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
   const [overrideStream, setOverrideStream] = useState<MediaStream | null>(null);
+  const selectedMarkId = useAnalysisStore((s) => s.selectedMarkId);
+  const selectMark = useAnalysisStore((s) => s.selectMark);
+  const shortcuts = useAnalysisStore((s) => s.shortcuts);
+  const autoPauseAtEnd = useAnalysisStore((s) => s.autoPauseAtEnd);
+  const prerollMs = useAnalysisStore((s) => s.prerollMs);
+  const postrollMs = useAnalysisStore((s) => s.postrollMs);
+
 
 
   const teamA = teams.find((t) => t.id === match?.teamAId);
@@ -236,6 +247,49 @@ function ScoutRoute() {
 
   const seekToMark = (m: VideoMark) => playerRef.current?.seekMs(Math.max(0, m.tMs - 500));
 
+  // Auto-pausa al final del clip virtual seleccionado (configurable via useAnalysisStore).
+  useEffect(() => {
+    if (!autoPauseAtEnd || !selectedMarkId) return;
+    const sel = marks.find((m) => m.id === selectedMarkId);
+    if (!sel) return;
+    const finMs = sel.tMs + postrollMs;
+    if (currentMs >= finMs) {
+      playerRef.current?.pause();
+    }
+  }, [currentMs, autoPauseAtEnd, selectedMarkId, marks, postrollMs]);
+
+  // Navegación por eventos: J anterior, L siguiente, K play/pausa.
+  // Se registra en fase de captura para preemptar los atajos internos del VideoPlayer (j/l = velocidad).
+  useEffect(() => {
+    const sorted = [...marks].sort((a, b) => a.tMs - b.tMs);
+    const jumpTo = (m: VideoMark | undefined) => {
+      if (!m) return;
+      selectMark(m.id);
+      playerRef.current?.seekMs(Math.max(0, m.tMs - prerollMs));
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      const k = e.key.toLowerCase();
+      if (k === shortcuts.prevEvent.toLowerCase()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const prev = [...sorted].reverse().find((m) => m.tMs < currentMs - 50);
+        jumpTo(prev);
+      } else if (k === shortcuts.nextEvent.toLowerCase()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const next = sorted.find((m) => m.tMs > currentMs + 50);
+        jumpTo(next);
+      } else if (k === shortcuts.playPause.toLowerCase()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const v = playerRef.current?.getVideoElement();
+        if (v) { if (v.paused) void v.play(); else v.pause(); }
+      }
+    };
+    window.addEventListener("keydown", onKey, { capture: true });
+    return () => window.removeEventListener("keydown", onKey, { capture: true } as AddEventListenerOptions);
+  }, [marks, currentMs, shortcuts, selectMark, prerollMs]);
+
+
   if (!match) {
     return (
       <AppShell>
@@ -343,15 +397,26 @@ function ScoutRoute() {
                   isYouTube={effectiveIsYouTube}
                   stream={effectiveStream}
                   onTimeUpdate={setCurrentMs}
+                  onDurationChange={setDurationSec}
                 />
               ) : (
                 <div className="p-8 bg-card/40 border border-border rounded-lg text-center text-muted-foreground text-sm">
                   Elegí una fuente arriba (archivo, cámara, ventana o pantalla) o <Link to="/video/$matchId" params={{ matchId }} className="text-primary underline">vinculá un video</Link>.
                 </div>
               )}
-              <ScoutTimeline marks={marks} currentMs={currentMs} onSeek={(ms) => playerRef.current?.seekMs(Math.max(0, ms - 300))} />
-              <ActionsTable marks={marks} currentMs={currentMs} onSeek={seekToMark} />
+              <AnalysisPanel
+                matchId={matchId}
+                marks={marks}
+                currentMs={currentMs}
+                totalMs={durationSec * 1000}
+                onSeek={(ms) => playerRef.current?.seekMs(Math.max(0, ms))}
+                onSelectMark={(m) => {
+                  selectMark(m.id);
+                  playerRef.current?.seekMs(Math.max(0, m.inicioClipMs));
+                }}
+              />
             </div>
+
 
 
             {/* RIGHT — registro rápido */}

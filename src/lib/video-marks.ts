@@ -23,9 +23,28 @@ export type VideoMarkKind =
   | "sanction"
   | "other";
 
+export interface VideoMarkAI {
+  /** Cajas de detección [x, y, w, h] normalizadas (0-1). */
+  bboxes?: Array<{ x: number; y: number; w: number; h: number; label?: string; conf?: number }>;
+  /** Puntos de tracking (trayectoria de balón / jugadora). */
+  tracking?: Array<{ tMs: number; x: number; y: number; playerId?: string }>;
+  /** Puntos de heatmap normalizados. */
+  heatmap?: Array<{ x: number; y: number; weight?: number }>;
+  /** Predicciones del modelo (etiqueta → probabilidad). */
+  predictions?: Record<string, number>;
+  /** Identificaciones automáticas de jugadoras dentro de la acción. */
+  playerDetections?: Array<{ playerId: string; conf: number }>;
+}
+
 export interface VideoMark {
   id: string;
   tMs: number;
+  /** Inicio del clip virtual (por defecto tMs - 5000 ms). */
+  inicioClipMs: number;
+  /** Fin del clip virtual (por defecto tMs + 5000 ms). */
+  finClipMs: number;
+  /** Índice de rally al que pertenece la acción (0-based, dentro del partido). */
+  rallyId: number;
   setNumber: number;
   kind: VideoMarkKind;
   fundamento: string;
@@ -39,7 +58,13 @@ export interface VideoMark {
   score: string; // "12-10"
   rotation: number | null; // rotation of team A at that moment (1..6)
   event: MatchEvent;
+  /** Metadatos para módulos de IA (bboxes, tracking, heatmap, predicciones). */
+  ai?: VideoMarkAI;
 }
+
+/** Ventana por defecto (ms) alrededor de cada acción para clips virtuales. */
+export const DEFAULT_CLIP_PREROLL_MS = 5000;
+export const DEFAULT_CLIP_POSTROLL_MS = 5000;
 
 export const MARK_COLORS: Record<VideoMarkKind, string> = {
   serve: "#22c55e",
@@ -135,12 +160,17 @@ export function buildVideoMarks(
   const players = playerLookup(teamA, teamB);
   const scoreMap = buildScoreMap(match);
   const marks: VideoMark[] = [];
+  // Rally index — cada PointEvent cierra el rally activo.
+  let rallyIdx = 0;
 
   for (const ev of match.events) {
     const tMs = (ev.timestamp - firstTs) + syncOffsetMs;
     const base = {
       id: ev.id,
       tMs,
+      inicioClipMs: Math.max(0, tMs - DEFAULT_CLIP_PREROLL_MS),
+      finClipMs: tMs + DEFAULT_CLIP_POSTROLL_MS,
+      rallyId: rallyIdx,
       setNumber: ev.setNumber,
       event: ev,
       score: (() => {
@@ -149,6 +179,7 @@ export function buildVideoMarks(
       })(),
       rotation: null as number | null,
     };
+
     const pid = (ev as { playerId?: string | null }).playerId ?? null;
     const side = (ev as { side?: "A" | "B" | null }).side ?? null;
     const p = pid ? players.get(pid) : null;
@@ -161,7 +192,7 @@ export function buildVideoMarks(
     };
 
     if (!("kind" in ev)) {
-      // PointEvent (no `kind` field)
+      // PointEvent (no `kind` field) — cierra rally.
       const c = classifyPoint(ev);
       marks.push({
         ...base,
@@ -171,7 +202,9 @@ export function buildVideoMarks(
         zone: (ev as { attackZone?: number }).attackZone ?? null,
         result: c.result,
       });
+      rallyIdx += 1;
     } else if (ev.kind === "reception") {
+
       const RATING_LABEL: Record<string, string> = {
         double_positive: "# Doble positiva",
         positive: "+ Positiva",
