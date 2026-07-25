@@ -20,6 +20,7 @@ import { useMatchVideo, getSignedVideoUrl } from "@/hooks/use-match-video";
 import { buildVideoMarks, type VideoMark } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
 import { AnalysisPanel } from "@/components/video/analysis/AnalysisPanel";
+import { KeyboardShortcutsPanel } from "@/components/video/analysis/KeyboardShortcutsPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Film, Filter, ListMusic, GitCompareArrows, BarChart3, LayoutDashboard } from "lucide-react";
