@@ -30,6 +30,24 @@ export function ActionsTableVirtual({ marks, currentMs, onSelect }: Props) {
     if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [selectedMarkId]);
 
+  // Auto-scroll a la acción actual mientras se reproduce (sin selección explícita).
+  const currentPlayingId = useMemo(() => {
+    if (selectedMarkId) return null;
+    let best: string | null = null;
+    let bestDelta = 2000;
+    for (const m of marks) {
+      const d = Math.abs(m.tMs - currentMs);
+      if (d < bestDelta) { bestDelta = d; best = m.id; }
+    }
+    return best;
+  }, [marks, currentMs, selectedMarkId]);
+
+  useEffect(() => {
+    if (!currentPlayingId) return;
+    const row = rowRefs.current.get(currentPlayingId);
+    if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [currentPlayingId]);
+
   // Ordenar por tiempo descendente para mostrar las más recientes arriba,
   // pero mantener índices consistentes.
   const ordered = useMemo(() => [...marks].reverse(), [marks]);
