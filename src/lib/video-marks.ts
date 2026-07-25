@@ -192,7 +192,7 @@ export function buildVideoMarks(
     };
 
     if (!("kind" in ev)) {
-      // PointEvent (no `kind` field)
+      // PointEvent (no `kind` field) — cierra rally.
       const c = classifyPoint(ev);
       marks.push({
         ...base,
@@ -202,7 +202,9 @@ export function buildVideoMarks(
         zone: (ev as { attackZone?: number }).attackZone ?? null,
         result: c.result,
       });
+      rallyIdx += 1;
     } else if (ev.kind === "reception") {
+
       const RATING_LABEL: Record<string, string> = {
         double_positive: "# Doble positiva",
         positive: "+ Positiva",
