@@ -185,7 +185,6 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
           <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} disabled={isRec} />
           Audio
         </label>
-      </div>
 
         {!isRec ? (
           <Button size="sm" onClick={start} className="bg-red-600 hover:bg-red-700 text-white">
