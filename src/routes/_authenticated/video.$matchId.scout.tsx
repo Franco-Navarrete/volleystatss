@@ -5,6 +5,8 @@ import { useVolley, POINT_TYPE_LABEL, type PointType, type ReceptionRating, type
 import { useMatchVideo, getSignedVideoUrl } from "@/hooks/use-match-video";
 import { buildVideoMarks, type VideoMark } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
+import { VideoSourceSwitcher, type VideoSourceKind } from "@/components/video/VideoSourceSwitcher";
+
 import { Button } from "@/components/ui/button";
 import {
   useScoutStore,
@@ -76,6 +78,10 @@ function ScoutRoute() {
   const playerRef = useRef<VideoPlayerHandle | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [currentMs, setCurrentMs] = useState(0);
+  const [sourceKind, setSourceKind] = useState<VideoSourceKind>("linked");
+  const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
+  const [overrideStream, setOverrideStream] = useState<MediaStream | null>(null);
+
 
   const teamA = teams.find((t) => t.id === match?.teamAId);
   const teamB = teams.find((t) => t.id === match?.teamBId);
@@ -282,11 +288,14 @@ function ScoutRoute() {
           </div>
         </header>
 
-        {!videoSrc ? (
-          <div className="p-8 bg-card/40 border border-border rounded-lg text-center text-muted-foreground">
-            Este partido aún no tiene video. <Link to="/video/$matchId" params={{ matchId }} className="text-primary underline">Vincula uno primero</Link>.
-          </div>
-        ) : (
+        {(() => {
+          const usingOverride = sourceKind !== "linked";
+          const effectiveSrc = usingOverride ? (overrideSrc ?? "") : (videoSrc ?? "");
+          const effectiveStream = usingOverride ? overrideStream : null;
+          const effectiveIsYouTube = !usingOverride && isYouTube;
+          const hasSomething = !!effectiveStream || !!effectiveSrc;
+
+          return (
           <div className="grid gap-3 lg:grid-cols-[240px_minmax(0,1fr)_340px]">
             {/* LEFT — info */}
             <aside className="flex flex-col gap-3 min-w-0">
@@ -317,16 +326,33 @@ function ScoutRoute() {
 
             {/* CENTER — video + timeline */}
             <div className="flex flex-col gap-3 min-w-0">
-              <VideoPlayer
-                ref={playerRef}
-                src={displaySrc}
-                marks={marks}
-                isYouTube={isYouTube}
-                onTimeUpdate={setCurrentMs}
+              <VideoSourceSwitcher
+                hasLinked={!!videoSrc}
+                current={sourceKind}
+                onChange={(kind, { src, stream }) => {
+                  setSourceKind(kind);
+                  setOverrideSrc(src ?? null);
+                  setOverrideStream(stream ?? null);
+                }}
               />
+              {hasSomething ? (
+                <VideoPlayer
+                  ref={playerRef}
+                  src={effectiveSrc}
+                  marks={marks}
+                  isYouTube={effectiveIsYouTube}
+                  stream={effectiveStream}
+                  onTimeUpdate={setCurrentMs}
+                />
+              ) : (
+                <div className="p-8 bg-card/40 border border-border rounded-lg text-center text-muted-foreground text-sm">
+                  Elegí una fuente arriba (archivo, cámara, ventana o pantalla) o <Link to="/video/$matchId" params={{ matchId }} className="text-primary underline">vinculá un video</Link>.
+                </div>
+              )}
               <ScoutTimeline marks={marks} currentMs={currentMs} onSeek={(ms) => playerRef.current?.seekMs(Math.max(0, ms - 300))} />
               <ActionsTable marks={marks} currentMs={currentMs} onSeek={seekToMark} />
             </div>
+
 
             {/* RIGHT — registro rápido */}
             <aside className="flex flex-col gap-3 min-w-0">
@@ -395,7 +421,9 @@ function ScoutRoute() {
               )}
             </aside>
           </div>
-        )}
+          );
+        })()}
+
 
         {/* Ghost toast */}
         {ghost && (

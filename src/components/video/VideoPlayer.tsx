@@ -15,16 +15,19 @@ interface Props {
   src: string;
   marks: VideoMark[];
   isYouTube?: boolean;
+  stream?: MediaStream | null;
   onTimeUpdate?: (ms: number) => void;
   onDurationChange?: (sec: number) => void;
 }
 
+
 const SPEEDS = [0.25, 0.5, 1, 1.25, 1.5, 2];
 
 export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
-  { src, marks, isYouTube, onTimeUpdate, onDurationChange },
+  { src, marks, isYouTube, stream, onTimeUpdate, onDurationChange },
   ref,
 ) {
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -46,6 +49,22 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     getDurationSec: () => videoRef.current?.duration ?? 0,
   }), []);
 
+  // Apply MediaStream via srcObject (Screen Capture / camera)
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (stream) {
+      v.srcObject = stream;
+      v.muted = true; // avoid echo when sharing tab audio
+      void v.play().catch(() => undefined);
+    } else {
+      v.srcObject = null;
+    }
+    return () => {
+      if (v && v.srcObject === stream) v.srcObject = null;
+    };
+  }, [stream]);
+
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -63,7 +82,8 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
       v.removeEventListener("play", onPlay);
       v.removeEventListener("pause", onPause);
     };
-  }, [onTimeUpdate, onDurationChange, src]);
+  }, [onTimeUpdate, onDurationChange, src, stream]);
+
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -109,7 +129,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   return (
     <div ref={wrapRef} className="flex flex-col gap-2 bg-black rounded-lg overflow-hidden">
       <div className="relative bg-black aspect-video">
-        {isYouTube ? (
+        {isYouTube && !stream ? (
           <iframe
             src={src}
             className="absolute inset-0 w-full h-full"
@@ -120,17 +140,18 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
         ) : (
           <video
             ref={videoRef}
-            src={src}
+            src={stream ? undefined : src}
             className="absolute inset-0 w-full h-full bg-black"
             preload="metadata"
             playsInline
             controls={false}
           />
         )}
+
       </div>
 
       {/* Timeline with markers */}
-      {!isYouTube && (
+      {!isYouTube && !stream && (
         <div className="px-3 pb-2 pt-1 bg-black/60">
           <div
             className="relative h-8 bg-white/5 rounded cursor-pointer group"
