@@ -24,9 +24,10 @@ interface Props {
 const SPEEDS = [0.25, 0.5, 1, 1.25, 1.5, 2];
 
 export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
-  { src, marks, isYouTube, onTimeUpdate, onDurationChange },
+  { src, marks, isYouTube, stream, onTimeUpdate, onDurationChange },
   ref,
 ) {
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [playing, setPlaying] = useState(false);
