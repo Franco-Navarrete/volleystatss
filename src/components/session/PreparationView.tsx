@@ -39,12 +39,12 @@ export function PreparationView() {
     const matchId = createMatch({
       teamAId,
       teamBId,
-      leagueId: leagueId || undefined,
       category: category || undefined,
       scheduledAt: Date.now(),
       setsToWin: 3,
       pointsPerSet: 25,
     });
+
     MatchSessionService.create({
       matchId,
       teamAId,
@@ -135,14 +135,17 @@ function TeamPicker({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  teams: { id: string; name: string; color?: string }[];
+  teams: { id: string; name: string; color?: string; shortName?: string; logoUrl?: string }[];
 }) {
   const sel = teams.find((t) => t.id === value);
+  const badgeTeam = sel
+    ? { color: sel.color, shortName: sel.shortName ?? sel.name.slice(0, 3).toUpperCase(), logoUrl: sel.logoUrl }
+    : undefined;
   return (
     <div>
       <label className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{label}</label>
       <div className="mt-1 rounded-xl border border-border bg-card/40 p-3 flex items-center gap-3">
-        <TeamBadge team={sel} size="md" />
+        <TeamBadge team={badgeTeam} size="md" />
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -157,6 +160,7 @@ function TeamPicker({
     </div>
   );
 }
+
 
 function VideoOption({
   v, cur, onPick, Icon, label,

@@ -38,44 +38,38 @@ export function AnalysisView({ sessionId, finished }: Props) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <AnalysisLink
-          to="/video/$matchId/analysis"
-          params={{ matchId: sessionId }}
+          href={`/video/${sessionId}/analysis`}
           title="Análisis post-partido"
           desc="Filtros, playlists, comparación y dashboard."
         />
         <AnalysisLink
-          to="/video/$matchId/scout"
-          params={{ matchId: sessionId }}
+          href={`/video/${sessionId}/scout`}
           title="Scouting profesional"
           desc="Tabla + Rally + timeline con zoom, atajos J/K/L."
         />
         <AnalysisLink
-          to="/matches/$id/stats"
-          params={{ id: sessionId }}
+          href={`/matches/${sessionId}/stats`}
           title="Estadísticas completas"
           desc="Rotaciones, distribución, mapa de calor, ranking."
         />
       </div>
+
     </div>
   );
 }
 
 function AnalysisLink({
-  to,
-  params,
+  href,
   title,
   desc,
 }: {
-  to: string;
-  params: Record<string, string>;
+  href: string;
   title: string;
   desc: string;
 }) {
   return (
-    <Link
-      // @ts-expect-error — dynamic to for reusable card
-      to={to}
-      params={params}
+    <a
+      href={href}
       className="group rounded-2xl border border-border/60 bg-card/40 p-4 hover:border-primary/60 hover:-translate-y-0.5 transition-all"
     >
       <div className="flex items-center justify-between mb-2">
@@ -83,6 +77,7 @@ function AnalysisLink({
         <ExternalLink className="size-3.5 text-muted-foreground group-hover:text-primary" />
       </div>
       <p className="text-xs text-muted-foreground">{desc}</p>
-    </Link>
+    </a>
   );
 }
+
