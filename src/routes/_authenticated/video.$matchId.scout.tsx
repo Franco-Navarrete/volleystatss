@@ -127,6 +127,17 @@ function ScoutRoute() {
     return () => { cancelled = true; };
   }, [video?.id, video?.source, video?.external_url, video?.storage_path]);
 
+  // Trackear estado de reproducción para la barra de controles.
+  useEffect(() => {
+    const v = playerRef.current?.getVideoElement();
+    if (!v) return;
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    return () => { v.removeEventListener("play", onPlay); v.removeEventListener("pause", onPause); };
+  }, [videoSrc, overrideStream, overrideSrc]);
+
   const isYouTube = useMemo(() => !!videoSrc && /youtube\.com|youtu\.be/.test(videoSrc), [videoSrc]);
   const displaySrc = useMemo(() => {
     if (!videoSrc) return "";
