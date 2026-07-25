@@ -78,12 +78,17 @@ export class LiveRecorder {
   private status: LiveStatus = "idle";
   private cb: LiveRecorderCallbacks;
   private saveLocal: boolean;
+  private fileHandle: FileSystemFileHandle | null = null;
+  private fileWriter: FileSystemWritableFileStream | null = null;
+  private writeQueue: Promise<void> = Promise.resolve();
+  private cloudEnabled = true;
 
-  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}, opts: { saveLocal?: boolean } = {}) {
+  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}, opts: { saveLocal?: boolean; fileHandle?: FileSystemFileHandle | null } = {}) {
     this.stream = stream;
     this.cb = cb;
     this.mime = pickMime();
     this.saveLocal = opts.saveLocal ?? true;
+    this.fileHandle = opts.fileHandle ?? null;
   }
 
   getStatus() { return this.status; }
@@ -100,33 +105,53 @@ export class LiveRecorder {
   async start(matchId: string) {
     if (this.status !== "idle") throw new Error("Recorder ya iniciado");
     this.setStatus("starting");
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData?.user;
-    if (!user) throw new Error("Inicia sesión para grabar");
 
     const sessionId = crypto.randomUUID();
     const storagePrefix = `live/${matchId}/${sessionId}`;
     const startedWallClock = Date.now();
+    let ownerId = "local";
+    let rowId: string = sessionId;
 
-    const { data: row, error } = await supabase
-      .from("live_recordings")
-      .insert({
-        match_id: matchId,
-        session_id: sessionId,
-        owner_id: user.id,
-        status: "active",
-        storage_prefix: storagePrefix,
-        chunk_manifest: [],
-      })
-      .select("*")
-      .single();
-    if (error || !row) throw new Error(error?.message ?? "No se pudo crear la sesión");
+    // Cloud session (best-effort — si falla, seguimos grabando local)
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (!user) throw new Error("sin sesión");
+      const { data: row, error } = await supabase
+        .from("live_recordings")
+        .insert({
+          match_id: matchId,
+          session_id: sessionId,
+          owner_id: user.id,
+          status: "active",
+          storage_prefix: storagePrefix,
+          chunk_manifest: [],
+        })
+        .select("*")
+        .single();
+      if (error || !row) throw new Error(error?.message ?? "insert falló");
+      ownerId = user.id;
+      rowId = row.id as string;
+    } catch (e) {
+      console.warn("[LiveRecorder] cloud deshabilitado, grabando solo local:", (e as Error).message);
+      this.cloudEnabled = false;
+    }
+
+    // Abrir writer al archivo local si nos dieron un handle
+    if (this.fileHandle) {
+      try {
+        this.fileWriter = await this.fileHandle.createWritable();
+      } catch (e) {
+        console.warn("[LiveRecorder] no se pudo abrir writer local:", e);
+        this.fileWriter = null;
+      }
+    }
 
     this.session = {
-      id: row.id as string,
+      id: rowId,
       sessionId,
       matchId,
-      ownerId: user.id,
+      ownerId,
       storagePrefix,
       startedAt: performance.now(),
       startedWallClock,
@@ -137,8 +162,10 @@ export class LiveRecorder {
       if (!ev.data || ev.data.size === 0 || !this.session) return;
       const idx = this.nextIdx++;
       const chunkStartMs = idx * CHUNK_MS;
-      if (this.saveLocal) this.localBlobs.push(ev.data);
-      this.enqueueUpload(idx, ev.data, chunkStartMs);
+      if (this.saveLocal && !this.fileWriter) this.localBlobs.push(ev.data);
+      if (this.fileWriter) this.enqueueLocalWrite(ev.data);
+      if (this.cloudEnabled) this.enqueueUpload(idx, ev.data, chunkStartMs);
+      else this.cb.onChunkUploaded?.({ index: idx, path: "", size: ev.data.size, startedAtMs: chunkStartMs, durationMs: CHUNK_MS }, chunkStartMs + CHUNK_MS);
     };
     this.mr.onerror = (ev) => {
       const err = (ev as unknown as { error?: Error }).error ?? new Error("MediaRecorder error");
@@ -147,6 +174,14 @@ export class LiveRecorder {
     };
     this.mr.start(CHUNK_MS);
     this.setStatus("recording");
+  }
+
+  private enqueueLocalWrite(blob: Blob) {
+    this.writeQueue = this.writeQueue.then(async () => {
+      if (!this.fileWriter) return;
+      try { await this.fileWriter.write(blob); }
+      catch (e) { console.warn("[LiveRecorder] write local falló", e); }
+    });
   }
 
   private enqueueUpload(idx: number, blob: Blob, startedAtMs: number) {
@@ -202,30 +237,40 @@ export class LiveRecorder {
       if (this.mr!.state !== "inactive") this.mr!.stop();
       else resolve();
     });
-    // Wait for pending uploads
+    // Wait for pending uploads y writes locales
     await this.uploadQueue;
+    await this.writeQueue;
 
     const totalMs = Math.max(...this.chunks.map((c) => c.startedAtMs + c.durationMs), 0);
     const mainPath = this.chunks[0]?.path ?? null;
 
-    await supabase.from("live_recordings")
-      .update({
-        status: "finalized",
-        ended_at: new Date().toISOString(),
-        duration_ms: totalMs,
-        chunk_count: this.chunks.length,
-        chunk_manifest: this.chunks as never,
-      })
-      .eq("id", this.session.id);
+    if (this.cloudEnabled) {
+      await supabase.from("live_recordings")
+        .update({
+          status: "finalized",
+          ended_at: new Date().toISOString(),
+          duration_ms: totalMs,
+          chunk_count: this.chunks.length,
+          chunk_manifest: this.chunks as never,
+        })
+        .eq("id", this.session.id);
+    }
 
 
     // Registrar como video del partido apuntando al primer chunk (Tanda 2: reproducción concatenada).
-    if (mainPath) {
+    if (mainPath && this.cloudEnabled) {
       try { await upsertMatchVideoUpload(this.session.matchId, mainPath); }
       catch (e) { console.warn("[LiveRecorder] upsertMatchVideoUpload", e); }
     }
 
-    // Descargar copia local (guardar en la PC del entrenador)
+    // Cerrar archivo local (si el usuario eligió ubicación con showSaveFilePicker)
+    if (this.fileWriter) {
+      try { await this.fileWriter.close(); }
+      catch (e) { console.warn("[LiveRecorder] close writer local falló", e); }
+      this.fileWriter = null;
+    }
+
+    // Fallback: descargar copia si NO usamos File System Access API
     if (this.saveLocal && this.localBlobs.length > 0) {
       try {
         const ext = this.mime.includes("mp4") ? "mp4" : "webm";
