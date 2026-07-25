@@ -64,21 +64,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   }), []);
 
 
-  // Apply MediaStream via srcObject (Screen Capture / camera)
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (stream) {
-      v.srcObject = stream;
-      v.muted = true; // avoid echo when sharing tab audio
-      void v.play().catch(() => undefined);
-    } else {
-      v.srcObject = null;
-    }
-    return () => {
-      if (v && v.srcObject === stream) v.srcObject = null;
-    };
-  }, [stream]);
+
 
   useEffect(() => {
     const v = videoRef.current;
