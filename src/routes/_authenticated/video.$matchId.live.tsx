@@ -283,6 +283,16 @@ function LiveRoute() {
             <Button size="sm" variant="ghost" onClick={() => { useVolley.getState().undoLastEvent(match.id); showGhost("Deshecho"); }}>
               <Undo2 className="size-4 mr-1" /> Deshacer
             </Button>
+            <Button
+              size="sm"
+              variant="default"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => void finishAndAnalyze()}
+              disabled={finalizing}
+              title="Cerrar el partido, guardar la grabación y abrir el Análisis Post-Partido"
+            >
+              <Flag className="size-4 mr-1" /> {finalizing ? "Finalizando…" : "Finalizar y Analizar"}
+            </Button>
           </div>
         </header>
 
