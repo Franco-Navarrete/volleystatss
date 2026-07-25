@@ -289,8 +289,16 @@ function LiveRoute() {
             <LiveCameraPanel
               matchId={matchId}
               onStarted={(t) => { recordingStartedRef.current = t; setRecording(true); }}
-              onStopped={() => { recordingStartedRef.current = null; setRecording(false); setElapsedMs(0); }}
+              onStopped={() => {
+                recordingStartedRef.current = null;
+                setRecording(false);
+                setElapsedMs(0);
+                setBufferedMs(0);
+                setBufferedBytes(0);
+              }}
               onTick={setElapsedMs}
+              onRecorderReady={setRecorder}
+              onBufferGrew={(bytes, ms) => { setBufferedBytes(bytes); setBufferedMs(ms); }}
             />
             {showOverlay && (
               <div className="absolute inset-0 top-0 h-[56%] bg-black/30 backdrop-blur-[1px] pointer-events-none flex items-center justify-center rounded-lg">
