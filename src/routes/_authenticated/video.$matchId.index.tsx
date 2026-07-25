@@ -419,6 +419,17 @@ function VideoWorkspace() {
           </div>
         )}
 
+        {video && videoSrc && marks.length > 0 && (
+          <ClipsPanel
+            matchId={matchId}
+            marks={marks}
+            playerRef={playerRef}
+            disabled={isYouTube}
+            disabledReason={isYouTube ? "Exportar clips requiere un video local o subido (YouTube no permite capturar el stream)." : undefined}
+          />
+        )}
+
+
         {video && !videoSrc && (
           <div className="text-center py-20 text-muted-foreground">
             <VideoIcon className="size-8 mx-auto mb-2" />
