@@ -39,7 +39,6 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       streamRef.current?.getTracks().forEach((t) => t.stop());
       let s: MediaStream;
       if (source === "screen") {
-        // @ts-expect-error getDisplayMedia typings
         s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio });
         // If user stops sharing via browser UI, revert to camera
         s.getVideoTracks()[0]?.addEventListener("ended", () => {
