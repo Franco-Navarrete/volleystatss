@@ -446,6 +446,7 @@ function ScoutRoute() {
                 isPlaying={isPlaying}
               />
               <KeyboardShortcutsPanel active={analysisMode} />
+              <ScoutShortcutsDrawer />
             </div>
 
 
