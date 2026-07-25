@@ -129,7 +129,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   return (
     <div ref={wrapRef} className="flex flex-col gap-2 bg-black rounded-lg overflow-hidden">
       <div className="relative bg-black aspect-video">
-        {isYouTube ? (
+        {isYouTube && !stream ? (
           <iframe
             src={src}
             className="absolute inset-0 w-full h-full"
@@ -140,13 +140,14 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
         ) : (
           <video
             ref={videoRef}
-            src={src}
+            src={stream ? undefined : src}
             className="absolute inset-0 w-full h-full bg-black"
             preload="metadata"
             playsInline
             controls={false}
           />
         )}
+
       </div>
 
       {/* Timeline with markers */}
