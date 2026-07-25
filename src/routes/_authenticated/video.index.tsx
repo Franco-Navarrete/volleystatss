@@ -60,10 +60,11 @@ function MatchCenterHome() {
     const list = matches.map((m) => {
       const v = videoByMatch.get(m.id) ?? null;
       const session = sessions[m.id];
-      const league = m.leagueId ? leagueById.get(m.leagueId) : undefined;
-      const competition = session?.competition ?? league?.name ?? undefined;
       const a = teamById.get(m.teamAId);
       const b = teamById.get(m.teamBId);
+      const leagueId = a?.leagueId ?? b?.leagueId;
+      const league = leagueId ? leagueById.get(leagueId) : undefined;
+      const competition = session?.competition ?? league?.name ?? undefined;
       return { m, v, session, competition, a, b };
     });
 
