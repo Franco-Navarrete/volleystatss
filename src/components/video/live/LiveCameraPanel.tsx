@@ -87,23 +87,57 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
   const start = async () => {
     if (!streamRef.current) await attachPreview();
     if (!streamRef.current) return;
-    const rec = new LiveRecorder(streamRef.current, {
-      onStatusChange: setStatus,
-      onChunkUploaded: (c: LiveChunk, total) => {
-        setChunkCount((n) => n + 1);
-        setTotalBytes((b) => b + c.size);
-        void total;
+
+    // Pedirle al usuario dónde guardar el archivo (File System Access API).
+    // Si el navegador no lo soporta, se descarga al final vía blob (carpeta Descargas).
+    let fileHandle: FileSystemFileHandle | null = null;
+    const anyWin = window as unknown as {
+      showSaveFilePicker?: (opts: {
+        suggestedName?: string;
+        types?: { description: string; accept: Record<string, string[]> }[];
+      }) => Promise<FileSystemFileHandle>;
+    };
+    if (typeof anyWin.showSaveFilePicker === "function") {
+      try {
+        const ts = new Date().toISOString().replace(/[:.]/g, "-");
+        fileHandle = await anyWin.showSaveFilePicker({
+          suggestedName: `rally-live-${matchId}-${ts}.webm`,
+          types: [{ description: "Video WebM", accept: { "video/webm": [".webm"] } }],
+        });
+      } catch (err) {
+        // Usuario canceló el picker → no arrancamos la grabación
+        if ((err as DOMException)?.name === "AbortError") {
+          toast.info("Grabación cancelada");
+          return;
+        }
+        console.warn("[LiveCameraPanel] showSaveFilePicker falló", err);
+      }
+    } else {
+      toast.info("Este navegador no permite elegir carpeta; se descargará al finalizar.");
+    }
+
+    const rec = new LiveRecorder(
+      streamRef.current,
+      {
+        onStatusChange: setStatus,
+        onChunkUploaded: (c: LiveChunk, total) => {
+          setChunkCount((n) => n + 1);
+          setTotalBytes((b) => b + c.size);
+          void total;
+        },
+        onError: (err) => toast.error(`Grabación: ${err.message}`),
       },
-      onError: (err) => toast.error(`Grabación: ${err.message}`),
-    });
+      { fileHandle },
+    );
     recorderRef.current = rec;
     try {
       await rec.start(matchId);
       startedRef.current = rec.getStartedAtMs();
       if (startedRef.current != null) onStarted(startedRef.current);
-      toast.success("REC iniciado");
+      toast.success(fileHandle ? "REC iniciado · guardando en tu archivo" : "REC iniciado");
     } catch (e) {
-      toast.error((e as Error).message);
+      console.error("[LiveCameraPanel] start falló", e);
+      toast.error((e as Error).message || "No se pudo iniciar la grabación");
     }
   };
 
