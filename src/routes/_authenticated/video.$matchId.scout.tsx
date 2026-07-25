@@ -325,8 +325,18 @@ function ScoutRoute() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
+              variant={analysisMode ? "default" : "outline"}
+              onClick={() => setAnalysisMode((v) => !v)}
+              title={analysisMode ? "Volver al scouting normal" : "Pausa el registro y habilita navegación libre"}
+              className={analysisMode ? "bg-red-500 hover:bg-red-600 text-white" : ""}
+            >
+              <Search className="size-4 mr-1" /> {analysisMode ? "Análisis ON" : "Modo Análisis"}
+            </Button>
+            <Button
+              size="sm"
               variant={mode === "rapido" ? "default" : "outline"}
               onClick={() => setMode("rapido")}
+              disabled={analysisMode}
               title="Nunca pausa el video"
             >
               <Zap className="size-4 mr-1" /> Rápido
@@ -335,6 +345,7 @@ function ScoutRoute() {
               size="sm"
               variant={mode === "completo" ? "default" : "outline"}
               onClick={() => setMode("completo")}
+              disabled={analysisMode}
               title={`Pausa ${autoPauseMs / 1000}s tras cada acción`}
             >
               <PauseCircle className="size-4 mr-1" /> Completo
