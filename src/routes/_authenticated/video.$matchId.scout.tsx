@@ -444,6 +444,7 @@ function ScoutRoute() {
                 playerRef={playerRef}
                 isPlaying={isPlaying}
               />
+              <KeyboardShortcutsPanel active={analysisMode} />
             </div>
 
 
