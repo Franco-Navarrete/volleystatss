@@ -9,7 +9,9 @@ export interface VideoPlayerHandle {
   pause: () => void;
   getCurrentMs: () => number;
   getDurationSec: () => number;
+  getVideoElement: () => HTMLVideoElement | null;
 }
+
 
 interface Props {
   src: string;
@@ -47,7 +49,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     pause: () => { videoRef.current?.pause(); },
     getCurrentMs: () => (videoRef.current?.currentTime ?? 0) * 1000,
     getDurationSec: () => videoRef.current?.duration ?? 0,
+    getVideoElement: () => videoRef.current,
   }), []);
+
 
   // Apply MediaStream via srcObject (Screen Capture / camera)
   useEffect(() => {

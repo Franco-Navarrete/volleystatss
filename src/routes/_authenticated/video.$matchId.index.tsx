@@ -14,6 +14,8 @@ import {
 } from "@/hooks/use-match-video";
 import { buildRallyBlocks, buildVideoMarks, MARK_COLORS, MARK_LABEL, type VideoMark, type VideoMarkKind } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
+import { ClipsPanel } from "@/components/video/ClipsPanel";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -418,6 +420,17 @@ function VideoWorkspace() {
             </aside>
           </div>
         )}
+
+        {video && videoSrc && marks.length > 0 && (
+          <ClipsPanel
+            matchId={matchId}
+            marks={marks}
+            playerRef={playerRef}
+            disabled={isYouTube}
+            disabledReason={isYouTube ? "Exportar clips requiere un video local o subido (YouTube no permite capturar el stream)." : undefined}
+          />
+        )}
+
 
         {video && !videoSrc && (
           <div className="text-center py-20 text-muted-foreground">
