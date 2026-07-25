@@ -265,6 +265,7 @@ function AnalysisRoute() {
               playerRef={playerRef}
               isPlaying={isPlaying}
             />
+            <KeyboardShortcutsPanel active />
           </div>
 
           {/* DERECHA — filtros permanentes */}
