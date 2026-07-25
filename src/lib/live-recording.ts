@@ -179,7 +179,10 @@ export class LiveRecorder {
       if (!ev.data || ev.data.size === 0 || !this.session) return;
       const idx = this.nextIdx++;
       const chunkStartMs = idx * CHUNK_MS;
-      if (this.saveLocal && !this.fileWriter) this.localBlobs.push(ev.data);
+      // Siempre acumulamos en RAM para permitir revisar mientras se graba.
+      // (Antes solo se guardaba cuando NO había fileWriter.)
+      this.localBlobs.push(ev.data);
+      this.cb.onChunkRecorded?.(this.getBufferedBytes(), this.getBufferedMs());
       if (this.fileWriter) this.enqueueLocalWrite(ev.data);
       if (this.cloudEnabled) this.enqueueUpload(idx, ev.data, chunkStartMs);
       else this.cb.onChunkUploaded?.({ index: idx, path: "", size: ev.data.size, startedAtMs: chunkStartMs, durationMs: CHUNK_MS }, chunkStartMs + CHUNK_MS);
