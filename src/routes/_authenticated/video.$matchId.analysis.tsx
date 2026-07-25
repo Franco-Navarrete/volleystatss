@@ -261,6 +261,8 @@ function AnalysisRoute() {
               totalMs={Math.max(durationSec * 1000, ...allClips.map((c) => c.tMs), 60_000)}
               onSeek={(ms) => playerRef.current?.seekMs(ms)}
               onSelectMark={onSelectMarkFromPanel}
+              playerRef={playerRef}
+              isPlaying={isPlaying}
             />
           </div>
 
