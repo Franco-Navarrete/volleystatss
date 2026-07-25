@@ -403,14 +403,21 @@ function LiveRoute() {
             )}
             {side && !playerId && currentTeam && (
               <div>
-                <SubTitle>Jugadora en cancha</SubTitle>
+                <SubTitle>
+                  Jugadora en cancha {match.servingSide === side && <span className="ml-1 text-primary">· sacando</span>}
+                </SubTitle>
                 <div className="grid grid-cols-3 gap-2">
-                  {currentTeam.players.filter((p) => onCourt.includes(p.id)).map((p) => (
-                    <button key={p.id} onClick={() => setPlayerId(p.id)} className="rounded-lg border border-border bg-card/60 py-3 text-center hover:border-primary/60">
-                      <div className="text-2xl font-black scoreboard-digit">{p.number ?? "?"}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{p.name}</div>
-                    </button>
-                  ))}
+                  {onCourt.map((id, idx) => {
+                    const p = currentTeam.players.find((pp) => pp.id === id);
+                    if (!p) return null;
+                    return (
+                      <button key={p.id} onClick={() => setPlayerId(p.id)} className="relative rounded-lg border border-border bg-card/60 py-3 text-center hover:border-primary/60">
+                        <span className="absolute top-1 left-1.5 text-[9px] text-muted-foreground font-bold">Z{idx + 1}</span>
+                        <div className="text-2xl font-black scoreboard-digit">{p.number ?? "?"}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{p.name}</div>
+                      </button>
+                    );
+                  })}
                 </div>
                 <button onClick={() => setSide(null)} className="mt-2 text-xs text-muted-foreground hover:text-foreground">← cambiar equipo</button>
               </div>
