@@ -82,6 +82,8 @@ function ScoutRoute() {
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [currentMs, setCurrentMs] = useState(0);
   const [durationSec, setDurationSec] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState(false);
   const [sourceKind, setSourceKind] = useState<VideoSourceKind>("linked");
   const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
   const [overrideStream, setOverrideStream] = useState<MediaStream | null>(null);
@@ -151,6 +153,7 @@ function ScoutRoute() {
   }, []);
 
   const commit = useCallback((result: ScoutResultado) => {
+    if (analysisMode) { showGhost("Modo Análisis activo — registro pausado"); return; }
     if (!match || !side || !fund) return;
     const v = useVolley.getState();
     // Cada handler del volley-store persiste automáticamente a Supabase vía cloud-sync.
@@ -200,7 +203,7 @@ function ScoutRoute() {
       playerRef.current.pause();
       window.setTimeout(() => playerRef.current?.play(), autoPauseMs);
     }
-  }, [match, side, fund, playerId, teamA, teamB, mode, autoPauseMs, resetStep, store]);
+  }, [match, side, fund, playerId, teamA, teamB, mode, autoPauseMs, resetStep, store, analysisMode]);
 
   // Keyboard shortcuts
   useEffect(() => {
