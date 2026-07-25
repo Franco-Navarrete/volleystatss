@@ -58,6 +58,17 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     }
   }, [currentMs, zoom, startMs, endMs, setCenterMs]);
 
+  // Al seleccionar una marca, centrar la timeline sobre ella si está fuera de vista.
+  useEffect(() => {
+    if (!selectedMarkId) return;
+    const m = marks.find((x) => x.id === selectedMarkId);
+    if (!m) return;
+    if (zoom > 1 && (m.tMs < startMs || m.tMs > endMs)) {
+      setCenterMs(m.tMs);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMarkId]);
+
   const msToX = useCallback(
     (ms: number) => ((ms - startMs) / viewportMs) * width,
     [startMs, viewportMs, width],
