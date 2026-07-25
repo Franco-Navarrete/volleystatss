@@ -22,7 +22,7 @@ import {
   type ScoutFundamento,
   type ScoutResultado,
 } from "@/lib/video-scout-store";
-import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight } from "lucide-react";
+import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/scout")({
