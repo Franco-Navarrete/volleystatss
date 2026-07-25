@@ -16,7 +16,9 @@ import {
   type ScoutFundamento,
   type ScoutResultado,
 } from "@/lib/video-scout-store";
-import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio } from "lucide-react";
+import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film } from "lucide-react";
+import type { LiveRecorder } from "@/lib/live-recording";
+import { RecordingReviewDialog } from "@/components/video/live/RecordingReviewDialog";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/live")({
   head: () => ({
@@ -79,6 +81,10 @@ function LiveRoute() {
   const recordingStartedRef = useRef<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [recording, setRecording] = useState(false);
+  const [recorder, setRecorder] = useState<LiveRecorder | null>(null);
+  const [bufferedMs, setBufferedMs] = useState(0);
+  const [bufferedBytes, setBufferedBytes] = useState(0);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   // Selección
   const [side, setSide] = useState<Side | null>(null);
@@ -225,6 +231,21 @@ function LiveRoute() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setReviewOpen(true)}
+              disabled={!recorder || bufferedMs < 1000}
+              title={recorder ? "Revisar la jugada anterior sin detener la captura" : "Iniciá REC para habilitar la revisión"}
+              className="border-primary/60 text-primary hover:bg-primary/10"
+            >
+              <Film className="size-4 mr-1" /> Analizar grabación
+              {bufferedMs > 0 && (
+                <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                  {(bufferedMs / 1000).toFixed(0)}s
+                </span>
+              )}
+            </Button>
             <Button size="sm" variant={mode === "rapido" ? "default" : "outline"} onClick={() => setMode("rapido")} title="Nunca pausa">
               <Zap className="size-4 mr-1" /> Rápido
             </Button>
@@ -268,8 +289,16 @@ function LiveRoute() {
             <LiveCameraPanel
               matchId={matchId}
               onStarted={(t) => { recordingStartedRef.current = t; setRecording(true); }}
-              onStopped={() => { recordingStartedRef.current = null; setRecording(false); setElapsedMs(0); }}
+              onStopped={() => {
+                recordingStartedRef.current = null;
+                setRecording(false);
+                setElapsedMs(0);
+                setBufferedMs(0);
+                setBufferedBytes(0);
+              }}
               onTick={setElapsedMs}
+              onRecorderReady={setRecorder}
+              onBufferGrew={(bytes, ms) => { setBufferedBytes(bytes); setBufferedMs(ms); }}
             />
             {showOverlay && (
               <div className="absolute inset-0 top-0 h-[56%] bg-black/30 backdrop-blur-[1px] pointer-events-none flex items-center justify-center rounded-lg">
@@ -345,6 +374,16 @@ function LiveRoute() {
           </div>
         )}
       </div>
+      <RecordingReviewDialog
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        recorder={recorder}
+        matchId={matchId}
+        marks={marks}
+        liveElapsedMs={elapsedMs}
+        bufferedMs={bufferedMs}
+        bufferedBytes={bufferedBytes}
+      />
     </AppShell>
   );
 }

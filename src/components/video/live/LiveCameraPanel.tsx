@@ -12,6 +12,10 @@ interface Props {
   onStarted: (startedAtMs: number) => void;
   onStopped: () => void;
   onTick?: (elapsedMs: number) => void;
+  /** Notifica el recorder activo para permitir revisar la grabación en curso. */
+  onRecorderReady?: (rec: LiveRecorder | null) => void;
+  /** Notifica cuando crece el buffer de review (RAM). */
+  onBufferGrew?: (bytes: number, ms: number) => void;
 }
 
 /**
@@ -19,7 +23,7 @@ interface Props {
  * La grabación (LiveRecorder) es independiente del origen: cámara,
  * ventana o pantalla producen el mismo `MediaStream` que se pasa al recorder.
  */
-export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props) {
+export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick, onRecorderReady, onBufferGrew }: Props) {
   const { source, status: srcStatus, open, reconnect } = useVideoSource();
   const playerRef = useRef<VideoPlayerHandle | null>(null);
   const recorderRef = useRef<LiveRecorder | null>(null);
@@ -96,11 +100,13 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
           setChunkCount((n) => n + 1);
           setTotalBytes((b) => b + c.size);
         },
+        onChunkRecorded: (bytes, ms) => onBufferGrew?.(bytes, ms),
         onError: (err) => toast.error(`Grabación: ${err.message}`),
       },
       { fileHandle },
     );
     recorderRef.current = rec;
+    onRecorderReady?.(rec);
     try {
       await rec.start(matchId);
       startedRef.current = rec.getStartedAtMs();
@@ -115,6 +121,7 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
     if (!recorderRef.current) return;
     const res = await recorderRef.current.stop();
     recorderRef.current = null;
+    onRecorderReady?.(null);
     startedRef.current = null;
     setElapsedMs(0);
     onStopped();

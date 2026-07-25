@@ -62,6 +62,7 @@ export async function openStream(opts: { deviceId?: string; audio: boolean }): P
 
 export interface LiveRecorderCallbacks {
   onChunkUploaded?: (chunk: LiveChunk, totalMs: number) => void;
+  onChunkRecorded?: (bufferedBytes: number, bufferedMs: number) => void;
   onError?: (err: Error) => void;
   onStatusChange?: (status: LiveStatus) => void;
 }
@@ -96,6 +97,22 @@ export class LiveRecorder {
   getSession() { return this.session; }
   getMime() { return this.mime; }
   getStartedAtMs(): number | null { return this.session?.startedAt ?? null; }
+
+  /** Buffer completo del video grabado hasta ahora (RAM). Sirve para revisar
+   *  la grabación mientras la captura continúa, sin detener el MediaRecorder. */
+  getReviewBlob(): Blob | null {
+    if (this.localBlobs.length === 0) return null;
+    return new Blob(this.localBlobs, { type: this.mime });
+  }
+  getBufferedBytes(): number {
+    let n = 0;
+    for (const b of this.localBlobs) n += b.size;
+    return n;
+  }
+  getBufferedMs(): number {
+    // Aproximación conservadora: nextIdx * CHUNK_MS es el # de chunks emitidos.
+    return this.nextIdx * CHUNK_MS;
+  }
 
   private setStatus(s: LiveStatus) {
     this.status = s;
@@ -162,7 +179,10 @@ export class LiveRecorder {
       if (!ev.data || ev.data.size === 0 || !this.session) return;
       const idx = this.nextIdx++;
       const chunkStartMs = idx * CHUNK_MS;
-      if (this.saveLocal && !this.fileWriter) this.localBlobs.push(ev.data);
+      // Siempre acumulamos en RAM para permitir revisar mientras se graba.
+      // (Antes solo se guardaba cuando NO había fileWriter.)
+      this.localBlobs.push(ev.data);
+      this.cb.onChunkRecorded?.(this.getBufferedBytes(), this.getBufferedMs());
       if (this.fileWriter) this.enqueueLocalWrite(ev.data);
       if (this.cloudEnabled) this.enqueueUpload(idx, ev.data, chunkStartMs);
       else this.cb.onChunkUploaded?.({ index: idx, path: "", size: ev.data.size, startedAtMs: chunkStartMs, durationMs: CHUNK_MS }, chunkStartMs + CHUNK_MS);
@@ -270,8 +290,9 @@ export class LiveRecorder {
       this.fileWriter = null;
     }
 
-    // Fallback: descargar copia si NO usamos File System Access API
-    if (this.saveLocal && this.localBlobs.length > 0) {
+    // Fallback: descargar copia si NO usamos File System Access API.
+    // (Con fileHandle presente, el archivo ya quedó en disco vía writer.)
+    if (this.saveLocal && !this.fileHandle && this.localBlobs.length > 0) {
       try {
         const ext = this.mime.includes("mp4") ? "mp4" : "webm";
         const full = new Blob(this.localBlobs, { type: this.mime });
