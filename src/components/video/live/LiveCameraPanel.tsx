@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Circle, Square, Pause, Play, Camera, RefreshCcw } from "lucide-react";
+import { Circle, Square, Pause, Play, Camera, RefreshCcw, MonitorUp } from "lucide-react";
 import { LiveRecorder, listVideoInputDevices, openStream, type LiveStatus, type LiveChunk } from "@/lib/live-recording";
 import { toast } from "sonner";
 
