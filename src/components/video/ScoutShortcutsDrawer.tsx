@@ -78,24 +78,24 @@ export function ScoutShortcutsDrawer({ topClass = "top-24" }: Props) {
 
   return (
     <>
-      {/* Lengüeta siempre visible */}
+      {/* Botón discreto en la esquina inferior izquierda */}
       {!open && (
         <button
           type="button"
           onClick={() => setOpen(true)}
           title="Guía de atajos (?)"
-          className={`fixed right-0 ${topClass} z-40 flex items-center gap-1.5 rounded-l-md bg-primary/90 hover:bg-primary text-primary-foreground px-2 py-2 shadow-elevated text-[11px] font-semibold`}
+          className="fixed bottom-3 left-3 z-40 flex items-center gap-1.5 rounded-full bg-card/80 hover:bg-card border border-border text-foreground/80 px-2.5 py-1.5 shadow-sm text-[10px] font-semibold backdrop-blur"
         >
-          <Keyboard className="size-3.5" />
+          <Keyboard className="size-3" />
           Atajos
-          <kbd className="px-1 py-0.5 rounded bg-black/25 text-[9px] font-mono">?</kbd>
+          <kbd className="px-1 py-0.5 rounded bg-background/60 text-[9px] font-mono">?</kbd>
         </button>
       )}
 
-      {/* Cajón lateral */}
+      {/* Cajón que emerge desde la esquina inferior izquierda, no tapa la cancha ni el panel de resultado */}
       <aside
-        className={`fixed right-0 ${topClass} z-40 w-64 max-h-[calc(100vh-8rem)] overflow-auto bg-card/95 backdrop-blur border border-border rounded-l-lg shadow-elevated transition-transform duration-200 ${
-          open ? "translate-x-0" : "translate-x-full pointer-events-none"
+        className={`fixed bottom-3 left-3 z-40 w-60 max-h-[70vh] overflow-auto bg-card/95 backdrop-blur border border-border rounded-lg shadow-elevated transition-all duration-200 origin-bottom-left ${
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
         <div className="sticky top-0 flex items-center justify-between px-3 py-2 border-b border-border bg-card/95 backdrop-blur">
@@ -108,7 +108,7 @@ export function ScoutShortcutsDrawer({ topClass = "top-24" }: Props) {
             className="p-1 rounded hover:bg-secondary/50"
             title="Ocultar (Esc)"
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4 rotate-180" />
           </button>
         </div>
         <div className="p-3 space-y-3">
