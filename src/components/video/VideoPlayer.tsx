@@ -9,7 +9,9 @@ export interface VideoPlayerHandle {
   pause: () => void;
   getCurrentMs: () => number;
   getDurationSec: () => number;
+  getVideoElement: () => HTMLVideoElement | null;
 }
+
 
 interface Props {
   src: string;
