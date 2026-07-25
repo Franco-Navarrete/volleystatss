@@ -19,7 +19,7 @@ import { ClipsPanel } from "@/components/video/ClipsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Star, Trash2, Upload, Link2, Crosshair, Video as VideoIcon } from "lucide-react";
+import { ArrowLeft, Star, Trash2, Upload, Link2, Crosshair, Video as VideoIcon, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/")({
