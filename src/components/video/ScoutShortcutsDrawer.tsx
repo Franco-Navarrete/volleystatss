@@ -131,5 +131,3 @@ export function ScoutShortcutsDrawer({ topClass = "top-24" }: Props) {
     </>
   );
 }
-// Evita import no usado si el ícono cambia
-void ChevronRight;
