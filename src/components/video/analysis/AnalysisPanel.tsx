@@ -10,6 +10,9 @@ import { AnalysisTimeline } from "@/components/video/analysis/AnalysisTimeline";
 import { ActionsTableVirtual } from "@/components/video/analysis/ActionsTableVirtual";
 import { RallyView } from "@/components/video/analysis/RallyView";
 import { CustomMarkersPanel } from "@/components/video/analysis/CustomMarkersPanel";
+import { PlaybackControls } from "@/components/video/analysis/PlaybackControls";
+import { SelectedActionCard } from "@/components/video/analysis/SelectedActionCard";
+import type { VideoPlayerHandle } from "@/components/video/VideoPlayer";
 
 interface Props {
   matchId: string;
@@ -19,6 +22,9 @@ interface Props {
   onSeek: (ms: number) => void;
   /** Llamado al seleccionar una fila / marca: recibe inicio y fin del clip virtual. */
   onSelectMark: (m: VideoMark) => void;
+  /** Si se pasa, se muestran la tarjeta de jugada seleccionada y la barra de controles. */
+  playerRef?: React.RefObject<VideoPlayerHandle | null>;
+  isPlaying?: boolean;
 }
 
 export function AnalysisPanel({ matchId, marks, currentMs, totalMs, onSeek, onSelectMark }: Props) {
