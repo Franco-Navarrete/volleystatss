@@ -151,7 +151,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
       </div>
 
       {/* Timeline with markers */}
-      {!isYouTube && (
+      {!isYouTube && !stream && (
         <div className="px-3 pb-2 pt-1 bg-black/60">
           <div
             className="relative h-8 bg-white/5 rounded cursor-pointer group"
