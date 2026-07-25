@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Circle, Square, Pause, Play, Camera, RefreshCcw, MonitorUp } from "lucide-react";
-import { LiveRecorder, listVideoInputDevices, openStream, type LiveStatus, type LiveChunk } from "@/lib/live-recording";
+import { Circle, Square, Pause, Play } from "lucide-react";
+import { LiveRecorder, type LiveStatus, type LiveChunk } from "@/lib/live-recording";
 import { toast } from "sonner";
+import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
+import { VideoSourcePicker, VideoSourceChip } from "@/components/video/VideoSourcePicker";
+import { useVideoSource } from "@/hooks/use-video-source";
 
 interface Props {
   matchId: string;
@@ -11,69 +14,25 @@ interface Props {
   onTick?: (elapsedMs: number) => void;
 }
 
+/**
+ * Panel de captura en vivo con arquitectura de proveedores.
+ * La grabación (LiveRecorder) es independiente del origen: cámara,
+ * ventana o pantalla producen el mismo `MediaStream` que se pasa al recorder.
+ */
 export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const { source, status: srcStatus, open, reconnect } = useVideoSource();
+  const playerRef = useRef<VideoPlayerHandle | null>(null);
   const recorderRef = useRef<LiveRecorder | null>(null);
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [deviceId, setDeviceId] = useState<string | undefined>(undefined);
-  const [audio, setAudio] = useState(true);
-  const [source, setSource] = useState<"camera" | "screen">("camera");
-  const [status, setStatus] = useState<LiveStatus>("idle");
+  const startedRef = useRef<number | null>(null);
+  const [recStatus, setRecStatus] = useState<LiveStatus>("idle");
   const [elapsedMs, setElapsedMs] = useState(0);
   const [chunkCount, setChunkCount] = useState(0);
   const [totalBytes, setTotalBytes] = useState(0);
-  const startedRef = useRef<number | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  // Enumerate devices
-  useEffect(() => {
-    void listVideoInputDevices().then((d) => {
-      setDevices(d);
-      if (d.length && !deviceId) setDeviceId(d[0].deviceId);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const attachPreview = useCallback(async () => {
-    try {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      let s: MediaStream;
-      if (source === "screen") {
-        s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio });
-        // If user stops sharing via browser UI, revert to camera
-        s.getVideoTracks()[0]?.addEventListener("ended", () => {
-          setSource("camera");
-        });
-      } else {
-        s = await openStream({ deviceId, audio });
-      }
-      streamRef.current = s;
-      if (videoRef.current) {
-        videoRef.current.srcObject = s;
-        await videoRef.current.play().catch(() => undefined);
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error(source === "screen" ? "No se pudo capturar la pantalla." : "No se pudo acceder a la cámara. Revisa permisos.");
-    }
-  }, [deviceId, audio, source]);
-
-  useEffect(() => {
-    if (status === "idle" && source === "camera") void attachPreview();
-  }, [deviceId, audio, status, source, attachPreview]);
-
-  // Stop tracks only when the component unmounts and no recording is active
-  useEffect(() => {
-    return () => {
-      if (!recorderRef.current) {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-      }
-    };
-  }, []);
+  const [audio, setAudio] = useState(true);
 
   // Elapsed ticker
   useEffect(() => {
-    if (status !== "recording") return;
+    if (recStatus !== "recording") return;
     const id = window.setInterval(() => {
       if (startedRef.current != null) {
         const e = performance.now() - startedRef.current;
@@ -82,14 +41,29 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       }
     }, 250);
     return () => window.clearInterval(id);
-  }, [status, onTick]);
+  }, [recStatus, onTick]);
+
+  // Pausar automáticamente la grabación si se interrumpe la captura;
+  // reanudar cuando el usuario reconecta.
+  useEffect(() => {
+    const rec = recorderRef.current;
+    if (!rec) return;
+    if (srcStatus === "interrupted" && rec.getStatus() === "recording") {
+      rec.pause();
+    } else if (srcStatus === "active" && rec.getStatus() === "paused") {
+      rec.resume();
+    }
+  }, [srcStatus]);
+
+  const isRec = recStatus === "recording" || recStatus === "paused" || recStatus === "finalizing";
 
   const start = async () => {
-    if (!streamRef.current) await attachPreview();
-    if (!streamRef.current) return;
+    if (!source?.stream) {
+      toast.error("Elegí una fuente con video en vivo antes de grabar (Cámara, Ventana o Pantalla).");
+      return;
+    }
 
-    // Pedirle al usuario dónde guardar el archivo (File System Access API).
-    // Si el navegador no lo soporta, se descarga al final vía blob (carpeta Descargas).
+    // File System Access API: preguntamos dónde guardar.
     let fileHandle: FileSystemFileHandle | null = null;
     const anyWin = window as unknown as {
       showSaveFilePicker?: (opts: {
@@ -105,25 +79,22 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
           types: [{ description: "Video WebM", accept: { "video/webm": [".webm"] } }],
         });
       } catch (err) {
-        // Usuario canceló el picker → no arrancamos la grabación
         if ((err as DOMException)?.name === "AbortError") {
           toast.info("Grabación cancelada");
           return;
         }
-        console.warn("[LiveCameraPanel] showSaveFilePicker falló", err);
       }
     } else {
       toast.info("Este navegador no permite elegir carpeta; se descargará al finalizar.");
     }
 
     const rec = new LiveRecorder(
-      streamRef.current,
+      source.stream,
       {
-        onStatusChange: setStatus,
-        onChunkUploaded: (c: LiveChunk, total) => {
+        onStatusChange: setRecStatus,
+        onChunkUploaded: (c: LiveChunk) => {
           setChunkCount((n) => n + 1);
           setTotalBytes((b) => b + c.size);
-          void total;
         },
         onError: (err) => toast.error(`Grabación: ${err.message}`),
       },
@@ -136,7 +107,6 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       if (startedRef.current != null) onStarted(startedRef.current);
       toast.success(fileHandle ? "REC iniciado · guardando en tu archivo" : "REC iniciado");
     } catch (e) {
-      console.error("[LiveCameraPanel] start falló", e);
       toast.error((e as Error).message || "No se pudo iniciar la grabación");
     }
   };
@@ -157,127 +127,50 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
     else if (r.getStatus() === "paused") r.resume();
   };
 
-  const isRec = status === "recording" || status === "paused" || status === "finalizing";
-
-  const mm = Math.floor(elapsedMs / 60000);
-  const ss = Math.floor((elapsedMs % 60000) / 1000);
-  const cs = Math.floor((elapsedMs % 1000) / 10);
-  const clock = `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
-
   return (
-    <div className="bg-black rounded-lg overflow-hidden border border-border flex flex-col">
-      <div className="relative aspect-video bg-black">
-        <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-contain" />
-        {isRec && (
-          <>
-            {/* Marco rojo pulsante mientras graba */}
-            <div
-              className={`pointer-events-none absolute inset-0 rounded-lg ring-4 ${
-                status === "recording"
-                  ? "ring-red-500 animate-pulse"
-                  : status === "paused"
-                    ? "ring-yellow-400"
-                    : "ring-orange-400"
-              }`}
-            />
-            {/* Badge de estado grande */}
-            <div className="absolute top-2 left-2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur border border-white/10">
-              <span
-                className={`inline-block size-3 rounded-full ${
-                  status === "recording"
-                    ? "bg-red-500 animate-pulse"
-                    : status === "paused"
-                      ? "bg-yellow-400"
-                      : "bg-orange-400 animate-pulse"
-                }`}
-              />
-              <span className="text-xs font-bold text-white uppercase tracking-wide">
-                {status === "recording" ? "Grabando" : status === "paused" ? "Pausado" : "Finalizando"}
-              </span>
-              <span className="text-sm font-bold text-white tabular-nums">{clock}</span>
-            </div>
-            {/* Info de chunks abajo */}
-            <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-black/70 text-[10px] text-white/80 tabular-nums">
-              {chunkCount} chunks · {(totalBytes / 1e6).toFixed(1)} MB subidos
-            </div>
-          </>
-        )}
-        {status === "idle" && (
-          <div className="absolute top-2 left-2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur">
-            <span className="inline-block size-2 rounded-full bg-white/60" />
-            <span className="text-xs font-medium text-white/90 uppercase tracking-wide">Vista previa · Sin grabar</span>
-          </div>
-        )}
-      </div>
-
-      <div className="p-2 flex flex-wrap items-center gap-2 bg-card/40">
-        <div className="flex items-center gap-1">
-          <Button
-            size="sm"
-            variant={source === "camera" ? "default" : "outline"}
-            onClick={() => { setSource("camera"); }}
-            disabled={isRec}
-            title="Usar cámara"
-          >
-            <Camera className="size-3 mr-1" /> Cámara
-          </Button>
-          <Button
-            size="sm"
-            variant={source === "screen" ? "default" : "outline"}
-            onClick={async () => { setSource("screen"); /* trigger picker immediately */ setTimeout(() => { void attachPreview(); }, 0); }}
-            disabled={isRec}
-            title="Compartir pantalla / pestaña (YouTube, HDMI, etc.)"
-          >
-            <MonitorUp className="size-3 mr-1" /> Pantalla
-          </Button>
-        </div>
-        {source === "camera" && (
-          <div className="flex items-center gap-1 min-w-0 flex-1">
-            <select
-              value={deviceId ?? ""}
-              onChange={(e) => setDeviceId(e.target.value || undefined)}
-              disabled={isRec}
-              className="text-xs bg-background border border-border rounded px-2 py-1 flex-1 min-w-0 truncate"
-            >
-              {devices.length === 0 && <option value="">Sin cámaras detectadas</option>}
-              {devices.map((d, i) => (
-                <option key={d.deviceId || i} value={d.deviceId}>
-                  {d.label || `Cámara ${i + 1}`}
-                </option>
-              ))}
-            </select>
-            <Button size="sm" variant="ghost" onClick={() => void listVideoInputDevices().then(setDevices)} title="Actualizar dispositivos">
-              <RefreshCcw className="size-3" />
-            </Button>
-          </div>
-        )}
-        {source === "screen" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void attachPreview()}
-            title="Elegir otra pantalla, ventana o pestaña"
-          >
-            <MonitorUp className="size-3 mr-1" /> {isRec ? "Cambiar (en vivo)" : "Cambiar fuente"}
-          </Button>
-        )}
-        <label className="text-[11px] flex items-center gap-1 text-muted-foreground ml-auto">
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2 bg-card/40 border border-border rounded-lg p-2">
+        <VideoSourcePicker
+          current={source}
+          onPick={(kind, opts) => void open(kind, { ...opts, audio })}
+          disabled={false}
+        />
+        <label className="text-[11px] flex items-center gap-1 text-muted-foreground">
           <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} disabled={isRec} />
           Audio
         </label>
-
         {!isRec ? (
-          <Button size="sm" onClick={start} className="bg-red-600 hover:bg-red-700 text-white">
+          <Button size="sm" onClick={start} className="ml-auto bg-red-600 hover:bg-red-700 text-white">
             <Circle className="size-3 mr-1 fill-white" /> REC
           </Button>
         ) : (
-          <div className="flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-1">
             <Button size="sm" variant="outline" onClick={togglePause}>
-              {status === "paused" ? <Play className="size-3" /> : <Pause className="size-3" />}
+              {recStatus === "paused" ? <Play className="size-3" /> : <Pause className="size-3" />}
             </Button>
             <Button size="sm" variant="destructive" onClick={stop}>
               <Square className="size-3 mr-1 fill-white" /> Stop
             </Button>
+          </div>
+        )}
+      </div>
+
+      <VideoPlayer
+        ref={playerRef}
+        src=""
+        marks={[]}
+        source={source}
+        recStatus={recStatus}
+        hudElapsedMs={isRec ? elapsedMs : undefined}
+        interrupted={srcStatus === "interrupted"}
+        onReconnect={() => void reconnect()}
+      />
+
+      <div className="flex items-center justify-between gap-2 px-1">
+        <VideoSourceChip source={source} interrupted={srcStatus === "interrupted"} />
+        {isRec && (
+          <div className="text-[10px] text-muted-foreground tabular-nums">
+            {chunkCount} chunks · {(totalBytes / 1e6).toFixed(1)} MB
           </div>
         )}
       </div>
