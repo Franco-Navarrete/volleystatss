@@ -19,10 +19,10 @@ interface Props {
   onPlaySequence: (cs: Clip[]) => void;
 }
 
+const EMPTY_PLAYLISTS: Playlist[] = [];
+
 export function PlaylistsPanel({ matchId, clips, onPlayClip, onPlaySequence }: Props) {
-  const playlists = usePlaylistStore(
-    (s) => s.playlistsByMatch[matchId] ?? ([] as Playlist[]),
-  );
+  const playlists = usePlaylistStore((s) => s.playlistsByMatch[matchId]) ?? EMPTY_PLAYLISTS;
   const create = usePlaylistStore((s) => s.create);
   const remove = usePlaylistStore((s) => s.remove);
   const removeClip = usePlaylistStore((s) => s.removeClip);
