@@ -216,6 +216,11 @@ function VideoWorkspace() {
                     <BarChart3 className="size-4 mr-1" /> Análisis Post-Partido
                   </Button>
                 </Link>
+                <Link to="/intelligence">
+                  <Button size="sm" variant="outline" title="Generar informe táctico con IA (Rally Intelligence)">
+                    <Sparkles className="size-4 mr-1" /> Rally Intelligence
+                  </Button>
+                </Link>
 
 
                 <Button size="sm" variant="ghost" onClick={toggleFav} title="Favorito">
