@@ -58,6 +58,17 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     }
   }, [currentMs, zoom, startMs, endMs, setCenterMs]);
 
+  // Al seleccionar una marca, centrar la timeline sobre ella si está fuera de vista.
+  useEffect(() => {
+    if (!selectedMarkId) return;
+    const m = marks.find((x) => x.id === selectedMarkId);
+    if (!m) return;
+    if (zoom > 1 && (m.tMs < startMs || m.tMs > endMs)) {
+      setCenterMs(m.tMs);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMarkId]);
+
   const msToX = useCallback(
     (ms: number) => ((ms - startMs) / viewportMs) * width,
     [startMs, viewportMs, width],
@@ -247,10 +258,25 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
           );
         })}
 
-        {/* Playhead */}
-        <div className="absolute top-0 bottom-0 w-[2px] bg-primary pointer-events-none" style={{ left: msToX(currentMs) }} />
+        {/* Playhead (rojo, siempre visible) */}
+        <div
+          className="absolute -top-1 -bottom-1 w-[2px] bg-red-500 pointer-events-none shadow-[0_0_6px_rgba(239,68,68,0.9)] z-20"
+          style={{ left: msToX(currentMs) }}
+        >
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]" />
+        </div>
 
-        {/* Tooltip */}
+        {/* Indicador de tiempo bajo el cursor */}
+        {hover && !dragRef.current && (
+          <div
+            className="absolute top-0 bottom-0 w-px bg-foreground/30 pointer-events-none"
+            style={{ left: hover.x }}
+          >
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] tabular-nums bg-background/90 border border-border rounded px-1 whitespace-nowrap">
+              {fmt(xToMs(hover.x))}
+            </div>
+          </div>
+        )}
         {hover && (hover.mark || hover.marker) && (
           <div
             className="absolute -top-16 z-10 pointer-events-none bg-card border border-border rounded-md px-2 py-1 text-[11px] shadow-elevated whitespace-nowrap"

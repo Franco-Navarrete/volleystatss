@@ -22,7 +22,7 @@ import {
   type ScoutFundamento,
   type ScoutResultado,
 } from "@/lib/video-scout-store";
-import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight } from "lucide-react";
+import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/scout")({
@@ -82,6 +82,8 @@ function ScoutRoute() {
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [currentMs, setCurrentMs] = useState(0);
   const [durationSec, setDurationSec] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState(false);
   const [sourceKind, setSourceKind] = useState<VideoSourceKind>("linked");
   const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
   const [overrideStream, setOverrideStream] = useState<MediaStream | null>(null);
@@ -125,6 +127,17 @@ function ScoutRoute() {
     return () => { cancelled = true; };
   }, [video?.id, video?.source, video?.external_url, video?.storage_path]);
 
+  // Trackear estado de reproducción para la barra de controles.
+  useEffect(() => {
+    const v = playerRef.current?.getVideoElement();
+    if (!v) return;
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    return () => { v.removeEventListener("play", onPlay); v.removeEventListener("pause", onPause); };
+  }, [videoSrc, overrideStream, overrideSrc]);
+
   const isYouTube = useMemo(() => !!videoSrc && /youtube\.com|youtu\.be/.test(videoSrc), [videoSrc]);
   const displaySrc = useMemo(() => {
     if (!videoSrc) return "";
@@ -151,6 +164,7 @@ function ScoutRoute() {
   }, []);
 
   const commit = useCallback((result: ScoutResultado) => {
+    if (analysisMode) { showGhost("Modo Análisis activo — registro pausado"); return; }
     if (!match || !side || !fund) return;
     const v = useVolley.getState();
     // Cada handler del volley-store persiste automáticamente a Supabase vía cloud-sync.
@@ -200,7 +214,7 @@ function ScoutRoute() {
       playerRef.current.pause();
       window.setTimeout(() => playerRef.current?.play(), autoPauseMs);
     }
-  }, [match, side, fund, playerId, teamA, teamB, mode, autoPauseMs, resetStep, store]);
+  }, [match, side, fund, playerId, teamA, teamB, mode, autoPauseMs, resetStep, store, analysisMode]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -219,6 +233,7 @@ function ScoutRoute() {
         return;
       }
       if (e.key === "Escape") { e.preventDefault(); resetStep(); setSide(null); showGhost("Selección cancelada"); return; }
+      if (analysisMode) return;
       // Fund shortcut
       const fundKey = FUND_KEY[e.key.toLowerCase()];
       if (fundKey) { e.preventDefault(); setFund(fundKey); return; }
@@ -243,7 +258,7 @@ function ScoutRoute() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [side, fund, match, teamA, teamB, currentMs, commit, resetStep]);
+  }, [side, fund, match, teamA, teamB, currentMs, commit, resetStep, analysisMode]);
 
   const seekToMark = (m: VideoMark) => playerRef.current?.seekMs(Math.max(0, m.tMs - 500));
 
@@ -322,8 +337,18 @@ function ScoutRoute() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
+              variant={analysisMode ? "default" : "outline"}
+              onClick={() => setAnalysisMode((v) => !v)}
+              title={analysisMode ? "Volver al scouting normal" : "Pausa el registro y habilita navegación libre"}
+              className={analysisMode ? "bg-red-500 hover:bg-red-600 text-white" : ""}
+            >
+              <Search className="size-4 mr-1" /> {analysisMode ? "Análisis ON" : "Modo Análisis"}
+            </Button>
+            <Button
+              size="sm"
               variant={mode === "rapido" ? "default" : "outline"}
               onClick={() => setMode("rapido")}
+              disabled={analysisMode}
               title="Nunca pausa el video"
             >
               <Zap className="size-4 mr-1" /> Rápido
@@ -332,6 +357,7 @@ function ScoutRoute() {
               size="sm"
               variant={mode === "completo" ? "default" : "outline"}
               onClick={() => setMode("completo")}
+              disabled={analysisMode}
               title={`Pausa ${autoPauseMs / 1000}s tras cada acción`}
             >
               <PauseCircle className="size-4 mr-1" /> Completo
@@ -414,6 +440,8 @@ function ScoutRoute() {
                   selectMark(m.id);
                   playerRef.current?.seekMs(Math.max(0, m.inicioClipMs));
                 }}
+                playerRef={playerRef}
+                isPlaying={isPlaying}
               />
             </div>
 

@@ -67,7 +67,18 @@ function AnalysisRoute() {
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [currentMs, setCurrentMs] = useState(0);
   const [durationSec, setDurationSec] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [tab, setTab] = useState<MainTab>("clips");
+
+  useEffect(() => {
+    const v = playerRef.current?.getVideoElement();
+    if (!v) return;
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    return () => { v.removeEventListener("play", onPlay); v.removeEventListener("pause", onPause); };
+  }, [videoSrc]);
 
   // Config global (compartido con scout).
   const prerollMs = useAnalysisStore((s) => s.prerollMs);
@@ -250,6 +261,8 @@ function AnalysisRoute() {
               totalMs={Math.max(durationSec * 1000, ...allClips.map((c) => c.tMs), 60_000)}
               onSeek={(ms) => playerRef.current?.seekMs(ms)}
               onSelectMark={onSelectMarkFromPanel}
+              playerRef={playerRef}
+              isPlaying={isPlaying}
             />
           </div>
 
