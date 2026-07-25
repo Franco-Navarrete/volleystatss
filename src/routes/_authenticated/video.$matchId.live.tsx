@@ -231,6 +231,21 @@ function LiveRoute() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setReviewOpen(true)}
+              disabled={!recorder || bufferedMs < 1000}
+              title={recorder ? "Revisar la jugada anterior sin detener la captura" : "Iniciá REC para habilitar la revisión"}
+              className="border-primary/60 text-primary hover:bg-primary/10"
+            >
+              <Film className="size-4 mr-1" /> Analizar grabación
+              {bufferedMs > 0 && (
+                <span className="ml-1 text-[10px] text-muted-foreground tabular-nums">
+                  {(bufferedMs / 1000).toFixed(0)}s
+                </span>
+              )}
+            </Button>
             <Button size="sm" variant={mode === "rapido" ? "default" : "outline"} onClick={() => setMode("rapido")} title="Nunca pausa">
               <Zap className="size-4 mr-1" /> Rápido
             </Button>
