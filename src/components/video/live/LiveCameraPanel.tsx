@@ -12,6 +12,10 @@ interface Props {
   onStarted: (startedAtMs: number) => void;
   onStopped: () => void;
   onTick?: (elapsedMs: number) => void;
+  /** Notifica el recorder activo para permitir revisar la grabación en curso. */
+  onRecorderReady?: (rec: LiveRecorder | null) => void;
+  /** Notifica cuando crece el buffer de review (RAM). */
+  onBufferGrew?: (bytes: number, ms: number) => void;
 }
 
 /**
