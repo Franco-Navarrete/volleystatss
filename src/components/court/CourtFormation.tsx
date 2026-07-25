@@ -53,7 +53,7 @@ export function CourtFormation({ team, formation, compact, showSetterTarget = tr
         className="relative aspect-[3/2] w-full rounded-xl border-2 border-foreground/30 overflow-hidden"
         style={{
           background:
-            "repeating-linear-gradient(135deg, oklch(0.72 0.09 60) 0 12px, oklch(0.68 0.1 55) 12px 24px)",
+            "repeating-linear-gradient(135deg, oklch(0.72 0.09 60) 0 6px, oklch(0.68 0.1 55) 6px 12px)",
         }}
       >
         {/* Red */}
