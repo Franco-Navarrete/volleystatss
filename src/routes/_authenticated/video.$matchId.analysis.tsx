@@ -87,16 +87,16 @@ function AnalysisRoute() {
   const selectMark = useAnalysisStore((s) => s.selectMark);
   const markersByMatch = useAnalysisStore((s) => s.markersByMatch);
 
-  // Metadata de clips.
-  const metaByClip = useClipMetaStore(
-    (s) => s.metaByMatch[matchId] ?? ({} as Record<string, import("@/lib/analysis/clip-service").ClipMeta>),
-  );
+  // Metadata de clips (evita crear objeto nuevo por render → loop).
+  const metaByClipRaw = useClipMetaStore((s) => s.metaByMatch[matchId]);
+  const EMPTY_META = useMemo(() => ({} as Record<string, import("@/lib/analysis/clip-service").ClipMeta>), []);
+  const metaByClip = metaByClipRaw ?? EMPTY_META;
 
   // Filtros y playlists.
   const filters = useFilterStore((s) => s.filters);
-  const playlists = usePlaylistStore(
-    (s) => s.playlistsByMatch[matchId] ?? [],
-  );
+  const playlistsRaw = usePlaylistStore((s) => s.playlistsByMatch[matchId]);
+  const EMPTY_PL = useMemo(() => [] as ReturnType<typeof usePlaylistStore.getState>["playlistsByMatch"][string], []);
+  const playlists = playlistsRaw ?? EMPTY_PL;
   const addClipToPlaylist = usePlaylistStore((s) => s.addClip);
   const createPlaylist = usePlaylistStore((s) => s.create);
 
