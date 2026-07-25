@@ -81,6 +81,10 @@ function LiveRoute() {
   const recordingStartedRef = useRef<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [recording, setRecording] = useState(false);
+  const [recorder, setRecorder] = useState<LiveRecorder | null>(null);
+  const [bufferedMs, setBufferedMs] = useState(0);
+  const [bufferedBytes, setBufferedBytes] = useState(0);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   // Selección
   const [side, setSide] = useState<Side | null>(null);
