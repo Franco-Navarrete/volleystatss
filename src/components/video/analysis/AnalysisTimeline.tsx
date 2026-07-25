@@ -21,6 +21,8 @@ interface Props {
   onSeek: (ms: number) => void;
 }
 
+const TIMELINE_EMPTY_MARKERS: CustomMarker[] = [];
+
 export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }: Props) {
   const zoom = useAnalysisStore((s) => s.zoom);
   const centerMs = useAnalysisStore((s) => s.centerMs);
