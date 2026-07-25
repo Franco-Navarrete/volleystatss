@@ -15,6 +15,7 @@ interface Props {
 }
 
 const KINDS: CustomMarkerKind[] = ["star", "fire", "warn", "note"];
+const EMPTY_MARKERS: ReturnType<typeof useAnalysisStore.getState>["markersByMatch"][string] = [];
 
 export function CustomMarkersPanel({ matchId, currentMs, onSeek }: Props) {
   const markers = useAnalysisStore((s) => s.markersByMatch[matchId]) ?? EMPTY_MARKERS;
