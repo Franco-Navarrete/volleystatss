@@ -6,8 +6,11 @@ import { useMatchVideo, getSignedVideoUrl } from "@/hooks/use-match-video";
 import { buildVideoMarks, type VideoMark } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
 import { VideoSourceSwitcher, type VideoSourceKind } from "@/components/video/VideoSourceSwitcher";
+import { AnalysisPanel } from "@/components/video/analysis/AnalysisPanel";
+import { useAnalysisStore } from "@/lib/video/analysis-store";
 
 import { Button } from "@/components/ui/button";
+
 import {
   useScoutStore,
   FUND_LABEL,
