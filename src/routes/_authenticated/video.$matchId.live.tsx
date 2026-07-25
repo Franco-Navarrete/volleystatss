@@ -20,6 +20,7 @@ import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film, Flag } f
 import type { LiveRecorder } from "@/lib/live-recording";
 import { RecordingReviewDialog } from "@/components/video/live/RecordingReviewDialog";
 import { toast } from "sonner";
+import { ScoutShortcutsDrawer } from "@/components/video/ScoutShortcutsDrawer";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/live")({
   head: () => ({
