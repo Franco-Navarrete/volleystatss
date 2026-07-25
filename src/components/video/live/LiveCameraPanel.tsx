@@ -141,29 +141,51 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       </div>
 
       <div className="p-2 flex flex-wrap items-center gap-2 bg-card/40">
-        <div className="flex items-center gap-1 min-w-0 flex-1">
-          <Camera className="size-4 text-muted-foreground" />
-          <select
-            value={deviceId ?? ""}
-            onChange={(e) => setDeviceId(e.target.value || undefined)}
+        <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant={source === "camera" ? "default" : "outline"}
+            onClick={() => { setSource("camera"); }}
             disabled={isRec}
-            className="text-xs bg-background border border-border rounded px-2 py-1 flex-1 min-w-0 truncate"
+            title="Usar cámara"
           >
-            {devices.length === 0 && <option value="">Sin cámaras detectadas</option>}
-            {devices.map((d, i) => (
-              <option key={d.deviceId || i} value={d.deviceId}>
-                {d.label || `Cámara ${i + 1}`}
-              </option>
-            ))}
-          </select>
-          <Button size="sm" variant="ghost" onClick={() => void listVideoInputDevices().then(setDevices)} title="Actualizar dispositivos">
-            <RefreshCcw className="size-3" />
+            <Camera className="size-3 mr-1" /> Cámara
           </Button>
-          <label className="text-[11px] flex items-center gap-1 text-muted-foreground">
-            <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} disabled={isRec} />
-            Audio
-          </label>
+          <Button
+            size="sm"
+            variant={source === "screen" ? "default" : "outline"}
+            onClick={async () => { setSource("screen"); /* trigger picker immediately */ setTimeout(() => { void attachPreview(); }, 0); }}
+            disabled={isRec}
+            title="Compartir pantalla / pestaña (YouTube, HDMI, etc.)"
+          >
+            <MonitorUp className="size-3 mr-1" /> Pantalla
+          </Button>
         </div>
+        {source === "camera" && (
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <select
+              value={deviceId ?? ""}
+              onChange={(e) => setDeviceId(e.target.value || undefined)}
+              disabled={isRec}
+              className="text-xs bg-background border border-border rounded px-2 py-1 flex-1 min-w-0 truncate"
+            >
+              {devices.length === 0 && <option value="">Sin cámaras detectadas</option>}
+              {devices.map((d, i) => (
+                <option key={d.deviceId || i} value={d.deviceId}>
+                  {d.label || `Cámara ${i + 1}`}
+                </option>
+              ))}
+            </select>
+            <Button size="sm" variant="ghost" onClick={() => void listVideoInputDevices().then(setDevices)} title="Actualizar dispositivos">
+              <RefreshCcw className="size-3" />
+            </Button>
+          </div>
+        )}
+        <label className="text-[11px] flex items-center gap-1 text-muted-foreground ml-auto">
+          <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} disabled={isRec} />
+          Audio
+        </label>
+      </div>
 
         {!isRec ? (
           <Button size="sm" onClick={start} className="bg-red-600 hover:bg-red-700 text-white">
