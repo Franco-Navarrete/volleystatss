@@ -81,9 +81,17 @@ function ScoutRoute() {
   const playerRef = useRef<VideoPlayerHandle | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [currentMs, setCurrentMs] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
   const [sourceKind, setSourceKind] = useState<VideoSourceKind>("linked");
   const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
   const [overrideStream, setOverrideStream] = useState<MediaStream | null>(null);
+  const selectedMarkId = useAnalysisStore((s) => s.selectedMarkId);
+  const selectMark = useAnalysisStore((s) => s.selectMark);
+  const shortcuts = useAnalysisStore((s) => s.shortcuts);
+  const autoPauseAtEnd = useAnalysisStore((s) => s.autoPauseAtEnd);
+  const prerollMs = useAnalysisStore((s) => s.prerollMs);
+  const postrollMs = useAnalysisStore((s) => s.postrollMs);
+
 
 
   const teamA = teams.find((t) => t.id === match?.teamAId);
