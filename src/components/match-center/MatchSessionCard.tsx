@@ -55,7 +55,7 @@ export function MatchSessionCard({ match, teamA, teamB, video, competition }: Pr
   const status = pickStatus(match, video, explicit);
   const { a: setsA, b: setsB } = setsWon(match);
   const actionsCount = match.events.length;
-  const ralliesCount = match.events.filter((e) => e.kind === "point").length;
+  const ralliesCount = match.events.filter((e) => "scoringSide" in e).length;
   const dur = video?.duration_sec ? formatDur(video.duration_sec) : "—";
 
   const videoState = !video ? "sin" : video.sync_offset_ms === 0 ? "linked" : "synced";
