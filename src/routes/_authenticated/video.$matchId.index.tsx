@@ -224,10 +224,15 @@ function VideoWorkspace() {
         {!video && (
           <div className="bg-card/40 border border-border rounded-lg p-4 grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="text-sm font-semibold mb-1 flex items-center gap-2"><Link2 className="size-4" /> Vincular por URL</div>
-              <div className="text-xs text-muted-foreground mb-2">HTTPS directa, Bunny, Cloudflare Stream, YouTube. YouTube reproduce vía embed y pierde precisión de frame.</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-2"><Link2 className="size-4" /> Vincular por URL (YouTube, MP4, HLS)</div>
+              <div className="text-xs text-muted-foreground mb-2">
+                Pegá un link de YouTube (<code>youtube.com/watch?v=…</code> o <code>youtu.be/…</code>), un MP4/WebM directo, Bunny o Cloudflare Stream.
+                Después usá <strong>“Scouting sobre video”</strong> para registrar acciones con atajos.
+                <br />
+                <span className="text-amber-500">Nota:</span> YouTube reproduce por embed y no permite auto-pausar ni precisión de frame.
+              </div>
               <div className="flex gap-2">
-                <Input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://…" />
+                <Input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://www.youtube.com/watch?v=…" />
                 <Button onClick={() => void applyUrl()}>Vincular</Button>
               </div>
             </div>
