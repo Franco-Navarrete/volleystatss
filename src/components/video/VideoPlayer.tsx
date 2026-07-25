@@ -1,7 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { MARK_COLORS, type VideoMark } from "@/lib/video-marks";
 import { Button } from "@/components/ui/button";
-import { Pause, Play, Maximize, ChevronsLeft, ChevronsRight, Gauge } from "lucide-react";
+import { Pause, Play, Maximize, ChevronsLeft, ChevronsRight, Gauge, AlertTriangle, RefreshCw } from "lucide-react";
+import { VideoHUD } from "@/components/video/VideoHUD";
+import type { VideoSource } from "@/lib/video/providers";
 
 export interface VideoPlayerHandle {
   seekMs: (ms: number) => void;
@@ -20,13 +22,22 @@ interface Props {
   stream?: MediaStream | null;
   onTimeUpdate?: (ms: number) => void;
   onDurationChange?: (sec: number) => void;
+  /** Fuente activa (para HUD / chip). Opcional para no romper usos existentes. */
+  source?: VideoSource | null;
+  /** Estado de grabación externa (LiveRecorder) para pintar el badge REC. */
+  recStatus?: "idle" | "recording" | "paused" | "finalizing";
+  /** Tiempo transcurrido a mostrar en el HUD (ms). */
+  hudElapsedMs?: number;
+  /** true si la captura fue interrumpida (usuario cerró la compartición). */
+  interrupted?: boolean;
+  onReconnect?: () => void;
 }
 
 
 const SPEEDS = [0.25, 0.5, 1, 1.25, 1.5, 2];
 
 export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
-  { src, marks, isYouTube, stream, onTimeUpdate, onDurationChange },
+  { src, marks, isYouTube, stream, onTimeUpdate, onDurationChange, source, recStatus, hudElapsedMs, interrupted, onReconnect },
   ref,
 ) {
 
@@ -53,21 +64,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   }), []);
 
 
-  // Apply MediaStream via srcObject (Screen Capture / camera)
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (stream) {
-      v.srcObject = stream;
-      v.muted = true; // avoid echo when sharing tab audio
-      void v.play().catch(() => undefined);
-    } else {
-      v.srcObject = null;
-    }
-    return () => {
-      if (v && v.srcObject === stream) v.srcObject = null;
-    };
-  }, [stream]);
+
 
   useEffect(() => {
     const v = videoRef.current;
@@ -127,15 +124,37 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     if (videoRef.current) videoRef.current.playbackRate = s;
   };
 
+
+
+  // effective stream: if the source provides one and no explicit stream was passed, use it
+  const effectiveStream = stream ?? source?.stream ?? null;
+  const effectiveSrc = effectiveStream ? "" : (source?.src ?? src);
+
+  // Apply effective stream via srcObject
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (effectiveStream) {
+      v.srcObject = effectiveStream;
+      v.muted = true;
+      void v.play().catch(() => undefined);
+    } else {
+      v.srcObject = null;
+    }
+    return () => {
+      if (v && v.srcObject === effectiveStream) v.srcObject = null;
+    };
+  }, [effectiveStream]);
+
   const totalMs = duration * 1000;
   const pct = totalMs > 0 ? (current * 1000 / totalMs) * 100 : 0;
 
   return (
     <div ref={wrapRef} className="flex flex-col gap-2 bg-black rounded-lg overflow-hidden">
       <div className="relative bg-black aspect-video">
-        {isYouTube && !stream ? (
+        {isYouTube && !effectiveStream ? (
           <iframe
-            src={src}
+            src={effectiveSrc}
             className="absolute inset-0 w-full h-full"
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
@@ -144,7 +163,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
         ) : (
           <video
             ref={videoRef}
-            src={stream ? undefined : src}
+            src={effectiveStream ? undefined : effectiveSrc}
             className="absolute inset-0 w-full h-full bg-black"
             preload="metadata"
             playsInline
@@ -152,10 +171,32 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
           />
         )}
 
+        {/* HUD superior con fuente, REC, resolución, calidad */}
+        {(source || recStatus) && (
+          <VideoHUD source={source ?? null} playing={playing} recStatus={recStatus} elapsedMs={hudElapsedMs} />
+        )}
+
+        {/* Overlay de captura interrumpida */}
+        {interrupted && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-yellow-300 font-semibold">
+              <AlertTriangle className="size-5" /> Captura interrumpida
+            </div>
+            <p className="text-white/80 text-xs max-w-sm text-center px-6">
+              La compartición se detuvo. Tus acciones y el cronómetro se mantienen intactos.
+            </p>
+            {onReconnect && (
+              <Button size="sm" onClick={onReconnect} className="bg-primary hover:bg-primary/90">
+                <RefreshCw className="size-3.5 mr-1.5" /> Reconectar
+              </Button>
+            )}
+          </div>
+        )}
+
       </div>
 
       {/* Timeline with markers */}
-      {!isYouTube && !stream && (
+      {!isYouTube && !effectiveStream && (
         <div className="px-3 pb-2 pt-1 bg-black/60">
           <div
             className="relative h-8 bg-white/5 rounded cursor-pointer group"

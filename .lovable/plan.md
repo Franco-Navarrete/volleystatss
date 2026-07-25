@@ -1,65 +1,86 @@
-# Modo Scouting en Vivo (cámara en tiempo real)
+## Objetivo
 
-Extiende el Modo Scouting actual (`/video/$matchId/scout`) para trabajar sin video pregrabado: el entrenador conecta una cámara (webcam, IP o capturadora HDMI vía WebRTC/`getUserMedia`), registra acciones mientras se juega y al terminar queda un video sincronizado con todos los eventos, listo para reproducir jugada por jugada y generar clips.
+Refactorizar el reproductor de video del módulo Scouting en Vivo para que parezca software profesional tipo Data Volley: una única fuente conmutable en caliente (archivo, ventana, pantalla, cámara), HUD con estado en tiempo real, y recuperación automática si el usuario corta la compartición — sin tocar registro, timeline, marcador ni sincronización.
 
-Divido en **3 tandas** para poder validar cada bloque.
+## 1. Nueva arquitectura de proveedores
 
-## Tanda 1 — Captura en vivo + registro sincronizado (esta iteración)
+Crear `src/lib/video/providers/` con una interfaz común:
 
-Objetivo: abrir cámara, ver la transmisión, registrar acciones con timestamp real, y al finalizar quedarse con un `.webm` subido a `match-videos` con todos los eventos anclados.
+```text
+VideoSource (interfaz)
+  ├─ id: "file" | "window" | "screen" | "camera"
+  ├─ label: string        // "Archivo local", "Google Chrome — YouTube", "Cámara Logitech C920"
+  ├─ kind: "media" | "stream"
+  ├─ src?: string          // object URL para archivo
+  ├─ stream?: MediaStream  // para captura
+  ├─ meta: { width, height, frameRate, deviceLabel?, displaySurface? }
+  ├─ onEnded: (cb) => void // ventana/pantalla cortada
+  └─ stop(): void
 
-1. **Nueva ruta** `/video/$matchId/live` (paralela a `.scout`). Layout de 3 columnas idéntico al scouting actual, pero el panel central es la cámara en vivo en lugar del `<video>` pregrabado.
-2. **`LiveCameraPanel`**:
-   - Selector de fuente: webcam integrada, cámara USB, cámara IP (URL RTSP/HLS via `<video src>` cuando el navegador lo soporte) o capturadora HDMI (aparecen como `videoinput` en `enumerateDevices`).
-   - `navigator.mediaDevices.getUserMedia({ video: { deviceId }, audio: true })` y `MediaRecorder` a `video/webm;codecs=vp9,opus` en chunks de 5 s.
-   - Botones **REC / Pausa / Stop**. Indicador rojo + cronómetro.
-   - Al pulsar REC guardo `recordingStartedAt = performance.now()` y `wallClockStart = Date.now()` — es el origen de tiempo del video.
-3. **Registro sincronizado**: cada acción del `ScoutPanel` calcula `videoTMs = performance.now() - recordingStartedAt` y se guarda en el evento (`MatchEvent.videoTMs`, ya soportado). Modo Rápido nunca pausa; modo Completo hace un `overlay` de 1.5 s (no se puede pausar la cámara real).
-4. **Autoguardado del video** (baja latencia, sin perder nada si se cae el navegador):
-   - Cada chunk del `MediaRecorder` se sube en paralelo a `match-videos/live/{matchId}/{index}.webm` usando uploads independientes.
-   - Metadata en tabla nueva `live_recordings` con `match_id`, `session_id`, `chunk_count`, `started_at`, `ended_at`, `status`.
-   - Al pulsar Stop: server function `finalizeLiveRecording` concatena refs (guarda un manifiesto JSON `chunks[]`) y hace `upsertMatchVideoUpload` apuntando al primer chunk como fuente principal; el `VideoPlayer` reproduce la lista secuencialmente.
-5. **Timeline y tabla en vivo**: reutilizo `ScoutTimeline` y `ScoutActionsTable` que ya leen `videoTMs`. Aparecen marcas mientras se registra.
-6. **Reanudación**: si el usuario recarga con una grabación activa, el manifiesto en `live_recordings` permite continuar (nuevo `session_id` si prefiere, o append al actual).
-7. **UX detalles**:
-   - Aviso permisos de cámara/micrófono con fallback claro.
-   - Detección de desconexión de dispositivo → toast + pausa automática.
-   - Warning si batería < 20% o almacenamiento < 500 MB (via `navigator.storage.estimate`).
+Providers concretos:
+  - LocalFileProvider   → <input type=file> + URL.createObjectURL
+  - WindowProvider      → getDisplayMedia({ video:{ displaySurface:"window" }})
+  - ScreenProvider      → getDisplayMedia({ video:{ displaySurface:"monitor" }})
+  - CameraProvider      → getUserMedia({ video:{ deviceId? }})
+```
 
-## Tanda 2 — Post-partido: clips + reproducción unificada
+Cada provider expone `open()` que devuelve un `VideoSource` ya listo, extrae el label real desde `track.getSettings()` / `track.label` (nombre de ventana o modelo de cámara) y engancha `track.onended` para disparar el evento de interrupción.
 
-- `VideoPlayer` acepta lista de chunks y los reproduce como uno solo (Media Source Extensions o `<video>` con `src` rotativo).
-- Botón "generar clips" por acción/rally usando `ffmpeg.wasm` (ya planificado) sobre los chunks concatenados.
-- Descarga del video completo concatenado en un solo `.mp4` (server function con ffmpeg vía worker externo si excede el runtime de Cloudflare).
-- Vista "highlights" filtrable por resultado (puntos, errores, aces, bloqueos).
+## 2. Nuevo selector unificado
 
-## Tanda 3 — IA (detección automática)
+Reemplazar `VideoSourceSwitcher.tsx` y los botones "Cámara"/"Pantalla" de `LiveCameraPanel.tsx` por un único componente `<VideoSourcePicker />`:
 
-- Arquitectura preparada: los chunks quedan en storage con timestamps precisos y un manifiesto que un job externo puede consumir.
-- Pipeline propuesto: worker externo (Cloud Run / Modal) que corra YOLOv8 para detectar jugadoras/balón y un clasificador (MMAction2 o similar) para acciones. Escribe a `ai_detections(match_id, video_time_ms, kind, payload jsonb)`.
-- UI: overlay opcional sobre el reproductor mostrando bounding boxes, y sugerencias de eventos ("¿Registrar ataque de #7?") que el entrenador confirma con un clic.
-- Este plan **no ejecuta** la IA todavía; sólo dejamos los ganchos: tabla `ai_detections`, botón "Analizar con IA" deshabilitado y documentación del contrato.
+- Botón principal: **📹 Cambiar fuente**.
+- Abre un `DropdownMenu` con: **📁 Archivo local**, **🖥 Compartir ventana**, **🖥 Compartir pantalla**, **📷 Cámara** (submenú con dispositivos si hay más de uno).
+- Bajo el reproductor, un chip siempre visible: **🟢 Fuente: {label}** (por ejemplo `🟢 Fuente: Google Chrome — Volleyball TV` o `🟢 Fuente: Cámara Logitech C920`).
+- Reemplaza "Cambiar (en vivo)" por **🔄 Cambiar fuente** dentro del mismo panel; funciona igual mientras está grabando.
 
-## Detalles técnicos (referencia)
+## 3. HUD del reproductor
 
-**Nuevos archivos**
-- `src/routes/_authenticated/video.$matchId.live.tsx` — ruta principal del modo en vivo.
-- `src/components/video/live/LiveCameraPanel.tsx` — captura, `MediaRecorder`, controles REC.
-- `src/components/video/live/LiveDeviceSelector.tsx` — selector de fuentes.
-- `src/lib/live-recording.ts` — cliente para chunks + manifiesto + `videoTMs`.
-- `src/lib/live-recording.functions.ts` — `startLiveRecording`, `appendChunk`, `finalizeLiveRecording` (usan `requireSupabaseAuth` + `supabaseAdmin` sólo para escribir manifiesto).
+Ampliar `VideoPlayer.tsx` con una barra superior semitransparente que muestre:
 
-**Cambios DB (una migración)**
-- Tabla `live_recordings(match_id uuid, session_id uuid, started_at, ended_at, status, chunk_manifest jsonb, owner_id uuid)` con RLS por `owner_id` + `can_manage_teams`.
-- Bucket `match-videos` ya existe; se reutiliza con prefijo `live/`.
-- (Preparación Tanda 3) Tabla `ai_detections` — se crea recién en Tanda 3.
+- Fuente activa (icono + label truncado).
+- Badge **REC** rojo pulsante cuando la grabación está corriendo (el estado ya lo maneja `LiveRecorder`; se propaga vía prop `recStatus`).
+- Estado **Reproduciendo / Pausado**.
+- Tiempo transcurrido de reproducción o de grabación.
+- Resolución de captura `1280×720` y `fps` leídos de `track.getSettings()`.
+- Calidad detectada (si `videoHeight >= 1080` → HD, si no SD).
 
-**Rendimiento**
-- Chunks de 5 s → subida progresiva, no bloquea UI.
-- `MediaRecorder` en Web Worker no es posible, pero el encoding es nativo (GPU-accelerated en Chrome).
-- Timeline y tabla ya están memoizadas.
+Nada de esto altera la máquina del scout: el HUD lee del `<video>` y del `VideoSource` activo, no despacha eventos al store.
 
-## Preguntas antes de arrancar
+## 4. Recuperación automática
 
-1. ¿Empiezo por **Tanda 1 completa** (captura + registro + subida en chunks) o querés primero un MVP más chico (sólo cámara + registro sin subida, para probar UX)?
-2. ¿La cámara IP/HDMI es prioridad ahora o alcanza con webcam en esta primera versión?
+Cuando el track de una ventana/pantalla dispara `ended` (usuario cerró la compartición desde el chip del navegador):
+
+- **No** se resetea la sesión de scout, ni el cronómetro, ni las acciones registradas.
+- El player muestra overlay: **"⚠ Captura interrumpida"** + botón **"Reconectar"** que reabre `getDisplayMedia` con el mismo tipo (window/screen).
+- Si la grabación estaba activa, `LiveRecorder` se pausa automáticamente y se reanuda al reconectar el stream (se anexa un nuevo segmento al mismo archivo destino).
+- Toast informativo `"Captura interrumpida — reconectá para continuar"`.
+
+## 5. Integración
+
+- `video.$matchId.live.tsx`: reemplaza el bloque cámara/pantalla de `LiveCameraPanel` por el nuevo `VideoSourcePicker` + `VideoPlayer` con `stream`. Mantiene `recordingStartedRef`, `videoTMsNow` y el resto igual — la sincronización de timestamps sigue anclada a `performance.now()` desde el inicio de grabación.
+- `video.$matchId.scout.tsx`: sustituye `VideoSourceSwitcher` por `VideoSourcePicker`, pasando `hasLinked` para exponer también el video vinculado.
+- `LiveCameraPanel.tsx` queda como envoltorio delgado alrededor de `VideoPlayer` + `VideoSourcePicker` + controles REC.
+
+## 6. Invariantes
+
+Sin cambios en:
+
+- `video-scout-store` / `useVolley` (registro de acciones, marcador, cronómetro).
+- `ScoutTimeline`, `ClipsPanel`, `buildVideoMarks`.
+- `LiveRecorder` (sólo se le enchufa la reanudación de segmento en el punto 4).
+- Sincronización `tMs`: los eventos siguen anclados a `videoTMsNow()` / `player.currentTime`.
+
+## Detalles técnicos
+
+- Los providers viven en `src/lib/video/providers/{local,window,screen,camera}.ts` con una fábrica `openVideoSource(kind, opts)` en `src/lib/video/index.ts`.
+- Label de ventana/pantalla: `track.label` en Chromium devuelve `"web-contents-media-stream://…"` como fallback; usamos `track.getSettings().displaySurface` + un heurístico "Ventana compartida" cuando no hay título expuesto (limitación del navegador — se documenta en el chip).
+- `VideoPlayer` acepta ahora `source?: VideoSource` (además de `src`/`stream` legacy para no romper la ruta index).
+- Detección de interrupción centralizada en el hook `useVideoSource()` que envuelve el provider actual y expone `{ source, status, reconnect, change }`.
+
+## Archivos afectados
+
+- Nuevos: `src/lib/video/index.ts`, `src/lib/video/providers/*.ts`, `src/hooks/use-video-source.ts`, `src/components/video/VideoSourcePicker.tsx`, `src/components/video/VideoHUD.tsx`.
+- Modificados: `src/components/video/VideoPlayer.tsx`, `src/components/video/live/LiveCameraPanel.tsx`, `src/routes/_authenticated/video.$matchId.live.tsx`, `src/routes/_authenticated/video.$matchId.scout.tsx`.
+- Reemplazado: `src/components/video/VideoSourceSwitcher.tsx` (se conserva como shim que reexporta `VideoSourcePicker` para no romper imports).
