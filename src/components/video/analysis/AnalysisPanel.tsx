@@ -27,7 +27,7 @@ interface Props {
   isPlaying?: boolean;
 }
 
-export function AnalysisPanel({ matchId, marks, currentMs, totalMs, onSeek, onSelectMark }: Props) {
+export function AnalysisPanel({ matchId, marks, currentMs, totalMs, onSeek, onSelectMark, playerRef, isPlaying }: Props) {
   const activeTab = useAnalysisStore((s) => s.activeTab);
   const setActiveTab = useAnalysisStore((s) => s.setActiveTab);
   const prerollMs = useAnalysisStore((s) => s.prerollMs);
