@@ -80,10 +80,16 @@ function MatchesIndex() {
           <p className="text-muted-foreground text-sm">Fixture, partidos en vivo y resultados.</p>
         </div>
         {canCreate && (
-          <Button asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
-            <Link to="/matches/new"><Plus className="size-4" /> Nuevo partido</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/session/new"><Plus className="size-4" /> Nueva sesión</Link>
+            </Button>
+            <Button asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
+              <Link to="/matches/new"><Plus className="size-4" /> Nuevo partido</Link>
+            </Button>
+          </div>
         )}
+
       </div>
 
       <LiveMatchesFeed />
