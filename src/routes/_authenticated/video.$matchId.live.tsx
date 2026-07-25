@@ -69,8 +69,10 @@ function pointTypeForBlock(r: ScoutResultado): PointType | null {
 
 function LiveRoute() {
   const { matchId } = Route.useParams();
+  const navigate = useNavigate();
   const match = useVolley((s) => s.matches.find((m) => m.id === matchId));
   const teams = useVolley((s) => s.teams);
+  const [finalizing, setFinalizing] = useState(false);
   const teamA = teams.find((t) => t.id === match?.teamAId);
   const teamB = teams.find((t) => t.id === match?.teamBId);
 
