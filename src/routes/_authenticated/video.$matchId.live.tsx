@@ -16,7 +16,9 @@ import {
   type ScoutFundamento,
   type ScoutResultado,
 } from "@/lib/video-scout-store";
-import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio } from "lucide-react";
+import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film } from "lucide-react";
+import type { LiveRecorder } from "@/lib/live-recording";
+import { RecordingReviewDialog } from "@/components/video/live/RecordingReviewDialog";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/live")({
   head: () => ({
