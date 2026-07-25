@@ -160,7 +160,7 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
         src=""
         marks={[]}
         source={source}
-        recStatus={recStatus === "error" ? "idle" : recStatus}
+        recStatus={recStatus === "recording" || recStatus === "paused" || recStatus === "finalizing" ? recStatus : "idle"}
         hudElapsedMs={isRec ? elapsedMs : undefined}
         interrupted={srcStatus === "interrupted"}
         onReconnect={() => void reconnect()}
