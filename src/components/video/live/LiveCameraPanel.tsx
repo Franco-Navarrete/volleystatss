@@ -181,6 +181,16 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
             </Button>
           </div>
         )}
+        {source === "screen" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void attachPreview()}
+            title="Elegir otra pantalla, ventana o pestaña"
+          >
+            <MonitorUp className="size-3 mr-1" /> {isRec ? "Cambiar (en vivo)" : "Cambiar fuente"}
+          </Button>
+        )}
         <label className="text-[11px] flex items-center gap-1 text-muted-foreground ml-auto">
           <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} disabled={isRec} />
           Audio
