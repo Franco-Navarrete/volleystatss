@@ -98,6 +98,22 @@ export class LiveRecorder {
   getMime() { return this.mime; }
   getStartedAtMs(): number | null { return this.session?.startedAt ?? null; }
 
+  /** Buffer completo del video grabado hasta ahora (RAM). Sirve para revisar
+   *  la grabación mientras la captura continúa, sin detener el MediaRecorder. */
+  getReviewBlob(): Blob | null {
+    if (this.localBlobs.length === 0) return null;
+    return new Blob(this.localBlobs, { type: this.mime });
+  }
+  getBufferedBytes(): number {
+    let n = 0;
+    for (const b of this.localBlobs) n += b.size;
+    return n;
+  }
+  getBufferedMs(): number {
+    // Aproximación conservadora: nextIdx * CHUNK_MS es el # de chunks emitidos.
+    return this.nextIdx * CHUNK_MS;
+  }
+
   private setStatus(s: LiveStatus) {
     this.status = s;
     this.cb.onStatusChange?.(s);
