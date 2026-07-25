@@ -124,20 +124,8 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
     if (videoRef.current) videoRef.current.playbackRate = s;
   };
 
-  const totalMs = duration * 1000;
-  const pct = totalMs > 0 ? (current * 1000 / totalMs) * 100 : 0;
 
-  return (
-    <div ref={wrapRef} className="flex flex-col gap-2 bg-black rounded-lg overflow-hidden">
-      <div className="relative bg-black aspect-video">
-        {isYouTube && !stream ? (
-          <iframe
-            src={src}
-            className="absolute inset-0 w-full h-full"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            title="video"
-          />
+
   // effective stream: if the source provides one and no explicit stream was passed, use it
   const effectiveStream = stream ?? source?.stream ?? null;
   const effectiveSrc = effectiveStream ? "" : (source?.src ?? src);
