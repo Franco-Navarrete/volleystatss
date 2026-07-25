@@ -225,6 +225,25 @@ export class LiveRecorder {
       catch (e) { console.warn("[LiveRecorder] upsertMatchVideoUpload", e); }
     }
 
+    // Descargar copia local (guardar en la PC del entrenador)
+    if (this.saveLocal && this.localBlobs.length > 0) {
+      try {
+        const ext = this.mime.includes("mp4") ? "mp4" : "webm";
+        const full = new Blob(this.localBlobs, { type: this.mime });
+        const url = URL.createObjectURL(full);
+        const a = document.createElement("a");
+        const ts = new Date(this.session.startedWallClock).toISOString().replace(/[:.]/g, "-");
+        a.href = url;
+        a.download = `rally-live-${this.session.matchId}-${ts}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (e) {
+        console.warn("[LiveRecorder] descarga local falló", e);
+      }
+    }
+
     this.stream.getTracks().forEach((t) => t.stop());
     this.setStatus("idle");
     return { mainPath, chunks: [...this.chunks] };
