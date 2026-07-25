@@ -135,14 +135,44 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       <div className="relative aspect-video bg-black">
         <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-contain" />
         {isRec && (
-          <div className="absolute top-2 left-2 flex items-center gap-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur">
-            <span className={`inline-block size-2 rounded-full bg-red-500 ${status === "recording" ? "animate-pulse" : ""}`} />
-            <span className="text-xs font-bold text-white tabular-nums">{clock}</span>
-            <span className="text-[10px] text-white/70">{chunkCount} chunks · {(totalBytes / 1e6).toFixed(1)} MB</span>
-          </div>
+          <>
+            {/* Marco rojo pulsante mientras graba */}
+            <div
+              className={`pointer-events-none absolute inset-0 rounded-lg ring-4 ${
+                status === "recording"
+                  ? "ring-red-500 animate-pulse"
+                  : status === "paused"
+                    ? "ring-yellow-400"
+                    : "ring-orange-400"
+              }`}
+            />
+            {/* Badge de estado grande */}
+            <div className="absolute top-2 left-2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur border border-white/10">
+              <span
+                className={`inline-block size-3 rounded-full ${
+                  status === "recording"
+                    ? "bg-red-500 animate-pulse"
+                    : status === "paused"
+                      ? "bg-yellow-400"
+                      : "bg-orange-400 animate-pulse"
+                }`}
+              />
+              <span className="text-xs font-bold text-white uppercase tracking-wide">
+                {status === "recording" ? "Grabando" : status === "paused" ? "Pausado" : "Finalizando"}
+              </span>
+              <span className="text-sm font-bold text-white tabular-nums">{clock}</span>
+            </div>
+            {/* Info de chunks abajo */}
+            <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-black/70 text-[10px] text-white/80 tabular-nums">
+              {chunkCount} chunks · {(totalBytes / 1e6).toFixed(1)} MB subidos
+            </div>
+          </>
         )}
         {status === "idle" && (
-          <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 text-[10px] text-white/80">Vista previa</div>
+          <div className="absolute top-2 left-2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur">
+            <span className="inline-block size-2 rounded-full bg-white/60" />
+            <span className="text-xs font-medium text-white/90 uppercase tracking-wide">Vista previa · Sin grabar</span>
+          </div>
         )}
       </div>
 
