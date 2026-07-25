@@ -1,7 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { MARK_COLORS, type VideoMark } from "@/lib/video-marks";
 import { Button } from "@/components/ui/button";
-import { Pause, Play, Maximize, ChevronsLeft, ChevronsRight, Gauge } from "lucide-react";
+import { Pause, Play, Maximize, ChevronsLeft, ChevronsRight, Gauge, AlertTriangle, RefreshCw } from "lucide-react";
+import { VideoHUD } from "@/components/video/VideoHUD";
+import type { VideoSource } from "@/lib/video/providers";
 
 export interface VideoPlayerHandle {
   seekMs: (ms: number) => void;
@@ -20,13 +22,22 @@ interface Props {
   stream?: MediaStream | null;
   onTimeUpdate?: (ms: number) => void;
   onDurationChange?: (sec: number) => void;
+  /** Fuente activa (para HUD / chip). Opcional para no romper usos existentes. */
+  source?: VideoSource | null;
+  /** Estado de grabación externa (LiveRecorder) para pintar el badge REC. */
+  recStatus?: "idle" | "recording" | "paused" | "finalizing";
+  /** Tiempo transcurrido a mostrar en el HUD (ms). */
+  hudElapsedMs?: number;
+  /** true si la captura fue interrumpida (usuario cerró la compartición). */
+  interrupted?: boolean;
+  onReconnect?: () => void;
 }
 
 
 const SPEEDS = [0.25, 0.5, 1, 1.25, 1.5, 2];
 
 export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPlayer(
-  { src, marks, isYouTube, stream, onTimeUpdate, onDurationChange },
+  { src, marks, isYouTube, stream, onTimeUpdate, onDurationChange, source, recStatus, hudElapsedMs, interrupted, onReconnect },
   ref,
 ) {
 
