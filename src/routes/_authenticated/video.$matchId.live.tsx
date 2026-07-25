@@ -196,6 +196,31 @@ function LiveRoute() {
     return () => window.removeEventListener("keydown", onKey);
   }, [side, fund, match, teamA, teamB, commit, resetStep, showGhost]);
 
+  const finishAndAnalyze = useCallback(async () => {
+    if (!match) return;
+    const ok = window.confirm(
+      "¿Finalizar el partido y pasar al modo Análisis?\n\n" +
+      "• Se detendrá la grabación (si está activa) y se guardará el archivo.\n" +
+      "• El video quedará auto-vinculado al partido.\n" +
+      "• Serás redirigido al Análisis Post-Partido."
+    );
+    if (!ok) return;
+    setFinalizing(true);
+    try {
+      if (recorder && recorder.getStatus() !== "idle") {
+        toast.info("Deteniendo grabación y subiendo chunks…");
+        await recorder.stop();
+      }
+      useVolley.getState().finishMatch(match.id);
+      toast.success("Partido finalizado. Abriendo Análisis…");
+      await navigate({ to: "/video/$matchId/analysis", params: { matchId: match.id } });
+    } catch (e) {
+      toast.error("No se pudo finalizar: " + (e as Error).message);
+    } finally {
+      setFinalizing(false);
+    }
+  }, [match, recorder, navigate]);
+
   const marks = useMemo(() => {
     if (!match) return [] as VideoMark[];
     return buildVideoMarks(match, teamA, teamB, 0);
