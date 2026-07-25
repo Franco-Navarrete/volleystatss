@@ -5,7 +5,7 @@
  * Se abre con el botón o la tecla "?" y se cierra con Esc.
  */
 import { useEffect, useState } from "react";
-import { Keyboard, ChevronRight } from "lucide-react";
+import { Keyboard } from "lucide-react";
 
 const GROUPS: { title: string; items: [string, string][] }[] = [
   {
@@ -78,43 +78,33 @@ export function ScoutShortcutsDrawer({ topClass = "top-24" }: Props) {
 
   return (
     <>
-      {/* Botón discreto en la esquina inferior izquierda */}
-      {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          title="Guía de atajos (?)"
-          className="fixed bottom-3 left-3 z-40 flex items-center gap-1.5 rounded-full bg-card/80 hover:bg-card border border-border text-foreground/80 px-2.5 py-1.5 shadow-sm text-[10px] font-semibold backdrop-blur"
-        >
-          <Keyboard className="size-3" />
-          Atajos
-          <kbd className="px-1 py-0.5 rounded bg-background/60 text-[9px] font-mono">?</kbd>
-        </button>
-      )}
+      {/* Icono minimalista: solo "?" en la esquina inferior izquierda */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        title="Guía de atajos (?)"
+        aria-label="Guía de atajos"
+        className="fixed bottom-3 left-3 z-40 size-7 grid place-items-center rounded-full bg-card/60 hover:bg-card border border-border/60 text-muted-foreground hover:text-foreground text-[11px] font-mono backdrop-blur transition-opacity opacity-60 hover:opacity-100"
+      >
+        ?
+      </button>
 
-      {/* Cajón que emerge desde la esquina inferior izquierda, no tapa la cancha ni el panel de resultado */}
+      {/* Popover compacto */}
       <aside
-        className={`fixed bottom-3 left-3 z-40 w-60 max-h-[70vh] overflow-auto bg-card/95 backdrop-blur border border-border rounded-lg shadow-elevated transition-all duration-200 origin-bottom-left ${
+        className={`fixed bottom-12 left-3 z-40 w-56 max-h-[65vh] overflow-auto bg-card/95 backdrop-blur border border-border rounded-lg shadow-elevated transition-all duration-150 origin-bottom-left ${
           open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
-        <div className="sticky top-0 flex items-center justify-between px-3 py-2 border-b border-border bg-card/95 backdrop-blur">
+        <div className="px-3 py-2 border-b border-border/60">
           <div className="flex items-center gap-1.5">
-            <Keyboard className="size-3.5 text-primary" />
-            <span className="text-xs font-bold">Atajos de registro</span>
+            <Keyboard className="size-3 text-muted-foreground" />
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Atajos</span>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="p-1 rounded hover:bg-secondary/50"
-            title="Ocultar (Esc)"
-          >
-            <ChevronRight className="size-4 rotate-180" />
-          </button>
         </div>
         <div className="p-3 space-y-3">
           {GROUPS.map((g) => (
             <div key={g.title}>
-              <div className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">
+              <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70 mb-1">
                 {g.title}
               </div>
               <ul className="space-y-0.5">
@@ -123,8 +113,8 @@ export function ScoutShortcutsDrawer({ topClass = "top-24" }: Props) {
                     key={k}
                     className="flex items-center justify-between gap-2 text-[11px] py-0.5"
                   >
-                    <span className="text-foreground/90 truncate">{desc}</span>
-                    <kbd className="shrink-0 px-1.5 py-0.5 rounded bg-background border border-border font-mono text-[10px] whitespace-nowrap">
+                    <span className="text-foreground/85 truncate">{desc}</span>
+                    <kbd className="shrink-0 px-1.5 py-0.5 rounded bg-background/70 border border-border/60 font-mono text-[10px] whitespace-nowrap text-muted-foreground">
                       {k}
                     </kbd>
                   </li>
@@ -132,9 +122,9 @@ export function ScoutShortcutsDrawer({ topClass = "top-24" }: Props) {
               </ul>
             </div>
           ))}
-          <div className="text-[10px] text-muted-foreground pt-2 border-t border-border/60">
-            Secuencia: equipo → jugadora → fundamento → resultado.
-            Ej: <span className="font-mono">Y 7 F +</span>
+          <div className="text-[10px] text-muted-foreground/80 pt-2 border-t border-border/50">
+            equipo → jugadora → fundamento → resultado
+            <div className="font-mono mt-0.5">Ej: Y 7 F +</div>
           </div>
         </div>
       </aside>
