@@ -43,7 +43,10 @@ export function PreparationView() {
       scheduledAt: Date.now(),
       setsToWin: 3,
       pointsPerSet: 25,
+      startingLineupA: [],
+      startingLineupB: [],
     });
+
 
     MatchSessionService.create({
       matchId,
@@ -139,8 +142,9 @@ function TeamPicker({
 }) {
   const sel = teams.find((t) => t.id === value);
   const badgeTeam = sel
-    ? { color: sel.color, shortName: sel.shortName ?? sel.name.slice(0, 3).toUpperCase(), logoUrl: sel.logoUrl }
+    ? { color: sel.color ?? "#94a3b8", shortName: sel.shortName ?? sel.name.slice(0, 3).toUpperCase(), logoUrl: sel.logoUrl }
     : undefined;
+
   return (
     <div>
       <label className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{label}</label>
