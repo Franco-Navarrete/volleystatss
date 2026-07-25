@@ -290,8 +290,9 @@ export class LiveRecorder {
       this.fileWriter = null;
     }
 
-    // Fallback: descargar copia si NO usamos File System Access API
-    if (this.saveLocal && this.localBlobs.length > 0) {
+    // Fallback: descargar copia si NO usamos File System Access API.
+    // (Con fileHandle presente, el archivo ya quedó en disco vía writer.)
+    if (this.saveLocal && !this.fileHandle && this.localBlobs.length > 0) {
       try {
         const ext = this.mime.includes("mp4") ? "mp4" : "webm";
         const full = new Blob(this.localBlobs, { type: this.mime });
