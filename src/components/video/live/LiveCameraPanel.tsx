@@ -17,6 +17,7 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string | undefined>(undefined);
   const [audio, setAudio] = useState(true);
+  const [source, setSource] = useState<"camera" | "screen">("camera");
   const [status, setStatus] = useState<LiveStatus>("idle");
   const [elapsedMs, setElapsedMs] = useState(0);
   const [chunkCount, setChunkCount] = useState(0);
