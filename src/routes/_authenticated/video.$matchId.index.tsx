@@ -14,6 +14,8 @@ import {
 } from "@/hooks/use-match-video";
 import { buildRallyBlocks, buildVideoMarks, MARK_COLORS, MARK_LABEL, type VideoMark, type VideoMarkKind } from "@/lib/video-marks";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPlayer";
+import { ClipsPanel } from "@/components/video/ClipsPanel";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
