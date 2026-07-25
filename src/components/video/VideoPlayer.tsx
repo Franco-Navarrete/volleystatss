@@ -100,7 +100,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
       else if (e.key === ".") { e.preventDefault(); v.pause(); v.currentTime = v.currentTime + 1 / 30; }
       else if (e.key === "j") { setSpeed((s) => { const i = Math.max(0, SPEEDS.indexOf(s) - 1); const n = SPEEDS[i]!; v.playbackRate = n; return n; }); }
       else if (e.key === "l") { setSpeed((s) => { const i = Math.min(SPEEDS.length - 1, SPEEDS.indexOf(s) + 1); const n = SPEEDS[i]!; v.playbackRate = n; return n; }); }
-      else if (e.key === "f") { e.preventDefault(); toggleFullscreen(); }
+      
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
