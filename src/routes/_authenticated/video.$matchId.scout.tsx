@@ -354,15 +354,26 @@ function ScoutRoute() {
                   isYouTube={effectiveIsYouTube}
                   stream={effectiveStream}
                   onTimeUpdate={setCurrentMs}
+                  onDurationChange={setDurationSec}
                 />
               ) : (
                 <div className="p-8 bg-card/40 border border-border rounded-lg text-center text-muted-foreground text-sm">
                   Elegí una fuente arriba (archivo, cámara, ventana o pantalla) o <Link to="/video/$matchId" params={{ matchId }} className="text-primary underline">vinculá un video</Link>.
                 </div>
               )}
-              <ScoutTimeline marks={marks} currentMs={currentMs} onSeek={(ms) => playerRef.current?.seekMs(Math.max(0, ms - 300))} />
-              <ActionsTable marks={marks} currentMs={currentMs} onSeek={seekToMark} />
+              <AnalysisPanel
+                matchId={matchId}
+                marks={marks}
+                currentMs={currentMs}
+                totalMs={durationSec * 1000}
+                onSeek={(ms) => playerRef.current?.seekMs(Math.max(0, ms))}
+                onSelectMark={(m) => {
+                  selectMark(m.id);
+                  playerRef.current?.seekMs(Math.max(0, m.inicioClipMs));
+                }}
+              />
             </div>
+
 
 
             {/* RIGHT — registro rápido */}
