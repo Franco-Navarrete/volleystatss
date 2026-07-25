@@ -247,6 +247,49 @@ function ScoutRoute() {
 
   const seekToMark = (m: VideoMark) => playerRef.current?.seekMs(Math.max(0, m.tMs - 500));
 
+  // Auto-pausa al final del clip virtual seleccionado (configurable via useAnalysisStore).
+  useEffect(() => {
+    if (!autoPauseAtEnd || !selectedMarkId) return;
+    const sel = marks.find((m) => m.id === selectedMarkId);
+    if (!sel) return;
+    const finMs = sel.tMs + postrollMs;
+    if (currentMs >= finMs) {
+      playerRef.current?.pause();
+    }
+  }, [currentMs, autoPauseAtEnd, selectedMarkId, marks, postrollMs]);
+
+  // Navegación por eventos: J anterior, L siguiente, K play/pausa.
+  // Se registra en fase de captura para preemptar los atajos internos del VideoPlayer (j/l = velocidad).
+  useEffect(() => {
+    const sorted = [...marks].sort((a, b) => a.tMs - b.tMs);
+    const jumpTo = (m: VideoMark | undefined) => {
+      if (!m) return;
+      selectMark(m.id);
+      playerRef.current?.seekMs(Math.max(0, m.tMs - prerollMs));
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      const k = e.key.toLowerCase();
+      if (k === shortcuts.prevEvent.toLowerCase()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const prev = [...sorted].reverse().find((m) => m.tMs < currentMs - 50);
+        jumpTo(prev);
+      } else if (k === shortcuts.nextEvent.toLowerCase()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const next = sorted.find((m) => m.tMs > currentMs + 50);
+        jumpTo(next);
+      } else if (k === shortcuts.playPause.toLowerCase()) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const v = playerRef.current?.getVideoElement();
+        if (v) { if (v.paused) void v.play(); else v.pause(); }
+      }
+    };
+    window.addEventListener("keydown", onKey, { capture: true });
+    return () => window.removeEventListener("keydown", onKey, { capture: true } as AddEventListenerOptions);
+  }, [marks, currentMs, shortcuts, selectMark, prerollMs]);
+
+
   if (!match) {
     return (
       <AppShell>
