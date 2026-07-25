@@ -8,6 +8,7 @@ import { VideoPlayer, type VideoPlayerHandle } from "@/components/video/VideoPla
 import { VideoSourceSwitcher, type VideoSourceKind } from "@/components/video/VideoSourceSwitcher";
 import { AnalysisPanel } from "@/components/video/analysis/AnalysisPanel";
 import { KeyboardShortcutsPanel } from "@/components/video/analysis/KeyboardShortcutsPanel";
+import { ScoutShortcutsDrawer } from "@/components/video/ScoutShortcutsDrawer";
 import { useAnalysisStore } from "@/lib/video/analysis-store";
 
 import { Button } from "@/components/ui/button";
@@ -445,6 +446,7 @@ function ScoutRoute() {
                 isPlaying={isPlaying}
               />
               <KeyboardShortcutsPanel active={analysisMode} />
+              <ScoutShortcutsDrawer />
             </div>
 
 

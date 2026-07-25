@@ -20,6 +20,7 @@ import { ArrowLeft, Zap, PauseCircle, Undo2, ChevronRight, Radio, Film, Flag } f
 import type { LiveRecorder } from "@/lib/live-recording";
 import { RecordingReviewDialog } from "@/components/video/live/RecordingReviewDialog";
 import { toast } from "sonner";
+import { ScoutShortcutsDrawer } from "@/components/video/ScoutShortcutsDrawer";
 
 export const Route = createFileRoute("/_authenticated/video/$matchId/live")({
   head: () => ({
@@ -255,6 +256,7 @@ function LiveRoute() {
 
   return (
     <AppShell>
+      <ScoutShortcutsDrawer />
       <div className="flex flex-col gap-3">
         <header className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
