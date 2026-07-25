@@ -71,16 +71,19 @@ export class LiveRecorder {
   private stream: MediaStream;
   private session: LiveSession | null = null;
   private chunks: LiveChunk[] = [];
+  private localBlobs: Blob[] = [];
   private nextIdx = 0;
   private uploadQueue: Promise<void> = Promise.resolve();
   private mime: string;
   private status: LiveStatus = "idle";
   private cb: LiveRecorderCallbacks;
+  private saveLocal: boolean;
 
-  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}) {
+  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}, opts: { saveLocal?: boolean } = {}) {
     this.stream = stream;
     this.cb = cb;
     this.mime = pickMime();
+    this.saveLocal = opts.saveLocal ?? true;
   }
 
   getStatus() { return this.status; }
