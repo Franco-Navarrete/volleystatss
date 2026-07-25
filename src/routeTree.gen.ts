@@ -33,6 +33,8 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedVideoIndexRouteImport } from './routes/_authenticated/video.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedVideoMatchIdRouteImport } from './routes/_authenticated/video.$matchId'
+import { Route as AuthenticatedSessionNewRouteImport } from './routes/_authenticated/session.new'
+import { Route as AuthenticatedSessionIdRouteImport } from './routes/_authenticated/session.$id'
 import { Route as AuthenticatedMatchesNewRouteImport } from './routes/_authenticated/matches.new'
 import { Route as AuthenticatedMatchesIdRouteImport } from './routes/_authenticated/matches.$id'
 import { Route as AuthenticatedVideoMatchIdIndexRouteImport } from './routes/_authenticated/video.$matchId.index'
@@ -165,6 +167,16 @@ const AuthenticatedVideoMatchIdRoute =
     path: '/video/$matchId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSessionNewRoute = AuthenticatedSessionNewRouteImport.update({
+  id: '/session/new',
+  path: '/session/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSessionIdRoute = AuthenticatedSessionIdRouteImport.update({
+  id: '/session/$id',
+  path: '/session/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMatchesNewRoute = AuthenticatedMatchesNewRouteImport.update({
   id: '/matches/new',
   path: '/matches/new',
@@ -235,6 +247,8 @@ export interface FileRoutesByFullPath {
   '/ligas/': typeof LigasIndexRoute
   '/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/matches/new': typeof AuthenticatedMatchesNewRoute
+  '/session/$id': typeof AuthenticatedSessionIdRoute
+  '/session/new': typeof AuthenticatedSessionNewRoute
   '/video/$matchId': typeof AuthenticatedVideoMatchIdRouteWithChildren
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/video/': typeof AuthenticatedVideoIndexRoute
@@ -265,6 +279,8 @@ export interface FileRoutesByTo {
   '/equipos': typeof EquiposIndexRoute
   '/ligas': typeof LigasIndexRoute
   '/matches/new': typeof AuthenticatedMatchesNewRoute
+  '/session/$id': typeof AuthenticatedSessionIdRoute
+  '/session/new': typeof AuthenticatedSessionNewRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/video': typeof AuthenticatedVideoIndexRoute
   '/matches/$id/stats': typeof AuthenticatedMatchesIdStatsRoute
@@ -299,6 +315,8 @@ export interface FileRoutesById {
   '/ligas/': typeof LigasIndexRoute
   '/_authenticated/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/_authenticated/matches/new': typeof AuthenticatedMatchesNewRoute
+  '/_authenticated/session/$id': typeof AuthenticatedSessionIdRoute
+  '/_authenticated/session/new': typeof AuthenticatedSessionNewRoute
   '/_authenticated/video/$matchId': typeof AuthenticatedVideoMatchIdRouteWithChildren
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/video/': typeof AuthenticatedVideoIndexRoute
@@ -334,6 +352,8 @@ export interface FileRouteTypes {
     | '/ligas/'
     | '/matches/$id'
     | '/matches/new'
+    | '/session/$id'
+    | '/session/new'
     | '/video/$matchId'
     | '/matches/'
     | '/video/'
@@ -364,6 +384,8 @@ export interface FileRouteTypes {
     | '/equipos'
     | '/ligas'
     | '/matches/new'
+    | '/session/$id'
+    | '/session/new'
     | '/matches'
     | '/video'
     | '/matches/$id/stats'
@@ -397,6 +419,8 @@ export interface FileRouteTypes {
     | '/ligas/'
     | '/_authenticated/matches/$id'
     | '/_authenticated/matches/new'
+    | '/_authenticated/session/$id'
+    | '/_authenticated/session/new'
     | '/_authenticated/video/$matchId'
     | '/_authenticated/matches/'
     | '/_authenticated/video/'
@@ -589,6 +613,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVideoMatchIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/session/new': {
+      id: '/_authenticated/session/new'
+      path: '/session/new'
+      fullPath: '/session/new'
+      preLoaderRoute: typeof AuthenticatedSessionNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/session/$id': {
+      id: '/_authenticated/session/$id'
+      path: '/session/$id'
+      fullPath: '/session/$id'
+      preLoaderRoute: typeof AuthenticatedSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/matches/new': {
       id: '/_authenticated/matches/new'
       path: '/matches/new'
@@ -697,6 +735,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
   AuthenticatedMatchesIdRoute: typeof AuthenticatedMatchesIdRouteWithChildren
   AuthenticatedMatchesNewRoute: typeof AuthenticatedMatchesNewRoute
+  AuthenticatedSessionIdRoute: typeof AuthenticatedSessionIdRoute
+  AuthenticatedSessionNewRoute: typeof AuthenticatedSessionNewRoute
   AuthenticatedVideoMatchIdRoute: typeof AuthenticatedVideoMatchIdRouteWithChildren
   AuthenticatedMatchesIndexRoute: typeof AuthenticatedMatchesIndexRoute
   AuthenticatedVideoIndexRoute: typeof AuthenticatedVideoIndexRoute
@@ -714,6 +754,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
   AuthenticatedMatchesIdRoute: AuthenticatedMatchesIdRouteWithChildren,
   AuthenticatedMatchesNewRoute: AuthenticatedMatchesNewRoute,
+  AuthenticatedSessionIdRoute: AuthenticatedSessionIdRoute,
+  AuthenticatedSessionNewRoute: AuthenticatedSessionNewRoute,
   AuthenticatedVideoMatchIdRoute: AuthenticatedVideoMatchIdRouteWithChildren,
   AuthenticatedMatchesIndexRoute: AuthenticatedMatchesIndexRoute,
   AuthenticatedVideoIndexRoute: AuthenticatedVideoIndexRoute,
