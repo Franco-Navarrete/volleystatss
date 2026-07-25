@@ -71,16 +71,19 @@ export class LiveRecorder {
   private stream: MediaStream;
   private session: LiveSession | null = null;
   private chunks: LiveChunk[] = [];
+  private localBlobs: Blob[] = [];
   private nextIdx = 0;
   private uploadQueue: Promise<void> = Promise.resolve();
   private mime: string;
   private status: LiveStatus = "idle";
   private cb: LiveRecorderCallbacks;
+  private saveLocal: boolean;
 
-  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}) {
+  constructor(stream: MediaStream, cb: LiveRecorderCallbacks = {}, opts: { saveLocal?: boolean } = {}) {
     this.stream = stream;
     this.cb = cb;
     this.mime = pickMime();
+    this.saveLocal = opts.saveLocal ?? true;
   }
 
   getStatus() { return this.status; }
@@ -134,6 +137,7 @@ export class LiveRecorder {
       if (!ev.data || ev.data.size === 0 || !this.session) return;
       const idx = this.nextIdx++;
       const chunkStartMs = idx * CHUNK_MS;
+      if (this.saveLocal) this.localBlobs.push(ev.data);
       this.enqueueUpload(idx, ev.data, chunkStartMs);
     };
     this.mr.onerror = (ev) => {
@@ -219,6 +223,25 @@ export class LiveRecorder {
     if (mainPath) {
       try { await upsertMatchVideoUpload(this.session.matchId, mainPath); }
       catch (e) { console.warn("[LiveRecorder] upsertMatchVideoUpload", e); }
+    }
+
+    // Descargar copia local (guardar en la PC del entrenador)
+    if (this.saveLocal && this.localBlobs.length > 0) {
+      try {
+        const ext = this.mime.includes("mp4") ? "mp4" : "webm";
+        const full = new Blob(this.localBlobs, { type: this.mime });
+        const url = URL.createObjectURL(full);
+        const a = document.createElement("a");
+        const ts = new Date(this.session.startedWallClock).toISOString().replace(/[:.]/g, "-");
+        a.href = url;
+        a.download = `rally-live-${this.session.matchId}-${ts}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (e) {
+        console.warn("[LiveRecorder] descarga local falló", e);
+      }
     }
 
     this.stream.getTracks().forEach((t) => t.stop());
