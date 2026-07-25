@@ -14,6 +14,7 @@ const GROUPS: { title: string; items: [string, string][] }[] = [
       ["Y", "Equipo A (izquierda)"],
       ["X", "Equipo B (derecha)"],
       ["1–9", "Jugadora por dorsal"],
+      ["M", "Pasar por X y Y"],
     ],
   },
   {
