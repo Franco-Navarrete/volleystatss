@@ -60,10 +60,16 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
 
   useEffect(() => {
     if (status === "idle" && source === "camera") void attachPreview();
-    return () => {
-      if (status === "idle") streamRef.current?.getTracks().forEach((t) => t.stop());
-    };
   }, [deviceId, audio, status, source, attachPreview]);
+
+  // Stop tracks only when the component unmounts and no recording is active
+  useEffect(() => {
+    return () => {
+      if (!recorderRef.current) {
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
 
   // Elapsed ticker
   useEffect(() => {
