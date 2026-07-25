@@ -37,7 +37,17 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
   const attachPreview = useCallback(async () => {
     try {
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      const s = await openStream({ deviceId, audio });
+      let s: MediaStream;
+      if (source === "screen") {
+        // @ts-expect-error getDisplayMedia typings
+        s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio });
+        // If user stops sharing via browser UI, revert to camera
+        s.getVideoTracks()[0]?.addEventListener("ended", () => {
+          setSource("camera");
+        });
+      } else {
+        s = await openStream({ deviceId, audio });
+      }
       streamRef.current = s;
       if (videoRef.current) {
         videoRef.current.srcObject = s;
@@ -45,16 +55,16 @@ export function LiveCameraPanel({ matchId, onStarted, onStopped, onTick }: Props
       }
     } catch (e) {
       console.error(e);
-      toast.error("No se pudo acceder a la cámara. Revisa permisos.");
+      toast.error(source === "screen" ? "No se pudo capturar la pantalla." : "No se pudo acceder a la cámara. Revisa permisos.");
     }
-  }, [deviceId, audio]);
+  }, [deviceId, audio, source]);
 
   useEffect(() => {
-    if (status === "idle") void attachPreview();
+    if (status === "idle" && source === "camera") void attachPreview();
     return () => {
       if (status === "idle") streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [deviceId, audio, status, attachPreview]);
+  }, [deviceId, audio, status, source, attachPreview]);
 
   // Elapsed ticker
   useEffect(() => {
