@@ -222,6 +222,7 @@ function ScoutRoute() {
         return;
       }
       if (e.key === "Escape") { e.preventDefault(); resetStep(); setSide(null); showGhost("Selección cancelada"); return; }
+      if (analysisMode) return;
       // Fund shortcut
       const fundKey = FUND_KEY[e.key.toLowerCase()];
       if (fundKey) { e.preventDefault(); setFund(fundKey); return; }
@@ -246,7 +247,7 @@ function ScoutRoute() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [side, fund, match, teamA, teamB, currentMs, commit, resetStep]);
+  }, [side, fund, match, teamA, teamB, currentMs, commit, resetStep, analysisMode]);
 
   const seekToMark = (m: VideoMark) => playerRef.current?.seekMs(Math.max(0, m.tMs - 500));
 
