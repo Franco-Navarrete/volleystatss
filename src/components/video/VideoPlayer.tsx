@@ -152,15 +152,71 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
             allowFullScreen
             title="video"
           />
+  // effective stream: if the source provides one and no explicit stream was passed, use it
+  const effectiveStream = stream ?? source?.stream ?? null;
+  const effectiveSrc = effectiveStream ? "" : (source?.src ?? src);
+
+  // Apply effective stream via srcObject
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (effectiveStream) {
+      v.srcObject = effectiveStream;
+      v.muted = true;
+      void v.play().catch(() => undefined);
+    } else {
+      v.srcObject = null;
+    }
+    return () => {
+      if (v && v.srcObject === effectiveStream) v.srcObject = null;
+    };
+  }, [effectiveStream]);
+
+  const totalMs = duration * 1000;
+  const pct = totalMs > 0 ? (current * 1000 / totalMs) * 100 : 0;
+
+  return (
+    <div ref={wrapRef} className="flex flex-col gap-2 bg-black rounded-lg overflow-hidden">
+      <div className="relative bg-black aspect-video">
+        {isYouTube && !effectiveStream ? (
+          <iframe
+            src={effectiveSrc}
+            className="absolute inset-0 w-full h-full"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            title="video"
+          />
         ) : (
           <video
             ref={videoRef}
-            src={stream ? undefined : src}
+            src={effectiveStream ? undefined : effectiveSrc}
             className="absolute inset-0 w-full h-full bg-black"
             preload="metadata"
             playsInline
             controls={false}
           />
+        )}
+
+        {/* HUD superior con fuente, REC, resolución, calidad */}
+        {(source || recStatus) && (
+          <VideoHUD source={source ?? null} playing={playing} recStatus={recStatus} elapsedMs={hudElapsedMs} />
+        )}
+
+        {/* Overlay de captura interrumpida */}
+        {interrupted && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-yellow-300 font-semibold">
+              <AlertTriangle className="size-5" /> Captura interrumpida
+            </div>
+            <p className="text-white/80 text-xs max-w-sm text-center px-6">
+              La compartición se detuvo. Tus acciones y el cronómetro se mantienen intactos.
+            </p>
+            {onReconnect && (
+              <Button size="sm" onClick={onReconnect} className="bg-primary hover:bg-primary/90">
+                <RefreshCw className="size-3.5 mr-1.5" /> Reconectar
+              </Button>
+            )}
+          </div>
         )}
 
       </div>
