@@ -160,12 +160,17 @@ export function buildVideoMarks(
   const players = playerLookup(teamA, teamB);
   const scoreMap = buildScoreMap(match);
   const marks: VideoMark[] = [];
+  // Rally index — cada PointEvent cierra el rally activo.
+  let rallyIdx = 0;
 
   for (const ev of match.events) {
     const tMs = (ev.timestamp - firstTs) + syncOffsetMs;
     const base = {
       id: ev.id,
       tMs,
+      inicioClipMs: Math.max(0, tMs - DEFAULT_CLIP_PREROLL_MS),
+      finClipMs: tMs + DEFAULT_CLIP_POSTROLL_MS,
+      rallyId: rallyIdx,
       setNumber: ev.setNumber,
       event: ev,
       score: (() => {
@@ -174,6 +179,7 @@ export function buildVideoMarks(
       })(),
       rotation: null as number | null,
     };
+
     const pid = (ev as { playerId?: string | null }).playerId ?? null;
     const side = (ev as { side?: "A" | "B" | null }).side ?? null;
     const p = pid ? players.get(pid) : null;
