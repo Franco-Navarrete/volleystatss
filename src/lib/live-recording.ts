@@ -137,6 +137,7 @@ export class LiveRecorder {
       if (!ev.data || ev.data.size === 0 || !this.session) return;
       const idx = this.nextIdx++;
       const chunkStartMs = idx * CHUNK_MS;
+      if (this.saveLocal) this.localBlobs.push(ev.data);
       this.enqueueUpload(idx, ev.data, chunkStartMs);
     };
     this.mr.onerror = (ev) => {
