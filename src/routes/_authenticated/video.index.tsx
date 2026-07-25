@@ -1,30 +1,45 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { useVolley, setsWon } from "@/lib/volley-store";
+import { useVolley } from "@/lib/volley-store";
 import { listMatchVideos, type MatchVideoRow } from "@/hooks/use-match-video";
-import { Input } from "@/components/ui/input";
+import { useMatchSessionStore } from "@/lib/match-session/store";
 import { Button } from "@/components/ui/button";
-import { Star, Video, VideoOff, Search, Filter, Clock, Plus, BarChart3 } from "lucide-react";
+import { Video, Plus, LayoutGrid } from "lucide-react";
+import { MatchSessionCard } from "@/components/match-center/MatchSessionCard";
+import { MatchSessionFilters, type Filters } from "@/components/match-center/MatchSessionFilters";
 
 export const Route = createFileRoute("/_authenticated/video/")({
   head: () => ({
     meta: [
-      { title: "Análisis de video — RALLY" },
-      { name: "description", content: "Biblioteca de partidos con video sincronizado al scout." },
+      { title: "Match Center — RALLY" },
+      { name: "description", content: "Centro operativo de partidos: grabación, scouting, análisis y clips en un único flujo." },
+      { property: "og:title", content: "Match Center — RALLY" },
+      { property: "og:description", content: "Centro operativo de partidos con grabación, scouting y análisis." },
     ],
   }),
-  component: VideoLibrary,
+  component: MatchCenterHome,
 });
 
-function VideoLibrary() {
+const DEFAULT_FILTERS: Filters = {
+  q: "",
+  status: "all",
+  video: "all",
+  scout: "all",
+  onlyFav: false,
+  competition: "all",
+  category: "all",
+  teamId: "all",
+  sort: "recent",
+};
+
+function MatchCenterHome() {
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
+  const sessions = useMatchSessionStore((s) => s.sessions);
   const [videos, setVideos] = useState<MatchVideoRow[]>([]);
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "synced" | "unsynced" | "none">("all");
-  const [onlyFav, setOnlyFav] = useState(false);
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
 
   useEffect(() => { void listMatchVideos().then(setVideos); }, []);
 
@@ -32,149 +47,114 @@ function VideoLibrary() {
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t] as const)), [teams]);
   const leagueById = useMemo(() => new Map(leagues.map((l) => [l.id, l] as const)), [leagues]);
 
+  const competitions = useMemo(
+    () => Array.from(new Set(leagues.map((l) => l.name).filter(Boolean))) as string[],
+    [leagues],
+  );
+  const categories = useMemo(
+    () => Array.from(new Set(matches.map((m) => m.category).filter(Boolean))) as string[],
+    [matches],
+  );
+
   const rows = useMemo(() => {
-    return matches
-      .map((m) => {
-        const v = videoByMatch.get(m.id) ?? null;
-        return { m, v };
-      })
-      .filter(({ m, v }) => {
-        const a = teamById.get(m.teamAId);
-        const b = teamById.get(m.teamBId);
-        const text = `${a?.name ?? ""} ${b?.name ?? ""} ${m.category ?? ""}`.toLowerCase();
-        if (q && !text.includes(q.toLowerCase())) return false;
-        if (statusFilter === "synced" && !(v && v.sync_offset_ms !== 0)) return false;
-        if (statusFilter === "unsynced" && !(v && v.sync_offset_ms === 0)) return false;
-        if (statusFilter === "none" && v) return false;
-        if (onlyFav && !v?.favorite) return false;
+    const list = matches.map((m) => {
+      const v = videoByMatch.get(m.id) ?? null;
+      const session = sessions[m.id];
+      const league = m.leagueId ? leagueById.get(m.leagueId) : undefined;
+      const competition = session?.competition ?? league?.name ?? undefined;
+      const a = teamById.get(m.teamAId);
+      const b = teamById.get(m.teamBId);
+      return { m, v, session, competition, a, b };
+    });
+
+    return list
+      .filter(({ m, v, session, competition, a, b }) => {
+        if (filters.q) {
+          const text = `${a?.name ?? ""} ${b?.name ?? ""} ${m.category ?? ""} ${competition ?? ""}`.toLowerCase();
+          if (!text.includes(filters.q.toLowerCase())) return false;
+        }
+        if (filters.competition !== "all" && competition !== filters.competition) return false;
+        if (filters.category !== "all" && m.category !== filters.category) return false;
+        if (filters.teamId !== "all" && m.teamAId !== filters.teamId && m.teamBId !== filters.teamId) return false;
+        if (filters.onlyFav && !v?.favorite) return false;
+
+        // Video filter
+        if (filters.video === "with" && !v) return false;
+        if (filters.video === "without" && v) return false;
+        if (filters.video === "synced" && !(v && v.sync_offset_ms !== 0)) return false;
+
+        // Scout filter
+        const scoutState = m.events.length === 0 ? "idle" : m.sets.some((s) => s.finished) ? "done" : "progress";
+        if (filters.scout !== "all" && scoutState !== filters.scout) return false;
+
+        // Status filter
+        const finished = m.sets.some((s) => s.finished) && m.status !== "live";
+        const explicit = session?.status;
+        const derived = explicit ?? (m.status === "live" ? "live" : finished && v ? "analysis" : finished ? "finished" : "preparation");
+        if (filters.status !== "all" && derived !== filters.status) return false;
+
         return true;
       })
-      .sort((x, y) => y.m.scheduledAt - x.m.scheduledAt);
-  }, [matches, videoByMatch, teamById, q, statusFilter, onlyFav]);
+      .sort((x, y) => {
+        if (filters.sort === "actions") return y.m.events.length - x.m.events.length;
+        if (filters.sort === "analyzed") return (y.v?.updated_at ? Date.parse(y.v.updated_at) : 0) - (x.v?.updated_at ? Date.parse(x.v.updated_at) : 0);
+        return y.m.scheduledAt - x.m.scheduledAt;
+      });
+  }, [matches, sessions, videoByMatch, teamById, leagueById, filters]);
 
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
-        <header className="flex flex-wrap items-end justify-between gap-3">
-          <div>
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-              <Video className="size-7 text-primary" /> Análisis de video
+              <Video className="size-7 text-primary shrink-0" />
+              <span className="truncate">Match Center</span>
             </h1>
             <p className="text-muted-foreground text-sm">
-              Sincronizá el video del partido con el scout y navegá cada acción con un click.
+              Cada tarjeta es un partido completo: grabación, scouting, análisis y clips en un único flujo.
             </p>
           </div>
           <Link to="/matches/new">
             <Button className="gap-2">
-              <Plus className="size-4" /> Empezar partido de 0
+              <Plus className="size-4" /> Nueva Match Session
             </Button>
           </Link>
         </header>
 
-        <div className="flex flex-wrap items-center gap-2 bg-card/40 border border-border rounded-lg p-3">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar equipo, rival o categoría…" className="pl-8" />
-          </div>
-          <div className="flex items-center gap-1 text-xs">
-            <Filter className="size-4 text-muted-foreground" />
-            {(["all", "synced", "unsynced", "none"] as const).map((k) => (
-              <button
-                key={k}
-                onClick={() => setStatusFilter(k)}
-                className={`px-2 py-1 rounded-md ${statusFilter === k ? "bg-primary text-primary-foreground" : "hover:bg-secondary/50 text-muted-foreground"}`}
-              >
-                {k === "all" ? "Todos" : k === "synced" ? "Sincronizados" : k === "unsynced" ? "Sin sincronizar" : "Sin video"}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setOnlyFav((f) => !f)}
-            className={`px-2 py-1 rounded-md text-xs flex items-center gap-1 ${onlyFav ? "bg-primary/20 text-primary" : "hover:bg-secondary/50 text-muted-foreground"}`}
-          >
-            <Star className={`size-4 ${onlyFav ? "fill-primary text-primary" : ""}`} /> Favoritos
-          </button>
-        </div>
+        <MatchSessionFilters
+          value={filters}
+          onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
+          competitions={competitions}
+          categories={categories}
+          teams={teams.map((t) => ({ id: t.id, name: t.name }))}
+        />
 
         {rows.length === 0 && (
-          <div className="text-center py-16 border border-dashed border-border rounded-lg text-muted-foreground text-sm">
+          <div className="text-center py-16 border border-dashed border-border rounded-xl text-muted-foreground text-sm flex flex-col items-center gap-3">
+            <LayoutGrid className="size-8 text-muted-foreground/60" />
             No hay partidos que coincidan con los filtros.
+            <Link to="/matches/new">
+              <Button size="sm" variant="outline" className="gap-1">
+                <Plus className="size-3.5" /> Crear match session
+              </Button>
+            </Link>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {rows.map(({ m, v }) => {
-            const a = teamById.get(m.teamAId);
-            const b = teamById.get(m.teamBId);
-            const league = null;
-            const { a: setsA, b: setsB } = setsWon(m);
-            void league;
-            const finished = m.sets.filter((s) => s.finished).length > 0;
-            const status = !v ? "Sin video" : v.sync_offset_ms === 0 ? "Sin sincronizar" : "Sincronizado";
-            const statusColor = !v ? "bg-muted text-muted-foreground" : v.sync_offset_ms === 0 ? "bg-warning/20 text-warning" : "bg-success/20 text-success";
-            const dur = v?.duration_sec ? formatDur(v.duration_sec) : "—";
-            const readyToAnalyze = !!v && finished;
-            return (
-              <div
-                key={m.id}
-                className="group relative bg-card border border-border rounded-lg p-4 hover:border-primary/60 hover:shadow-glow transition-all flex flex-col gap-3"
-              >
-                <Link
-                  to="/video/$matchId"
-                  params={{ matchId: m.id }}
-                  className="absolute inset-0 rounded-lg"
-                  aria-label={`Abrir workspace de ${a?.name ?? ""} vs ${b?.name ?? ""}`}
-                />
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground relative pointer-events-none">
-                  <span>{m.category ?? "Sin categoría"}</span>
-                  <span className={`px-1.5 py-0.5 rounded ${statusColor}`}>{status}</span>
-                </div>
-                <div className="flex items-center justify-between gap-2 relative pointer-events-none">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-bold truncate">{a?.name ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground truncate">vs {b?.name ?? "—"}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-black tabular-nums">{setsA}–{setsB}</div>
-                    <div className="text-[10px] text-muted-foreground">{finished ? "Finalizado" : m.status === "live" ? "En vivo" : "Programado"}</div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground relative pointer-events-none">
-                  <span>{new Date(m.scheduledAt).toLocaleDateString()}</span>
-                  <span className="flex items-center gap-1"><Clock className="size-3" /> {dur}</span>
-                  {v ? <Video className="size-3.5 text-primary" /> : <VideoOff className="size-3.5" />}
-                </div>
-                {readyToAnalyze && (
-                  <div className="relative flex items-center justify-between gap-2 pt-2 border-t border-border/40">
-                    <span className="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-success/20 text-success font-semibold">
-                      Listo para analizar
-                    </span>
-                    <Link
-                      to="/video/$matchId/analysis"
-                      params={{ matchId: m.id }}
-                      className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 relative z-10"
-                    >
-                      <BarChart3 className="size-3.5" /> Analizar →
-                    </Link>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="text-xs text-muted-foreground border-t border-border/40 pt-3">
-          Tip: en el workspace de cada partido podés subir el video, pegar una URL (HTTPS directa, Bunny, Cloudflare Stream, YouTube),
-          marcar el primer saque para sincronizar y navegar cada acción con teclado.
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+          {rows.map(({ m, v, competition, a, b }) => (
+            <MatchSessionCard
+              key={m.id}
+              match={m}
+              teamA={a}
+              teamB={b}
+              video={v}
+              competition={competition}
+            />
+          ))}
         </div>
       </div>
     </AppShell>
   );
 }
-
-function formatDur(sec: number) {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
