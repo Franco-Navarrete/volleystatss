@@ -14,8 +14,7 @@ import {
   LayoutGrid,
   Settings,
   MoreVertical,
-  Plus,
-  TreePalm
+  Plus
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -45,7 +44,6 @@ interface OrganizationNode {
   userCount: number;
 }
 
-// Mock de la jerarquía para visualización inicial (será reemplazado por datos reales de la DB)
 const MOCK_HIERARCHY: OrganizationNode[] = [
   {
     id: 'fed-1',
@@ -178,24 +176,7 @@ function AdminPage() {
         </TabsList>
 
         <TabsContent value="organizations" className="m-0 focus-visible:outline-none">
-          <Card className="border-border/60 shadow-elevated overflow-hidden">
-            <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Explorador de Jerarquía</CardTitle>
-                  <CardDescription>Visualización tipo árbol de la estructura SaaS.</CardDescription>
-                </div>
-                <Badge variant="outline" className="bg-background/50">Total: 1,452 nodos</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border/40">
-                {MOCK_HIERARCHY.map(node => (
-                  <HierarchyRow key={node.id} node={node} level={0} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <WorkspacesSection />
         </TabsContent>
 
         <TabsContent value="users" className="m-0">
@@ -203,14 +184,50 @@ function AdminPage() {
         </TabsContent>
 
         <TabsContent value="modules" className="m-0">
-          <ModulesSection />
+          <div className="space-y-8">
+            <PermissionsCatalogSection />
+            <ModulesSection />
+          </div>
         </TabsContent>
       </Tabs>
     </AppShell>
   );
 }
 
-function HierarchyRow({ node, level }: { node: OrganizationNode, level: number }) {
+function WorkspacesSection() {
+  const listWorkspaces = useServerFn(adminListWorkspaces);
+  const { data, isLoading } = useQuery({ 
+    queryKey: ["admin", "workspaces"], 
+    queryFn: () => listWorkspaces() 
+  });
+
+  if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground animate-pulse">Consultando topología de red SaaS…</div>;
+
+  const workspaces = data?.workspaces ?? MOCK_HIERARCHY;
+
+  return (
+    <Card className="border-border/60 shadow-elevated overflow-hidden">
+      <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">Estructura Organizacional</CardTitle>
+            <CardDescription>Jerarquía multinivel de identidades corporativas.</CardDescription>
+          </div>
+          <Badge variant="outline" className="bg-background/50">Red Federada</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border/40">
+          {workspaces.map((node: any) => (
+            <HierarchyRow key={node.id} node={node} level={0} />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function HierarchyRow({ node, level }: { node: any, level: number }) {
   const [isExpanded, setIsExpanded] = useState(level < 2);
   const hasChildren = node.children && node.children.length > 0;
 
@@ -245,20 +262,24 @@ function HierarchyRow({ node, level }: { node: OrganizationNode, level: number }
           ) : (
             <div className="size-4" />
           )}
-          <div className={`size-8 rounded-lg ${typeColors[node.type]} flex items-center justify-center shrink-0 border`}>
+          <div className={`size-8 rounded-lg ${typeColors[node.type as OrgType] || 'bg-muted'} flex items-center justify-center shrink-0 border`}>
             <Building2 className="size-4" />
           </div>
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm truncate">{node.name}</span>
-              <Badge variant="outline" className={`text-[10px] uppercase font-black px-1.5 py-0 h-4 ${typeColors[node.type]}`}>
-                {typeLabels[node.type]}
+              <Badge variant="outline" className={`text-[10px] uppercase font-black px-1.5 py-0 h-4 ${typeColors[node.type as OrgType] || 'bg-muted'}`}>
+                {typeLabels[node.type as OrgType] || node.type}
               </Badge>
             </div>
             <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
-              <span className="flex items-center gap-1"><Users className="size-3" /> {node.userCount}</span>
-              <span>•</span>
-              <span className="flex items-center gap-1"><Package className="size-3" /> {node.plan}</span>
+              {node.userCount !== undefined && <span className="flex items-center gap-1"><Users className="size-3" /> {node.userCount}</span>}
+              {node.plan && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1"><Package className="size-3" /> {node.plan}</span>
+                </>
+              )}
               <span>•</span>
               <span className="flex items-center gap-1">WS: {node.id.slice(0, 5)}</span>
             </div>
@@ -266,10 +287,10 @@ function HierarchyRow({ node, level }: { node: OrganizationNode, level: number }
         </div>
         
         <div className="hidden sm:flex items-center gap-2">
-          {node.modules.slice(0, 2).map(m => (
+          {node.modules?.slice(0, 2).map((m: string) => (
             <Badge key={m} variant="secondary" className="text-[10px] bg-background border-border/40">{m}</Badge>
           ))}
-          {node.modules.length > 2 && <span className="text-[10px] text-muted-foreground">+{node.modules.length - 2}</span>}
+          {node.modules?.length > 2 && <span className="text-[10px] text-muted-foreground">+{node.modules.length - 2}</span>}
         </div>
 
         <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -279,7 +300,7 @@ function HierarchyRow({ node, level }: { node: OrganizationNode, level: number }
       
       {hasChildren && isExpanded && (
         <div className="animate-in slide-in-from-top-1 duration-200">
-          {node.children!.map(child => (
+          {node.children!.map((child: any) => (
             <HierarchyRow key={child.id} node={child} level={level + 1} />
           ))}
         </div>
@@ -321,7 +342,6 @@ function UsersSection() {
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[10px] font-bold uppercase text-muted-foreground">Membresías Activas</span>
                   <div className="flex flex-wrap gap-1">
-                    {/* En la nueva arquitectura esto mostraría las organizaciones del usuario */}
                     <Badge variant="outline" className="text-[9px] bg-background">Workspace Default</Badge>
                     {user.extraRoles.map(r => (
                       <Badge key={r} variant="outline" className="text-[9px] capitalize border-primary/20">{r}</Badge>
@@ -332,6 +352,45 @@ function UsersSection() {
                   Gestionar Accesos
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PermissionsCatalogSection() {
+  const listPerms = useServerFn(adminListPermissionsCatalog);
+  const { data: perms, isLoading } = useQuery({ 
+    queryKey: ["admin", "permissions-catalog"], 
+    queryFn: () => listPerms() 
+  });
+
+  if (isLoading) return null;
+
+  const categories = Array.from(new Set(perms?.map(p => p.category) ?? []));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Catálogo Central de Capacidades</h2>
+        <Badge variant="outline" className="border-primary/20 text-primary">Global Scope</Badge>
+      </div>
+      
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {categories.map(cat => (
+          <Card key={cat} className="border-border/60 bg-card/40">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-xs font-black uppercase text-primary/60 tracking-tighter">{cat}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-2">
+              {perms?.filter(p => p.category === cat).map(p => (
+                <div key={p.id} className="flex items-center justify-between group">
+                  <span className="text-sm font-medium">{p.name}</span>
+                  <code className="text-[9px] bg-muted px-1 rounded opacity-60 group-hover:opacity-100 transition-opacity">{p.id}</code>
+                </div>
+              ))}
             </CardContent>
           </Card>
         ))}
