@@ -1,84 +1,95 @@
-# Propuesta Técnica: RALLY SaaS Multi-tenant
+# Propuesta Técnica Evolutiva: RALLY Enterprise SaaS & Ecosistema Jerárquico
 
-Esta propuesta detalla la evolución de VolleyStatss hacia una arquitectura de plataforma SaaS de clase mundial, permitiendo escalabilidad masiva para clubes, ligas y federaciones.
+Esta propuesta detalla la transformación de VolleyStatss en una plataforma SaaS de clase mundial, diseñada para gestionar la complejidad de organizaciones deportivas desde el nivel internacional hasta el jugador individual, utilizando una arquitectura multi-tenant jerárquica.
 
-## 1. Arquitectura General
-El sistema transiciona de un modelo centrado en el usuario a uno centrado en el **Workspace**. 
-- **Estructura jerárquica**: Workspace (Tenant) > Usuarios > Roles > Permisos.
-- **Frontend**: El `workspace_id` se convierte en el parámetro de contexto global (vía URL o header).
-- **Backend**: Implementación de Row Level Security (RLS) basado en `workspace_id` en todas las tablas transaccionales.
+## 1. Arquitectura General: "The Tree of Volleyball"
+La arquitectura se basa en un **Grafo Acíclico Dirigido (DAG)** de organizaciones, donde cada nodo es un **Workspace**.
+- **Multi-tenancy Jerárquico**: A diferencia de un SaaS plano (como Slack), RALLY permite que un Workspace sea "hijo" de otro.
+- **Aislamiento de Datos**: Cada entidad (partido, video, estadística) pertenece a un Workspace específico.
+- **Herencia Ascendente**: Los padres tienen visibilidad (read-only o gestionada) sobre los datos de sus hijos.
 
-## 2. Modelo de Datos (Nuevas Entidades)
+## 2. Modelo de Datos Extendido
 ```sql
--- Tabla principal de organización
+-- Definición de Niveles y Tipos
+CREATE TYPE public.organization_level AS ENUM (
+    'international_federation', 
+    'national_federation', 
+    'regional_federation', 
+    'association', 
+    'league', 
+    'club', 
+    'academy', 
+    'team'
+);
+
+-- Tabla de Workspaces con Jerarquía
 CREATE TABLE public.workspaces (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    parent_id uuid REFERENCES public.workspaces(id), -- Referencia al padre
     name text NOT NULL,
-    slug text UNIQUE NOT NULL, -- Para URLs personalizadas (ej: club-independiente.rally.app)
-    logo_url text,
-    type text CHECK (type IN ('club', 'league', 'federation', 'academy')),
+    slug text UNIQUE NOT NULL,
+    level organization_level NOT NULL,
+    settings jsonb DEFAULT '{
+        "branding": {"primary_color": "#3B82F6", "logo_url": null},
+        "localization": {"timezone": "UTC", "language": "es"}
+    }',
+    subscription_plan text DEFAULT 'public', -- 'public', 'coach', 'club', 'league', 'federation'
+    modules_enabled text[] DEFAULT '{"public_portal"}',
     owner_id uuid REFERENCES auth.users(id),
-    settings jsonb DEFAULT '{}',
-    subscription_id uuid, -- Relación con el plan contratado
     created_at timestamptz DEFAULT now()
 );
 
--- Relación N:N entre Usuarios y Workspaces (un usuario, múltiples contextos)
+-- Membresía y Roles Contextuales
 CREATE TABLE public.workspace_members (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE,
     user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-    role_id uuid REFERENCES public.workspace_roles(id), -- Rol específico en este workspace
-    joined_at timestamptz DEFAULT now(),
+    role_id uuid REFERENCES public.workspace_roles(id),
+    status text DEFAULT 'active',
     UNIQUE(workspace_id, user_id)
-);
-
--- Roles personalizados por Workspace
-CREATE TABLE public.workspace_roles (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    workspace_id uuid REFERENCES public.workspaces(id), -- NULL para roles globales por defecto
-    name text NOT NULL,
-    permissions text[] DEFAULT '{}', -- Array de keys de permisos (ej: ['manage_teams', 'view_scout'])
-    created_at timestamptz DEFAULT now()
 );
 ```
 
-## 3. Arquitectura Multi-tenant
-- **Aislamiento**: Cada tabla (teams, matches, players) recibirá una columna `workspace_id`.
-- **Seguridad**: Las políticas de RLS de Supabase se actualizarán para permitir acceso solo si `auth.uid()` existe en `workspace_members` para el `workspace_id` de la fila.
-- **Contexto dinámico**: El `useWorkspace()` hook proveerá el ID actual en toda la App.
+## 3. Sistema de Permisos y Roles (Enterprise Grade)
+- **Roles por Nivel**: Los roles disponibles en una 'Federación' son distintos a los de un 'Club'.
+- **Permission Service Centralizado**: 
+  - `check(userId, workspaceId, permission)`
+  - Evalúa permisos locales + permisos heredados (si aplica).
+- **Herencia de Permisos**: Configurable por el administrador del Workspace superior (ej: "Permitir a la Federación Nacional editar calendarios de la Liga Regional").
 
-## 4. Arquitectura de Permisos
-- **Permission Service**: Un servicio centralizado en `src/lib/permissions.ts` que evalúa:
-  `hasPermission(workspaceId, permissionKey)`.
-- **Desacoplamiento**: Los componentes solo preguntan por el permiso, no por el rol.
+## 4. Arquitectura de Módulos (Modular SaaS)
+Los módulos se activan dinámicamente:
+- **VolleyStatss Live**: Gestión de partidos en tiempo real.
+- **VolleyStatss Scout/Video**: Análisis técnico avanzado.
+- **VolleyStatss AI**: Generación de insights automáticos.
+- **Implementación**: Un middleware de rutas en TanStack Router bloquea el acceso a módulos no contratados por el Workspace actual.
 
-## 5. Arquitectura de Módulos y Suscripciones
-- **Activación por Workspace**: Los módulos definidos en `rally-modules.ts` se habilitarán/deshabilitarán según el `plan` del Workspace.
-- **Guardas de Módulos**: 
-  - Routing: Filtro en los loaders de TanStack Router.
-  - UI: Componente `<ModuleGate id="scout_pro">...</ModuleGate>`.
+## 5. Flujo de Usuario y Selector de Workspace
+- **Single Sign-On (SSO)**: Una cuenta, múltiples identidades organizacionales.
+- **Selector Contextual**: Inspirado en Linear/Slack. Al cambiar de Workspace:
+  1. Se actualiza el `currentWorkspace` en el store global.
+  2. Se aplica el `branding` (colores/logos) del nuevo workspace.
+  3. Se filtran las queries de datos automáticamente por el nuevo `workspace_id`.
 
-## 6. Flujo de Cambio de Workspace
-1. **Selector**: Ubicado en el Sidebar (estilo Slack/Linear).
-2. **Acción**: Al cambiar, se actualiza el `current_workspace_id` en el `localStorage` (o URL) y se refresca el cache de TanStack Query.
-3. **Persistencia**: La preferencia de último workspace visitado se guarda por usuario.
+## 6. Estrategia de Migración (Fases)
+### Fase 1: Cimientos (Current Turn)
+- Creación de tablas de `workspaces` y `organization_levels`.
+- Script de migración inicial: Cada usuario actual recibe un Workspace tipo 'Club' (o 'Coach') por defecto.
+- Asignación de `workspace_id` a todas las filas de `teams`, `matches`, `players`.
 
-## 7. Mapa de Navegación
-- `/` (Home Pública / Landing)
-- `/_authenticated` (Layout común con Sidebar y Selector)
-- `/_authenticated/:workspaceSlug/dashboard`
-- `/_authenticated/:workspaceSlug/scout`
-- `/_authenticated/:workspaceSlug/video`
+### Fase 2: Contextualización UI
+- Implementación del `WorkspaceProvider` en React.
+- Rediseño del Sidebar para incluir el selector.
+- Aplicación de RLS estricto en la base de datos.
 
-## 8. Riesgos y Estrategia de Migración (Enfoque Conservador)
-- **Fase 1**: Crear tablas `workspaces` y `workspace_members`. 
-- **Fase 2**: Crear un "Default Workspace" para todos los usuarios actuales y migrar sus datos existentes (teams, matches) a este workspace.
-- **Fase 3**: Habilitar el selector y la creación de nuevos Workspaces.
-- **Cero Downtime**: El código actual seguirá funcionando asumiendo el primer workspace disponible si no hay uno seleccionado.
+### Fase 3: Jerarquía y Consolidación
+- Implementación de la lógica `parent_id`.
+- Desarrollo de dashboards consolidados para niveles superiores (Federaciones).
 
-## 9. Roadmap
-1. **Semana 1**: Infraestructura Core (Tablas y Contexto).
-2. **Semana 2**: Migración de datos existentes a Workspace por defecto.
-3. **Semana 3**: Implementación de Permission Service y Gate de Módulos.
-4. **Semana 4**: UI del Selector de Workspace y Branding dinámico.
+## 7. Riesgos Técnicos
+- **Complejidad de RLS**: Las políticas que comprueban herencia jerárquica pueden ser pesadas; se usarán funciones `SECURITY DEFINER` optimizadas.
+- **Consistencia**: Asegurar que al mover un Club de una Liga a otra, los datos se mantengan coherentes.
+
+---
+**Design Principle Check**: ¿Permitiría esto administrar una federación nacional con miles de jugadores?
+**Respuesta**: SÍ. La estructura jerárquica indexada permite consultas recursivas eficientes y aislamiento total de datos entre ramas del árbol.
