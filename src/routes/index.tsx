@@ -136,8 +136,8 @@ function PublicHome() {
             <div className="absolute inset-0 bg-gradient-primary opacity-[0.06] pointer-events-none" />
             <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-extrabold leading-tight">
-                  Vóley en vivo, <span className="text-primary">punto a punto</span>.
+                <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight tracking-tighter">
+                  Todo el voleibol en un <span className="text-primary">solo lugar</span>.
                 </h1>
                 <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                   Resultados, fixture y estadísticas en tiempo real.
