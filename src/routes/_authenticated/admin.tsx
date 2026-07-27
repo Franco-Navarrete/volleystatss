@@ -1,119 +1,115 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
-import {
-  Loader2,
-  KeyRound,
-  Plus,
-  Radio,
-  Share2,
-  ShieldCheck,
-  Trash2,
-  Trophy,
-  UserPlus,
-  Users,
+import { 
+  Building2, 
+  ChevronRight, 
+  ChevronDown, 
+  Users, 
+  ShieldCheck, 
+  Package, 
+  CreditCard, 
+  History,
+  LayoutGrid,
+  Settings,
+  MoreVertical,
+  Plus
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useIsAdmin } from "@/hooks/use-auth";
-import {
-  adminCreateLeague,
-  adminCreateUser,
-  adminDeleteLeague,
-  adminDeleteUser,
-  adminGetPassword,
-  adminListLeagues,
-  adminListUsers,
-  adminSetExtraRole,
-  adminSetLeagueAccess,
-  adminSetPassword,
-  adminSetPermissions,
-  adminSetRole,
-  type ExtraRole,
-} from "@/lib/admin.functions";
-import { adminListPublicMatches } from "@/lib/public-match.functions";
-
-const ROLE_OPTIONS: { value: "admin" | ExtraRole; label: string; hint: string }[] = [
-  { value: "entrenador", label: "Entrenador", hint: "Acceso a estadísticas avanzadas" },
-  { value: "planillero", label: "Planillero", hint: "Carga rápida modo liga" },
-  { value: "admin", label: "Admin", hint: "Acceso total al sistema" },
-];
-
-function RoleSelector({
-  isAdmin,
-  extraRoles,
-  onToggleAdmin,
-  onToggleExtra,
-  disabled,
-}: {
-  isAdmin: boolean;
-  extraRoles: Set<ExtraRole>;
-  onToggleAdmin: (v: boolean) => void;
-  onToggleExtra: (role: ExtraRole, on: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
-      {ROLE_OPTIONS.map((opt) => {
-        const active =
-          opt.value === "admin" ? isAdmin : extraRoles.has(opt.value as ExtraRole);
-        const isAdminOpt = opt.value === "admin";
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            disabled={disabled}
-            onClick={() => {
-              if (isAdminOpt) onToggleAdmin(!active);
-              else onToggleExtra(opt.value as ExtraRole, !active);
-            }}
-            className={`text-left rounded-md border px-2.5 py-2 transition-colors ${
-              active
-                ? isAdminOpt
-                  ? "border-primary bg-primary/20"
-                  : "border-primary bg-primary/10"
-                : "border-border/60 bg-card hover:bg-secondary/50"
-            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <div className="text-xs font-bold flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className={`inline-block size-3 rounded-sm border ${
-                  active ? "bg-primary border-primary" : "border-border"
-                }`}
-              />
-              {opt.label}
-            </div>
-            <div className="text-[10px] text-muted-foreground leading-tight mt-1">
-              {opt.hint}
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-
+import { adminListUsers } from "@/lib/admin.functions";
+import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Administración · vstats" }] }),
+  head: () => ({ meta: [{ title: "Panel de Administración · RALLY SaaS" }] }),
   component: AdminPage,
 });
+
+type OrgType = 'federacion' | 'asociacion' | 'liga' | 'club' | 'categoria' | 'equipo';
+
+interface OrganizationNode {
+  id: string;
+  name: string;
+  type: OrgType;
+  children?: OrganizationNode[];
+  workspace?: string;
+  status: 'active' | 'inactive';
+  plan: string;
+  modules: string[];
+  userCount: number;
+}
+
+const MOCK_HIERARCHY: OrganizationNode[] = [
+  {
+    id: 'fed-1',
+    name: 'Federación del Voleibol Argentino (FeVA)',
+    type: 'federacion',
+    status: 'active',
+    plan: 'Enterprise',
+    modules: ['Live', 'Scout', 'Video', 'Intelligence'],
+    userCount: 1250,
+    children: [
+      {
+        id: 'aso-1',
+        name: 'Federación Cordobesa de Voleibol',
+        type: 'asociacion',
+        status: 'active',
+        plan: 'Federation',
+        modules: ['Live', 'Scout', 'Video'],
+        userCount: 450,
+        children: [
+          {
+            id: 'liga-1',
+            name: 'División de Honor Femenina',
+            type: 'liga',
+            status: 'active',
+            plan: 'League',
+            modules: ['Live', 'Scout'],
+            userCount: 120,
+            children: [
+              {
+                id: 'club-1',
+                name: 'Club Atlético Belgrano',
+                type: 'club',
+                status: 'active',
+                plan: 'Club',
+                modules: ['Live', 'Scout', 'Video'],
+                userCount: 45,
+                children: [
+                  {
+                    id: 'cat-1',
+                    name: 'Primera División',
+                    type: 'categoria',
+                    status: 'active',
+                    plan: 'Inherent',
+                    modules: ['Live'],
+                    userCount: 18,
+                    children: [
+                      {
+                        id: 'eq-1',
+                        name: 'Belgrano Vóley A',
+                        type: 'equipo',
+                        status: 'active',
+                        plan: 'Inherent',
+                        modules: ['Live'],
+                        userCount: 14
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
 
 function AdminPage() {
   const { isAdmin, checking } = useIsAdmin();
@@ -121,17 +117,21 @@ function AdminPage() {
   if (checking) {
     return (
       <AppShell>
-        <p className="text-sm text-muted-foreground">Verificando permisos…</p>
+        <div className="flex items-center justify-center py-20">
+          <p className="text-sm text-muted-foreground animate-pulse">Autenticando sistema Enterprise…</p>
+        </div>
       </AppShell>
     );
   }
+
   if (!isAdmin) {
     return (
       <AppShell>
         <div className="max-w-md mx-auto text-center py-16">
-          <h1 className="text-lg font-semibold">Sin acceso</h1>
+          <ShieldCheck className="size-12 mx-auto text-muted-foreground/20 mb-4" />
+          <h1 className="text-xl font-bold">Acceso Restringido</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Esta sección es solo para administradores.
+            Este panel requiere permisos de Administración Global.
           </p>
         </div>
       </AppShell>
@@ -140,849 +140,300 @@ function AdminPage() {
 
   return (
     <AppShell>
-      <div className="flex items-center gap-2 mb-6">
-        <ShieldCheck className="size-5 text-primary" />
-        <h1 className="text-xl font-bold tracking-tight">Administración</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-2 text-primary mb-1">
+            <ShieldCheck className="size-5" />
+            <span className="text-xs font-bold uppercase tracking-wider">SaaS Infrastructure</span>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight">Panel de Administración</h1>
+          <p className="text-sm text-muted-foreground">Gestioná la jerarquía global de RALLY.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="h-9">
+            <History className="size-4 mr-2" /> Auditoría
+          </Button>
+          <Button size="sm" className="h-9 shadow-glow">
+            <Plus className="size-4 mr-2" /> Nueva Organización
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="users">
-        <TabsList className="mb-4">
-          <TabsTrigger value="users">
-            <Users className="size-4 mr-1.5" /> Usuarios
+      <Tabs defaultValue="organizations" className="space-y-6">
+        <TabsList className="bg-muted/50 p-1 rounded-xl h-auto flex flex-wrap gap-1">
+          <TabsTrigger value="organizations" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
+            <Building2 className="size-4 mr-2" /> Organizaciones
           </TabsTrigger>
-          <TabsTrigger value="leagues">
-            <Trophy className="size-4 mr-1.5" /> Ligas
+          <TabsTrigger value="users" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
+            <Users className="size-4 mr-2" /> Usuarios & Roles
           </TabsTrigger>
-          <TabsTrigger value="shared">
-            <Share2 className="size-4 mr-1.5" /> Partidos
+          <TabsTrigger value="modules" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
+            <Package className="size-4 mr-2" /> Módulos & Planes
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
+            <CreditCard className="size-4 mr-2" /> Suscripciones
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="users">
-          <UsersTab />
+
+        <TabsContent value="organizations" className="m-0 focus-visible:outline-none">
+          <WorkspacesSection />
         </TabsContent>
-        <TabsContent value="leagues">
-          <LeaguesTab />
+
+        <TabsContent value="users" className="m-0">
+          <UsersSection />
         </TabsContent>
-        <TabsContent value="shared">
-          <SharedMatchesTab />
+
+        <TabsContent value="modules" className="m-0">
+          <div className="space-y-8">
+            <PermissionsCatalogSection />
+            <ModulesSection />
+          </div>
         </TabsContent>
       </Tabs>
     </AppShell>
   );
 }
 
-// =========================================================================
-// USUARIOS
-// =========================================================================
+function WorkspacesSection() {
+  const listWorkspaces = useServerFn(adminListWorkspaces);
+  const { data, isLoading } = useQuery({ 
+    queryKey: ["admin", "workspaces"], 
+    queryFn: () => listWorkspaces() 
+  });
 
-function UsersTab() {
-  const qc = useQueryClient();
-  const listUsers = useServerFn(adminListUsers);
-  const listLeagues = useServerFn(adminListLeagues);
+  if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground animate-pulse">Consultando topología de red SaaS…</div>;
 
-  const usersQ = useQuery({ queryKey: ["admin", "users"], queryFn: () => listUsers() });
-  const leaguesQ = useQuery({ queryKey: ["admin", "leagues"], queryFn: () => listLeagues() });
-
-  const [createOpen, setCreateOpen] = useState(false);
-
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["admin", "users"] });
-  };
-
-  if (usersQ.isLoading || leaguesQ.isLoading) {
-    return <p className="text-sm text-muted-foreground">Cargando…</p>;
-  }
-  const leagues = leaguesQ.data ?? [];
-  const users = usersQ.data ?? [];
+  const workspaces = data?.workspaces ?? MOCK_HIERARCHY;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="size-4" />
-          {users.length} usuario{users.length === 1 ? "" : "s"}
+    <Card className="border-border/60 shadow-elevated overflow-hidden">
+      <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">Estructura Organizacional</CardTitle>
+            <CardDescription>Jerarquía multinivel de identidades corporativas.</CardDescription>
+          </div>
+          <Badge variant="outline" className="bg-background/50">Red Federada</Badge>
         </div>
-        <Button onClick={() => setCreateOpen(true)} size="sm">
-          <UserPlus className="size-4" /> Nuevo usuario
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border/40">
+          {workspaces.map((node: any) => (
+            <HierarchyRow key={node.id} node={node} level={0} />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function HierarchyRow({ node, level }: { node: any, level: number }) {
+  const [isExpanded, setIsExpanded] = useState(level < 2);
+  const hasChildren = node.children && node.children.length > 0;
+
+  const typeLabels: Record<OrgType, string> = {
+    federacion: 'Federación',
+    asociacion: 'Asociación',
+    liga: 'Liga',
+    club: 'Club',
+    categoria: 'Categoría',
+    equipo: 'Equipo'
+  };
+
+  const typeColors: Record<OrgType, string> = {
+    federacion: 'bg-purple-500/10 text-purple-600 border-purple-200 dark:border-purple-900',
+    asociacion: 'bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-900',
+    liga: 'bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-900',
+    club: 'bg-green-500/10 text-green-600 border-green-200 dark:border-green-900',
+    categoria: 'bg-slate-500/10 text-slate-600 border-slate-200 dark:border-slate-900',
+    equipo: 'bg-rose-500/10 text-rose-600 border-rose-200 dark:border-rose-900'
+  };
+
+  return (
+    <>
+      <div 
+        className={`group flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer`}
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{ paddingLeft: `${(level * 24) + 16}px` }}
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {hasChildren ? (
+            isExpanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />
+          ) : (
+            <div className="size-4" />
+          )}
+          <div className={`size-8 rounded-lg ${typeColors[node.type as OrgType] || 'bg-muted'} flex items-center justify-center shrink-0 border`}>
+            <Building2 className="size-4" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm truncate">{node.name}</span>
+              <Badge variant="outline" className={`text-[10px] uppercase font-black px-1.5 py-0 h-4 ${typeColors[node.type as OrgType] || 'bg-muted'}`}>
+                {typeLabels[node.type as OrgType] || node.type}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+              {node.userCount !== undefined && <span className="flex items-center gap-1"><Users className="size-3" /> {node.userCount}</span>}
+              {node.plan && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1"><Package className="size-3" /> {node.plan}</span>
+                </>
+              )}
+              <span>•</span>
+              <span className="flex items-center gap-1">WS: {node.id.slice(0, 5)}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="hidden sm:flex items-center gap-2">
+          {node.modules?.slice(0, 2).map((m: string) => (
+            <Badge key={m} variant="secondary" className="text-[10px] bg-background border-border/40">{m}</Badge>
+          ))}
+          {node.modules?.length > 2 && <span className="text-[10px] text-muted-foreground">+{node.modules.length - 2}</span>}
+        </div>
+
+        <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 transition-opacity">
+          <MoreVertical className="size-4" />
         </Button>
       </div>
-
-      {users.map((u) => (
-        <UserRow key={u.id} user={u} leagues={leagues} onChanged={refresh} />
-      ))}
-
-      <CreateUserDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        leagues={leagues}
-        onCreated={refresh}
-      />
-    </div>
-  );
-}
-
-type UserRowData = Awaited<ReturnType<typeof adminListUsers>>[number];
-type LeagueRow = Awaited<ReturnType<typeof adminListLeagues>>[number];
-
-function UserRow({
-  user,
-  leagues,
-  onChanged,
-}: {
-  user: UserRowData;
-  leagues: LeagueRow[];
-  onChanged: () => void;
-}) {
-  const setPerms = useServerFn(adminSetPermissions);
-  const setAccess = useServerFn(adminSetLeagueAccess);
-  const setRole = useServerFn(adminSetRole);
-  const setExtraRole = useServerFn(adminSetExtraRole);
-  const deleteUser = useServerFn(adminDeleteUser);
-
-  const [selected, setSelected] = useState<Set<string>>(new Set(user.leagueIds));
-  const [canCreate, setCanCreate] = useState(user.canCreateMatches);
-  const [isAdmin, setIsAdmin] = useState(user.isAdmin);
-  const [extraRoles, setExtraRolesState] = useState<Set<ExtraRole>>(
-    new Set(user.extraRoles),
-  );
-  const [open, setOpen] = useState(false);
-  const [pwOpen, setPwOpen] = useState(false);
-
-  const extraRolesEqual = (a: Set<ExtraRole>, b: ExtraRole[]) => {
-    if (a.size !== b.length) return false;
-    for (const r of b) if (!a.has(r)) return false;
-    return true;
-  };
-
-  const dirty = useMemo(() => {
-    if (isAdmin !== user.isAdmin) return true;
-    if (!extraRolesEqual(extraRoles, user.extraRoles)) return true;
-    const orig = new Set(user.leagueIds);
-    if (selected.size !== orig.size) return true;
-    for (const id of selected) if (!orig.has(id)) return true;
-    return canCreate !== user.canCreateMatches;
-  }, [selected, canCreate, isAdmin, extraRoles, user]);
-
-  const saveMut = useMutation({
-    mutationFn: async () => {
-      if (isAdmin !== user.isAdmin) {
-        await setRole({ data: { userId: user.id, isAdmin } });
-      }
-      if (!extraRolesEqual(extraRoles, user.extraRoles)) {
-        await setExtraRole({ data: { userId: user.id, roles: Array.from(extraRoles) } });
-      }
-      if (!isAdmin) {
-        await Promise.all([
-          setPerms({ data: { userId: user.id, canCreateMatches: canCreate } }),
-          setAccess({ data: { userId: user.id, leagueIds: Array.from(selected) } }),
-        ]);
-      }
-    },
-    onSuccess: () => {
-      toast.success("Usuario actualizado");
-      onChanged();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const delMut = useMutation({
-    mutationFn: () => deleteUser({ data: { userId: user.id } }),
-    onSuccess: () => {
-      toast.success("Usuario eliminado");
-      onChanged();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const toggle = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  return (
-    <div className="rounded-xl border border-border/60 bg-card/40">
-      <button
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
-        onClick={() => setOpen((v) => !v)}
-      >
-        <div className="min-w-0">
-          <div className="font-medium text-sm truncate flex items-center gap-2 flex-wrap">
-            {user.email}
-            {isAdmin && (
-              <Badge variant="secondary" className="text-[10px]">Admin</Badge>
-            )}
-            {Array.from(extraRoles).map((r) => (
-              <Badge key={r} variant="outline" className="text-[10px] capitalize">
-                {r}
-              </Badge>
-            ))}
-          </div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            {isAdmin
-              ? "Acceso total a todas las ligas y partidos"
-              : `${user.leagueIds.length} liga${user.leagueIds.length === 1 ? "" : "s"} · ${user.canCreateMatches ? "Puede crear partidos" : "Sin permiso de crear"}`}
-          </div>
-        </div>
-      </button>
-      {open && (
-        <div className="border-t border-border/60 px-4 py-4 space-y-4">
-          <div>
-            <Label className="text-sm">Roles del usuario</Label>
-            <p className="text-xs text-muted-foreground mb-2">
-              Podés combinar varios roles. Admin da acceso total.
-            </p>
-            <RoleSelector
-              isAdmin={isAdmin}
-              extraRoles={extraRoles}
-              onToggleAdmin={setIsAdmin}
-              onToggleExtra={(role, on) => {
-                setExtraRolesState((prev) => {
-                  const next = new Set(prev);
-                  if (on) next.add(role);
-                  else next.delete(role);
-                  return next;
-                });
-              }}
-            />
-          </div>
-
-
-          {isAdmin ? (
-            <p className="text-xs text-muted-foreground">
-              Los administradores tienen acceso total. No hay permisos individuales que editar.
-            </p>
-          ) : (
-            <>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <Label className="text-sm">Puede crear partidos</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Habilita el botón "Nuevo partido" para este usuario.
-                  </p>
-                </div>
-                <Switch checked={canCreate} onCheckedChange={setCanCreate} />
-              </div>
-
-              <div>
-                <Label className="text-sm mb-2 block">Acceso a ligas</Label>
-                {leagues.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    Aún no hay ligas. Creá una en la pestaña "Ligas".
-                  </p>
-                ) : (
-                  <div className="grid sm:grid-cols-2 gap-1.5">
-                    {leagues.map((l) => {
-                      const checked = selected.has(l.id);
-                      return (
-                        <label
-                          key={l.id}
-                          className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer hover:bg-secondary/60"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggle(l.id)}
-                            className="size-4 accent-primary"
-                          />
-                          <span className="text-sm flex-1 truncate">
-                            {l.name}
-                            {l.season ? (
-                              <span className="text-xs text-muted-foreground ml-1">· {l.season}</span>
-                            ) : null}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => {
-                  if (confirm(`¿Eliminar la cuenta ${user.email}?`)) delMut.mutate();
-                }}
-                disabled={delMut.isPending}
-              >
-                <Trash2 className="size-4" /> Eliminar
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setPwOpen(true)}>
-                <KeyRound className="size-4" /> Contraseña
-              </Button>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => saveMut.mutate()}
-              disabled={!dirty || saveMut.isPending}
-            >
-              {saveMut.isPending && <Loader2 className="size-4 animate-spin" />}
-              Guardar cambios
-            </Button>
-          </div>
-          <ChangePasswordDialog
-            open={pwOpen}
-            onOpenChange={setPwOpen}
-            userId={user.id}
-            email={user.email}
-          />
+      
+      {hasChildren && isExpanded && (
+        <div className="animate-in slide-in-from-top-1 duration-200">
+          {node.children!.map((child: any) => (
+            <HierarchyRow key={child.id} node={child} level={level + 1} />
+          ))}
         </div>
       )}
+    </>
+  );
+}
+
+function UsersSection() {
+  const listUsers = useServerFn(adminListUsers);
+  const { data: users, isLoading } = useQuery({ 
+    queryKey: ["admin", "users"], 
+    queryFn: () => listUsers() 
+  });
+
+  if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground">Cargando catálogo de identidades…</div>;
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Identidades en el Ecosistema</h2>
+        <Badge variant="secondary">{users?.length} Usuarios Totales</Badge>
+      </div>
+      
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {users?.map(user => (
+          <Card key={user.id} className="border-border/60 hover:border-primary/40 transition-colors shadow-sm bg-card/40">
+            <CardHeader className="p-4 space-y-1">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-bold truncate pr-2">{user.email}</CardTitle>
+                <Badge variant={user.isAdmin ? "default" : "secondary"} className="text-[10px]">
+                  {user.isAdmin ? "Global Admin" : "User"}
+                </Badge>
+              </div>
+              <CardDescription className="text-[10px]">Miembro desde: {new Date(user.createdAt).toLocaleDateString()}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="space-y-3">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Membresías Activas</span>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="outline" className="text-[9px] bg-background">Workspace Default</Badge>
+                    {user.extraRoles.map(r => (
+                      <Badge key={r} variant="outline" className="text-[9px] capitalize border-primary/20">{r}</Badge>
+                    ))}
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" className="w-full h-8 text-xs font-bold">
+                  Gestionar Accesos
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
 
-function ChangePasswordDialog({
-  open,
-  onOpenChange,
-  userId,
-  email,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  userId: string;
-  email: string;
-}) {
-  const setPassword = useServerFn(adminSetPassword);
-  const getPassword = useServerFn(adminGetPassword);
-  const [password, setPasswordValue] = useState("");
-  const [stored, setStored] = useState<{ password: string; updatedAt: string } | null>(null);
-  const [loadingStored, setLoadingStored] = useState(false);
-  const [reveal, setReveal] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    setLoadingStored(true);
-    getPassword({ data: { userId } })
-      .then((res) => {
-        if (!cancelled) setStored(res);
-      })
-      .catch((e: Error) => {
-        if (!cancelled) toast.error(e.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingStored(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, userId, getPassword]);
-
-  const generate = () => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-    let out = "";
-    const arr = new Uint32Array(12);
-    crypto.getRandomValues(arr);
-    for (let i = 0; i < 12; i++) out += chars[arr[i] % chars.length];
-    setPasswordValue(out);
-  };
-
-  const mut = useMutation({
-    mutationFn: () => setPassword({ data: { userId, password } }),
-    onSuccess: () => {
-      toast.success("Contraseña actualizada");
-      setStored({ password, updatedAt: new Date().toISOString() });
-      setPasswordValue("");
-    },
-    onError: (e: Error) => toast.error(e.message),
+function PermissionsCatalogSection() {
+  const listPerms = useServerFn(adminListPermissionsCatalog);
+  const { data: perms, isLoading } = useQuery({ 
+    queryKey: ["admin", "permissions-catalog"], 
+    queryFn: () => listPerms() 
   });
 
-  const copy = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success("Copiada al portapapeles");
-    } catch {
-      toast.error("No se pudo copiar");
-    }
-  };
+  if (isLoading) return null;
 
-  const sendByEmail = (pw: string) => {
-    const subject = encodeURIComponent("Tus datos de acceso a vstats");
-    const body = encodeURIComponent(
-      `Hola,\n\nEstos son tus datos para ingresar a vstats:\n\nUsuario: ${email}\nContraseña: ${pw}\n\nPodés cambiarla cuando quieras desde tu perfil.\n\nSaludos.`,
-    );
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) {
-          setPasswordValue("");
-          setStored(null);
-          setReveal(false);
-        }
-        onOpenChange(v);
-      }}
-    >
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Contraseña</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {/* Contraseña actual guardada */}
-          <div className="rounded-lg border border-border/60 bg-secondary/30 p-3 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                Contraseña actual
-              </Label>
-              {stored && (
-                <button
-                  type="button"
-                  onClick={() => setReveal((v) => !v)}
-                  className="text-[11px] text-primary hover:underline"
-                >
-                  {reveal ? "Ocultar" : "Mostrar"}
-                </button>
-              )}
-            </div>
-            {loadingStored ? (
-              <p className="text-xs text-muted-foreground">Cargando…</p>
-            ) : stored ? (
-              <>
-                <div className="font-mono text-sm bg-background rounded px-2 py-1.5 border border-border/60 break-all">
-                  {reveal ? stored.password : "•".repeat(Math.min(stored.password.length, 14))}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copy(stored.password)}
-                    className="flex-1"
-                  >
-                    Copiar
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => sendByEmail(stored.password)}
-                    className="flex-1"
-                  >
-                    Enviar por email
-                  </Button>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Última actualización: {new Date(stored.updatedAt).toLocaleString()}
-                </p>
-              </>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                No hay contraseña guardada para este usuario. Solo se registran las que asignes desde el panel.
-              </p>
-            )}
-          </div>
-
-          {/* Cambiar contraseña */}
-          <div className="space-y-2 pt-1 border-t border-border/40">
-            <Label htmlFor="pw-new" className="text-sm">Cambiar contraseña</Label>
-            <Input
-              id="pw-new"
-              type="text"
-              value={password}
-              onChange={(e) => setPasswordValue(e.target.value)}
-              placeholder="Nueva contraseña (mín. 8)"
-              autoComplete="off"
-            />
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={generate} className="flex-1">
-                Generar
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => copy(password)}
-                disabled={!password}
-                className="flex-1"
-              >
-                Copiar
-              </Button>
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cerrar</Button>
-          <Button
-            onClick={() => mut.mutate()}
-            disabled={password.length < 8 || mut.isPending}
-          >
-            {mut.isPending && <Loader2 className="size-4 animate-spin" />}
-            Guardar nueva
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function CreateUserDialog({
-  open,
-  onOpenChange,
-  leagues,
-  onCreated,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  leagues: LeagueRow[];
-  onCreated: () => void;
-}) {
-  const create = useServerFn(adminCreateUser);
-  const setRole = useServerFn(adminSetRole);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [canCreate, setCanCreate] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [extraRoles, setExtraRoles] = useState<Set<ExtraRole>>(new Set());
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-
-  const reset = () => {
-    setEmail("");
-    setPassword("");
-    setCanCreate(false);
-    setIsAdmin(false);
-    setExtraRoles(new Set());
-    setSelected(new Set());
-  };
-
-  const mut = useMutation({
-    mutationFn: async () => {
-      const res = await create({
-        data: {
-          email: email.trim(),
-          password,
-          canCreateMatches: isAdmin ? false : canCreate,
-          leagueIds: isAdmin ? [] : Array.from(selected),
-          extraRoles: Array.from(extraRoles),
-        },
-      });
-      if (isAdmin && res?.id) {
-        await setRole({ data: { userId: res.id, isAdmin: true } });
-      }
-      return res;
-    },
-    onSuccess: () => {
-      toast.success("Usuario creado");
-      reset();
-      onOpenChange(false);
-      onCreated();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const toggle = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const canSubmit = email.trim().length > 3 && password.length >= 8;
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Nuevo usuario</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label htmlFor="new-email">Email</Label>
-            <Input
-              id="new-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="usuario@equipo.com"
-              autoComplete="off"
-            />
-          </div>
-          <div>
-            <Label htmlFor="new-pass">Contraseña inicial</Label>
-            <Input
-              id="new-pass"
-              type="text"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
-              autoComplete="off"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              El usuario la podrá cambiar después.
-            </p>
-          </div>
-          <div>
-            <Label className="mb-1.5 block">Roles</Label>
-            <RoleSelector
-              isAdmin={isAdmin}
-              extraRoles={extraRoles}
-              onToggleAdmin={setIsAdmin}
-              onToggleExtra={(role, on) => {
-                setExtraRoles((prev) => {
-                  const next = new Set(prev);
-                  if (on) next.add(role);
-                  else next.delete(role);
-                  return next;
-                });
-              }}
-            />
-          </div>
-          {!isAdmin && (
-            <>
-              <div className="flex items-center justify-between gap-2">
-                <Label>Puede crear partidos</Label>
-                <Switch checked={canCreate} onCheckedChange={setCanCreate} />
-              </div>
-              <div>
-                <Label className="mb-2 block">Acceso a ligas</Label>
-                {leagues.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No hay ligas creadas.</p>
-                ) : (
-                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                    {leagues.map((l) => (
-                      <label
-                        key={l.id}
-                        className="flex items-center gap-2 rounded-md bg-secondary/40 px-3 py-2 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selected.has(l.id)}
-                          onChange={() => toggle(l.id)}
-                          className="size-4 accent-primary"
-                        />
-                        <span className="text-sm flex-1 truncate">{l.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => mut.mutate()} disabled={!canSubmit || mut.isPending}>
-            {mut.isPending && <Loader2 className="size-4 animate-spin" />}
-            Crear usuario
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// =========================================================================
-// LIGAS
-// =========================================================================
-
-function LeaguesTab() {
-  const qc = useQueryClient();
-  const listLeagues = useServerFn(adminListLeagues);
-  const createLeague = useServerFn(adminCreateLeague);
-  const deleteLeague = useServerFn(adminDeleteLeague);
-
-  const leaguesQ = useQuery({ queryKey: ["admin", "leagues"], queryFn: () => listLeagues() });
-
-  const [name, setName] = useState("");
-  const [season, setSeason] = useState("");
-
-  const invalidate = () => {
-    qc.invalidateQueries({ queryKey: ["admin", "leagues"] });
-    qc.invalidateQueries({ queryKey: ["admin", "users"] });
-  };
-
-  const createMut = useMutation({
-    mutationFn: () =>
-      createLeague({ data: { name: name.trim(), season: season.trim() || undefined } }),
-    onSuccess: () => {
-      toast.success("Liga creada");
-      setName("");
-      setSeason("");
-      invalidate();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const deleteMut = useMutation({
-    mutationFn: (leagueId: string) => deleteLeague({ data: { leagueId } }),
-    onSuccess: () => {
-      toast.success("Liga eliminada");
-      invalidate();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const leagues = leaguesQ.data ?? [];
+  const categories = Array.from(new Set(perms?.map(p => p.category) ?? []));
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border/60 p-4 bg-card/40 space-y-2">
-        <Label className="text-sm">Nueva liga</Label>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input
-            placeholder="Nombre (ej: Liga Apertura)"
-            value={name}
-            onChange={(e) => setName(e.target.value.slice(0, 80))}
-          />
-          <Input
-            placeholder="Temporada (opcional)"
-            value={season}
-            onChange={(e) => setSeason(e.target.value.slice(0, 40))}
-            className="sm:max-w-[180px]"
-          />
-          <Button onClick={() => createMut.mutate()} disabled={!name.trim() || createMut.isPending}>
-            {createMut.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            Crear
-          </Button>
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Catálogo Central de Capacidades</h2>
+        <Badge variant="outline" className="border-primary/20 text-primary">Global Scope</Badge>
       </div>
-
-      {leaguesQ.isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando ligas…</p>
-      ) : leagues.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Aún no hay ligas compartidas.</p>
-      ) : (
-        <ul className="space-y-2">
-          {leagues.map((l) => (
-            <li
-              key={l.id}
-              className="rounded-xl border border-border/60 bg-card/40 px-4 py-3 flex items-center gap-3"
-            >
-              <div className="size-9 rounded-md bg-gradient-primary flex items-center justify-center">
-                <Trophy className="size-4 text-primary-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{l.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {l.season ?? "Sin temporada"}
+      
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {categories.map(cat => (
+          <Card key={cat} className="border-border/60 bg-card/40">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-xs font-black uppercase text-primary/60 tracking-tighter">{cat}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-2">
+              {perms?.filter(p => p.category === cat).map(p => (
+                <div key={p.id} className="flex items-center justify-between group">
+                  <span className="text-sm font-medium">{p.name}</span>
+                  <code className="text-[9px] bg-muted px-1 rounded opacity-60 group-hover:opacity-100 transition-opacity">{p.id}</code>
                 </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (confirm(`¿Eliminar la liga ${l.name}? También se quitarán los accesos de los usuarios.`)) {
-                    deleteMut.mutate(l.id);
-                  }
-                }}
-              >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
 
-// =========================================================================
-// PARTIDOS COMPARTIDOS
-// =========================================================================
-
-function SharedMatchesTab() {
-  const list = useServerFn(adminListPublicMatches);
-  const listUsers = useServerFn(adminListUsers);
-  const sharedQ = useQuery({
-    queryKey: ["admin", "shared-matches"],
-    queryFn: () => list(),
-    refetchInterval: 10_000,
-  });
-  const usersQ = useQuery({ queryKey: ["admin", "users"], queryFn: () => listUsers() });
-
-  const emailByUser = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const u of usersQ.data ?? []) map.set(u.id, u.email);
-    return map;
-  }, [usersQ.data]);
-
-  if (sharedQ.isLoading) {
-    return <p className="text-sm text-muted-foreground">Cargando partidos…</p>;
-  }
-  const rows = sharedQ.data ?? [];
-  if (rows.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        Todavía no hay partidos compartidos por ningún usuario.
-      </p>
-    );
-  }
-
-  const live = rows.filter((r) => r.status === "live");
-  const other = rows.filter((r) => r.status !== "live");
-
-  const renderRow = (r: (typeof rows)[number]) => {
-    const owner = emailByUser.get(r.ownerId) ?? r.ownerId.slice(0, 8);
-    const href = `/m/${r.slug}`;
-    return (
-      <li
-        key={r.slug}
-        className="rounded-xl border border-border/60 bg-card/40 px-4 py-3 flex items-center gap-3"
-      >
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate flex items-center gap-2">
-            {r.teamAName ?? "—"} <span className="text-muted-foreground">vs</span>{" "}
-            {r.teamBName ?? "—"}
-            {r.status === "live" && (
-              <Badge variant="destructive" className="text-[10px] gap-1">
-                <Radio className="size-3 animate-pulse" /> En vivo
-              </Badge>
-            )}
-            {!r.isPublic && (
-              <Badge variant="outline" className="text-[10px]">Privado</Badge>
-            )}
-          </div>
-          <div className="text-xs text-muted-foreground mt-0.5 truncate">
-            {r.leagueName ? `${r.leagueName} · ` : ""}
-            {owner} · {new Date(r.updatedAt).toLocaleString()}
-          </div>
-        </div>
-        <a
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs font-semibold text-primary hover:underline shrink-0"
-        >
-          Ver
-        </a>
-      </li>
-    );
-  };
+function ModulesSection() {
+  const modules = [
+    { id: 'live', name: 'RALLY Live', desc: 'Registro de partidos en tiempo real.', plan: 'Free+' },
+    { id: 'scout', name: 'RALLY Scout', desc: 'Análisis técnico avanzado de video.', plan: 'Club+' },
+    { id: 'video', name: 'RALLY Video', desc: 'Biblioteca de clips y playlists.', plan: 'Club+' },
+    { id: 'intel', name: 'RALLY Intelligence', desc: 'IA aplicada a informes tácticos.', plan: 'Enterprise' },
+  ];
 
   return (
-    <div className="space-y-6">
-      {live.length > 0 && (
-        <section>
-          <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">
-            En vivo · {live.length}
-          </h2>
-          <ul className="space-y-2">{live.map(renderRow)}</ul>
-        </section>
-      )}
-      <section>
-        <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">
-          Historial · {other.length}
-        </h2>
-        {other.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Sin partidos anteriores.</p>
-        ) : (
-          <ul className="space-y-2">{other.map(renderRow)}</ul>
-        )}
-      </section>
+    <div className="grid gap-4 sm:grid-cols-2">
+      {modules.map(m => (
+        <Card key={m.id} className="border-border/60 bg-card/40">
+          <CardHeader className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <LayoutGrid className="size-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">{m.name}</CardTitle>
+                  <CardDescription className="text-xs">{m.plan}</CardDescription>
+                </div>
+              </div>
+              <Settings className="size-4 text-muted-foreground cursor-pointer hover:text-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <p className="text-sm text-muted-foreground">{m.desc}</p>
+            <div className="mt-4 pt-4 border-t border-border/40 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">Disponibilidad Global</span>
+              <Badge variant="outline" className="text-[10px] text-green-500 border-green-500/20 bg-green-500/5">Activo</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
