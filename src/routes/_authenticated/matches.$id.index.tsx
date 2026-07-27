@@ -172,8 +172,6 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 function LiveMatch() {
   const { id } = Route.useParams();
   const match = useVolley((s) => s.matches.find((m) => m.id === id));
-  const { globalGender } = useGenderPreference();
-  const t = getTerminology(globalGender);
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
   const startMatch = useVolley((s) => s.startMatch);
@@ -2238,6 +2236,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         </DialogTitle>
       </DialogHeader>
 
+      {(() => {
+        const { globalGender } = useGenderPreference();
+        const t = getTerminology(globalGender);
+        return (
+          <>
       <div className="flex items-center gap-2">
         <StepChip n={1} label={teamA.shortName} active={step === 1} done={validA} onClick={() => goToStep(1)} color={teamA.color} />
         <div className="flex-1 h-0.5 bg-border/60 rounded-full overflow-hidden">
@@ -2501,6 +2504,9 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
       {!stepValid && (
         <p className="text-[10px] text-center text-muted-foreground">Asigná los 6 {t.players.toLowerCase()} en la cancha.</p>
       )}
+          </>
+        );
+      })()}
     </div>
   );
 }
