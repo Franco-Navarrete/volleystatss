@@ -215,7 +215,7 @@ function PublicHome() {
           </section>
 
           {/* Live matches — hero content */}
-          <section>
+          <section id="vivo">
             <SectionHeader
               icon={<Radio className="size-4 text-destructive animate-pulse" />}
               title="Partidos en vivo"
