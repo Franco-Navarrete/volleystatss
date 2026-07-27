@@ -133,57 +133,51 @@ function PublicHome() {
         <div className="space-y-6">
           <section className="rounded-2xl bg-gradient-surface border border-border/60 px-4 py-4 sm:px-6 sm:py-5 shadow-elevated relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-primary opacity-[0.06] pointer-events-none" />
-            <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="min-w-0">
-                <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight tracking-tighter">
+            <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 sm:gap-12">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tighter">
                   Todo el voleibol en un <span className="text-primary">solo lugar</span>.
                 </h1>
-                <p className="mt-3 text-sm sm:text-lg text-muted-foreground max-w-xl">
+                <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl">
                   Seguí tus ligas, equipos y jugadores favoritos con estadísticas profesionales en tiempo real.
                 </p>
-                <div className="mt-6 flex flex-wrap gap-3">
+                <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     to="/"
                     hash="vivo"
-                    className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center shadow-glow hover:opacity-90 transition-all"
+                    className="h-12 px-8 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center shadow-glow hover:opacity-90 transition-all text-base"
                   >
                     Ver partidos en vivo
                   </Link>
                   <Link
                     to="/ligas"
-                    className="h-11 px-6 rounded-xl bg-secondary text-secondary-foreground border border-border/60 font-bold flex items-center justify-center hover:bg-secondary/80 transition-all"
+                    className="h-12 px-8 rounded-xl bg-secondary text-secondary-foreground border border-border/60 font-bold flex items-center justify-center hover:bg-secondary/80 transition-all text-base"
                   >
                     Explorar ligas
                   </Link>
-                  <Link
-                    to="/auth"
-                    className="h-11 px-6 rounded-xl border border-primary/40 text-primary font-bold flex items-center justify-center hover:bg-primary/5 transition-all"
-                  >
-                    Crear cuenta
-                  </Link>
                 </div>
               </div>
-              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 sm:shrink-0 lg:max-w-xs w-full">
+              <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:shrink-0 lg:max-w-md w-full">
                 {stats.map((s) => (
                   <div
                     key={s.label}
-                    className="rounded-xl bg-background/60 border border-border/60 px-3 py-3 text-center backdrop-blur-sm"
+                    className="rounded-xl bg-background/60 border border-border/60 px-4 py-4 text-center backdrop-blur-sm flex flex-col items-center justify-center min-h-[100px]"
                   >
-                    <s.icon className={`size-4 sm:size-5 mx-auto mb-1.5 ${s.tone}`} />
-                    <div className="text-xl sm:text-2xl font-black tabular-nums leading-none">
+                    <s.icon className={`size-5 sm:size-6 mb-2 ${s.tone}`} />
+                    <div className="text-2xl sm:text-3xl font-black tabular-nums leading-none">
                       {s.value}
                     </div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-1.5">
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-2">
                       {s.label}
                     </div>
                   </div>
                 ))}
-                <div className="rounded-xl bg-background/60 border border-border/60 px-3 py-3 text-center backdrop-blur-sm">
-                  <Flame className="size-4 sm:size-5 mx-auto mb-1.5 text-orange-500" />
-                  <div className="text-xl sm:text-2xl font-black tabular-nums leading-none">
+                <div className="rounded-xl bg-background/60 border border-border/60 px-4 py-4 text-center backdrop-blur-sm flex flex-col items-center justify-center min-h-[100px]">
+                  <Flame className="size-5 sm:size-6 mb-2 text-orange-500" />
+                  <div className="text-2xl sm:text-3xl font-black tabular-nums leading-none">
                     {pointsToday}
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-1.5">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-2">
                     Puntos Hoy
                   </div>
                 </div>
