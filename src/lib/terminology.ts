@@ -7,6 +7,7 @@ export interface SportTerminology {
   attackers: string;
   blockers: string;
   setters: string;
+  servers: string;
   liberos: string;
   players: string;
   coaches: string;
@@ -22,6 +23,7 @@ const terminology: Record<Gender, SportTerminology> = {
     attackers: 'Mejores atacantes',
     blockers: 'Mejores bloqueadoras',
     setters: 'Mejores armadoras',
+    servers: 'Mejores sacadoras',
     liberos: 'Mejores líberos',
     players: 'Jugadoras',
     coaches: 'Entrenadoras',
@@ -35,6 +37,7 @@ const terminology: Record<Gender, SportTerminology> = {
     attackers: 'Mejores atacantes',
     blockers: 'Mejores bloqueadores',
     setters: 'Mejores armadores',
+    servers: 'Mejores sacadores',
     liberos: 'Mejores líberos',
     players: 'Jugadores',
     coaches: 'Entrenadores',
@@ -48,6 +51,7 @@ const terminology: Record<Gender, SportTerminology> = {
     attackers: 'Mejores atacantes',
     blockers: 'Mejores bloqueadores',
     setters: 'Mejores armadores',
+    servers: 'Mejores sacadores',
     liberos: 'Mejores líberos',
     players: 'Jugadores',
     coaches: 'Entrenadores',
