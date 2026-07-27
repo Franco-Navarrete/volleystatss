@@ -1,3 +1,8 @@
+/**
+ * RALLY · Ecosistema Digital del Voleibol
+ * Estrategia: La versión pública es la puerta de entrada.
+ * Módulos independientes desbloqueables para profesionales.
+ */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -71,7 +76,7 @@ function PublicHome() {
     () =>
       filtered
         .filter((m) => m.status === "live")
-        .sort((a, b) => a.scheduledAt - b.scheduledAt),
+        .sort((a, b) => (b.setStartTimes?.[b.currentSet] ?? 0) - (a.setStartTimes?.[a.currentSet] ?? 0)),
     [filtered],
   );
 
@@ -139,7 +144,8 @@ function PublicHome() {
                   Todo el voleibol en un <span className="text-primary">solo lugar</span>.
                 </h1>
                 <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl">
-                  Seguí tus ligas, equipos y jugadores favoritos con estadísticas profesionales en tiempo real.
+                  Seguí tus ligas, equipos y jugadores favoritos con estadísticas profesionales en tiempo real. 
+                  Explorá el ecosistema digital del voleibol.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
@@ -154,6 +160,12 @@ function PublicHome() {
                     className="h-12 px-8 rounded-xl bg-secondary text-secondary-foreground border border-border/60 font-bold flex items-center justify-center hover:bg-secondary/80 transition-all text-base"
                   >
                     Explorar ligas
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="h-12 px-8 rounded-xl bg-background border border-border/60 font-bold flex items-center justify-center hover:bg-secondary/20 transition-all text-base"
+                  >
+                    Crear cuenta gratuita
                   </Link>
                 </div>
               </div>
