@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { RankingList } from "@/components/RankingList";
+import { useGenderPreference } from "@/hooks/use-gender-preference";
+import { getTerminology } from "@/lib/terminology";
 import {
   useVolley,
   PLAYER_POSITIONS,
@@ -30,12 +32,17 @@ function RankingsPage() {
     [matches, teams],
   );
 
+  const { globalGender, setGlobalGender } = useGenderPreference();
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");
-  const [genderFilter, setGenderFilter] = useState<"all" | "F" | "M">("all");
+  const [genderFilter, setGenderFilter] = useState<"all" | "F" | "M">(
+    globalGender === "femenino" ? "F" : globalGender === "masculino" ? "M" : "all"
+  );
   const [categoryFilter, setCategoryFilter] = useState<"all" | TeamCategory>("all");
   const [positionFilter, setPositionFilter] = useState<"all" | PlayerPosition>("all");
   const [metricKey, setMetricKey] = useState<RankingMetric>("points");
+
+  const t = getTerminology(globalGender);
 
   const aggregates = useMemo(() => {
     let list = allAggregates;
@@ -121,6 +128,7 @@ function RankingsPage() {
                 type="button"
                 onClick={() => {
                   setGenderFilter(g);
+                  setGlobalGender(g === "F" ? "femenino" : g === "M" ? "masculino" : "mixto");
                   // si el equipo elegido ya no aplica, lo limpio
                   if (teamFilter !== "all") {
                     const stillValid = teams.find((t) => t.id === teamFilter);
@@ -146,7 +154,14 @@ function RankingsPage() {
             <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
               Categoría
             </label>
-            <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as "all" | TeamCategory)}>
+            <Select value={categoryFilter} onValueChange={(v) => {
+              setCategoryFilter(v as "all" | TeamCategory);
+              if (v !== "all") {
+                // If a specific category is selected, align gender if it matches common patterns
+                if (v.includes("Fem")) setGlobalGender("femenino");
+                else if (v.includes("Masc")) setGlobalGender("masculino");
+              }
+            }}>
               <SelectTrigger className="h-9">
                 <SelectValue />
               </SelectTrigger>
@@ -224,7 +239,7 @@ function RankingsPage() {
         {/* Title */}
         <div>
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-            {metric.label}
+            {metricKey === "points" ? t.scorers.toUpperCase() : metric.label}
           </h2>
         </div>
 
