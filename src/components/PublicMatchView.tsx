@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ListOrdered } from "lucide-react";
 import { CourtPlayerBadge } from "@/components/court/CourtPlayerBadge";
+import { cn } from "@/lib/utils";
 import {
   currentServer,
   repairOnCourt,
   setsWon,
+  TEAM_CATEGORY_LABEL,
   type Match,
   type MatchEvent,
   type PointEvent,
@@ -22,10 +24,6 @@ export interface PublicMatchViewProps {
 export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchViewProps) {
   const w = setsWon(match);
   const server = currentServer(match);
-  const [activeTab, setActiveTab] = useMemo(() => {
-    // Basic state for tabs if we were using a real state manager, but for now we'll use a local one
-    return ["Resumen", "Punto a punto", "Cancha", "Estadísticas"];
-  }, []);
   const [currentTab, setCurrentTab] = useState("Resumen");
 
   const tabs = [
