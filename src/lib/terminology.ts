@@ -58,5 +58,21 @@ const terminology: Record<Gender, SportTerminology> = {
 };
 
 export const getTerminology = (gender: Gender = 'mixto'): SportTerminology => {
-  return terminology[gender] || terminology.mixto;
+  const result = terminology[gender] || terminology.mixto;
+  
+  // Fallback para campos individuales si faltaran en el objeto (seguridad extra)
+  if (gender !== 'mixto') {
+    const fallback = terminology.mixto;
+    const final = { ...result };
+    
+    (Object.keys(fallback) as Array<keyof SportTerminology>).forEach(key => {
+      if (!final[key]) {
+        final[key] = fallback[key];
+      }
+    });
+    
+    return final;
+  }
+  
+  return result;
 };
