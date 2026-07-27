@@ -139,25 +139,55 @@ function PublicHome() {
                 <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight tracking-tighter">
                   Todo el voleibol en un <span className="text-primary">solo lugar</span>.
                 </h1>
-                <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-                  Resultados, fixture y estadísticas en tiempo real.
+                <p className="mt-3 text-sm sm:text-lg text-muted-foreground max-w-xl">
+                  Seguí tus ligas, equipos y jugadores favoritos con estadísticas profesionales en tiempo real.
                 </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    to="/"
+                    hash="vivo"
+                    className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center shadow-glow hover:opacity-90 transition-all"
+                  >
+                    Ver partidos en vivo
+                  </Link>
+                  <Link
+                    to="/ligas"
+                    className="h-11 px-6 rounded-xl bg-secondary text-secondary-foreground border border-border/60 font-bold flex items-center justify-center hover:bg-secondary/80 transition-all"
+                  >
+                    Explorar ligas
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="h-11 px-6 rounded-xl border border-primary/40 text-primary font-bold flex items-center justify-center hover:bg-primary/5 transition-all"
+                  >
+                    Crear cuenta
+                  </Link>
+                </div>
               </div>
-              <div className="grid grid-cols-4 gap-2 sm:gap-3 sm:shrink-0">
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 sm:shrink-0 lg:max-w-xs w-full">
                 {stats.map((s) => (
                   <div
                     key={s.label}
-                    className="rounded-xl bg-background/60 border border-border/60 px-2 py-1.5 sm:px-3 sm:py-2 text-center"
+                    className="rounded-xl bg-background/60 border border-border/60 px-3 py-3 text-center backdrop-blur-sm"
                   >
-                    <s.icon className={`size-3.5 mx-auto ${s.tone}`} />
-                    <div className="text-base sm:text-lg font-extrabold tabular-nums leading-tight mt-0.5">
+                    <s.icon className={`size-4 sm:size-5 mx-auto mb-1.5 ${s.tone}`} />
+                    <div className="text-xl sm:text-2xl font-black tabular-nums leading-none">
                       {s.value}
                     </div>
-                    <div className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-1.5">
                       {s.label}
                     </div>
                   </div>
                 ))}
+                <div className="rounded-xl bg-background/60 border border-border/60 px-3 py-3 text-center backdrop-blur-sm">
+                  <Flame className="size-4 sm:size-5 mx-auto mb-1.5 text-orange-500" />
+                  <div className="text-xl sm:text-2xl font-black tabular-nums leading-none">
+                    {pointsToday}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-1.5">
+                    Puntos Hoy
+                  </div>
+                </div>
               </div>
             </div>
           </section>
