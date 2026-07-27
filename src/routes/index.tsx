@@ -28,17 +28,17 @@ const SITE_URL = "https://volleystatss.lovable.app";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "RALLY · Estadísticas de vóley en vivo" },
+      { title: "RALLY · El ecosistema digital del voleibol" },
       {
         name: "description",
         content:
-          "Seguí partidos, ligas, equipos y rankings de vóley en tiempo real. Resultados live, fixture y estadísticas detalladas.",
+          "Resultados en vivo, estadísticas profesionales, ligas, equipos y jugadores. Todo el voleibol en un solo lugar.",
       },
-      { property: "og:title", content: "RALLY · Estadísticas de vóley en vivo" },
+      { property: "og:title", content: "RALLY · El ecosistema digital del voleibol" },
       {
         property: "og:description",
         content:
-          "Seguí partidos, ligas, equipos y rankings de vóley en tiempo real.",
+          "Explorá el mundo del voleibol con estadísticas en tiempo real y perfiles profesionales.",
       },
       { property: "og:url", content: `${SITE_URL}/` },
     ],
