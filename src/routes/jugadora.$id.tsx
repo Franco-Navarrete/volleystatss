@@ -42,6 +42,7 @@ import {
 import jsPDF from "jspdf";
 
 import { PublicShell } from "@/components/PublicShell";
+import { TeamBadge } from "@/components/TeamBadge";
 import { usePublicData } from "@/lib/use-public-data";
 import {
   DOMINANT_HAND_LABEL,
