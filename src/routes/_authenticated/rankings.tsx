@@ -246,7 +246,11 @@ function RankingsPage() {
         {/* Title */}
         <div>
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-            {metricKey === "points" ? t.scorers.toUpperCase() : metric.label}
+            {metricKey === "points" 
+              ? t.scorers.toUpperCase() 
+              : metricKey === "blocks" 
+                ? t.blockers.toUpperCase()
+                : metric.label}
           </h2>
         </div>
 
