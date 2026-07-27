@@ -427,7 +427,7 @@ function LiveMatchCard({
     <Link
       to="/partidos/$id"
       params={{ id: match.id }}
-      className="group relative block rounded-2xl bg-card border border-border/60 hover:border-destructive/60 shadow-elevated hover:shadow-glow transition-all overflow-hidden"
+      className="group relative block rounded-2xl bg-card border border-border/60 hover:border-destructive/60 shadow-elevated hover:shadow-glow transition-all overflow-hidden animate-in fade-in duration-500"
     >
       {/* Pulse accent */}
       <div className="absolute inset-x-0 top-0 h-0.5 bg-destructive/70 animate-pulse" />
