@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ListOrdered } from "lucide-react";
 import { CourtPlayerBadge } from "@/components/court/CourtPlayerBadge";
+import { cn } from "@/lib/utils";
 import {
   currentServer,
   repairOnCourt,
   setsWon,
+  TEAM_CATEGORY_LABEL,
   type Match,
   type MatchEvent,
   type PointEvent,
@@ -22,38 +24,93 @@ export interface PublicMatchViewProps {
 export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchViewProps) {
   const w = setsWon(match);
   const server = currentServer(match);
+  const [currentTab, setCurrentTab] = useState("Resumen");
+
+  const tabs = [
+    { id: "Resumen", label: "Resumen" },
+    { id: "Punto a punto", label: "Punto a punto" },
+    { id: "Cancha", label: "Cancha" },
+    { id: "Estadísticas", label: "Estadísticas" },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header / Final */}
-      <section className="rounded-3xl bg-gradient-surface border border-border/60 p-6 sm:p-8 shadow-elevated">
-        {league && (
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-2">
-            {league.name}{league.season ? ` · ${league.season}` : ""}
-          </div>
-        )}
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-3">
-          {match.status === "finished" ? "Resultado final" : match.status === "live" ? "En vivo" : "Próximamente"}
-        </div>
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-4 sm:gap-8 items-center">
-          <TeamHeader team={teamA} sets={w.a} highlight={w.a > w.b} align="left" />
-          <div className="text-2xl text-muted-foreground font-bold">–</div>
-          <TeamHeader team={teamB} sets={w.b} highlight={w.b > w.a} align="right" />
-        </div>
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
-          {match.sets.map((s) => (
-            <span
-              key={s.number}
-              className="px-3 py-1.5 rounded-md bg-background/40 border border-border/60 text-xs scoreboard-digit font-bold tabular-nums"
-            >
-              Set {s.number}: {s.scoreA}–{s.scoreB}
-            </span>
-          ))}
-        </div>
-      </section>
+      {/* Navigation Tabs */}
+      <div className="flex border-b border-border/40 overflow-x-auto no-scrollbar gap-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setCurrentTab(tab.id)}
+            className={cn(
+              "pb-3 text-sm font-bold uppercase tracking-widest transition-all relative shrink-0",
+              currentTab === tab.id
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.label}
+            {currentTab === tab.id && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary shadow-glow" />
+            )}
+          </button>
+        ))}
+      </div>
 
-      {/* Cancha en vivo */}
-      {match.status !== "scheduled" && (
+      {currentTab === "Resumen" && (
+        <>
+          {/* Header / Final */}
+          <section className="rounded-3xl bg-gradient-surface border border-border/60 p-6 sm:p-8 shadow-elevated">
+            {league && (
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-2">
+                {league.name}{league.season ? ` · ${league.season}` : ""}
+              </div>
+            )}
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold text-center mb-3">
+              {match.status === "finished" ? "Resultado final" : match.status === "live" ? "En vivo" : "Próximamente"}
+            </div>
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 sm:gap-8 items-center">
+              <TeamHeader team={teamA} sets={w.a} highlight={w.a > w.b} align="left" />
+              <div className="text-2xl text-muted-foreground font-bold">–</div>
+              <TeamHeader team={teamB} sets={w.b} highlight={w.b > w.a} align="right" />
+            </div>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {match.sets.map((s) => (
+                <span
+                  key={s.number}
+                  className="px-3 py-1.5 rounded-md bg-background/40 border border-border/60 text-xs scoreboard-digit font-bold tabular-nums"
+                >
+                  Set {s.number}: {s.scoreA}–{s.scoreB}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          {/* Simple preview of other sections or general info */}
+          <div className="grid sm:grid-cols-2 gap-4">
+             <div className="p-4 rounded-2xl bg-card border border-border/60">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Información</h4>
+                <div className="space-y-2 text-sm">
+                   <div className="flex justify-between">
+                      <span className="text-muted-foreground">Estado</span>
+                      <span className="font-bold">{match.status === 'live' ? 'En Vivo' : match.status === 'finished' ? 'Finalizado' : 'Programado'}</span>
+                   </div>
+                   <div className="flex justify-between">
+                      <span className="text-muted-foreground">Categoría</span>
+                      <span className="font-bold">{teamA.category ? TEAM_CATEGORY_LABEL[teamA.category] : '—'}</span>
+                   </div>
+                </div>
+             </div>
+             <div className="p-4 rounded-2xl bg-card border border-border/60">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Estadísticas Rápidas</h4>
+                <div className="space-y-2 text-sm text-center py-2 italic text-muted-foreground">
+                   Próximamente más detalles de equipo.
+                </div>
+             </div>
+          </div>
+        </>
+      )}
+
+      {currentTab === "Cancha" && match.status !== "scheduled" && (
         <PublicCourt
           match={match}
           teamA={teamA}
@@ -63,8 +120,15 @@ export function PublicMatchView({ match, teamA, teamB, league }: PublicMatchView
         />
       )}
 
-      {/* Punto a punto */}
-      <PlayByPlay match={match} teamA={teamA} teamB={teamB} />
+      {currentTab === "Punto a punto" && (
+        <PlayByPlay match={match} teamA={teamA} teamB={teamB} />
+      )}
+
+      {currentTab === "Estadísticas" && (
+        <div className="py-12 text-center text-muted-foreground border border-dashed border-border/60 rounded-2xl bg-card/40">
+           Las estadísticas detalladas del partido estarán disponibles pronto.
+        </div>
+      )}
     </div>
   );
 }

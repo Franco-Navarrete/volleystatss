@@ -42,6 +42,7 @@ import {
 import jsPDF from "jspdf";
 
 import { PublicShell } from "@/components/PublicShell";
+import { TeamBadge } from "@/components/TeamBadge";
 import { usePublicData } from "@/lib/use-public-data";
 import {
   DOMINANT_HAND_LABEL,
@@ -379,41 +380,45 @@ function PlayerHeader({
     ) },
   ];
   return (
-    <div className="rounded-xl border border-border/60 bg-card/40 overflow-hidden">
-      <div className="p-4 sm:p-6 flex items-center gap-4">
-        <div className="size-16 sm:size-20 rounded-full overflow-hidden flex items-center justify-center text-lg font-bold text-white shrink-0" style={{ background: team.color }}>
-          {player.photoUrl ? (
-            <img src={player.photoUrl} alt={player.name} className="size-full object-cover" />
-          ) : (<span>#{player.number}</span>)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl sm:text-2xl font-bold leading-tight truncate">{player.name}</h1>
-          <div className="text-sm text-muted-foreground truncate">
-            <Link to="/equipos/$id" params={{ id: team.id }} className="hover:text-foreground">{team.name}</Link>
-            {positionLabel ? ` · ${positionLabel}` : ""} · #{player.number}
-            {leagueName ? ` · ${leagueName}` : ""}
+    <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden shadow-elevated">
+      <div className="relative h-32 sm:h-40 bg-gradient-to-br from-primary/20 via-background to-background">
+        <div className="absolute inset-0 bg-grid-white/[0.02]" />
+        <div className="absolute bottom-4 left-4 sm:left-6 flex items-end gap-4 sm:gap-6">
+          <div className="size-20 sm:size-28 rounded-2xl overflow-hidden flex items-center justify-center text-2xl font-black text-white shrink-0 ring-4 ring-background shadow-glow-primary" style={{ background: team.color }}>
+            {player.photoUrl ? (
+              <img src={player.photoUrl} alt={player.name} className="size-full object-cover" />
+            ) : (<span>#{player.number}</span>)}
+          </div>
+          <div className="pb-1 min-w-0">
+            <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tighter truncate">{player.name}</h1>
+            <div className="flex items-center gap-2 mt-1">
+               <Link to="/equipos/$id" params={{ id: team.id }} className="flex items-center gap-1.5 hover:text-primary transition-colors">
+                  <TeamBadge team={team} size="sm" />
+                  <span className="text-sm font-bold">{team.name}</span>
+               </Link>
+               <span className="text-muted-foreground">·</span>
+               <span className="text-sm font-bold text-primary">#{player.number}</span>
+            </div>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 shrink-0 print:hidden">
+        <div className="absolute top-4 right-4 hidden sm:flex items-center gap-2 print:hidden">
           <IconBtn onClick={onShare} icon={<Share2 className="size-4" />} label="Compartir" />
-          <IconBtn onClick={onPdf} icon={<FileText className="size-4" />} label="PDF" />
-          <IconBtn onClick={onCsv} icon={<Download className="size-4" />} label="CSV" />
-          <IconBtn onClick={onPrint} icon={<Printer className="size-4" />} label="Imprimir" />
+          <IconBtn onClick={onPdf} icon={<Sparkles className="size-4" />} label="Análisis IA" />
         </div>
       </div>
-      <div className="border-t border-border/40 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 px-4 sm:px-6 py-4 text-sm">
-        {bioRows.map((r) => (
+      
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 px-4 sm:px-6 py-6 border-t border-border/40">
+        {bioRows.slice(0, 8).map((r) => (
           <div key={r.label} className="min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{r.label}</div>
-            <div className="truncate">{r.value}</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black mb-1">{r.label}</div>
+            <div className="text-sm font-bold truncate">{r.value}</div>
           </div>
         ))}
       </div>
-      <div className="sm:hidden border-t border-border/40 flex flex-wrap gap-1.5 p-3 print:hidden">
+      
+      <div className="sm:hidden border-t border-border/40 flex justify-center gap-2 p-3 print:hidden">
         <IconBtn onClick={onShare} icon={<Share2 className="size-4" />} label="Compartir" />
-        <IconBtn onClick={onPdf} icon={<FileText className="size-4" />} label="PDF" />
-        <IconBtn onClick={onCsv} icon={<Download className="size-4" />} label="CSV" />
-        <IconBtn onClick={onPrint} icon={<Printer className="size-4" />} label="Imprimir" />
+        <IconBtn onClick={onPdf} icon={<Sparkles className="size-4" />} label="Análisis IA" />
       </div>
     </div>
   );

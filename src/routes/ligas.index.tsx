@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Trophy } from "lucide-react";
+import { Trophy, Calendar, Users, ArrowRight } from "lucide-react";
 import { PublicShell } from "@/components/PublicShell";
 import { usePublicData } from "@/lib/use-public-data";
 
@@ -37,7 +37,7 @@ function LeaguesIndex() {
           No hay ligas cargadas todavía.
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {leagues.map((l) => {
             const teamCount = teams.filter((t) => t.leagueId === l.id).length;
             return (
@@ -45,16 +45,31 @@ function LeaguesIndex() {
                 key={l.id}
                 to="/ligas/$id"
                 params={{ id: l.id }}
-                className="rounded-2xl bg-card border border-border/60 p-5 hover:border-primary/60 hover:shadow-glow transition-all"
+                className="group rounded-2xl bg-card border border-border/60 p-0 hover:border-primary/60 hover:shadow-glow transition-all overflow-hidden flex flex-col"
               >
-                <div className="font-bold text-lg">{l.name}</div>
-                {l.season && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Temporada {l.season}
+                <div 
+                  className="h-24 w-full bg-cover bg-center relative"
+                  style={{ backgroundColor: l.color + '20' }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+                  {l.color && <div className="absolute top-4 right-4 size-3 rounded-full shadow-glow" style={{ backgroundColor: l.color }} />}
+                </div>
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="font-bold text-lg group-hover:text-primary transition-colors">{l.name}</div>
+                  {l.season && (
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Calendar className="size-3" /> Temporada {l.season}
+                    </div>
+                  )}
+                  <div className="mt-auto pt-4 flex items-center justify-between">
+                    <div className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                      <Users className="size-3.5" />
+                      {teamCount} {teamCount === 1 ? "Equipo" : "Equipos"}
+                    </div>
+                    <div className="text-xs font-bold text-primary flex items-center gap-1">
+                      Ver liga <ArrowRight className="size-3" />
+                    </div>
                   </div>
-                )}
-                <div className="text-xs text-muted-foreground mt-3">
-                  {teamCount} {teamCount === 1 ? "equipo" : "equipos"}
                 </div>
               </Link>
             );
