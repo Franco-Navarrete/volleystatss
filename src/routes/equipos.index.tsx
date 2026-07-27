@@ -10,6 +10,8 @@ import {
   Venus,
   Volleyball,
   X,
+  Trophy,
+  ArrowRight,
 } from "lucide-react";
 
 import { PublicShell } from "@/components/PublicShell";
@@ -356,23 +358,33 @@ function TeamsIndex() {
                   key={team.id}
                   to="/equipos/$id"
                   params={{ id: team.id }}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card/40 hover:bg-secondary/40 hover:border-primary/30 transition-colors"
+                  className="group flex flex-col rounded-2xl border border-border/60 bg-card/40 hover:bg-secondary/40 hover:border-primary/30 transition-all overflow-hidden"
                 >
-                  <TeamBadge team={team} size="md" />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-sm truncate">
-                      {team.name}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground truncate">
-                      {league ? league.name : "Sin liga"}
-                      {team.gender ? ` · ${TEAM_GENDER_LABEL[team.gender]}` : ""}
-                      {team.category
-                        ? ` · ${TEAM_CATEGORY_LABEL[team.category]}`
-                        : ""}
+                  <div className="h-20 w-full relative" style={{ backgroundColor: (team.color || '#3b82f6') + '15' }}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+                    <div className="absolute -bottom-5 left-4">
+                      <TeamBadge team={team} size="lg" className="ring-4 ring-background shadow-elevated" />
                     </div>
                   </div>
-                  <div className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                    {team.players.length} jug.
+                  <div className="p-4 pt-7 flex-1">
+                    <div className="font-bold text-base group-hover:text-primary transition-colors truncate">
+                      {team.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate mt-1 flex items-center gap-1.5">
+                      <Trophy className="size-3 text-primary" />
+                      {league ? league.name : "Sin liga"}
+                    </div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded">
+                          {team.gender ? TEAM_GENDER_LABEL[team.gender] : "Mixto"}
+                        </div>
+                        <div className="text-xs font-bold tabular-nums">
+                          {team.players.length} <span className="text-muted-foreground font-medium">Jug.</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="size-4 text-primary opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    </div>
                   </div>
                 </Link>
               );
