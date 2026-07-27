@@ -297,7 +297,7 @@ function StatsCombinadasPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black tracking-tight">Estadísticas combinadas</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Elegí varios partidos y ver totales acumulados por equipo y por {t.players.toLowerCase().slice(0, -1)}a
+              Elegí varios partidos y ver totales acumulados por equipo y por {t.players.toLowerCase().slice(0, -1)}a. Sincronizar la preferencia de sexo con los filtros de cada página para que al cambiar de categoría se actualicen automáticamente los textos y rankings.
             </p>
           </div>
         </header>
