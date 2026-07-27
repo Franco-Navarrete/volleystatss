@@ -450,11 +450,11 @@ function ScheduledRow({ match, teamById, leagueById }: { match: Match; teamById:
         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
           <div className="flex items-center gap-2 justify-end min-w-0">
             <span className="text-xs font-bold truncate text-right">{a?.shortName ?? "—"}</span>
-            <TeamBadge team={a} size="xs" />
+            <TeamBadge team={a} size="sm" />
           </div>
           <div className="px-2 py-0.5 rounded bg-secondary/50 text-[10px] font-bold tabular-nums">VS</div>
           <div className="flex items-center gap-2 min-w-0">
-            <TeamBadge team={b} size="xs" />
+            <TeamBadge team={b} size="sm" />
             <span className="text-xs font-bold truncate">{b?.shortName ?? "—"}</span>
           </div>
         </div>
@@ -477,11 +477,11 @@ function ResultRow({ match, teamById }: { match: Match; teamById: Map<string, Te
         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
           <div className="flex items-center gap-2 justify-end min-w-0">
             <span className={`text-xs font-bold truncate text-right ${w.a > w.b ? "text-foreground" : "text-muted-foreground"}`}>{a?.shortName ?? "—"}</span>
-            <TeamBadge team={a} size="xs" />
+            <TeamBadge team={a} size="sm" />
           </div>
           <div className="text-xs font-black tabular-nums bg-secondary/50 px-2.5 py-1 rounded-md">{w.a}–{w.b}</div>
           <div className="flex items-center gap-2 min-w-0">
-            <TeamBadge team={b} size="xs" />
+            <TeamBadge team={b} size="sm" />
             <span className={`text-xs font-bold truncate ${w.b > w.a ? "text-foreground" : "text-muted-foreground"}`}>{b?.shortName ?? "—"}</span>
           </div>
         </div>
