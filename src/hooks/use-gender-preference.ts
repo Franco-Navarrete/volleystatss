@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Gender } from './terminology';
+import { Gender } from '@/lib/terminology';
 
 interface GenderPreferenceState {
   globalGender: Gender;
