@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/tabs";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import { useIsAdmin } from "@/hooks/use-auth";
+import { useGenderPreference } from "@/hooks/use-gender-preference";
+import { getTerminology } from "@/lib/terminology";
 
 export const Route = createFileRoute("/_authenticated/stats-combinadas")({
   head: () => ({ meta: [{ title: "Estadísticas combinadas · RALLY" }] }),
@@ -64,6 +66,8 @@ function StatsCombinadasPage() {
   const localLeagues = useVolley((s) => s.leagues);
   const { isAdmin } = useIsAdmin();
   const adminAll = useAllUsersAppState();
+  const { globalGender } = useGenderPreference();
+  const t = getTerminology(globalGender);
 
   const matches = useMemo(() => {
     if (!isAdmin || !adminAll.data) return localMatches;
@@ -293,7 +297,7 @@ function StatsCombinadasPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black tracking-tight">Estadísticas combinadas</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Elegí varios partidos y ver totales acumulados por equipo y por jugadora
+              Elegí varios partidos y ver totales acumulados por equipo y por {t.players.toLowerCase().slice(0, -1)}a
             </p>
           </div>
         </header>
@@ -376,7 +380,7 @@ function StatsCombinadasPage() {
           <Tabs defaultValue="teams" className="w-full">
             <TabsList className="grid grid-cols-3 w-full">
               <TabsTrigger value="teams">Equipos</TabsTrigger>
-              <TabsTrigger value="players">Jugadoras</TabsTrigger>
+              <TabsTrigger value="players">{t.players}</TabsTrigger>
               <TabsTrigger value="breakdown">Por partido</TabsTrigger>
             </TabsList>
 
