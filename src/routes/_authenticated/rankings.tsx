@@ -250,7 +250,9 @@ function RankingsPage() {
               ? t.scorers.toUpperCase() 
               : metricKey === "block" 
                 ? t.blockers.toUpperCase()
-                : metric.label}
+                : metricKey === "ace"
+                  ? t.servers.toUpperCase()
+                  : metric.label}
           </h2>
         </div>
 
