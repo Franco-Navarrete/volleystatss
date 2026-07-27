@@ -248,7 +248,7 @@ function RankingsPage() {
           <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
             {metricKey === "points" 
               ? t.scorers.toUpperCase() 
-              : metricKey === "blocks" 
+              : metricKey === "block" 
                 ? t.blockers.toUpperCase()
                 : metric.label}
           </h2>
