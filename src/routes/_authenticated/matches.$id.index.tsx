@@ -59,6 +59,8 @@ import { useCoachRally } from "@/lib/coach/rally-machine";
 import { toast } from "sonner";
 import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
+import { useGenderPreference } from "@/hooks/use-gender-preference";
+import { getTerminology } from "@/lib/terminology";
 
 
 
@@ -2234,6 +2236,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         </DialogTitle>
       </DialogHeader>
 
+      {(() => {
+        const { globalGender } = useGenderPreference();
+        const t = getTerminology(globalGender);
+        return (
+          <>
       <div className="flex items-center gap-2">
         <StepChip n={1} label={teamA.shortName} active={step === 1} done={validA} onClick={() => goToStep(1)} color={teamA.color} />
         <div className="flex-1 h-0.5 bg-border/60 rounded-full overflow-hidden">
@@ -2297,7 +2304,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           const roleOrder = ["A", "C1/L", "P2", "O", "C2", "P1"];
           const armadorSlot = lineup.findIndex((pid) => {
             const pl = team.players.find((x) => x.id === pid);
-            return pl?.position === "armador";
+            return pl?.position?.startsWith("armador");
           });
           const armadorPos = armadorSlot >= 0 ? armadorSlot + 1 : -1;
           const roleFor = (slotIdx: number): string | null => {
@@ -2332,7 +2339,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           <div className="absolute inset-0 rounded-xl bg-background/95 backdrop-blur-sm flex flex-col p-2 z-20">
             <div className="flex items-center justify-between px-1 pb-2 border-b border-border/60">
               <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
-                Elegir jugador · <span className="text-primary">P{pickingLabel}</span>
+                Elegir {t.players.toLowerCase().slice(0, -1)}a · <span className="text-primary">P{pickingLabel}</span>
               </div>
               <button
                 type="button"
@@ -2349,7 +2356,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                 type="text"
                 value={pickerSearch}
                 onChange={(e) => setPickerSearch(e.target.value)}
-                placeholder="Buscar por nombre, número o posición…"
+                placeholder={`Buscar por nombre, número o posición…`}
                 className="w-full pl-7 pr-2 py-1.5 rounded-md bg-secondary/60 border border-border/60 text-xs focus:outline-none focus:border-primary"
                 autoFocus
               />
@@ -2377,7 +2384,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
 
             <div className="flex-1 overflow-y-auto mt-2 grid grid-cols-2 gap-1.5">
               {team.players.length === 0 && (
-                <p className="col-span-2 text-xs text-muted-foreground text-center py-4">Sin jugadores en el equipo.</p>
+                <p className="col-span-2 text-xs text-muted-foreground text-center py-4">Sin {t.players.toLowerCase()} en el equipo.</p>
               )}
               {(() => {
                 const q = pickerSearch.trim().toLowerCase();
@@ -2422,9 +2429,9 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                     ? (grid.flat().find((g) => g.idx === slotOfPl)?.label ?? "")
                     : "";
                   const reason = liberoInFront
-                    ? "líbero no en frente"
+                    ? `${t.liberos.toLowerCase().slice(7, -1)}o no en frente`
                     : otherLiberoOnCourt
-                      ? "ya hay un líbero"
+                      ? `ya hay un ${t.liberos.toLowerCase().slice(7, -1)}o`
                       : takenElsewhere
                         ? `P${swapLabel} ⇄`
                         : null;
@@ -2495,8 +2502,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         )}
       </div>
       {!stepValid && (
-        <p className="text-[10px] text-center text-muted-foreground">Asigná los 6 jugadores en la cancha.</p>
+        <p className="text-[10px] text-center text-muted-foreground">Asigná los 6 {t.players.toLowerCase()} en la cancha.</p>
       )}
+          </>
+        );
+      })()}
     </div>
   );
 }

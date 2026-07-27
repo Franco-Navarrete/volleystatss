@@ -27,6 +27,8 @@ import {
   type Team,
   type League,
 } from "@/lib/volley-store";
+import { useGenderPreference } from "@/hooks/use-gender-preference";
+import { getTerminology } from "@/lib/terminology";
 
 const SITE_URL = "https://volleystatss.lovable.app";
 
@@ -59,7 +61,12 @@ function PublicHome() {
   const teams = data?.teams ?? [];
   const matches = data?.matches ?? [];
   const leagues = data?.leagues ?? [];
-  const [gender, setGender] = useState<GenderChip>("all");
+  const { globalGender, setGlobalGender } = useGenderPreference();
+  const [gender, setGender] = useState<GenderChip>(
+    globalGender === "femenino" ? "F" : globalGender === "masculino" ? "M" : "all"
+  );
+
+  const t = getTerminology(globalGender);
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const leagueById = useMemo(
@@ -144,7 +151,7 @@ function PublicHome() {
                   Todo el voleibol en un <span className="text-primary">solo lugar</span>.
                 </h1>
                 <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl">
-                  Seguí tus ligas, equipos y jugadores favoritos con estadísticas profesionales en tiempo real. 
+                  Seguí tus ligas, equipos y {t.players.toLowerCase()} favorit{globalGender === "femenino" ? "as" : "os"} con estadísticas profesionales en tiempo real. 
                   Explorá el ecosistema digital del voleibol.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
@@ -200,19 +207,28 @@ function PublicHome() {
           <section className="flex flex-wrap items-center gap-2">
             <Chip
               active={gender === "all"}
-              onClick={() => setGender("all")}
+              onClick={() => {
+                setGender("all");
+                setGlobalGender("mixto");
+              }}
               icon={<Volleyball className="size-4" />}
               label="Todos"
             />
             <Chip
               active={gender === "F"}
-              onClick={() => setGender("F")}
+              onClick={() => {
+                setGender("F");
+                setGlobalGender("femenino");
+              }}
               icon={<Venus className="size-4" />}
               label="Femenino"
             />
             <Chip
               active={gender === "M"}
-              onClick={() => setGender("M")}
+              onClick={() => {
+                setGender("M");
+                setGlobalGender("masculino");
+              }}
               icon={<Mars className="size-4" />}
               label="Masculino"
             />

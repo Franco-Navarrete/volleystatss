@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import type { Match, Team } from "@/lib/volley-store";
 import { buildEnrichedAttacks, ORIGIN_ZONE_LABEL, type OriginZone } from "@/lib/attack-heatmap";
 import { SETTER_ZONES, type SetterZone } from "@/lib/setter-position";
+import { useGenderPreference } from "@/hooks/use-gender-preference";
+import { getTerminology } from "@/lib/terminology";
 
 interface Props {
   match: Match;
@@ -58,18 +60,21 @@ export function SetterDistributionCard({ match, teamA, teamB }: Props) {
 
 function SideCard({ team, data }: { team: Team; data: SetterRow[] }) {
   const grandTotal = data.reduce((s, r) => s + r.total, 0);
+  const { globalGender } = useGenderPreference();
+  const t = getTerminology(globalGender);
+  const setterLabel = t.setters.toLowerCase().split(' ').pop(); // armadora/armador
   return (
     <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
       <div className="px-3 py-2 flex items-center gap-2 border-b border-border/60" style={{ background: `${team.color}22` }}>
         <span className="size-5 rounded text-white text-[10px] font-black flex items-center justify-center" style={{ background: team.color }}>
           {team.shortName}
         </span>
-        <h3 className="font-bold text-xs truncate flex-1">Distribución ofensiva · Pos. armadora</h3>
+        <h3 className="font-bold text-xs truncate flex-1">Distribución ofensiva · Pos. {setterLabel}</h3>
         <span className="text-[10px] text-muted-foreground tabular-nums">{grandTotal} ataques</span>
       </div>
 
       {grandTotal === 0 ? (
-        <p className="text-xs text-muted-foreground p-4 text-center">Sin ataques registrados con posición de armadora.</p>
+        <p className="text-xs text-muted-foreground p-4 text-center">Sin ataques registrados con posición de {setterLabel}.</p>
       ) : (
         <div className="divide-y divide-border/40">
           {data.filter((r) => r.total > 0).map((r) => (
@@ -82,7 +87,7 @@ function SideCard({ team, data }: { team: Team; data: SetterRow[] }) {
                   A{r.setter}
                 </span>
                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex-1">
-                  Armadora en zona {r.setter}
+                  {setterLabel?.toUpperCase()} EN ZONA {r.setter}
                 </span>
                 <span className="text-[10px] tabular-nums text-muted-foreground">
                   {r.total} · <span className={r.efficiency >= 25 ? "text-success" : r.efficiency < 0 ? "text-destructive" : ""}>Ef {r.efficiency}%</span>
