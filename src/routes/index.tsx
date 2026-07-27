@@ -1,7 +1,6 @@
 /**
  * RALLY · Ecosistema Digital del Voleibol
- * Estrategia: La versión pública es la puerta de entrada.
- * Módulos independientes desbloqueables para profesionales.
+ * Estrategia: Plataforma SaaS Multi-tenant centrada en Workspaces.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
