@@ -44,6 +44,13 @@ function RankingsPage() {
 
   const t = getTerminology(globalGender);
 
+  useEffect(() => {
+    const newGender = globalGender === "femenino" ? "F" : globalGender === "masculino" ? "M" : "all";
+    if (newGender !== genderFilter) {
+      setGenderFilter(newGender);
+    }
+  }, [globalGender]);
+
   const aggregates = useMemo(() => {
     let list = allAggregates;
     if (leagueFilter !== "all") list = list.filter((a) => a.team.leagueId === leagueFilter);
