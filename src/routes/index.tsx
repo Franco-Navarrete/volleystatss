@@ -1,6 +1,7 @@
 /**
  * RALLY · Ecosistema Digital del Voleibol
- * Estrategia: Plataforma SaaS Multi-tenant centrada en Workspaces.
+ * Arquitectura: Enterprise SaaS Jerárquico & Multi-tenant.
+ * Visión: Plataforma modular para Federaciones, Ligas, Clubes y Jugadores.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
