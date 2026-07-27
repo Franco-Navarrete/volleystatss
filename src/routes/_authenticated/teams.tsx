@@ -22,6 +22,8 @@ import {
 import { useCanManageTeams } from "@/hooks/use-permissions";
 import { useCanCreateTeam } from "@/hooks/use-team-permissions";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+import { useGenderPreference } from "@/hooks/use-gender-preference";
+import { getTerminology } from "@/lib/terminology";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
@@ -125,6 +127,8 @@ async function fileToCompressedDataUrl(file: File): Promise<string> {
 
 function TeamsPage() {
   const teamsQ = useCloudTeams();
+  const { globalGender } = useGenderPreference();
+  const t = getTerminology(globalGender);
   const leaguesQ = useCloudLeagues();
   const teams = teamsQ.data ?? [];
   const cloudLeagues = leaguesQ.data ?? [];
@@ -439,6 +443,14 @@ function TeamsPage() {
   const openClub = openClubKey ? clubGroups.find((c) => c.key === openClubKey) ?? null : null;
   const openClubCategories = useMemo(() => {
     if (!openClub) return [] as { key: string; label: string; count: number }[];
+    const categoryLabel = (key: string) => {
+      if (key === "__none__") return "Sin categoría";
+      const base = TEAM_CATEGORY_LABEL[key as TeamCategory];
+      if (globalGender === "femenino") {
+        return base.replace("Masculino", "Femenino").replace("Libre", "Femenino");
+      }
+      return base;
+    };
     const counts = new Map<string, number>();
     for (const t of openClub.teams) {
       const key = t.category ?? "__none__";
@@ -446,11 +458,11 @@ function TeamsPage() {
     }
     const all: { key: string; label: string; count: number }[] = TEAM_CATEGORIES.map((c) => ({
       key: c,
-      label: TEAM_CATEGORY_LABEL[c],
+      label: categoryLabel(c),
       count: counts.get(c) ?? 0,
     }));
     if ((counts.get("__none__") ?? 0) > 0) {
-      all.push({ key: "__none__", label: "Sin categoría", count: counts.get("__none__") ?? 0 });
+      all.push({ key: "__none__", label: categoryLabel("__none__"), count: counts.get("__none__") ?? 0 });
     }
     return all;
   }, [openClub]);
