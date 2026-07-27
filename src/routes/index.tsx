@@ -131,7 +131,6 @@ function PublicHome() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Compact Hero */}
           <section className="rounded-2xl bg-gradient-surface border border-border/60 px-4 py-4 sm:px-6 sm:py-5 shadow-elevated relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-primary opacity-[0.06] pointer-events-none" />
             <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -192,7 +191,6 @@ function PublicHome() {
             </div>
           </section>
 
-          {/* Gender chips */}
           <section className="flex flex-wrap items-center gap-2">
             <Chip
               active={gender === "all"}
@@ -214,7 +212,6 @@ function PublicHome() {
             />
           </section>
 
-          {/* Live matches — hero content */}
           <section id="vivo">
             <SectionHeader
               icon={<Radio className="size-4 text-destructive animate-pulse" />}
@@ -238,7 +235,6 @@ function PublicHome() {
           </section>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Upcoming */}
             <section>
               <SectionHeader
                 icon={<CalendarDays className="size-4 text-accent" />}
@@ -272,7 +268,6 @@ function PublicHome() {
               )}
             </section>
 
-            {/* Recent results — only 3 */}
             <section>
               <SectionHeader
                 icon={<Trophy className="size-4 text-primary" />}
@@ -302,7 +297,6 @@ function PublicHome() {
             </section>
           </div>
 
-          {/* Quick stats strip */}
           <section className="rounded-2xl bg-card border border-border/60 px-4 py-3 flex flex-wrap items-center justify-around gap-3 text-xs sm:text-sm">
             <QuickStat icon={<Volleyball className="size-4 text-destructive" />} label="En vivo" value={live.length} />
             <QuickStat icon={<Trophy className="size-4 text-primary" />} label="Ligas" value={leagues.length} />
@@ -315,17 +309,7 @@ function PublicHome() {
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
+function Chip({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
   return (
     <button
       type="button"
@@ -342,17 +326,7 @@ function Chip({
   );
 }
 
-function SectionHeader({
-  icon,
-  title,
-  count,
-  action,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  count: number;
-  action?: React.ReactNode;
-}) {
+function SectionHeader({ icon, title, count, action }: { icon: React.ReactNode; title: string; count: number; action?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between mb-3 gap-2">
       <h2 className="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-widest text-muted-foreground">
@@ -372,15 +346,7 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
-function QuickStat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
+function QuickStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="flex items-center gap-2">
       {icon}
@@ -404,15 +370,7 @@ function useElapsed(startedAt: number | undefined) {
   return `${mm}:${ss}`;
 }
 
-function LiveMatchCard({
-  match,
-  teamById,
-  leagueById,
-}: {
-  match: Match;
-  teamById: Map<string, Team>;
-  leagueById: Map<string, League>;
-}) {
+function LiveMatchCard({ match, teamById, leagueById }: { match: Match; teamById: Map<string, Team>; leagueById: Map<string, League> }) {
   const a = teamById.get(match.teamAId);
   const b = teamById.get(match.teamBId);
   const currentSet = match.sets.find((s) => !s.finished) ?? match.sets.at(-1);
@@ -429,10 +387,7 @@ function LiveMatchCard({
       params={{ id: match.id }}
       className="group relative block rounded-2xl bg-card border border-border/60 hover:border-destructive/60 shadow-elevated hover:shadow-glow transition-all overflow-hidden animate-in fade-in duration-500"
     >
-      {/* Pulse accent */}
       <div className="absolute inset-x-0 top-0 h-0.5 bg-destructive/70 animate-pulse" />
-
-      {/* Header */}
       <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-background/40">
         <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-destructive">
           <span className="relative flex size-2">
@@ -443,186 +398,94 @@ function LiveMatchCard({
         </span>
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
           {elapsed && <span className="tabular-nums">{elapsed}</span>}
-          {gender && (
-            <span className="px-1.5 py-0.5 rounded bg-secondary/60 text-foreground/80">
-              {gender === "F" ? "Fem" : "Masc"}
-            </span>
-          )}
-          {league && (
-            <span className="truncate max-w-[120px]">{league.name}</span>
-          )}
+          {gender && <span className="px-1.5 py-0.5 rounded bg-secondary/60 text-foreground/80">{gender === "F" ? "Fem" : "Masc"}</span>}
+          {league && <span className="truncate max-w-[120px]">{league.name}</span>}
         </div>
       </div>
-
-      {/* Scoreboard */}
       <div className="px-4 py-5">
-        <TeamScoreRow
-          team={a}
-          score={currentSet?.scoreA ?? 0}
-          setsWon={w.a}
-          serving={serving === "A"}
-          leading={(currentSet?.scoreA ?? 0) >= (currentSet?.scoreB ?? 0)}
-        />
+        <TeamScoreRow team={a} score={currentSet?.scoreA ?? 0} setsWon={w.a} serving={serving === "A"} leading={(currentSet?.scoreA ?? 0) >= (currentSet?.scoreB ?? 0)} />
         <div className="my-2 h-px bg-border/40" />
-        <TeamScoreRow
-          team={b}
-          score={currentSet?.scoreB ?? 0}
-          setsWon={w.b}
-          serving={serving === "B"}
-          leading={(currentSet?.scoreB ?? 0) >= (currentSet?.scoreA ?? 0)}
-        />
+        <TeamScoreRow team={b} score={currentSet?.scoreB ?? 0} setsWon={w.b} serving={serving === "B"} leading={(currentSet?.scoreB ?? 0) >= (currentSet?.scoreA ?? 0)} />
       </div>
-
-      {/* Footer / CTA */}
       <div className="px-4 py-2.5 border-t border-border/40 bg-background/40 flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-          {serving && (
-            <>
-              <span className="text-destructive">●</span> Saca{" "}
-              {(serving === "A" ? a : b)?.shortName ?? "—"}
-            </>
-          )}
+          {serving && <> <span className="text-destructive">●</span> Saca {(serving === "A" ? a : b)?.shortName ?? "—"} </>}
         </span>
-        <span className="text-xs font-bold text-primary inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-          Ver partido <ArrowRight className="size-3.5" />
-        </span>
+        <span className="text-xs font-bold text-primary inline-flex items-center gap-1 group-hover:gap-2 transition-all">Ver partido <ArrowRight className="size-3.5" /></span>
       </div>
     </Link>
   );
 }
 
-function TeamScoreRow({
-  team,
-  score,
-  setsWon,
-  serving,
-  leading,
-}: {
-  team: Team | undefined;
-  score: number;
-  setsWon: number;
-  serving: boolean;
-  leading: boolean;
-}) {
+function TeamScoreRow({ team, score, setsWon, serving, leading }: { team?: Team; score: number; setsWon: number; serving: boolean; leading: boolean }) {
   return (
-    <div className="flex items-center gap-3">
-      <TeamBadge team={team} size="md" />
-      <div className="min-w-0 flex-1">
-        <div className="font-bold truncate text-base leading-tight flex items-center gap-1.5">
-          {team?.name ?? "—"}
-          {serving && (
-            <span
-              aria-label="Saca"
-              title="Saca"
-              className="size-2 rounded-full bg-destructive animate-pulse shrink-0"
-            />
-          )}
-        </div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-          Sets ganados · <span className="tabular-nums">{setsWon}</span>
-        </div>
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <TeamBadge team={team} size="sm" />
+        <span className={`text-sm font-bold truncate ${leading ? "text-foreground" : "text-muted-foreground"}`}>{team?.name ?? "—"}</span>
+        {serving && <div className="size-1.5 rounded-full bg-destructive shadow-glow-destructive" />}
       </div>
-      <div
-        className={`scoreboard-digit tabular-nums font-black text-5xl sm:text-6xl leading-none ${
-          leading ? "text-primary" : "text-foreground/70"
-        }`}
-      >
-        {score}
+      <div className="flex items-center gap-4">
+        <div className="flex gap-1">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className={`size-1.5 rounded-full ${i < setsWon ? "bg-primary shadow-glow" : "bg-border"}`} />
+          ))}
+        </div>
+        <div className={`text-2xl font-black tabular-nums scoreboard-digit ${leading ? "text-primary" : "text-muted-foreground/60"}`}>{score}</div>
       </div>
     </div>
   );
 }
 
-function ScheduledRow({
-  match,
-  teamById,
-  leagueById,
-}: {
-  match: Match;
-  teamById: Map<string, Team>;
-  leagueById: Map<string, League>;
-}) {
+function ScheduledRow({ match, teamById, leagueById }: { match: Match; teamById: Map<string, Team>; leagueById: Map<string, League> }) {
   const a = teamById.get(match.teamAId);
   const b = teamById.get(match.teamBId);
   const league = a?.leagueId ? leagueById.get(a.leagueId) : null;
   const date = new Date(match.scheduledAt);
-  const dateLabel = date.toLocaleDateString("es-AR", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-  const timeLabel = date.toLocaleTimeString("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const time = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <li>
-      <Link
-        to="/partidos/$id"
-        params={{ id: match.id }}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors"
-      >
-        <div className="text-xs text-muted-foreground w-16 shrink-0">
-          <div className="font-semibold text-foreground capitalize truncate">
-            {dateLabel}
-          </div>
-          <div className="tabular-nums">{timeLabel}</div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-sm min-w-0">
+    <li className="p-3 sm:p-4 hover:bg-secondary/30 transition-colors">
+      <Link to="/partidos/$id" params={{ id: match.id }} className="flex items-center justify-between gap-4">
+        <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className="flex items-center gap-2 justify-end min-w-0">
+            <span className="text-xs font-bold truncate text-right">{a?.shortName ?? "—"}</span>
             <TeamBadge team={a} size="sm" />
-            <span className="font-medium truncate">{a?.shortName ?? "—"}</span>
-            <span className="text-muted-foreground text-xs shrink-0">vs</span>
-            <span className="font-medium truncate">{b?.shortName ?? "—"}</span>
-            <TeamBadge team={b} size="sm" />
           </div>
-          {league && (
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5 truncate">
-              {league.name}
-            </div>
-          )}
+          <div className="px-2 py-0.5 rounded bg-secondary/50 text-[10px] font-bold tabular-nums">VS</div>
+          <div className="flex items-center gap-2 min-w-0">
+            <TeamBadge team={b} size="sm" />
+            <span className="text-xs font-bold truncate">{b?.shortName ?? "—"}</span>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-xs font-bold tabular-nums">{time}</div>
+          <div className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold truncate max-w-[80px]">{league?.name ?? "Amistoso"}</div>
         </div>
       </Link>
     </li>
   );
 }
 
-function ResultRow({
-  match,
-  teamById,
-}: {
-  match: Match;
-  teamById: Map<string, Team>;
-}) {
+function ResultRow({ match, teamById }: { match: Match; teamById: Map<string, Team> }) {
   const a = teamById.get(match.teamAId);
   const b = teamById.get(match.teamBId);
   const w = setsWon(match);
-  const aWon = w.a > w.b;
   return (
-    <li>
-      <Link
-        to="/partidos/$id"
-        params={{ id: match.id }}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors"
-      >
-        <TeamBadge team={a} size="sm" />
-        <span
-          className={`flex-1 text-sm truncate ${aWon ? "font-bold" : "text-muted-foreground"}`}
-        >
-          {a?.shortName ?? "—"}
-        </span>
-        <span className="scoreboard-digit font-bold tabular-nums text-base">
-          <span className={aWon ? "text-primary" : ""}>{w.a}</span>
-          <span className="text-muted-foreground mx-1">–</span>
-          <span className={!aWon ? "text-primary" : ""}>{w.b}</span>
-        </span>
-        <span
-          className={`flex-1 text-right text-sm truncate ${!aWon ? "font-bold" : "text-muted-foreground"}`}
-        >
-          {b?.shortName ?? "—"}
-        </span>
-        <TeamBadge team={b} size="sm" />
+    <li className="p-3 sm:p-4 hover:bg-secondary/30 transition-colors">
+      <Link to="/partidos/$id" params={{ id: match.id }} className="flex items-center justify-between gap-4">
+        <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className="flex items-center gap-2 justify-end min-w-0">
+            <span className={`text-xs font-bold truncate text-right ${w.a > w.b ? "text-foreground" : "text-muted-foreground"}`}>{a?.shortName ?? "—"}</span>
+            <TeamBadge team={a} size="sm" />
+          </div>
+          <div className="text-xs font-black tabular-nums bg-secondary/50 px-2.5 py-1 rounded-md">{w.a}–{w.b}</div>
+          <div className="flex items-center gap-2 min-w-0">
+            <TeamBadge team={b} size="sm" />
+            <span className={`text-xs font-bold truncate ${w.b > w.a ? "text-foreground" : "text-muted-foreground"}`}>{b?.shortName ?? "—"}</span>
+          </div>
+        </div>
+        <ArrowRight className="size-3.5 text-muted-foreground/40" />
       </Link>
     </li>
   );
