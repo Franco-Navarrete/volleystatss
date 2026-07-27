@@ -14,7 +14,8 @@ import {
   LayoutGrid,
   Settings,
   MoreVertical,
-  Plus
+  Plus,
+  TreePalm
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useIsAdmin } from "@/hooks/use-auth";
-import { adminListUsers, adminListLeagues } from "@/lib/admin.functions";
+import { adminListUsers } from "@/lib/admin.functions";
+import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Panel de Administración · RALLY SaaS" }] }),
