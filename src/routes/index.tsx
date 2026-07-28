@@ -1,7 +1,114 @@
 /**
- * # RALLY CORE CONSOLE
- * Centro de control para el ecosistema jerárquico RALLY.
+ * # VOLLEYSTATSS
+ * # VIDEO ANALYSIS WORKSPACE V2
+ * # ENTERPRISE REDESIGN
+ *
+ * El módulo de Scouting en Vivo ya funciona.
+ * Ahora quiero convertir esta pantalla en un Workspace profesional de análisis de voleibol.
+ * No quiero agregar funcionalidades aisladas.
+ * Quiero rediseñar completamente la experiencia de usuario para competir con:
+ * • Data Video
+ * • Hudl Sportscode
+ * • VolleyStation
+ * • Nacsport
+ * Manteniendo una identidad visual moderna, limpia y orientada al rendimiento.
+ *
+ * =============================================================
+ * FILOSOFÍA
+ * =============================================================
+ * El usuario NO debe sentir que usa varias herramientas.
+ * Debe sentir que está navegando un único partido.
+ * Todo gira alrededor del Match.
+ * Video ↓ Timeline ↓ Scout ↓ Eventos ↓ Analytics ↓ IA
+ * No existen módulos separados.
+ * Existe un único Workspace.
+ *
+ * =============================================================
+ * NUEVO LAYOUT
+ * =============================================================
+ * Distribución principal.
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │ Header                                                      │
+ * ├─────────────────────────────────────────────────────────────┤
+ * │ Toolbar                                                     │
+ * ├──────────────┬──────────────────────────────┬───────────────┤
+ * │              │                              │               │
+ * │ Navegación   │                              │ Inspector     │
+ * │ del Partido  │          VIDEO               │ Inteligente   │
+ * │              │                              │               │
+ * ├──────────────┴──────────────────────────────┴───────────────┤
+ * │ Timeline Profesional                                        │
+ * ├─────────────────────────────────────────────────────────────┤
+ * │ Tabla de Acciones                                           │
+ * └─────────────────────────────────────────────────────────────┘
+ *
+ * =============================================================
+ * VIDEO
+ * =============================================================
+ * El video debe ser el elemento principal.
+ * Debe ocupar aproximadamente el 70% del ancho disponible.
+ * Implementar: Modo Teatro, Pantalla Completa, Zoom, Frame a Frame, JKL, Loop, Velocidad, Marcadores, MiniMap, Mini Timeline.
+ *
+ * =============================================================
+ * PANELES
+ * =============================================================
+ * Panel izquierdo: Colapsarse, Expandirse, Redimensionarse, Guardar tamaño.
+ * Panel derecho: Mismo comportamiento.
+ * El sistema debe recordar el último layout del usuario.
+ *
+ * =============================================================
+ * LAYOUT MANAGER
+ * =============================================================
+ * Agregar administrador de layouts: Scout, Video, Entrenador, Analista, Streaming, Personalizado.
+ * Permitir: Guardar, Duplicar, Restablecer, Compartir, Eliminar.
+ *
+ * =============================================================
+ * TIMELINE PROFESIONAL
+ * =============================================================
+ * Timeline multicapa: VIDEO, SETS, RALLIES, ACCIONES, SCOUT, CLIPS, COMENTARIOS, IA, EVENTOS.
+ * Implementar: Zoom, Scroll horizontal, Selección múltiple, Marcadores.
+ *
+ * =============================================================
+ * SINCRONIZACIÓN
+ * =============================================================
+ * Todo debe estar sincronizado: Acción ↓ Video ↓ Timeline ↓ Rally ↓ Inspector ↓ Estadísticas.
+ *
+ * =============================================================
+ * TABLA DE ACCIONES
+ * =============================================================
+ * Columnas configurables: Tiempo, Set, Rally, Rotación, Equipo, Jugador, Fundamento, Resultado, Zona, Marcador, Video, Etiquetas, Comentarios, Duración, Operador.
+ *
+ * =============================================================
+ * INSPECTOR INTELIGENTE
+ * =============================================================
+ * Panel derecho dinámico: Estadísticas rápidas, Últimos rallies, Acciones rápidas (sin selección) o Detalle de acción/rally (con selección).
+ *
+ * =============================================================
+ * CAPTURA RÁPIDA
+ * =============================================================
+ * Dock inferior con botones grandes para fundamentos: SAQUE, RECEPCIÓN, ARMADO, ATAQUE, BLOQUEO, DEFENSA, FREEBALL, ERROR, PUNTO.
+ *
+ * =============================================================
+ * MARCADOR
+ * =============================================================
+ * Rediseño en tiempo real: Sets, Puntos, Servidor, Rotación, Timeouts, Cambios, Racha, Duración.
+ *
+ * =============================================================
+ * REC
+ * =============================================================
+ * Indicador de grabación: REC ●, Tiempo, FPS, Fuente, Latencia.
+ *
+ * =============================================================
+ * CLIPS & PLAYLISTS
+ * =============================================================
+ * Administrador profesional de clips y colecciones inteligentes por fundamento, jugador o IA.
+ *
+ * =============================================================
+ * OBJETIVO FINAL
+ * =============================================================
+ * Superar la experiencia de Data Video ofreciendo un Workspace moderno, fluido y preparado para IA, donde el usuario nunca necesite cambiar de pantalla.
  */
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
