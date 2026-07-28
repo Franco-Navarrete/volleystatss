@@ -1,139 +1,86 @@
 /**
- * # RALLY CORE
- * # Refactorización Global
- * # Eliminación de Placeholders
- * # Implementación de Entidades Reales
+ * # CORRECCIÓN CRÍTICA
+ * # Entity Wizard - Plan
+ * El Wizard "Nuevo Plan" continúa renderizando un componente temporal.
+ * Actualmente aparece:
+ * Configuración de Plan
+ * "Este componente está resolviendo las reglas de negocio..."
+ * "EN DESARROLLO"
+ * Ese componente debe eliminarse completamente. Nunca debe mostrarse al usuario.
  *
- * A partir de este momento se suspende completamente el desarrollo de nuevas funcionalidades.
- * No desarrollar nuevos módulos.
- * No desarrollar nuevas pantallas.
- * No desarrollar nuevas entidades.
- * El objetivo exclusivo es transformar toda la infraestructura existente en una aplicación completamente funcional.
- *
- * =====================================================================
- * SITUACIÓN ACTUAL
- * La arquitectura ya existe.
- * ✔ RALLY CORE
- * ✔ Entity Framework
- * ✔ Action Framework
- * ✔ Wizard Framework
- * ✔ Drawer Framework
- * ✔ Permission Engine
- * ✔ Workspace Engine
- * ✔ Organization Engine
- * ✔ Navigation Engine
- * Todo eso ya funciona.
- *
- * Sin embargo, la mayoría de los Wizards muestran componentes como:
- * "Este componente del Action Framework..."
- * "Resolviendo reglas de negocio..."
- * "En desarrollo"
- * "Placeholder"
- * "Business Rule Resolver"
- * "Coming Soon"
- * Estos componentes nunca deben aparecer in producción.
- *
- * =====================================================================
+ * ====================================================================
  * OBJETIVO
- * Eliminar absolutamente TODOS los placeholders del sistema.
- * No debe quedar ningún componente temporal.
- * El usuario nunca debe ver mensajes internos del framework.
+ * Reemplazar el placeholder por el formulario funcional del Plan.
+ * No utilizar componentes temporales.
+ * No mostrar mensajes internos del framework.
  *
- * =====================================================================
- * BUSCAR Y ELIMINAR
- * Recorrer todo el proyecto.
- * Eliminar o reemplazar completamente cualquier componente como:
- * Placeholder, PlaceholderCard, ComingSoon, ComingSoonCard, DevelopmentCard,
- * BusinessRuleResolver, ActionFrameworkPlaceholder, EntityPlaceholder,
- * FeaturePlaceholder, MockComponent, StubComponent.
- * Todo componente temporal. Todo mensaje interno. Todo indicador de "En desarrollo".
+ * ====================================================================
+ * PASO 1: Información del Plan
+ * Implementar el formulario real.
+ * Campos:
+ * - Nombre del Plan * (Input) - Ejemplo: Club Professional
+ * - Código * (Input) - Ejemplo: club_pro (Validar unicidad)
+ * - Descripción (Textarea)
+ * - Tipo (Select) - Opciones: Free, Coach, Club, League, Federation, Enterprise, Custom
+ * - Facturación (Select) - Mensual, Anual, Único, Enterprise
+ * - Precio (Input numérico) - Con selector de moneda
+ * - Moneda: ARS, USD, EUR, BRL
+ * - Estado: Activo, Borrador, Archivado
+ * - Color: Color Picker
+ * - Icono: Icon Picker
+ * - Versión: Input - Ejemplo: v1.0
  *
- * =====================================================================
- * IMPLEMENTAR WIZARDS REALES
- * Completar completamente los Wizards de:
- * Organización, Usuario, Rol, Permiso, Workspace, Plan, Suscripción, Club,
- * Temporada, Categoría, Equipo, Jugador, Staff, Competencia, Partido, Entrenamiento.
- * Cada paso debe contener formularios reales. No tarjetas vacías. No placeholders.
+ * VALIDACIONES:
+ * - Nombre obligatorio
+ * - Código obligatorio
+ * - Precio >= 0
+ * - Código único
+ * - No permitir avanzar si existen errores. Mostrar errores inline.
  *
- * =====================================================================
- * FORMULARIOS
- * Todos los formularios deben utilizar componentes reutilizables.
- * TextInput, Textarea, Select, MultiSelect, SearchSelect, ColorPicker,
- * IconPicker, DatePicker, DateRange, Checkbox, Switch, RadioGroup,
- * AvatarUploader, ImageUploader, FileUploader, PhoneInput, EmailInput,
- * URLInput, NumberInput, TagsInput.
- * Todos conectados con: React Hook Form, Zod, Validaciones, Mensajes inline.
+ * ====================================================================
+ * PASO 2: Características del Plan
+ * Implementar formulario real.
+ * Módulos (Checkbox):
+ * - Live, Scout, Video, Analytics, Training, Coach, AI, Marketplace, API
  *
- * =====================================================================
- * VALIDACIONES
- * Todos los campos obligatorios. Mensajes debajo del campo.
- * Nunca usar alert(). Nunca usar prompt(). Nunca usar confirm().
+ * Límites:
+ * - Usuarios, Clubes, Equipos, Jugadores, Partidos, Storage, Videos, API Requests
  *
- * =====================================================================
- * BOTONES
- * Anterior, Cancelar, Guardar Borrador, Guardar, Crear, Siguiente, Finalizar.
- * Los botones deben respetar el estado del formulario.
+ * Características:
+ * - White Label, Custom Domain, Backups, MFA, SSO, Integraciones API, Soporte Premium
  *
- * =====================================================================
- * STEPPER
- * Cada Wizard debe mostrar: Paso actual, Pasos completados, Validación.
- * Permitir volver. Mantener datos.
+ * ====================================================================
+ * RESUMEN
+ * Mostrar: Información, Precio, Módulos, Límites, Características.
+ * Botón: Crear Plan
  *
- * =====================================================================
- * DRAWERS
- * Todos los Drawers deben mostrar información real. No componentes vacíos.
- * Cada pestaña debe tener contenido funcional:
- * Resumen, Actividad, Configuración, Relaciones, Auditoría, Documentos.
+ * ====================================================================
+ * IMPLEMENTACIÓN
+ * Eliminar cualquier componente:
+ * Placeholder, DevelopmentCard, BusinessRuleResolver, ComingSoon,
+ * ConfigurationPlaceholder, MockStep, StubStep, EntityPlaceholder.
+ * No debe quedar ninguno.
  *
- * =====================================================================
- * TABLAS
- * Todas las tablas deben tener:
- * Búsqueda, Filtros, Ordenamiento, Columnas configurables, Paginación,
- * Exportar, Importar, Acciones, Selección múltiple.
+ * ====================================================================
+ * ARQUITECTURA
+ * El Wizard debe renderizar directamente:
+ * <EntityWizard>
+ *     <PlanInformationStep />
+ *     <PlanFeaturesStep />
+ *     <PlanSummaryStep />
+ * </EntityWizard>
+ * No utilizar wrappers temporales.
  *
- * =====================================================================
- * CRUD
- * Cada entidad debe soportar completamente:
- * Crear, Editar, Duplicar, Archivar, Eliminar (Soft Delete), Restaurar,
- * Historial, Auditoría.
+ * ====================================================================
+ * REGLA
+ * Si una entidad tiene Wizard, cada paso debe contener componentes funcionales.
+ * Nunca placeholders. Nunca mensajes internos del framework.
+ * Nunca tarjetas "En desarrollo".
  *
- * =====================================================================
- * ESTADOS VACÍOS
- * Si no existen registros: Mostrar Empty State profesional.
- * No mostrar tablas vacías. No mostrar errores.
- *
- * =====================================================================
- * LOADING
- * Implementar: Skeletons, Loading States, Saving States, Error States.
- *
- * =====================================================================
- * DISEÑO
- * Todo el sistema debe sentirse uniforme.
- * Mismos márgenes, espacios, botones, formularios, Drawer, colores, tipografía.
- *
- * =====================================================================
- * COMPONENTES
- * Crear una librería reutilizable:
- * EntityTable, EntityDrawer, EntityWizard, EntityHeader, EntityEmptyState,
- * EntityFilters, EntityToolbar, EntitySearch, EntityActions, EntityBadge,
- * EntityStatus, EntityTimeline, EntityAudit.
- *
- * =====================================================================
- * REGLA FUNDAMENTAL
- * No agregar ninguna funcionalidad nueva. No crear módulos nuevos.
- * No crear nuevas pantallas. Todo el esfuerzo debe destinarse a convertir
- * la infraestructura existente en una aplicación completamente funcional.
- *
- * =====================================================================
+ * ====================================================================
  * OBJETIVO FINAL
- * Cuando termine esta refactorización:
- * - No debe existir ningún placeholder.
- * - No debe existir ningún mensaje "En desarrollo".
- * - Todos los Wizards deben ser utilizables.
- * - Todas las entidades existentes deben tener CRUD completo.
- * - Toda la experiencia debe sentirse como un producto Enterprise listo para producción.
- *
- * Solo cuando esta etapa esté completamente terminada se retomará el desarrollo de nuevas fases del ERP deportivo.
+ * El Wizard "Nuevo Plan" debe sentirse completamente terminado y listo para producción,
+ * con formularios reales, validaciones, navegación entre pasos y persistencia de datos.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
