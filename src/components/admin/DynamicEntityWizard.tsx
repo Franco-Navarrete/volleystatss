@@ -384,7 +384,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
               )}
 
               {/* Mensaje de desarrollo elegante si el paso no está completo */}
-              {(entityType === "permission" && currentStep > 0 || 
+              {((entityType === "permission" && currentStep > 0) || 
                 entityType === "module" || 
                 entityType === "subscription" ||
                 (entityType === "role" && currentStep > 0) ||
