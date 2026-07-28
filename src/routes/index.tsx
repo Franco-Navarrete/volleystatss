@@ -1,133 +1,106 @@
 /**
- * # FASE 2 - Identity & User Management
- * La Fase 1 (Organization Management) será la base de la jerarquía del sistema.
- * Ahora quiero desarrollar completamente la segunda entidad más importante de toda la plataforma.
- * Usuarios.
+ * # FASE 3 - Role & Permission Management
+ * La Fase 2 implementó el sistema de usuarios.
+ * Ahora quiero implementar el sistema completo de autorización.
  *
- * No quiero un simple CRUD.
- * Quiero un sistema de Identity Management Enterprise.
+ * No quiero un CRUD de Roles.
+ * Quiero un sistema Enterprise de Roles y Permisos.
  * Inspirado en:
  * - GitHub Enterprise
  * - Google Workspace
  * - Atlassian
  * - Azure Active Directory
+ * - AWS IAM
  * - Auth0
  * - Okta
  *
- * ====================================================================
+ * =====================================================================
  * OBJETIVO
- * Construir un módulo completo para administrar identidades.
- * No solamente crear usuarios.
- * Quiero administrar personas.
- * Su acceso. Su historial. Sus sesiones. Sus organizaciones. Sus permisos. Su seguridad.
+ * Construir un sistema RBAC profesional.
+ * Cada usuario tendrá acceso según: Workspace ↓ Organización ↓ Rol ↓ Permisos ↓ Políticas ↓ Permisos efectivos.
+ * Todo debe resolverse dinámicamente.
  *
- * ====================================================================
- * DIRECTORIO DE USUARIOS
- * Eliminar definitivamente el listado simple.
- * Crear un Directorio Profesional.
- * Columnas:
- * Avatar, Nombre completo, Correo, Usuario, Organización Principal, Cantidad de organizaciones,
- * Rol principal, Estado, Último acceso, Sesiones activas, Fecha de creación, Acciones.
- *
- * Debe soportar:
- * Búsqueda global, Filtros, Ordenamiento, Paginación, Exportar CSV, Exportar Excel,
- * Columnas configurables, Vista Tabla, Vista Tarjetas.
- *
- * ====================================================================
- * CREAR USUARIO
- * El Wizard debe ser completamente funcional.
- * No placeholders. No mensajes internos. No simulaciones.
- *
- * ----------------------------------------------------
- * Paso 1: Información Personal
- * Nombre, Apellido, Correo, Teléfono, Documento, Fecha nacimiento, Idioma, Zona horaria, Avatar,
- * Estado (Activo, Suspendido, Invitado).
- *
- * ----------------------------------------------------
- * Paso 2: Organizaciones
- * Buscar Organización, Agregar una o varias, Seleccionar Workspace, Definir organización principal,
- * Mostrar jerarquía.
- *
- * ----------------------------------------------------
- * Paso 3: Rol
- * Seleccionar Rol, Agregar Roles adicionales, Permisos personalizados, Workspace principal.
- *
- * ----------------------------------------------------
- * Paso 4: Seguridad
- * Enviar invitación, Contraseña temporal, Forzar cambio, MFA, Política de acceso, Restricciones.
- *
- * ----------------------------------------------------
- * Paso 5: Resumen
- * Mostrar toda la información. Botón: Crear Usuario.
- *
- * ====================================================================
- * DRAWER DEL USUARIO
- * Al hacer click sobre un usuario. Abrir Drawer.
- * Tabs: Resumen, Organizaciones, Roles, Permisos, Seguridad, Sesiones, Actividad, Auditoría, Configuración.
- *
- * ====================================================================
- * ORGANIZACIONES
- * Mostrar todas las organizaciones donde participa.
+ * =====================================================================
+ * NO EXISTEN ROLES GLOBALES
+ * Un rol siempre pertenece a una Organización o Workspace.
  * Ejemplo:
- * 🏛 Federación Córdoba - Administrador
- * ────────────────────
- * 🏆 Liga Norte - Operador Live
- * ────────────────────
- * 🏐 Club Quilino - Entrenador
+ * - Club Quilino: Entrenador, Presidente.
+ * - Liga Norte: Administrador, Operador Live.
+ * - Federación Córdoba: Supervisor.
+ * Nunca un rol compartido globalmente.
  *
- * Permitir: Agregar Organización, Cambiar Rol, Eliminar Organización, Cambiar Workspace principal.
+ * =====================================================================
+ * DIRECTORIO DE ROLES
+ * Pantalla profesional con tabla: Nombre, Descripción, Workspace, Usuarios, Permisos, Estado, Última modificación, Acciones.
+ * Soporta: Filtros, Búsqueda, Ordenamiento, Exportar, Duplicar.
  *
- * ====================================================================
- * ROLES
- * Mostrar: Rol, Workspace, Permisos heredados, Permisos personalizados, Permisos efectivos.
+ * =====================================================================
+ * CREAR ROL (Wizard completo)
+ * Paso 1: Información (Nombre, Descripción, Workspace, Color, Icono, Estado).
+ * Paso 2: Permisos (Selección por categorías: Administración, Usuarios, Organizaciones, Clubes, Ligas, Equipos, Jugadores, Competencias, Partidos, Scout, Video, Analytics, IA, Sistema).
+ * Paso 3: Restricciones (Solo lectura, Horario, IP, Acceso temporal, Expiración, Workspace obligatorio).
+ * Paso 4: Resumen y Creación.
  *
- * ====================================================================
- * PERMISOS
- * Mostrar: Todos los permisos. Origen: Heredado, Directo, Denegado. Permitir editar.
+ * =====================================================================
+ * CATÁLOGO DE PERMISOS
+ * Centralizado por entidades:
+ * - Organization: .view, .create, .edit, .delete, .archive
+ * - Usuarios: .view, .create, .edit, .delete, .invite, .suspend
+ * - Roles: .view, .create, .edit, .delete
+ * - Equipos: .view, .create, .edit, .delete
+ * - Partidos: .view, .create, .live, .edit, .delete
+ * - Scout: .view, .edit, .export
+ * - Video: .view, .upload, .delete, .share
+ * - Analytics: .view, .export, .compare
+ * - AI: .use, .generate, .admin
  *
- * ====================================================================
- * SESIONES
- * Mostrar: Dispositivo, Navegador, IP, Ubicación aproximada, Fecha, Última actividad.
- * Acciones: Cerrar sesión, Cerrar todas.
+ * =====================================================================
+ * CATEGORÍAS
+ * Agrupar visualmente los permisos para facilitar la administración.
  *
- * ====================================================================
- * SEGURIDAD
- * Estado de la cuenta, Último cambio de contraseña, Último login, MFA, Invitación, Recuperación, Tokens, API Keys.
+ * =====================================================================
+ * PERMISSION MATRIX
+ * Vista tipo matriz (Filas: Permisos, Columnas: Roles) para activar/desactivar rápidamente, estilo GitHub Enterprise.
  *
- * ====================================================================
- * ACTIVIDAD
- * Mostrar cronología: Inicio de sesión, Cambio de rol, Cambio de organización, Creación, Ediciones, Acciones.
+ * =====================================================================
+ * PERMISOS EFECTIVOS
+ * Visualización clara para cada usuario: Rol ↓ Heredados ↓ Personalizados ↓ Denegados ↓ Resultado final.
  *
- * ====================================================================
+ * =====================================================================
+ * HERENCIA
+ * Un rol puede heredar otro (ej: Entrenador Principal hereda de Entrenador) sumando solo las diferencias.
+ *
+ * =====================================================================
+ * ROLES PREDEFINIDOS
+ * Instalación automática: Super Admin, Platform Admin, Federación Supervisor, Liga Administrador/Operador,
+ * Club Presidente/Secretario/Entrenador/Asistente/Analista, Jugador, Padre, Invitado.
+ *
+ * =====================================================================
+ * POLÍTICAS
+ * Reglas adicionales: Solo lectura, por Horario, IP, Temporal, Dispositivo, Organización o Workspace.
+ *
+ * =====================================================================
+ * DRAWER DEL ROL
+ * Tabs: Resumen, Permisos, Usuarios, Herencia, Actividad, Auditoría, Configuración.
+ *
+ * =====================================================================
  * AUDITORÍA
- * Mostrar todos los eventos relacionados con ese usuario. Con filtros.
+ * Registro de creación, edición, cambio de permisos, asignación, eliminación y duplicación.
  *
- * ====================================================================
- * INVITACIONES
- * Implementar flujo completo: Invitar usuario, Enviar correo. Estados: Pendiente, Aceptado, Expirado.
- * Acciones: Reenviar, Cancelar.
+ * =====================================================================
+ * ACTION BAR & COMMAND PALETTE
+ * Acceso rápido a crear, duplicar, importar, exportar, comparar roles y ver matriz/auditoría.
  *
- * ====================================================================
- * SUSPENDER
- * Suspender usuario. Debe impedir: Login, Cambio de contraseña, Uso de API. Mantener historial.
+ * =====================================================================
+ * REGLA FUNDAMENTAL
+ * Nunca verificar permisos por nombre de rol (if role == "admin").
+ * Toda la autorización se resuelve vía Permission Engine (can("match.create")).
+ * Esto desacopla la UI de los nombres de los roles.
  *
- * ====================================================================
- * ELIMINAR
- * Nunca eliminar físicamente. Soft Delete.
- *
- * ====================================================================
- * BUSCADOR
- * El Command Palette (CTRL + K) debe permitir: Buscar usuarios, Ir al perfil, Editar, Suspender, Invitar, Crear.
- *
- * ====================================================================
- * ACTION BAR
- * En la pantalla Usuarios. Acciones:
- * + Crear Usuario, Invitar Usuario, Importar CSV, Exportar, Administrar Roles, Administrar Permisos, Ver Auditoría.
- *
- * ====================================================================
+ * =====================================================================
  * OBJETIVO FINAL
- * Cuando termine esta fase, VolleyStatss deberá tener un sistema profesional de administración de usuarios.
- * No un CRUD, sino un verdadero Identity Management preparado para soportar miles de usuarios.
+ * VolleyStatss deberá tener un sistema de autorización Enterprise completamente funcional que sea la base
+ * de todos los módulos actuales y futuros. No habrá lógica de autorización fuera del Permission Engine.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
