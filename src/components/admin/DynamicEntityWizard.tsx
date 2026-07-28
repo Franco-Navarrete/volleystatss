@@ -87,8 +87,8 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
     title: "Nuevo Módulo",
     icon: Package,
     steps: [
-      { title: "Módulo", description: "Nombre y versión" },
-      { title: "Dependencias", description: "Requisitos técnicos" }
+      { title: "Información", description: "Datos básicos del módulo" },
+      { title: "Configuración", description: "Rutas y visibilidad" }
     ]
   },
   plan: {
@@ -104,8 +104,7 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
     title: "Nueva Suscripción",
     icon: Zap,
     steps: [
-      { title: "Entidad", description: "A quién pertenece" },
-      { title: "Configuración", description: "Periodo y facturación" }
+      { title: "Entidad", description: "A quién pertenece" }
     ]
   }
 };
