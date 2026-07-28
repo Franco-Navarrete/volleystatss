@@ -2,66 +2,36 @@
  * # RALLY CORE FRAMEWORK
  * ## Arquitectura Central de VolleyStatss
  *
- * La implementación actual del Action Framework es incorrecta.
- * Actualmente, al hacer clic en:
- * - Nueva Organización
- * - Nuevo Usuario
- * - Nuevo Rol
- * - Nuevo Permiso
- * - Nuevo Módulo
- * - Nuevo Plan
- * - Nueva Suscripción
- * el sistema muestra un alert() con un mensaje como:
- * "Action Framework: Iniciando flujo centralizado..."
- * y luego no ocurre absolutamente nada.
- * Ese comportamiento debe eliminarse completamente.
- * No quiero ningún alert(), prompt(), confirm() ni mensajes de depuración visibles para el usuario.
+ * El Action Framework es uno de los pilares arquitectónicos del sistema y deberá ser utilizado por absolutamente todos los módulos actuales y futuros.
  *
  * ====================================================================
  * OBJETIVO
- * El Action Framework debe ser completamente transparente.
- * El usuario nunca debe saber que existe.
- * Debe percibir únicamente que se abrió el flujo correspondiente.
+ * El Action Framework es el único lugar donde vive la lógica transversal del sistema.
+ * Los módulos únicamente implementarán reglas específicas de su dominio. Todo el resto deberá reutilizar el Core.
  * ====================================================================
- * FLUJO CORRECTO
- * Al hacer click sobre cualquier entidad.
- * Ejemplo: Nuevo Usuario
- * Debe ocurrir exactamente lo siguiente.
- * Click ↓ Cerrar Drawer "Crear Nuevo Elemento" ↓ Action Engine ↓ Resolver Entity Definition ↓ Validar permisos ↓ Validar Workspace ↓ Validar módulos ↓ Abrir Dynamic Entity Wizard ↓ Mostrar Paso 1
- * Nunca detener el flujo. Nunca mostrar mensajes. Nunca usar alert().
- * ====================================================================
- * EL ACTION FRAMEWORK ES INTERNO
- * No debe mostrar mensajes como: "Action Framework iniciado", "Action Engine validando", "Iniciando Wizard", "Resolviendo entidad".
- * Eso pertenece a la arquitectura interna. El usuario nunca debe verlo.
- * ====================================================================
- * ENTITY CREATION WIZARD
- * Implementar un único Wizard reutilizable. No crear siete Wizards distintos.
- * Debe cambiar automáticamente según la entidad seleccionada.
- * Ejemplo: Nuevo Usuario -> Crear Usuario (Información Personal, etc.), Nueva Organización -> Crear Organización (Tipo, etc.).
- * ====================================================================
- * SI EL BACKEND TODAVÍA NO EXISTE
- * No importa. El Wizard igualmente debe abrirse. Los botones Guardar pueden estar deshabilitados.
- * Pero el flujo debe existir. El usuario debe poder navegar: Anterior, Siguiente, Cancelar, Cerrar, Resumen.
- * Nunca detenerse en un alert().
- * ====================================================================
- * SI EL FORMULARIO TODAVÍA NO ESTÁ TERMINADO
- * Mostrar un Wizard real con Header, Stepper, Formulario, Botones y un mensaje elegante:
- * "Este formulario todavía está en desarrollo."
- * Pero permitir navegar por los pasos. Nunca finalizar el flujo mostrando un mensaje.
- * ====================================================================
- * ARQUITECTURA
- * El Action Framework debe finalizar únicamente en alguno de estos destinos:
- * OPEN_WIZARD, OPEN_DRAWER, OPEN_MODAL, OPEN_PAGE, RUN_BACKGROUND_TASK, DOWNLOAD_FILE, UPLOAD_FILE.
- * Nunca finalizar en un alert().
- * ====================================================================
- * DEPURACIÓN
- * Toda la información de depuración debe ir únicamente a: console.debug() o al sistema de logs.
- * Nunca mostrar mensajes técnicos al usuario.
- * ====================================================================
- * OBJETIVO FINAL
- * RALLY CORE será el único lugar donde vivirá la lógica transversal.
- * Los módulos únicamente implementarán reglas específicas de su dominio.
- * Plataforma Enterprise real: flujos de trabajo reales, continuos y consistentes.
+ *
+ * ### 1. ENGINE FLOW (TRANSPARENTE AL USUARIO)
+ * Click ↓ Acción (ACTION_TYPE) ↓ Action Engine (Validación Contexto) ↓ Dynamic Entity Wizard (UI Centralizada)
+ *
+ * ### 2. ACTION REGISTRY
+ * - CREATE_ORGANIZATION: Flujo jerárquico para Federaciones, Ligas, Clubes.
+ * - CREATE_USER: Gestión de identidades y membresías de Workspaces.
+ * - MANAGE_ROLES / MANAGE_PERMISSIONS: Control de acceso basado en capacidades.
+ * - PROVISION_MODULE / CONFIGURE_SUBSCRIPTION: Ciclo de vida comercial y técnico.
+ *
+ * ### 3. DYNAMIC ENTITY WIZARD (UI CORE)
+ * Un componente único (`DynamicEntityWizard.tsx`) que adapta su comportamiento:
+ * - Títulos, Iconos y Pasos dinámicos según la entidad.
+ * - Stepper visual con validación de estados.
+ * - Navegación: [Anterior, Siguiente, Cancelar, Finalizar].
+ * - Estados de desarrollo para flujos pendientes (Enterprise Elegante).
+ *
+ * ### 4. INVARIANTS
+ * - NUNCA usar alert(), confirm() o mensajes técnicos de depuración en producción.
+ * - Toda la lógica de resolución (Entity Definition) ocurre en segundo plano.
+ * - Los errores se manejan mediante Toasts y estados de validación en el formulario.
+ *
+ * Esta arquitectura es la base de VolleyStatss para garantizar escalabilidad multi-tenant y modularidad absoluta.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
