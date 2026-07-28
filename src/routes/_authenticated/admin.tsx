@@ -268,9 +268,9 @@ function AdminPage() {
             <History className="size-4 mr-2" /> Auditoría
           </Button>
           
-          <Sheet>
+          <Sheet open={createDrawerOpen} onOpenChange={setCreateDrawerOpen}>
             <SheetTrigger asChild>
-              <Button size="sm" className="h-9 shadow-glow px-4">
+              <Button size="sm" className="h-9 shadow-glow px-4" onClick={() => setCreateDrawerOpen(true)}>
                 <Plus className="size-4 mr-2" /> Crear
               </Button>
             </SheetTrigger>
@@ -281,19 +281,19 @@ function AdminPage() {
               </SheetHeader>
               <div className="grid gap-4 py-6">
                 {[
-                  { label: "Nueva Organización", icon: Building2, type: "org" },
-                  { label: "Nuevo Usuario", icon: Users, type: "user" },
-                  { label: "Nuevo Rol", icon: Shield, type: "role" },
-                  { label: "Nuevo Permiso", icon: Key, type: "permission" },
-                  { label: "Nuevo Módulo", icon: Package, type: "module" },
-                  { label: "Nuevo Plan", icon: CreditCard, type: "plan" },
-                  { label: "Nueva Suscripción", icon: Zap, type: "subscription" },
+                  { label: "Nueva Organización", icon: Building2, type: "org" as EntityType },
+                  { label: "Nuevo Usuario", icon: Users, type: "user" as EntityType },
+                  { label: "Nuevo Rol", icon: Shield, type: "role" as EntityType },
+                  { label: "Nuevo Permiso", icon: Key, type: "permission" as EntityType },
+                  { label: "Nuevo Módulo", icon: Package, type: "module" as EntityType },
+                  { label: "Nuevo Plan", icon: CreditCard, type: "plan" as EntityType },
+                  { label: "Nueva Suscripción", icon: Zap, type: "subscription" as EntityType },
                 ].map((item) => (
                   <Button 
                     key={item.type}
                     variant="outline" 
                     className="justify-start h-12 text-left px-4 hover:border-primary/50 hover:bg-primary/5"
-                    onClick={() => handleCreateAction(item.label)}
+                    onClick={() => handleCreateAction(item.type)}
                   >
                     <item.icon className="size-5 mr-3 text-primary" />
                     <span>{item.label}</span>
