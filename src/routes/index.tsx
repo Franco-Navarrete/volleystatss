@@ -1,130 +1,139 @@
 /**
- * # FASE 16 - Video Intelligence Engine
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine, ✔ Match Engine, ✔ Training Performance Engine, ✔ Event Engine, ✔ Scout Engine.
- * Ahora comienza el desarrollo del Video Intelligence Engine.
- * No quiero un reproductor de video. No quiero un módulo para subir videos.
- * Quiero una plataforma profesional de análisis de video completamente integrada con el Scout Engine.
+ * # RALLY CORE
+ * # Refactorización Global
+ * # Eliminación de Placeholders
+ * # Implementación de Entidades Reales
  *
- * Inspirado en: - Data Video, - Hudl Sportscode, - VolleyStation Video, - Balltime, - Nacsport. Pero con una arquitectura moderna.
+ * A partir de este momento se suspende completamente el desarrollo de nuevas funcionalidades.
+ * No desarrollar nuevos módulos.
+ * No desarrollar nuevas pantallas.
+ * No desarrollar nuevas entidades.
+ * El objetivo exclusivo es transformar toda la infraestructura existente en una aplicación completamente funcional.
+ *
+ * =====================================================================
+ * SITUACIÓN ACTUAL
+ * La arquitectura ya existe.
+ * ✔ RALLY CORE
+ * ✔ Entity Framework
+ * ✔ Action Framework
+ * ✔ Wizard Framework
+ * ✔ Drawer Framework
+ * ✔ Permission Engine
+ * ✔ Workspace Engine
+ * ✔ Organization Engine
+ * ✔ Navigation Engine
+ * Todo eso ya funciona.
+ *
+ * Sin embargo, la mayoría de los Wizards muestran componentes como:
+ * "Este componente del Action Framework..."
+ * "Resolviendo reglas de negocio..."
+ * "En desarrollo"
+ * "Placeholder"
+ * "Business Rule Resolver"
+ * "Coming Soon"
+ * Estos componentes nunca deben aparecer in producción.
  *
  * =====================================================================
  * OBJETIVO
- * El video nunca será una entidad aislada. Todo video estará sincronizado con:
- * Match Engine, Scout Engine, Event Engine, Timeline, Analytics, IA.
+ * Eliminar absolutamente TODOS los placeholders del sistema.
+ * No debe quedar ningún componente temporal.
+ * El usuario nunca debe ver mensajes internos del framework.
  *
  * =====================================================================
- * FILOSOFÍA
- * El video solamente muestra visualmente lo que ocurrió. La fuente de verdad siempre será:
- * Match ↓ Event ↓ Scout ↓ Timeline ↓ Video. Nunca al revés.
+ * BUSCAR Y ELIMINAR
+ * Recorrer todo el proyecto.
+ * Eliminar o reemplazar completamente cualquier componente como:
+ * Placeholder, PlaceholderCard, ComingSoon, ComingSoonCard, DevelopmentCard,
+ * BusinessRuleResolver, ActionFrameworkPlaceholder, EntityPlaceholder,
+ * FeaturePlaceholder, MockComponent, StubComponent.
+ * Todo componente temporal. Todo mensaje interno. Todo indicador de "En desarrollo".
  *
  * =====================================================================
- * MODELO
- * Match ↓ Video Session ↓ Timeline ↓ Clip ↓ Tag ↓ Playlist ↓ Analysis.
+ * IMPLEMENTAR WIZARDS REALES
+ * Completar completamente los Wizards de:
+ * Organización, Usuario, Rol, Permiso, Workspace, Plan, Suscripción, Club,
+ * Temporada, Categoría, Equipo, Jugador, Staff, Competencia, Partido, Entrenamiento.
+ * Cada paso debe contener formularios reales. No tarjetas vacías. No placeholders.
  *
  * =====================================================================
- * VIDEO SESSION
- * Registrar: Nombre, Partido, Fuente, Resolución, FPS, Duración, Estado, Fecha, Operador.
+ * FORMULARIOS
+ * Todos los formularios deben utilizar componentes reutilizables.
+ * TextInput, Textarea, Select, MultiSelect, SearchSelect, ColorPicker,
+ * IconPicker, DatePicker, DateRange, Checkbox, Switch, RadioGroup,
+ * AvatarUploader, ImageUploader, FileUploader, PhoneInput, EmailInput,
+ * URLInput, NumberInput, TagsInput.
+ * Todos conectados con: React Hook Form, Zod, Validaciones, Mensajes inline.
  *
  * =====================================================================
- * SOPORTE
- * Videos locales, Streaming, Múltiples cámaras, RTSP, HLS, MP4, MOV, MKV.
+ * VALIDACIONES
+ * Todos los campos obligatorios. Mensajes debajo del campo.
+ * Nunca usar alert(). Nunca usar prompt(). Nunca usar confirm().
  *
  * =====================================================================
- * SINCRONIZACIÓN
- * Sincronizar automáticamente: Timeline, Scout, Eventos, Sets, Rallies, Rotaciones, Marcador.
+ * BOTONES
+ * Anterior, Cancelar, Guardar Borrador, Guardar, Crear, Siguiente, Finalizar.
+ * Los botones deben respetar el estado del formulario.
  *
  * =====================================================================
- * TIMELINE
- * Crear Timeline profesional. Mostrar: Tiempo, Evento, Jugador, Equipo, Set, Rally, Resultado, Video, Filtros, Zoom.
+ * STEPPER
+ * Cada Wizard debe mostrar: Paso actual, Pasos completados, Validación.
+ * Permitir volver. Mantener datos.
  *
  * =====================================================================
- * REPRODUCTOR
- * Profesional: Frame a Frame, J/K/L, Velocidad, Loop, Zoom, Pantalla completa, Mini mapa, Mini timeline, Marcadores.
+ * DRAWERS
+ * Todos los Drawers deben mostrar información real. No componentes vacíos.
+ * Cada pestaña debe tener contenido funcional:
+ * Resumen, Actividad, Configuración, Relaciones, Auditoría, Documentos.
  *
  * =====================================================================
- * ATAJOS
- * Configurar: J, L, K, ←, →, Shift, Ctrl, Macros, Layouts.
+ * TABLAS
+ * Todas las tablas deben tener:
+ * Búsqueda, Filtros, Ordenamiento, Columnas configurables, Paginación,
+ * Exportar, Importar, Acciones, Selección múltiple.
  *
  * =====================================================================
- * CLIPS
- * Crear clips: Manual, Automático, Desde Scout, Desde Timeline, Desde IA.
- * Permitir: Título, Descripción, Etiquetas, Jugadores, Equipos, Categorías.
+ * CRUD
+ * Cada entidad debe soportar completamente:
+ * Crear, Editar, Duplicar, Archivar, Eliminar (Soft Delete), Restaurar,
+ * Historial, Auditoría.
  *
  * =====================================================================
- * PLAYLISTS
- * Crear: Recepciones, Ataques, Errores, Bloqueos, Saques, Rotación 1, Rotación 2, Jugador, Entrenamiento, Comparativas.
+ * ESTADOS VACÍOS
+ * Si no existen registros: Mostrar Empty State profesional.
+ * No mostrar tablas vacías. No mostrar errores.
  *
  * =====================================================================
- * ETIQUETAS
- * Agregar: Técnica, Táctica, Error, Acierto, Lesión, Importante, IA, Personalizadas.
+ * LOADING
+ * Implementar: Skeletons, Loading States, Saving States, Error States.
  *
  * =====================================================================
- * COMPARADOR
- * Comparar: Dos videos, Dos jugadores, Dos partidos, Dos rotaciones, Dos equipos. Sincronizados.
+ * DISEÑO
+ * Todo el sistema debe sentirse uniforme.
+ * Mismos márgenes, espacios, botones, formularios, Drawer, colores, tipografía.
  *
  * =====================================================================
- * MULTICÁMARA
- * Administrar: Cámara Principal, Lateral, Fondo, Drone, Celular. Cambiar instantáneamente.
+ * COMPONENTES
+ * Crear una librería reutilizable:
+ * EntityTable, EntityDrawer, EntityWizard, EntityHeader, EntityEmptyState,
+ * EntityFilters, EntityToolbar, EntitySearch, EntityActions, EntityBadge,
+ * EntityStatus, EntityTimeline, EntityAudit.
  *
  * =====================================================================
- * NOTAS
- * Agregar: Texto, Dibujos, Flechas, Círculos, Marcadores, Comentarios.
- *
- * =====================================================================
- * DIBUJOS
- * Sobre el video: Flechas, Líneas, Rectángulos, Círculos, Zonas, Libre.
- *
- * =====================================================================
- * AUTO TAGGING
- * Cuando un evento del Scout ocurre, crear automáticamente un marcador. No utilizar IA todavía.
- *
- * =====================================================================
- * DRAWER
- * Tabs: Resumen, Timeline, Eventos, Clips, Playlists, Etiquetas, Comparaciones, Archivos, Actividad, Configuración, Auditoría.
- *
- * =====================================================================
- * ACTION BAR
- * ▶ Reproducir, ⏸ Pausar, ◀ Frame -, ▶ Frame +, 📌 Crear Clip, 🏷 Agregar Tag, 📂 Playlist, 📊 Abrir Scout, 📈 Analytics.
- *
- * =====================================================================
- * COMMAND PALETTE
- * CTRL + K: Buscar Clip, Buscar Rally, Buscar Jugador, Buscar Evento, Ir al minuto, Ir al set.
- *
- * =====================================================================
- * IMPORTAR
- * Videos, Timeline, Scout, Clips, Data Video, CSV, JSON.
- *
- * =====================================================================
- * EXPORTAR
- * MP4, Clips, Playlist, PDF, JSON, CSV.
- *
- * =====================================================================
- * API
- * VideoEngine.createClip() ↓ Timeline.link() ↓ EventEngine.relate() ↓ Analytics.update().
- *
- * =====================================================================
- * PERMISOS
- * video.view, video.upload, video.edit, video.clip, video.playlist, video.export, video.compare, video.multicam.
- * Todos administrados exclusivamente por el Permission Engine.
- *
- * =====================================================================
- * AUDITORÍA
- * Registrar: Carga, Edición, Nuevo clip, Nueva playlist, Comparación, Exportación, Comentarios.
+ * REGLA FUNDAMENTAL
+ * No agregar ninguna funcionalidad nueva. No crear módulos nuevos.
+ * No crear nuevas pantallas. Todo el esfuerzo debe destinarse a convertir
+ * la infraestructura existente en una aplicación completamente funcional.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * VolleyStatss deberá ofrecer una plataforma profesional de análisis de video sincronizada con Scout, Match y Event Engine.
- * El usuario deberá navegar por eventos, no por minutos del video.
+ * Cuando termine esta refactorización:
+ * - No debe existir ningún placeholder.
+ * - No debe existir ningún mensaje "En desarrollo".
+ * - Todos los Wizards deben ser utilizables.
+ * - Todas las entidades existentes deben tener CRUD completo.
+ * - Toda la experiencia debe sentirse como un producto Enterprise listo para producción.
  *
- * EJEMPLO DE FLUJO:
- * 00:03  🟢 Inicio del set
- * 00:18  🏐 Saque #12
- * 00:21  📊 Recepción +
- * 00:23  ⚡ Ataque #
- * 00:24  🎥 Clip generado
- * 00:24  🤖 IA detectó bloqueo tardío
- * 00:25  📝 Comentario del entrenador
- * 00:26  📌 Etiqueta "Transición rápida"
+ * Solo cuando esta etapa esté completamente terminada se retomará el desarrollo de nuevas fases del ERP deportivo.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
