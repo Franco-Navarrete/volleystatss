@@ -36,6 +36,8 @@ import { ModuleInfoStep, type ModuleInfoData } from "./steps/ModuleInfoStep";
 import { ModuleConfigStep, type ModuleConfigData } from "./steps/ModuleConfigStep";
 import { SubscriptionInfoStep, type SubscriptionInfoData } from "./steps/SubscriptionInfoStep";
 
+import { SubscriptionBillingStep, type SubscriptionBillingData } from "./steps/SubscriptionBillingStep";
+
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
 
 interface Step {
@@ -104,7 +106,8 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
     title: "Nueva Suscripción",
     icon: Zap,
     steps: [
-      { title: "Entidad", description: "A quién pertenece" }
+      { title: "Entidad", description: "A quién pertenece" },
+      { title: "Facturación", description: "Periodo y facturación" }
     ]
   }
 };
@@ -158,9 +161,12 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     visible: true,
     requiresLicense: true
   });
-  const [subscriptionData, setSubscriptionData] = useState<SubscriptionInfoData>({
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionInfoData & SubscriptionBillingData>({
     orgId: "",
-    planId: ""
+    planId: "",
+    frequency: "mensual",
+    currency: "USD",
+    price: 0
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -346,6 +352,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
               )}
               {entityType === "subscription" && currentStep === 0 && (
                 <SubscriptionInfoStep data={subscriptionData} onChange={(d) => setSubscriptionData(p => ({...p, ...d}))} />
+              )}
+              {entityType === "subscription" && currentStep === 1 && (
+                <SubscriptionBillingStep data={subscriptionData} onChange={(d) => setSubscriptionData(p => ({...p, ...d}))} />
               )}
 
               {entityType === "user" && currentStep === 0 && (
