@@ -1,106 +1,76 @@
 /**
- * # FASE 3 - Role & Permission Management
- * La Fase 2 implementó el sistema de usuarios.
- * Ahora quiero implementar el sistema completo de autorización.
+ * # FASE 4 - Subscription & Licensing Management
+ * Las fases anteriores implementaron: ✔ Organizaciones, ✔ Usuarios, ✔ Roles, ✔ Permisos.
+ * Ahora quiero implementar completamente el sistema comercial de la plataforma.
  *
- * No quiero un CRUD de Roles.
- * Quiero un sistema Enterprise de Roles y Permisos.
+ * No quiero solamente una tabla de planes.
+ * Quiero un sistema Enterprise de Suscripciones, Licencias y Consumo.
  * Inspirado en:
+ * - Stripe Billing
  * - GitHub Enterprise
- * - Google Workspace
- * - Atlassian
- * - Azure Active Directory
- * - AWS IAM
- * - Auth0
- * - Okta
+ * - Atlassian Cloud
+ * - Microsoft 365
+ * - Notion
+ * - Slack
  *
  * =====================================================================
  * OBJETIVO
- * Construir un sistema RBAC profesional.
- * Cada usuario tendrá acceso según: Workspace ↓ Organización ↓ Rol ↓ Permisos ↓ Políticas ↓ Permisos efectivos.
- * Todo debe resolverse dinámicamente.
+ * Construir el sistema completo que determinará qué funcionalidades puede utilizar cada organización.
+ * Toda la plataforma dependerá de este módulo.
  *
  * =====================================================================
- * NO EXISTEN ROLES GLOBALES
- * Un rol siempre pertenece a una Organización o Workspace.
- * Ejemplo:
- * - Club Quilino: Entrenador, Presidente.
- * - Liga Norte: Administrador, Operador Live.
- * - Federación Córdoba: Supervisor.
- * Nunca un rol compartido globalmente.
+ * MODELO
+ * Plan ↓ Licencia ↓ Suscripción ↓ Workspace ↓ Módulos ↓ Límites ↓ Consumo
  *
  * =====================================================================
- * DIRECTORIO DE ROLES
- * Pantalla profesional con tabla: Nombre, Descripción, Workspace, Usuarios, Permisos, Estado, Última modificación, Acciones.
- * Soporta: Filtros, Búsqueda, Ordenamiento, Exportar, Duplicar.
+ * PLANES
+ * Directorio de Planes con tabla: Nombre, Código, Tipo, Precio, Facturación, Límites de Usuarios/Organizaciones, Estado, Versión, Acciones.
+ * Acciones: Duplicar, Editar, Archivar, Exportar.
  *
  * =====================================================================
- * CREAR ROL (Wizard completo)
- * Paso 1: Información (Nombre, Descripción, Workspace, Color, Icono, Estado).
- * Paso 2: Permisos (Selección por categorías: Administración, Usuarios, Organizaciones, Clubes, Ligas, Equipos, Jugadores, Competencias, Partidos, Scout, Video, Analytics, IA, Sistema).
- * Paso 3: Restricciones (Solo lectura, Horario, IP, Acceso temporal, Expiración, Workspace obligatorio).
- * Paso 4: Resumen y Creación.
+ * CREAR PLAN (Wizard completo)
+ * Paso 1: Información (Nombre, Código, Descripción, Categoría, Color, Icono, Estado).
+ * Paso 2: Facturación (Mensual, Anual, Prueba, Enterprise, Precio, Moneda, Impuestos).
+ * Paso 3: Módulos (Selección: Live, Scout, Video, Analytics, Coach, AI, Media, Marketplace, API).
+ * Paso 4: Límites (Usuarios, Organizaciones, Clubes, Ligas, Equipos, Jugadores, Partidos, Videos, Storage, API, Exportaciones, IA).
+ * Paso 5: Características (Branding, White Label, Subdominios, API, Integraciones, Soporte, Backups, Logs, SSO, MFA).
+ * Paso 6: Resumen y Guardado.
  *
  * =====================================================================
- * CATÁLOGO DE PERMISOS
- * Centralizado por entidades:
- * - Organization: .view, .create, .edit, .delete, .archive
- * - Usuarios: .view, .create, .edit, .delete, .invite, .suspend
- * - Roles: .view, .create, .edit, .delete
- * - Equipos: .view, .create, .edit, .delete
- * - Partidos: .view, .create, .live, .edit, .delete
- * - Scout: .view, .edit, .export
- * - Video: .view, .upload, .delete, .share
- * - Analytics: .view, .export, .compare
- * - AI: .use, .generate, .admin
+ * SUSCRIPCIONES
+ * Directorio con tabla: Organización, Plan, Estado, Inicio, Vencimiento, Renovación, Método de pago, Monto, Consumo, Acciones.
+ * Estados: Trial, Activo, Suspendido, Cancelado, Expirado, Pendiente.
  *
  * =====================================================================
- * CATEGORÍAS
- * Agrupar visualmente los permisos para facilitar la administración.
+ * LICENCIAS & CONSUMO
+ * Cada suscripción genera licencias y rastrea consumo:
+ * - Dashboard de consumo: Usuarios, Equipos, Jugadores, Competencias, Videos, Scout, IA, Storage, Bandwidth, API.
+ * - Visualización: Disponible vs Utilizado con porcentajes.
  *
  * =====================================================================
- * PERMISSION MATRIX
- * Vista tipo matriz (Filas: Permisos, Columnas: Roles) para activar/desactivar rápidamente, estilo GitHub Enterprise.
+ * LÍMITES & UPGRADES
+ * - Si se alcanza un límite, mostrar advertencia y ofrecer actualización (no bloqueo silencioso).
+ * - Flujo de Upgrade: Comparar planes, mostrar diferencias de costo e impacto (módulos/límites nuevos).
+ * - Flujo de Downgrade: Validar excesos, explicar qué debe eliminar o qué dejará de funcionar.
  *
  * =====================================================================
- * PERMISOS EFECTIVOS
- * Visualización clara para cada usuario: Rol ↓ Heredados ↓ Personalizados ↓ Denegados ↓ Resultado final.
+ * MÓDULOS
+ * Los módulos dependen exclusivamente del PLAN, no del rol.
+ * Ejemplo: Plan Club incluye Scout/Video/Analytics pero no IA/Marketplace.
  *
  * =====================================================================
- * HERENCIA
- * Un rol puede heredar otro (ej: Entrenador Principal hereda de Entrenador) sumando solo las diferencias.
+ * DRAWER DE SUSCRIPCIÓN
+ * Tabs: Resumen, Facturación, Licencias, Consumo, Historial, Pagos, Actividad, Configuración.
  *
  * =====================================================================
- * ROLES PREDEFINIDOS
- * Instalación automática: Super Admin, Platform Admin, Federación Supervisor, Liga Administrador/Operador,
- * Club Presidente/Secretario/Entrenador/Asistente/Analista, Jugador, Padre, Invitado.
- *
- * =====================================================================
- * POLÍTICAS
- * Reglas adicionales: Solo lectura, por Horario, IP, Temporal, Dispositivo, Organización o Workspace.
- *
- * =====================================================================
- * DRAWER DEL ROL
- * Tabs: Resumen, Permisos, Usuarios, Herencia, Actividad, Auditoría, Configuración.
- *
- * =====================================================================
- * AUDITORÍA
- * Registro de creación, edición, cambio de permisos, asignación, eliminación y duplicación.
- *
- * =====================================================================
- * ACTION BAR & COMMAND PALETTE
- * Acceso rápido a crear, duplicar, importar, exportar, comparar roles y ver matriz/auditoría.
- *
- * =====================================================================
- * REGLA FUNDAMENTAL
- * Nunca verificar permisos por nombre de rol (if role == "admin").
- * Toda la autorización se resuelve vía Permission Engine (can("match.create")).
- * Esto desacopla la UI de los nombres de los roles.
+ * AUDITORÍA, ACTION BAR & COMMAND PALETTE
+ * Registro de cambios de plan, pagos y licencias.
+ * Acceso rápido (CTRL+K) para buscar planes, ver consumo y administrar licenciamiento.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * VolleyStatss deberá tener un sistema de autorización Enterprise completamente funcional que sea la base
- * de todos los módulos actuales y futuros. No habrá lógica de autorización fuera del Permission Engine.
+ * VolleyStatss deberá tener un sistema profesional de suscripciones.
+ * La disponibilidad de módulos dependerá del Subscription Engine; ningún módulo decidirá por sí mismo.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
