@@ -151,6 +151,11 @@ const MOCK_HIERARCHY: OrganizationNode[] = [
 
 function AdminPage() {
   const { isAdmin, checking } = useIsAdmin();
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedOrg, setSelectedOrg] = useState<any>(null);
+  const [selectedRole, setSelectedRole] = useState<any>(null);
+  const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   if (checking) {
     return (
@@ -178,90 +183,125 @@ function AdminPage() {
 
   return (
     <AppShell>
+      <div className="mb-6 flex items-center gap-2 text-xs font-medium text-muted-foreground overflow-hidden whitespace-nowrap">
+        <span>Administración</span>
+        <ChevronRight className="size-3" />
+        <span className="text-foreground">General</span>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-2 text-primary mb-1">
             <ShieldCheck className="size-5" />
-            <span className="text-xs font-bold uppercase tracking-wider">SaaS Infrastructure</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em]">RALLY Core Console</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight">Panel de Administración</h1>
-          <p className="text-sm text-muted-foreground">Gestioná la jerarquía global de RALLY.</p>
+          <h1 className="text-3xl font-black tracking-tight">Console</h1>
+          <p className="text-sm text-muted-foreground">Centro de control para el ecosistema jerárquico RALLY.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="h-9">
+          <div className="bg-muted/50 p-1 rounded-lg flex gap-1 mr-2">
+            <Button 
+              variant={viewMode === 'table' ? 'secondary' : 'ghost'} 
+              size="icon" 
+              className="size-8 rounded-md"
+              onClick={() => setViewMode('table')}
+            >
+              <List className="size-4" />
+            </Button>
+            <Button 
+              variant={viewMode === 'cards' ? 'secondary' : 'ghost'} 
+              size="icon" 
+              className="size-8 rounded-md"
+              onClick={() => setViewMode('cards')}
+            >
+              <Grid className="size-4" />
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" className="h-9 border-border/60">
             <History className="size-4 mr-2" /> Auditoría
           </Button>
-          <Button size="sm" className="h-9 shadow-glow">
-            <Plus className="size-4 mr-2" /> Nueva Organización
+          <Button size="sm" className="h-9 shadow-glow px-4">
+            <Plus className="size-4 mr-2" /> Crear
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="organizations" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 rounded-xl h-auto flex flex-wrap gap-1">
+        <TabsList className="bg-muted/50 p-1 rounded-xl h-auto flex flex-wrap gap-1 border border-border/40">
           <TabsTrigger value="organizations" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
             <Building2 className="size-4 mr-2" /> Organizaciones
           </TabsTrigger>
           <TabsTrigger value="users" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
-            <Users className="size-4 mr-2" /> Usuarios & Roles
+            <Users className="size-4 mr-2" /> Usuarios
           </TabsTrigger>
           <TabsTrigger value="modules" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
-            <Package className="size-4 mr-2" /> Módulos & Planes
+            <Package className="size-4 mr-2" /> Módulos
           </TabsTrigger>
           <TabsTrigger value="billing" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
             <CreditCard className="size-4 mr-2" /> Suscripciones
           </TabsTrigger>
+          <TabsTrigger value="audit" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
+            <Activity className="size-4 mr-2" /> Auditoría
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="organizations" className="m-0 focus-visible:outline-none">
-          <WorkspacesSection />
+          <WorkspacesSection onSelect={setSelectedOrg} />
         </TabsContent>
 
-        <TabsContent value="users" className="m-0">
-          <UsersSection />
+        <TabsContent value="users" className="m-0 focus-visible:outline-none">
+          <UsersSection viewMode={viewMode} onSelect={setSelectedUser} />
         </TabsContent>
 
-        <TabsContent value="modules" className="m-0">
+        <TabsContent value="modules" className="m-0 focus-visible:outline-none">
           <div className="space-y-8">
             <PermissionsCatalogSection />
-            <ModulesSection />
+            <ModulesSection onSelect={setSelectedModule} />
           </div>
         </TabsContent>
+
+        <TabsContent value="billing" className="m-0 focus-visible:outline-none">
+          <SubscriptionsSection />
+        </TabsContent>
+
+        <TabsContent value="audit" className="m-0 focus-visible:outline-none">
+          <AuditLogSection />
+        </TabsContent>
       </Tabs>
+
+      <UserDetailDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
+      <OrgDetailDrawer org={selectedOrg} onClose={() => setSelectedOrg(null)} />
+      <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
     </AppShell>
   );
 }
 
-function WorkspacesSection() {
+function WorkspacesSection({ onSelect }: { onSelect: (org: any) => void }) {
   const listWorkspaces = useServerFn(adminListWorkspaces);
   const { data, isLoading } = useQuery({ 
     queryKey: ["admin", "workspaces"], 
     queryFn: () => listWorkspaces() 
   });
 
-  if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground animate-pulse">Consultando topología de red SaaS…</div>;
+  if (isLoading) return <div className="p-12 space-y-4">
+    <div className="h-10 bg-muted/20 animate-pulse rounded-lg" />
+    <div className="h-64 bg-muted/10 animate-pulse rounded-xl" />
+  </div>;
 
   const workspaces = data?.workspaces ?? MOCK_HIERARCHY;
 
   return (
-    <Card className="border-border/60 shadow-elevated overflow-hidden">
-      <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">Estructura Organizacional</CardTitle>
-            <CardDescription>Jerarquía multinivel de identidades corporativas.</CardDescription>
-          </div>
-          <Badge variant="outline" className="bg-background/50">Red Federada</Badge>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            Topología de Red <Badge variant="outline" className="text-[10px] font-bold">Multi-tenant</Badge>
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">Explorador jerárquico de organizaciones federadas.</p>
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-border/40">
-          {workspaces.map((node: any) => (
-            <HierarchyRow key={node.id} node={node} level={0} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+      <OrganizationTree data={workspaces} onSelect={onSelect} />
+    </div>
   );
 }
 
