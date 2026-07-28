@@ -1,51 +1,50 @@
 /**
- * # FASE 8 - Team Management Domain
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management.
- * Ahora comienza el desarrollo del dominio Team Management. No es un CRUD, es un sistema completo para el ciclo de vida del equipo.
+ * # FASE 9 - Player Lifecycle Management
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management.
+ * Ahora comienza el desarrollo del dominio Player Management. No es una ficha, es un sistema completo para el ciclo de vida de una persona.
  *
  * Jerarquía: Organización ↓ Club ↓ Temporada ↓ Categoría ↓ Equipo ↓ Jugador
  *
  * =====================================================================
  * OBJETIVO
- * El Equipo es la unidad deportiva central que participa en entrenamientos, competencias y partidos.
- * Toda la información deportiva (Scout, Video, Analytics, IA) deberá relacionarse con el Equipo.
+ * El Jugador es la entidad central de todo el sistema deportivo.
+ * Toda estadística, entrenamiento, scout, video, evolución y participación deberá relacionarse con un jugador.
  *
  * =====================================================================
- * DASHBOARD Y DIRECTORIO DE EQUIPO
- * Dashboard: Nombre, Escudo, Categoría, Estado, Staff Técnico, Plantel, Próximos eventos, Estadísticas rápidas y Actividad.
- * Directorio: Tabla profesional con filtros, búsqueda, clonado (clonar staff/uniformes, no jugadores) y exportación.
+ * DASHBOARD Y DIRECTORIO DE JUGADOR
+ * Dashboard: Foto, Bio, Equipo actual, Posición, Datos físicos (Altura/Peso/Alcances), Licencia, Médicos, Videos y Actividad.
+ * Directorio: Tabla profesional con búsqueda, filtros avanzados, exportación e importación masiva.
  *
  * =====================================================================
- * CREACIÓN DE EQUIPO (Wizard)
- * Paso 1: Información (Nombre, Código, Categoría, Colores, Escudo, Estado).
- * Paso 2: Cuerpo Técnico (Entrenador, Asistente, PF, Analista, Médico, Kinesiólogo, Utilero, Coordinador).
- * Paso 3: Plantel inicial (Seleccionar/Crear jugadores, asignar dorsal, posición y estado).
- * Paso 4: Capitanía (Capitán, Subcapitán, Líberos).
- * Paso 5: Configuración deportiva (Sistema táctico, Rotación inicial, Uniformes).
- * Paso 6: Resumen y Creación.
+ * CREACIÓN DE JUGADOR (Wizard)
+ * Paso 1: Información Personal (Nombre, Documento, Fecha nac, Sexo, Nacionalidad, Contacto, Foto).
+ * Paso 2: Información Deportiva (Club, Temporada, Categoría, Equipo, Posición, Dorsal, Mano dominante, Estado).
+ * Paso 3: Datos Físicos (Altura, Peso, Alcance ataque/bloqueo, Salto vertical, Observaciones).
+ * Paso 4: Documentación (Licencia, Seguro, Apto médico, DNI, Autorizaciones).
+ * Paso 5: Resumen y Creación.
  *
  * =====================================================================
- * GESTIÓN DE PLANTEL Y STAFF
- * - Plantel: Jugadores activos, suspendidos, lesionados, prestados, altas/bajas e historial.
- * - Cuerpo Técnico: Administración del staff por roles e historial de movimientos.
- * - Uniformes: Gestión de indumentaria (Principal, Alternativo, Líbero, Entrenamiento) y patrocinadores.
+ * GESTIÓN DE SALUD, LICENCIAS Y MOVIMIENTOS
+ * - Ficha Médica: Grupo sanguíneo, alergias, medicación, historial de lesiones/cirugías y vencimiento de aptos médicos.
+ * - Licencias: Número, federación, emisión/vencimiento y renovaciones históricas.
+ * - Movimientos: Registro de altas, bajas, préstamos, transferencias y cambios de equipo/categoría (Historial completo).
  *
  * =====================================================================
- * CALENDARIO, ESTADÍSTICAS Y RECURSOS
- * - Calendario: Entrenamientos, partidos, competencias y reuniones.
- * - Estadísticas Rápidas: Récord (G/P), Sets, Puntos, Eficiencia y Racha.
- * - Documentos y Galería: Autorizaciones, listas de buena fe, fotos y videos técnicos.
+ * RENDIMIENTO, DOCUMENTOS Y GALERÍA
+ * - Rendimiento: Estructura base para conectar Partidos, Entrenamientos, Scout, Video y Evaluaciones (IA).
+ * - Documentos: Repositorio central de contratos, seguros y autorizaciones.
+ * - Galería: Material visual destacado del jugador (Fotos y Clips de video).
  *
  * =====================================================================
  * DRAWER, ACTION BAR Y PERMISOS
- * - Drawer: Resumen, Plantel, Staff, Competencias, Partidos, Entrenamientos, Stats, Documentos, Configuración.
- * - Action Bar: Nueva Temporada, Importar Plantel, Duplicar, Asignar Staff, Crear Evento.
- * - Permisos (Permission Engine): team.view, team.create, team.players, team.staff, team.matches, team.analytics.
+ * - Drawer: Resumen, Datos Personales, Info Deportiva, Equipo, Licencias, Ficha Médica, Documentos, Galería, Historial.
+ * - Action Bar: Nuevo Jugador, Transferir, Cambiar Equipo, Asignar Dorsal, Exportar, Archivar.
+ * - Permisos (Permission Engine): player.view, player.create, player.transfer, player.medical, player.documents, player.statistics.
  *
  * =====================================================================
- * OBJETIVO FINAL
- * El Equipo deberá convertirse en el centro operativo de toda la actividad deportiva.
- * Las siguientes fases (Jugadores, Competencias, Partidos, Scout y Video) se integrarán con este dominio.
+ * REGLAS Y OBJETIVO FINAL
+ * Nunca eliminar físicamente un jugador (Soft Delete); conservar toda la información histórica.
+ * El Jugador deberá convertirse en la entidad más importante e integrada de todo el ecosistema deportivo.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
