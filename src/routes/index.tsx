@@ -1,29 +1,113 @@
 /**
  * # VOLLEYSTATSS
- * # VIDEO ANALYSIS WORKSPACE V2
- * # ENTERPRISE REDESIGN
+ * # PROFESSIONAL ANALYSIS WORKSPACE V5
  *
- * No agregues ninguna funcionalidad nueva.
- * No agregues nuevos botones.
- * No agregues nuevos módulos.
- * Quiero una refactorización completa de la interfaz del Workspace de Scouting.
- * Objetivo:
- * Que el usuario pueda analizar un partido durante cinco horas seguidas sin sentir fatiga visual.
+ * El módulo actual ya posee una buena estructura visual.
+ * A partir de este momento no quiero más cambios cosméticos.
+ * Quiero transformar esta pantalla en una herramienta profesional para analistas de voleibol.
+ * La prioridad pasa a ser la productividad.
  *
- * Priorizar:
- * 1. El video debe ocupar aproximadamente el 70% del área central.
- * 2. Convertir el panel derecho en un Inspector Inteligente contextual.
- * 3. Implementar paneles colapsables y redimensionables.
- * 4. Reemplazar la timeline actual por una timeline multicapa profesional.
- * 5. Compactar el marcador y el header para liberar espacio vertical.
- * 6. Convertir la lista de atajos en un Cheat Sheet visual.
- * 7. Mejorar la tabla con iconografía, colores, filtros y sincronización bidireccional con el video.
- * 8. Diseñar distintos Workspaces (Scout, Video, Entrenador y Streaming), permitiendo guardar layouts personalizados.
- * 9. Optimizar toda la interfaz para uso intensivo con teclado.
- * 10. Reducir espacios vacíos y aumentar la densidad de información sin perder claridad.
+ * =========================================================
+ * OBJETIVO
+ * =========================================================
+ * Reducir la cantidad de clicks.
+ * Reducir la cantidad de movimientos del mouse.
+ * Permitir analizar un partido completo utilizando principalmente teclado.
+ * Todo debe sentirse inmediato.
  *
- * El objetivo no es agregar funciones, sino lograr que la experiencia de uso sea superior a Data Video, moderna, fluida y preparada para largas sesiones de análisis.
+ * =========================================================
+ * 1. INSPECTOR INTELIGENTE
+ * =========================================================
+ * Eliminar el panel derecho actual.
+ * Reemplazarlo por un Inspector Contextual.
+ *
+ * Cuando no haya ninguna selección mostrar:
+ * • Resumen del partido
+ * • Marcador
+ * • Últimos rallies
+ * • Estadísticas rápidas
+ *
+ * Cuando seleccione una acción mostrar:
+ * Jugador | Equipo | Fundamento | Resultado | Zona | Rotación | Marcador | Video | Comentarios | Etiquetas | IA (preparado) | Clip relacionado
+ *
+ * Cuando seleccione un Rally mostrar:
+ * Duración | Acciones | Ganador | Servidor | Rotación | Tiempo | Video | Estadísticas del rally
+ *
+ * =========================================================
+ * 2. DOBLE CLICK
+ * =========================================================
+ * Toda la tabla debe soportar doble click.
+ * Doble click sobre una acción ↓ Mover el video exactamente a ese frame ↓ Seleccionar la acción ↓ Abrir el Inspector
+ *
+ * =========================================================
+ * 3. HOVER PREVIEW
+ * =========================================================
+ * Al pasar el mouse sobre una acción, mostrar una mini previsualización del video (sin hacer click).
+ *
+ * =========================================================
+ * 4. FILTROS PROFESIONALES
+ * =========================================================
+ * Agregar una barra superior para filtrar por: Jugador, Equipo, Set, Rally, Fundamento, Resultado, Zona, Rotación, Servidor.
+ * No utilizar ventanas modales.
+ *
+ * =========================================================
+ * 5. TIMELINE PROFESIONAL
+ * =========================================================
+ * La Timeline actual debe evolucionar agregando capas: SETS, RALLIES, EVENTOS, CLIPS, COMENTARIOS.
+ * Cada capa debe poder ocultarse.
+ *
+ * =========================================================
+ * 6. CLIPS
+ * =========================================================
+ * Botón rápido para crear Clip desde la acción seleccionada, desde un Rally o desde un rango.
+ *
+ * =========================================================
+ * 7. PLAYLISTS
+ * =========================================================
+ * Crear automáticamente: Ataques, Recepciones, Errores, Bloqueos, Saques (por jugador o por equipo).
+ *
+ * =========================================================
+ * 8. TABLA
+ * =========================================================
+ * Agregar iconos: 🏐 Saque, 🧱 Bloqueo, ⚡ Ataque, 🤲 Recepción, 🛡 Defensa, ⏱ Timeout, 🟨 Tarjeta.
+ * Todo mucho más visual.
+ *
+ * =========================================================
+ * 9. MODO SCOUT
+ * =========================================================
+ * Ocultar automáticamente Timeline, Tabla e Inspector cuando el usuario quiera registrar rápidamente.
+ * Mostrar solamente: Video, Captura y Marcador.
+ *
+ * =========================================================
+ * 10. MODO ANÁLISIS
+ * =========================================================
+ * Mostrar Video, Timeline, Tabla, Inspector, Clips y Comentarios. Ideal para revisar partidos.
+ *
+ * =========================================================
+ * 11. MODO PRESENTACIÓN
+ * =========================================================
+ * Ocultar herramientas. Mostrar solamente: Video, Marcador, Comentarios y Timeline. Ideal para reuniones.
+ *
+ * =========================================================
+ * 12. ATAJOS
+ * =========================================================
+ * Agregar un Command Palette (CTRL + K) para buscar jugador, rally, acción, ir al set, tiempo o clip.
+ *
+ * =========================================================
+ * 13. DISEÑO
+ * =========================================================
+ * Eliminar el footer. Eliminar espacios vacíos. Aumentar el tamaño del video. Compactar tarjetas.
+ * Todo debe sentirse como una aplicación de escritorio.
+ *
+ * =========================================================
+ * OBJETIVO FINAL
+ * =========================================================
+ * Quiero que el usuario pueda analizar un partido completo con la menor cantidad posible de clicks.
+ * Toda la navegación debe sentirse inmediata.
+ * La interfaz debe priorizar velocidad, precisión y productividad.
+ * No agregar nuevas funcionalidades deportivas. Todo el esfuerzo debe enfocarse exclusivamente en optimizar la experiencia de uso.
  */
+
 
 
 
