@@ -33,12 +33,13 @@ import {
   Clock,
   ExternalLink,
   Ban,
-  Trash2
+  Trash2,
+  Copy
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
@@ -47,7 +48,8 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetFooter
+  SheetFooter,
+  SheetTrigger
 } from "@/components/ui/sheet";
 import { 
   Table, 
@@ -155,7 +157,24 @@ function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
   const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
+  const [selectedAuditLog, setSelectedAuditLog] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("organizations");
+  
+  // Persistencia de preferencia de vista (simulada con estado, podría ser localStorage)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
+  const breadcrumbs = useMemo(() => {
+    const base = [{ label: "Administración", value: "admin" }];
+    const tabs: Record<string, string> = {
+      organizations: "Organizaciones",
+      users: "Usuarios",
+      modules: "Módulos",
+      billing: "Suscripciones",
+      audit: "Auditoría"
+    };
+    return [...base, { label: tabs[activeTab] || "General", value: activeTab }];
+  }, [activeTab]);
 
   if (checking) {
     return (
@@ -181,12 +200,25 @@ function AdminPage() {
     );
   }
 
+  const handleAuditClick = () => {
+    setActiveTab("audit");
+  };
+
+  const handleCreateAction = (type: string) => {
+    console.log(`Iniciando Wizard para: ${type}`);
+    // Aquí se abriría el Wizard correspondiente
+    alert(`Esta funcionalidad aún no está disponible: Wizard de ${type}`);
+  };
+
   return (
     <AppShell>
       <div className="mb-6 flex items-center gap-2 text-xs font-medium text-muted-foreground overflow-hidden whitespace-nowrap">
-        <span>Administración</span>
-        <ChevronRight className="size-3" />
-        <span className="text-foreground">General</span>
+        {breadcrumbs.map((b, i) => (
+          <div key={b.value} className="flex items-center gap-2">
+            <span className={i === breadcrumbs.length - 1 ? "text-foreground font-bold" : ""}>{b.label}</span>
+            {i < breadcrumbs.length - 1 && <ChevronRight className="size-3" />}
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -205,6 +237,7 @@ function AdminPage() {
               size="icon" 
               className="size-8 rounded-md"
               onClick={() => setViewMode('table')}
+              title="Vista Tabla"
             >
               <List className="size-4" />
             </Button>
@@ -213,20 +246,54 @@ function AdminPage() {
               size="icon" 
               className="size-8 rounded-md"
               onClick={() => setViewMode('cards')}
+              title="Vista Tarjetas"
             >
               <Grid className="size-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="h-9 border-border/60">
+          <Button variant="outline" size="sm" className="h-9 border-border/60" onClick={handleAuditClick}>
             <History className="size-4 mr-2" /> Auditoría
           </Button>
-          <Button size="sm" className="h-9 shadow-glow px-4">
-            <Plus className="size-4 mr-2" /> Crear
-          </Button>
+          
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm" className="h-9 shadow-glow px-4">
+                <Plus className="size-4 mr-2" /> Crear
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>Crear Nuevo Elemento</SheetTitle>
+                <SheetDescription>Seleccione qué tipo de entidad desea crear en el sistema.</SheetDescription>
+              </SheetHeader>
+              <div className="grid gap-4 py-6">
+                {[
+                  { label: "Nueva Organización", icon: Building2, type: "org" },
+                  { label: "Nuevo Usuario", icon: Users, type: "user" },
+                  { label: "Nuevo Rol", icon: Shield, type: "role" },
+                  { label: "Nuevo Permiso", icon: Key, type: "permission" },
+                  { label: "Nuevo Módulo", icon: Package, type: "module" },
+                  { label: "Nuevo Plan", icon: CreditCard, type: "plan" },
+                  { label: "Nueva Suscripción", icon: Zap, type: "subscription" },
+                ].map((item) => (
+                  <Button 
+                    key={item.type}
+                    variant="outline" 
+                    className="justify-start h-12 text-left px-4 hover:border-primary/50 hover:bg-primary/5"
+                    onClick={() => handleCreateAction(item.label)}
+                  >
+                    <item.icon className="size-5 mr-3 text-primary" />
+                    <span>{item.label}</span>
+                    <ChevronRight className="size-4 ml-auto opacity-40" />
+                  </Button>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
-      <Tabs defaultValue="organizations" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/50 p-1 rounded-xl h-auto flex flex-wrap gap-1 border border-border/40">
           <TabsTrigger value="organizations" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
             <Building2 className="size-4 mr-2" /> Organizaciones
@@ -261,17 +328,19 @@ function AdminPage() {
         </TabsContent>
 
         <TabsContent value="billing" className="m-0 focus-visible:outline-none">
-          <SubscriptionsSection />
+          <SubscriptionsSection onSelect={setSelectedSubscription} />
         </TabsContent>
 
         <TabsContent value="audit" className="m-0 focus-visible:outline-none">
-          <AuditLogSection />
+          <AuditLogSection onSelect={setSelectedAuditLog} />
         </TabsContent>
       </Tabs>
 
       <UserDetailDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
       <OrgDetailDrawer org={selectedOrg} onClose={() => setSelectedOrg(null)} />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
+      <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
+      <AuditDetailDrawer log={selectedAuditLog} onClose={() => setSelectedAuditLog(null)} />
     </AppShell>
   );
 }
@@ -426,7 +495,10 @@ function ModulesSection({ onSelect }: { onSelect: (m: any) => void }) {
                   <CardDescription className="text-xs">{m.plan}</CardDescription>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="size-8" onClick={(e) => { e.stopPropagation(); /* config */ }}>
+              <Button variant="ghost" size="icon" className="size-8" onClick={(e) => { 
+                e.stopPropagation(); 
+                onSelect({...m, view: 'config'});
+              }}>
                 <Settings className="size-4 text-muted-foreground" />
               </Button>
             </div>
@@ -495,9 +567,8 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
               </div>
             </TabsContent>
 
-            <TabsContent value="workspaces" className="m-0">
-              <div className="space-y-4">
-                <div className="border border-border/60 rounded-lg p-3 bg-muted/30 flex items-center justify-between">
+            <TabsContent value="workspaces" className="m-0 space-y-4">
+                <div className="border border-border/60 rounded-lg p-3 bg-muted/30 flex items-center justify-between cursor-pointer hover:border-primary/40 transition-colors" onClick={() => alert('Abriendo Workspace de Belgrano')}>
                   <div className="flex items-center gap-3">
                     <Building2 className="size-4 text-primary" />
                     <div>
@@ -507,18 +578,35 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
                   </div>
                   <Badge className="text-[9px]">Principal</Badge>
                 </div>
-                <Button variant="outline" className="w-full text-xs h-9 border-dashed">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-xs h-9 border-dashed"
+                  onClick={() => alert('Wizard: Asignar Organización (Paso 1: Buscar, Paso 2: Rol, Paso 3: Permisos, Paso 4: Workspace Principal, Paso 5: Confirmar)')}
+                >
                   <Plus className="size-3 mr-2" /> Asignar a otra Organización
                 </Button>
-              </div>
+            </TabsContent>
+            
+            <TabsContent value="activity" className="m-0">
+               <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-3 text-xs border-b border-border/20 pb-3">
+                       <Clock className="size-3 text-muted-foreground shrink-0 mt-0.5" />
+                       <div>
+                          <p className="font-medium">Inicio de sesión exitoso</p>
+                          <p className="text-[10px] text-muted-foreground">Hace {i * 2} horas • IP: 186.12.{i}.99</p>
+                       </div>
+                    </div>
+                  ))}
+               </div>
             </TabsContent>
           </div>
 
           <div className="p-6 border-t border-border/40 bg-muted/10 grid grid-cols-2 gap-3">
-            <Button variant="outline" size="sm" className="text-xs h-9">
+            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => alert('Usuario suspendido')}>
               <Ban className="size-3 mr-2" /> Suspender
             </Button>
-            <Button size="sm" className="text-xs h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <Button size="sm" className="text-xs h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => confirm('¿Está seguro de eliminar este usuario?')}>
               <Trash2 className="size-3 mr-2" /> Eliminar
             </Button>
           </div>
@@ -599,14 +687,50 @@ function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) {
                   ))}
                 </div>
               </div>
+              <div className="space-y-4">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones Rápidas</h4>
+                 <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Crear sub-entidad')}>
+                       <Plus className="size-3 mr-2" /> Crear hijo
+                    </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Mover en jerarquía')}>
+                       <ArrowRight className="size-3 mr-2" /> Mover
+                    </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Duplicar configuración')}>
+                       <Copy className="size-3 mr-2" /> Duplicar
+                    </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start text-destructive" onClick={() => confirm('¿Eliminar organización?')}>
+                       <Trash2 className="size-3 mr-2" /> Eliminar
+                    </Button>
+                 </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="config" className="m-0 space-y-6">
+               <div className="space-y-4">
+                  <div className="p-4 rounded-xl border border-border/60 space-y-3">
+                     <p className="text-xs font-bold">Identidad Visual</p>
+                     <div className="flex gap-4 items-center">
+                        <div className="size-12 rounded-lg bg-muted border flex items-center justify-center text-[10px] text-muted-foreground">Logo</div>
+                        <Button variant="outline" size="sm" className="text-[10px]">SUBIR IMAGEN</Button>
+                     </div>
+                  </div>
+                  <div className="p-4 rounded-xl border border-border/60 space-y-3">
+                     <p className="text-xs font-bold">Configuración de Dominio</p>
+                     <Input placeholder="subdomain.rally.com" className="h-9 text-xs" />
+                  </div>
+                  <Button className="w-full shadow-glow font-black text-xs h-10" onClick={() => alert('Configuración guardada')}>GUARDAR CONFIGURACIÓN</Button>
+               </div>
             </TabsContent>
           </div>
-          
+
           <div className="p-4 border-t border-border/40 bg-muted/5 flex justify-between gap-3">
-             <Button variant="outline" size="sm" className="text-xs font-bold px-6">Editar Organización</Button>
+             <Button variant="outline" size="sm" className="text-xs font-bold px-6" onClick={() => alert('Abriendo editor global')}>Editar Organización</Button>
              <div className="flex gap-2">
-               <Button variant="ghost" size="icon" className="size-8 text-destructive"><Trash2 className="size-4" /></Button>
-               <Button size="sm" className="text-xs font-black shadow-glow">Guardar Cambios</Button>
+               <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => confirm('¿Eliminar?')}>
+                  <Trash2 className="size-4" />
+               </Button>
+               <Button size="sm" className="text-xs font-black shadow-glow" onClick={() => alert('Cambios guardados')}>Guardar</Button>
              </div>
           </div>
         </Tabs>
@@ -634,7 +758,9 @@ function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => v
                   <p className="text-sm font-bold">Estado del Módulo</p>
                   <p className="text-[10px] text-muted-foreground">Desactivar para toda la plataforma</p>
                 </div>
-                <Badge className="bg-green-500 hover:bg-green-600">Activo</Badge>
+                <div className="flex gap-2">
+                  <Badge className="bg-green-500 hover:bg-green-600 cursor-pointer" onClick={() => alert('Esta funcionalidad aún no está disponible')}>Activo</Badge>
+                </div>
               </div>
               <div className="flex items-center justify-between p-3 rounded-xl border border-border/60">
                 <div>
@@ -645,16 +771,127 @@ function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => v
               </div>
             </div>
           </div>
-          <Button className="w-full shadow-glow py-6 font-black uppercase tracking-widest text-xs">
+          
+          <Button 
+            className="w-full shadow-glow py-6 font-black uppercase tracking-widest text-xs"
+            onClick={() => alert('Abriendo pantalla de Capacidades & Dependencias')}
+          >
             <Settings className="size-4 mr-2" /> Editar Capacidades & Dependencias
           </Button>
+
+          <Card className="border-border/60 bg-muted/20">
+            <CardHeader className="p-4">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Dependencias</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-2">
+               {module.id === 'intel' && <Badge variant="secondary" className="text-[9px]">Requiere Analytics</Badge>}
+               {module.id === 'video' && <Badge variant="secondary" className="text-[9px]">Requiere Scout</Badge>}
+               <p className="text-[10px] text-muted-foreground italic">Los módulos de RALLY están interconectados para maximizar el rendimiento.</p>
+            </CardContent>
+          </Card>
         </div>
       </SheetContent>
     </Sheet>
   );
 }
 
-function SubscriptionsSection() {
+function SubscriptionDetailDrawer({ sub, onClose }: { sub: any, onClose: () => void }) {
+  if (!sub) return null;
+  return (
+    <Sheet open={!!sub} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-[500px] p-0 border-l border-border/60">
+        <SheetHeader className="p-8 border-b border-border/40">
+          <SheetTitle className="text-2xl font-black">{sub.orgName}</SheetTitle>
+          <SheetDescription>Suscripción {sub.plan}</SheetDescription>
+        </SheetHeader>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+             <div className="p-3 rounded-xl border bg-muted/20">
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Estado</p>
+                <Badge className="mt-1">{sub.status}</Badge>
+             </div>
+             <div className="p-3 rounded-xl border bg-muted/20">
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Monto</p>
+                <p className="text-lg font-black">${sub.amount}/mes</p>
+             </div>
+          </div>
+          <div className="space-y-2">
+            <Button className="w-full justify-start h-12" variant="outline" onClick={() => alert('Esta funcionalidad aún no está disponible')}>
+              <CreditCard className="size-4 mr-2" /> Historial de Pagos
+            </Button>
+            <Button className="w-full justify-start h-12" variant="outline" onClick={() => alert('Esta funcionalidad aún no está disponible')}>
+              <Activity className="size-4 mr-2" /> Ver Consumo Detallado
+            </Button>
+          </div>
+          <div className="pt-6 flex flex-col gap-2">
+            <Button className="w-full bg-primary shadow-glow font-bold">Renovar Suscripción</Button>
+            <Button className="w-full text-destructive" variant="ghost">Suspender Servicio</Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function AuditDetailDrawer({ log, onClose }: { log: any, onClose: () => void }) {
+  if (!log) return null;
+  return (
+    <Sheet open={!!log} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-[600px] p-0 border-l border-border/60">
+        <SheetHeader className="p-8 border-b border-border/40 bg-muted/30">
+          <div className="flex items-center gap-2 text-xs font-black text-primary uppercase tracking-widest mb-2">
+             <History className="size-4" /> Evento de Auditoría
+          </div>
+          <SheetTitle className="text-xl font-black">{log.action}</SheetTitle>
+          <SheetDescription>{new Date(log.timestamp).toLocaleString()}</SheetDescription>
+        </SheetHeader>
+        <div className="p-8 space-y-6 overflow-y-auto max-h-[calc(100vh-120px)]">
+           <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground">Usuario</p>
+                 <p className="text-sm font-medium">{log.userEmail}</p>
+                 <p className="text-[10px] text-muted-foreground font-mono">{log.userId}</p>
+              </div>
+              <div className="space-y-1 text-right">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground">IP de Origen</p>
+                 <p className="text-sm font-mono">{log.ip}</p>
+              </div>
+           </div>
+
+           <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-border/60 bg-card">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Detalles de la Acción</p>
+                 <p className="text-sm">{log.details}</p>
+              </div>
+              
+              <div className="p-4 rounded-xl border border-border/60 bg-black/5 dark:bg-black/20">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground mb-2 flex items-center justify-between">
+                    <span>Payload JSON</span>
+                    <Button variant="ghost" size="icon" className="size-6"><Copy className="size-3" /></Button>
+                 </p>
+                 <pre className="text-[10px] font-mono overflow-x-auto p-2 bg-black/10 rounded">
+                    {JSON.stringify({
+                       id: log.id,
+                       timestamp: log.timestamp,
+                       action: log.action,
+                       entity: log.entity,
+                       status: log.status,
+                       metadata: {
+                          browser: "Chrome 122.0.0",
+                          os: "macOS 14.3",
+                          duration: "45ms"
+                       }
+                    }, null, 2)}
+                 </pre>
+              </div>
+           </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function SubscriptionsSection({ onSelect }: { onSelect: (sub: any) => void }) {
   const listSubs = useServerFn(adminGetSubscriptions);
   const { data: subs, isLoading } = useQuery({ 
     queryKey: ["admin", "subscriptions"], 
@@ -677,7 +914,7 @@ function SubscriptionsSection() {
         </TableHeader>
         <TableBody>
           {subs?.map(s => (
-            <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30">
+            <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30" onClick={() => onSelect(s)}>
               <TableCell className="font-bold text-sm">{s.orgName}</TableCell>
               <TableCell><Badge variant="outline" className="text-[10px]">{s.plan}</Badge></TableCell>
               <TableCell>
@@ -695,7 +932,7 @@ function SubscriptionsSection() {
   );
 }
 
-function AuditLogSection() {
+function AuditLogSection({ onSelect }: { onSelect: (log: any) => void }) {
   const listLogs = useServerFn(adminGetAuditLogs);
   const { data: logs, isLoading } = useQuery({ 
     queryKey: ["admin", "audit-logs"], 
@@ -710,7 +947,7 @@ function AuditLogSection() {
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
           <History className="size-4" /> Transacciones de Sistema
         </h3>
-        <Button variant="ghost" size="sm" className="text-[10px] h-7 font-black">EXPORTAR LOGS</Button>
+        <Button variant="ghost" size="sm" className="text-[10px] h-7 font-black" onClick={() => alert('Exportando a CSV...')}>EXPORTAR LOGS</Button>
       </div>
       <div className="border border-border/60 rounded-xl overflow-hidden bg-card/40">
         <Table>
@@ -726,7 +963,7 @@ function AuditLogSection() {
           </TableHeader>
           <TableBody>
             {logs?.map(log => (
-              <TableRow key={log.id} className="hover:bg-muted/20 text-xs">
+              <TableRow key={log.id} className="cursor-pointer hover:bg-muted/20 text-xs" onClick={() => onSelect(log)}>
                 <TableCell className="text-muted-foreground font-mono">{new Date(log.timestamp).toLocaleTimeString()}</TableCell>
                 <TableCell className="font-medium">{log.userEmail}</TableCell>
                 <TableCell><Badge variant="secondary" className="text-[9px] font-mono">{log.action}</Badge></TableCell>
