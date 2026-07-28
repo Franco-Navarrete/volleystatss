@@ -687,14 +687,50 @@ function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) {
                   ))}
                 </div>
               </div>
+              <div className="space-y-4">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones Rápidas</h4>
+                 <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Crear sub-entidad')}>
+                       <Plus className="size-3 mr-2" /> Crear hijo
+                    </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Mover en jerarquía')}>
+                       <ArrowRight className="size-3 mr-2" /> Mover
+                    </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Duplicar configuración')}>
+                       <Copy className="size-3 mr-2" /> Duplicar
+                    </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start text-destructive" onClick={() => confirm('¿Eliminar organización?')}>
+                       <Trash2 className="size-3 mr-2" /> Eliminar
+                    </Button>
+                 </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="config" className="m-0 space-y-6">
+               <div className="space-y-4">
+                  <div className="p-4 rounded-xl border border-border/60 space-y-3">
+                     <p className="text-xs font-bold">Identidad Visual</p>
+                     <div className="flex gap-4 items-center">
+                        <div className="size-12 rounded-lg bg-muted border flex items-center justify-center text-[10px] text-muted-foreground">Logo</div>
+                        <Button variant="outline" size="sm" className="text-[10px]">SUBIR IMAGEN</Button>
+                     </div>
+                  </div>
+                  <div className="p-4 rounded-xl border border-border/60 space-y-3">
+                     <p className="text-xs font-bold">Configuración de Dominio</p>
+                     <Input placeholder="subdomain.rally.com" className="h-9 text-xs" />
+                  </div>
+                  <Button className="w-full shadow-glow font-black text-xs h-10" onClick={() => alert('Configuración guardada')}>GUARDAR CONFIGURACIÓN</Button>
+               </div>
             </TabsContent>
           </div>
-          
+
           <div className="p-4 border-t border-border/40 bg-muted/5 flex justify-between gap-3">
-             <Button variant="outline" size="sm" className="text-xs font-bold px-6">Editar Organización</Button>
+             <Button variant="outline" size="sm" className="text-xs font-bold px-6" onClick={() => alert('Abriendo editor global')}>Editar Organización</Button>
              <div className="flex gap-2">
-               <Button variant="ghost" size="icon" className="size-8 text-destructive"><Trash2 className="size-4" /></Button>
-               <Button size="sm" className="text-xs font-black shadow-glow">Guardar Cambios</Button>
+               <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => confirm('¿Eliminar?')}>
+                  <Trash2 className="size-4" />
+               </Button>
+               <Button size="sm" className="text-xs font-black shadow-glow" onClick={() => alert('Cambios guardados')}>Guardar</Button>
              </div>
           </div>
         </Tabs>
