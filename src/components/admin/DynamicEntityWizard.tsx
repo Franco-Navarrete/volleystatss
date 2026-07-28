@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   X, 
   ChevronRight, 
@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { RoleInfoStep, type RoleInfoData } from "./steps/RoleInfoStep";
 
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
 
@@ -109,10 +110,36 @@ interface DynamicEntityWizardProps {
 
 export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEntityWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [roleData, setRoleData] = useState<RoleInfoData>({
+    name: "",
+    description: "",
+    workspaceId: "",
+    organizationId: "",
+    color: "#3b82f6",
+    icon: "Shield",
+    status: "active",
+    type: "custom"
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const config = ENTITY_CONFIG[entityType];
   const totalSteps = config.steps.length;
 
+  const validateRoleStep = () => {
+    const newErrors: Record<string, string> = {};
+    if (!roleData.name.trim()) newErrors.name = "El nombre es obligatorio";
+    if (!roleData.workspaceId) newErrors.workspaceId = "Debes seleccionar un Workspace";
+    if (!roleData.organizationId) newErrors.organizationId = "Debes seleccionar una Organización";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = () => {
+    if (entityType === "role" && currentStep === 0) {
+      if (!validateRoleStep()) return;
+    }
+
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -124,9 +151,24 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     }
   };
 
+  // Reset state on open
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+      setErrors({});
+    }
+  }, [isOpen]);
+
   if (!config) return null;
 
   const Icon = config.icon;
+
+  const isNextDisabled = () => {
+    if (entityType === "role" && currentStep === 0) {
+      return !roleData.name || !roleData.workspaceId || !roleData.organizationId;
+    }
+    return currentStep === totalSteps - 1 && entityType !== "user";
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -184,8 +226,16 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
 
             <Separator className="opacity-40" />
 
-            {/* Formulario Placeholder real según entidad */}
+            {/* Formulario real según entidad */}
             <div className="space-y-6">
+              {entityType === "role" && currentStep === 0 && (
+                <RoleInfoStep 
+                  data={roleData} 
+                  onChange={(newData) => setRoleData(prev => ({ ...prev, ...newData }))}
+                  errors={errors}
+                />
+              )}
+
               {entityType === "user" && currentStep === 0 && (
                 <>
                   <div className="grid gap-2">
@@ -222,14 +272,20 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
               )}
 
               {/* Mensaje de desarrollo elegante si el paso no está completo */}
-              {(entityType !== "user" || currentStep > 0) && (entityType !== "org" || currentStep > 0) && (
+              {(entityType === "permission" || 
+                entityType === "module" || 
+                entityType === "plan" || 
+                entityType === "subscription" ||
+                (entityType === "role" && currentStep > 0) ||
+                (entityType === "user" && currentStep > 0) || 
+                (entityType === "org" && currentStep > 0)) && (
                 <div className="p-8 rounded-2xl border border-dashed border-border/60 bg-muted/5 flex flex-col items-center text-center">
                   <div className="size-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
                     <Info className="size-6 text-muted-foreground" />
                   </div>
                   <h4 className="font-bold text-foreground">Configuración de {config.steps[currentStep].title}</h4>
                   <p className="text-sm text-muted-foreground mt-2 max-w-xs">
-                    Este componente del Action Framework está resolviendo las reglas de negocio para la entidad.
+                    Este componente está resolviendo las reglas de negocio para la entidad.
                   </p>
                   <Badge variant="outline" className="mt-6 font-bold text-[10px] uppercase tracking-widest py-1">
                     En Desarrollo
@@ -252,7 +308,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
             <Button 
               onClick={handleNext} 
               className={`font-bold px-8 ${currentStep === totalSteps - 1 ? "bg-green-600 hover:bg-green-700 text-white" : "shadow-glow"}`}
-              disabled={currentStep === totalSteps - 1 && entityType !== "user"} // Solo permitir finalizar si está implementado
+              disabled={isNextDisabled()} // Solo permitir finalizar si está implementado
             >
               {currentStep === totalSteps - 1 ? "Finalizar" : "Siguiente"}
               {currentStep < totalSteps - 1 && <ChevronRight className="size-4 ml-2" />}
