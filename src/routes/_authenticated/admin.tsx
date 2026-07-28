@@ -205,11 +205,12 @@ function AdminPage() {
   };
 
   const handleCreateAction = (type: string) => {
-    console.log(`Action Framework -> Resolviendo acción: CREATE_${type.toUpperCase().replace(/\s/g, '_')}`);
-    // En la ETAPA 2, esto llamará al Action Engine centralizado
-    alert(`Action Framework: Iniciando flujo centralizado para [${type}]. 
+    // Action Engine - Resolution Path
+    console.debug(`[ActionEngine] Resolviendo acción: CREATE_${type.toUpperCase().replace(/\s/g, '_')}`);
     
-    El Action Engine validará el contexto de la organización, permisos y módulos antes de abrir el Entity Wizard dinámico.`);
+    // Inicia Wizard dinámico sin detener el flujo con alerts
+    // TODO: Integrar con Entity Registry central
+    console.debug(`[ActionEngine] Abriendo Dynamic Entity Wizard para: ${type}`);
   };
 
   return (
