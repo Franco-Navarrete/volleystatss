@@ -387,56 +387,70 @@ function HierarchyRow({ node, level }: { node: any, level: number }) {
   );
 }
 
-function UsersSection() {
+function UsersSection({ viewMode, onSelect }: { viewMode: 'table' | 'cards', onSelect: (u: any) => void }) {
   const listUsers = useServerFn(adminListUsers);
   const { data: users, isLoading } = useQuery({ 
     queryKey: ["admin", "users"], 
     queryFn: () => listUsers() 
   });
 
-  if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground">Cargando catálogo de identidades…</div>;
+  if (isLoading) return <div className="p-8 text-center text-sm text-muted-foreground animate-pulse">Cargando identidades…</div>;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Identidades en el Ecosistema</h2>
-        <Badge variant="secondary">{users?.length} Usuarios Totales</Badge>
+        <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Directorio de Usuarios</h2>
+        <Badge variant="secondary">{users?.length} Usuarios</Badge>
       </div>
-      
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {users?.map(user => (
-          <Card key={user.id} className="border-border/60 hover:border-primary/40 transition-colors shadow-sm bg-card/40">
-            <CardHeader className="p-4 space-y-1">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-bold truncate pr-2">{user.email}</CardTitle>
-                <Badge variant={user.isAdmin ? "default" : "secondary"} className="text-[10px]">
-                  {user.isAdmin ? "Global Admin" : "User"}
-                </Badge>
-              </div>
-              <CardDescription className="text-[10px]">Miembro desde: {new Date(user.createdAt).toLocaleDateString()}</CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="space-y-3">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Membresías Activas</span>
-                  <div className="flex flex-wrap gap-1">
-                    <Badge variant="outline" className="text-[9px] bg-background">Workspace Default</Badge>
-                    {user.extraRoles.map(r => (
-                      <Badge key={r} variant="outline" className="text-[9px] capitalize border-primary/20">{r}</Badge>
-                    ))}
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="w-full h-8 text-xs font-bold">
-                  Gestionar Accesos
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+      {viewMode === 'table' ? (
+        <div className="border border-border/60 rounded-xl overflow-hidden bg-card/40">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Nombre</TableHead>
+                <TableHead>Workspace</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users?.map(u => (
+                <TableRow key={u.id} className="cursor-pointer hover:bg-muted/30" onClick={() => onSelect(u)}>
+                  <TableCell className="flex items-center gap-3">
+                    <Avatar className="size-8"><AvatarFallback>{u.email[0].toUpperCase()}</AvatarFallback></Avatar>
+                    <span className="font-medium text-sm">{u.email}</span>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">Default</TableCell>
+                  <TableCell>
+                    <Badge variant={u.isAdmin ? "default" : "outline"} className="capitalize text-[10px]">{u.isAdmin ? "Admin" : "User"}</Badge>
+                  </TableCell>
+                  <TableCell><Badge className="bg-green-500/10 text-green-600 border-green-200 text-[10px]">Activo</Badge></TableCell>
+                  <TableCell className="text-right"><MoreVertical className="size-4 text-muted-foreground inline" /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {users?.map(u => (
+            <Card key={u.id} className="border-border/60 cursor-pointer hover:border-primary/40" onClick={() => onSelect(u)}>
+              <CardHeader className="p-4"><CardTitle className="text-sm">{u.email}</CardTitle></CardHeader>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+function SubscriptionsSection() { return <div className="p-8 text-center text-muted-foreground">Gestión de Suscripciones Enterprise</div>; }
+function AuditLogSection() { return <div className="p-8 text-center text-muted-foreground">Historial de Auditoría Global</div>; }
+function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void }) { return <Sheet open={!!user} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Usuario</SheetTitle></SheetHeader></SheetContent></Sheet>; }
+function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) { return <Sheet open={!!org} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Organización</SheetTitle></SheetHeader></SheetContent></Sheet>; }
+function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => void }) { return <Sheet open={!!module} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Módulo</SheetTitle></SheetHeader></SheetContent></Sheet>; }
 
 function PermissionsCatalogSection() {
   const listPerms = useServerFn(adminListPermissionsCatalog);
