@@ -1,81 +1,56 @@
 /**
- * # FASE 6 - Season Management Domain
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management.
- * Ahora quiero implementar el dominio más importante del ERP deportivo: Season Management.
- * Toda la actividad deportiva deberá depender de una Temporada.
+ * # FASE 7 - Category Management Domain
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management.
+ * Ahora quiero implementar el dominio Category Management.
+ * Una Categoría representa una división deportiva dentro de una Temporada.
  *
- * Organización
- * │
- * └── Club
- *     │
- *     ├── Temporada 2026
- *     │   ├── Categorías
- *     │   ├── Equipos
- *     │   ├── Jugadores
- *     │   ├── Entrenadores
- *     │   ├── Competencias
- *     │   ├── Entrenamientos
- *     │   ├── Partidos
- *     │   ├── Scout
- *     │   ├── Video
- *     │   └── Analytics
- *     │
- *     ├── Temporada 2027
- *     │   ├── ...
- *     │
- *     └── Historial
+ * Jerarquía: Organización ↓ Club ↓ Temporada ↓ Categoría ↓ Equipo ↓ Jugador
  *
  * =====================================================================
  * OBJETIVO
- * Construir un sistema profesional para administrar temporadas deportivas.
- * Cada temporada representará un ciclo completo de actividad.
- * Todas las entidades deportivas (Equipos, Competencias, Jugadores, Estadísticas) deberán relacionarse con ella.
+ * Toda la organización deportiva deberá comenzar en una Categoría.
+ * Los Equipos, Entrenadores, Jugadores, Entrenamientos y Competencias dependerán de ella.
  *
  * =====================================================================
- * DASHBOARD DE TEMPORADA
- * Al ingresar a una temporada visualizar indicadores clave: Nombre, Estado, Club, Período,
- * Cantidad de Equipos, Jugadores, Entrenadores, Competencias, Entrenamientos y Partidos.
+ * DASHBOARD DE CATEGORÍA
+ * Mostrar: Nombre, Temporada, Estado, Cantidad de Equipos, Jugadores, Entrenadores,
+ * Competencias, Entrenamientos, Próximos partidos y Actividad reciente.
  *
  * =====================================================================
- * DIRECTORIO DE TEMPORADAS
- * Tabla con: Nombre, Club, Inicio, Fin, Estado, Equipos, Jugadores, Competencias, Partidos, Actividad y Acciones.
- * Acciones: Buscar, Filtrar, Ordenar, Exportar, Duplicar, Archivar.
- *
- * =====================================================================
- * CREAR TEMPORADA (Wizard completo)
- * Paso 1: Información (Nombre, Descripción, Club, Año, Fecha inicio/fin, Color, Imagen, Estado).
- * Paso 2: Configuración (Temporada activa, Moneda, Zona horaria, Formato fecha, Configuración deportiva).
- * Paso 3: Inicialización (Copiar categorías, entrenadores, equipos, sponsors y configuraciones de la temporada anterior).
+ * DIRECTORIO Y CREACIÓN (Wizard)
+ * Tabla con: Nombre, Código, Temporada, Rama, Edad, Equipos, Jugadores, Entrenadores, Estado y Acciones.
+ * Wizard:
+ * Paso 1: Información (Nombre, Código, Rama: Masc/Fem/Mix, Edad min/max, Color, Estado).
+ * Paso 2: Configuración (Multi-equipos, Max jugadores, Capitán/Líbero obligatorio, Numeración auto).
+ * Paso 3: Configuración deportiva (Sistema puntuación, Sets, Altura red, Balón, Tipo: Competitiva/Escuela/Formativa).
  * Paso 4: Resumen y Creación.
  *
  * =====================================================================
- * ESTADOS, CALENDARIO & OBJETIVOS
+ * ESTADOS, REGLAS & CONFIGURACIÓN
  * - Estados: Preparación, Activa, Pausada, Finalizada, Archivada.
- * - Calendario: Anual con entrenamientos, competencias, eventos, reuniones y fechas importantes.
- * - Objetivos: Deportivos, Institucionales, Económicos y de Formación.
- * - Presupuesto: Registro de presupuesto estimado y observaciones.
+ * - Reglas: Edades, Sexos, Cantidades mín/máx de jugadores y staff técnico.
+ * - Configuración: Logo, Color, Icono, Plantillas de numeración y Reglamentos.
  *
  * =====================================================================
- * CLONAR Y PLANTILLAS
- * - Guardar temporada como plantilla.
- * - Clonar: Crear temporada nueva copiando estructura (no estadísticas/resultados/auditoría) con selección manual de qué copiar.
+ * IMPORTACIÓN Y CLONADO
+ * - Importar categorías desde otras temporadas seleccionando qué copiar (no estadísticas).
+ * - Duplicar categoría: Copia configuración, pero no actividad ni auditoría.
  *
  * =====================================================================
  * DRAWER, ACTION BAR & COMMAND PALETTE
- * - Tabs: Resumen, Configuración, Equipos, Entrenadores, Competencias, Calendario, Objetivos, Sponsors, Actividad.
- * - Action Bar: Nueva Temporada, Duplicar, Archivar, Finalizar, Activar.
- * - Command Palette (CTRL+K): Buscar temporada, ir al Dashboard, Duplicar, Archivar o Activar.
+ * - Tabs: Resumen, Equipos, Jugadores, Entrenadores, Competencias, Entrenamientos, Configuración, Auditoría.
+ * - Action Bar: Nueva Categoría, Duplicar, Archivar, Exportar, Importar.
+ * - Command Palette (CTRL+K): Buscar categoría, abrir Dashboard, Duplicar, Archivar, Editar.
  *
  * =====================================================================
- * REGLAS & RELACIONES
- * - Un Club puede tener múltiples temporadas, pero solo una activa.
- * - Las archivadas son de solo lectura; nunca eliminar, siempre archivar.
- * - La Temporada es el PADRE OBLIGATORIO de: Categorías, Equipos, Jugadores, Entrenadores, Competencias, Partidos, Scout, etc.
+ * PERMISOS & AUDITORÍA
+ * - Permisos (Permission Engine): category.view, category.create, category.edit, category.archive, category.configuration.
+ * - Auditoría: Registro de creación, edición, cambios de reglamento, configuración, archivado y duplicación.
  *
  * =====================================================================
- * OBJETIVO FINAL
- * VolleyStatss deberá administrar el ciclo deportivo completo mediante temporadas.
- * Esta estructura será la base para las siguientes fases de desarrollo.
+ * RELACIONES Y OBJETIVO FINAL
+ * Una Categoría contendrá: Equipos, Entrenadores, Jugadores, Competencias, Entrenamientos, Partidos, Scout, Videos y Analytics.
+ * Las Categorías serán la unidad organizativa principal de una Temporada.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
