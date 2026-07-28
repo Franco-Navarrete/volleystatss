@@ -109,6 +109,7 @@
  * Superar la experiencia de Data Video ofreciendo un Workspace moderno, fluido y preparado para IA, donde el usuario nunca necesite cambiar de pantalla.
  */
 
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
