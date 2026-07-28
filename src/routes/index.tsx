@@ -1,212 +1,133 @@
 /**
- * A partir de este momento comienza la Fase 1 del desarrollo funcional de VolleyStatss.
- * La infraestructura del sistema ya está implementada:
- * - RALLY CORE
- * - Action Framework
- * - Entity Wizard
- * - Permission Engine
- * - Workspace Engine
- * - Organization Engine
+ * # FASE 2 - Identity & User Management
+ * La Fase 1 (Organization Management) será la base de la jerarquía del sistema.
+ * Ahora quiero desarrollar completamente la segunda entidad más importante de toda la plataforma.
+ * Usuarios.
  *
- * No quiero seguir desarrollando infraestructura.
- * No quiero placeholders.
- * No quiero mensajes "En desarrollo".
- * No quiero componentes vacíos.
- * Quiero comenzar a implementar el negocio real.
+ * No quiero un simple CRUD.
+ * Quiero un sistema de Identity Management Enterprise.
+ * Inspirado en:
+ * - GitHub Enterprise
+ * - Google Workspace
+ * - Atlassian
+ * - Azure Active Directory
+ * - Auth0
+ * - Okta
  *
- * =====================================================================
- * FASE 1
- * Organization Management
- * Esta será la entidad más importante de toda la plataforma.
- * Todo el sistema dependerá de ella.
- * Usuarios
- * Clubes
- * Ligas
- * Federaciones
- * Equipos
- * Planes
- * Permisos
- * Todo comienza aquí.
- *
- * =====================================================================
+ * ====================================================================
  * OBJETIVO
- * Construir completamente la administración de Organizaciones.
- * Debe quedar terminada antes de comenzar Usuarios.
+ * Construir un módulo completo para administrar identidades.
+ * No solamente crear usuarios.
+ * Quiero administrar personas.
+ * Su acceso. Su historial. Sus sesiones. Sus organizaciones. Sus permisos. Su seguridad.
  *
- * =====================================================================
- * EL WIZARD DEBE FUNCIONAR COMPLETO
- * No placeholders.
- * No simulaciones.
- * No mensajes internos.
+ * ====================================================================
+ * DIRECTORIO DE USUARIOS
+ * Eliminar definitivamente el listado simple.
+ * Crear un Directorio Profesional.
+ * Columnas:
+ * Avatar, Nombre completo, Correo, Usuario, Organización Principal, Cantidad de organizaciones,
+ * Rol principal, Estado, Último acceso, Sesiones activas, Fecha de creación, Acciones.
  *
- * =====================================================================
- * PASO 1
- * Tipo de Organización
- * Opciones
- * ○ Federación
- * ○ Asociación
- * ○ Liga
- * ○ Club
- * ○ Academia
- * ○ Empresa
- * ○ Otro
- * Cada tipo debe mostrar una descripción.
+ * Debe soportar:
+ * Búsqueda global, Filtros, Ordenamiento, Paginación, Exportar CSV, Exportar Excel,
+ * Columnas configurables, Vista Tabla, Vista Tarjetas.
  *
- * =====================================================================
- * PASO 2
- * Información General
- * Nombre
- * Nombre corto
- * Siglas
- * Descripción
- * Logo
- * Banner
- * Correo
- * Teléfono
- * WhatsApp
- * Sitio Web
- * Facebook
- * Instagram
- * TikTok
- * YouTube
- * Dirección
- * Ciudad
- * Provincia
- * País
- * Código Postal
- * Coordenadas
- * Estado
- * Activo
- * Suspendido
- * Archivado
+ * ====================================================================
+ * CREAR USUARIO
+ * El Wizard debe ser completamente funcional.
+ * No placeholders. No mensajes internos. No simulaciones.
  *
- * =====================================================================
- * PASO 3
- * Jerarquía
- * Seleccionar organización padre.
- * Mostrar árbol.
- * Ejemplo.
- * Federación Argentina
- * └── Federación Córdoba
- *       └── Liga Norte
- *              └── Club Quilino
- * Debe mostrar claramente dónde será creada.
+ * ----------------------------------------------------
+ * Paso 1: Información Personal
+ * Nombre, Apellido, Correo, Teléfono, Documento, Fecha nacimiento, Idioma, Zona horaria, Avatar,
+ * Estado (Activo, Suspendido, Invitado).
  *
- * =====================================================================
- * PASO 4
- * Workspace
- * Nombre del Workspace
- * Slug
- * Subdominio
- * Idioma
- * Zona horaria
- * Moneda
- * Formato de fecha
- * Branding inicial
+ * ----------------------------------------------------
+ * Paso 2: Organizaciones
+ * Buscar Organización, Agregar una o varias, Seleccionar Workspace, Definir organización principal,
+ * Mostrar jerarquía.
  *
- * =====================================================================
- * PASO 5
- * Plan
- * Seleccionar plan.
- * Mostrar comparación.
- * Free
- * Coach
- * Club
- * League
- * Federation
- * Enterprise
- * Mostrar módulos incluidos.
+ * ----------------------------------------------------
+ * Paso 3: Rol
+ * Seleccionar Rol, Agregar Roles adicionales, Permisos personalizados, Workspace principal.
  *
- * =====================================================================
- * PASO 6
- * Módulos
- * Seleccionar.
- * Live
- * Scout
- * Video
- * Analytics
- * Coach
- * Media
- * Intelligence
- * Marketplace
- * Los módulos incompatibles deben aparecer bloqueados.
+ * ----------------------------------------------------
+ * Paso 4: Seguridad
+ * Enviar invitación, Contraseña temporal, Forzar cambio, MFA, Política de acceso, Restricciones.
  *
- * =====================================================================
- * PASO 7
- * Administrador Principal
- * Nombre
- * Apellido
- * Correo
- * Teléfono
- * Rol inicial
- * Enviar invitación
+ * ----------------------------------------------------
+ * Paso 5: Resumen
+ * Mostrar toda la información. Botón: Crear Usuario.
  *
- * =====================================================================
- * PASO 8
- * Resumen
- * Mostrar absolutamente toda la información.
- * Validar errores.
- * Permitir volver.
- * Botón. Crear Organización.
+ * ====================================================================
+ * DRAWER DEL USUARIO
+ * Al hacer click sobre un usuario. Abrir Drawer.
+ * Tabs: Resumen, Organizaciones, Roles, Permisos, Seguridad, Sesiones, Actividad, Auditoría, Configuración.
  *
- * =====================================================================
- * DESPUÉS DE CREAR
- * Crear automáticamente.
- * Workspace
- * Organización
- * Administrador
- * Rol
- * Permisos
- * Plan
- * Módulos
- * Auditoría
- * Notificación
- * Actualizar árbol de organizaciones.
- * Sin recargar la página.
+ * ====================================================================
+ * ORGANIZACIONES
+ * Mostrar todas las organizaciones donde participa.
+ * Ejemplo:
+ * 🏛 Federación Córdoba - Administrador
+ * ────────────────────
+ * 🏆 Liga Norte - Operador Live
+ * ────────────────────
+ * 🏐 Club Quilino - Entrenador
  *
- * =====================================================================
- * DRAWER
- * Al hacer click sobre una organización.
- * Abrir Drawer.
- * Tabs.
- * Resumen
- * Jerarquía
- * Usuarios
- * Equipos
- * Competencias
- * Roles
- * Permisos
- * Planes
- * Módulos
- * Actividad
- * Configuración
+ * Permitir: Agregar Organización, Cambiar Rol, Eliminar Organización, Cambiar Workspace principal.
  *
- * =====================================================================
- * TABLA
- * Implementar tabla profesional.
- * Columnas.
- * Logo
- * Nombre
- * Tipo
- * Padre
- * Workspace
- * Plan
- * Estado
- * Usuarios
- * Clubes hijos
- * Última actividad
- * Acciones
- * Ordenamiento.
- * Filtros.
- * Búsqueda.
- * Exportación.
+ * ====================================================================
+ * ROLES
+ * Mostrar: Rol, Workspace, Permisos heredados, Permisos personalizados, Permisos efectivos.
  *
- * =====================================================================
- * OBJETIVO
- * Cuando esta fase termine.
- * La administración de Organizaciones debe sentirse completamente terminada.
- * Debe ser posible administrar toda la jerarquía del ecosistema VolleyStatss desde esta única entidad.
- * No continuar con Usuarios hasta que Organización esté completamente finalizada.
+ * ====================================================================
+ * PERMISOS
+ * Mostrar: Todos los permisos. Origen: Heredado, Directo, Denegado. Permitir editar.
+ *
+ * ====================================================================
+ * SESIONES
+ * Mostrar: Dispositivo, Navegador, IP, Ubicación aproximada, Fecha, Última actividad.
+ * Acciones: Cerrar sesión, Cerrar todas.
+ *
+ * ====================================================================
+ * SEGURIDAD
+ * Estado de la cuenta, Último cambio de contraseña, Último login, MFA, Invitación, Recuperación, Tokens, API Keys.
+ *
+ * ====================================================================
+ * ACTIVIDAD
+ * Mostrar cronología: Inicio de sesión, Cambio de rol, Cambio de organización, Creación, Ediciones, Acciones.
+ *
+ * ====================================================================
+ * AUDITORÍA
+ * Mostrar todos los eventos relacionados con ese usuario. Con filtros.
+ *
+ * ====================================================================
+ * INVITACIONES
+ * Implementar flujo completo: Invitar usuario, Enviar correo. Estados: Pendiente, Aceptado, Expirado.
+ * Acciones: Reenviar, Cancelar.
+ *
+ * ====================================================================
+ * SUSPENDER
+ * Suspender usuario. Debe impedir: Login, Cambio de contraseña, Uso de API. Mantener historial.
+ *
+ * ====================================================================
+ * ELIMINAR
+ * Nunca eliminar físicamente. Soft Delete.
+ *
+ * ====================================================================
+ * BUSCADOR
+ * El Command Palette (CTRL + K) debe permitir: Buscar usuarios, Ir al perfil, Editar, Suspender, Invitar, Crear.
+ *
+ * ====================================================================
+ * ACTION BAR
+ * En la pantalla Usuarios. Acciones:
+ * + Crear Usuario, Invitar Usuario, Importar CSV, Exportar, Administrar Roles, Administrar Permisos, Ver Auditoría.
+ *
+ * ====================================================================
+ * OBJETIVO FINAL
+ * Cuando termine esta fase, VolleyStatss deberá tener un sistema profesional de administración de usuarios.
+ * No un CRUD, sino un verdadero Identity Management preparado para soportar miles de usuarios.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
