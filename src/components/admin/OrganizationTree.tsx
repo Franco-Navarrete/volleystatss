@@ -141,7 +141,7 @@ function HierarchyRow({ node, level, onSelect }: { node: OrganizationNode, level
       {hasChildren && isExpanded && (
         <div className="border-l border-border/40 ml-7">
           {node.children!.map((child) => (
-            <HierarchyRow key={child.id} childNode={child} level={level + 1} onSelect={onSelect} />
+            <HierarchyRow key={child.id} node={child} level={level + 1} onSelect={onSelect} />
           ))}
         </div>
       )}
