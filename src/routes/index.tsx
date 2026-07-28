@@ -1,56 +1,51 @@
 /**
- * # FASE 7 - Category Management Domain
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management.
- * Ahora quiero implementar el dominio Category Management.
- * Una Categoría representa una división deportiva dentro de una Temporada.
+ * # FASE 8 - Team Management Domain
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management.
+ * Ahora comienza el desarrollo del dominio Team Management. No es un CRUD, es un sistema completo para el ciclo de vida del equipo.
  *
  * Jerarquía: Organización ↓ Club ↓ Temporada ↓ Categoría ↓ Equipo ↓ Jugador
  *
  * =====================================================================
  * OBJETIVO
- * Toda la organización deportiva deberá comenzar en una Categoría.
- * Los Equipos, Entrenadores, Jugadores, Entrenamientos y Competencias dependerán de ella.
+ * El Equipo es la unidad deportiva central que participa en entrenamientos, competencias y partidos.
+ * Toda la información deportiva (Scout, Video, Analytics, IA) deberá relacionarse con el Equipo.
  *
  * =====================================================================
- * DASHBOARD DE CATEGORÍA
- * Mostrar: Nombre, Temporada, Estado, Cantidad de Equipos, Jugadores, Entrenadores,
- * Competencias, Entrenamientos, Próximos partidos y Actividad reciente.
+ * DASHBOARD Y DIRECTORIO DE EQUIPO
+ * Dashboard: Nombre, Escudo, Categoría, Estado, Staff Técnico, Plantel, Próximos eventos, Estadísticas rápidas y Actividad.
+ * Directorio: Tabla profesional con filtros, búsqueda, clonado (clonar staff/uniformes, no jugadores) y exportación.
  *
  * =====================================================================
- * DIRECTORIO Y CREACIÓN (Wizard)
- * Tabla con: Nombre, Código, Temporada, Rama, Edad, Equipos, Jugadores, Entrenadores, Estado y Acciones.
- * Wizard:
- * Paso 1: Información (Nombre, Código, Rama: Masc/Fem/Mix, Edad min/max, Color, Estado).
- * Paso 2: Configuración (Multi-equipos, Max jugadores, Capitán/Líbero obligatorio, Numeración auto).
- * Paso 3: Configuración deportiva (Sistema puntuación, Sets, Altura red, Balón, Tipo: Competitiva/Escuela/Formativa).
- * Paso 4: Resumen y Creación.
+ * CREACIÓN DE EQUIPO (Wizard)
+ * Paso 1: Información (Nombre, Código, Categoría, Colores, Escudo, Estado).
+ * Paso 2: Cuerpo Técnico (Entrenador, Asistente, PF, Analista, Médico, Kinesiólogo, Utilero, Coordinador).
+ * Paso 3: Plantel inicial (Seleccionar/Crear jugadores, asignar dorsal, posición y estado).
+ * Paso 4: Capitanía (Capitán, Subcapitán, Líberos).
+ * Paso 5: Configuración deportiva (Sistema táctico, Rotación inicial, Uniformes).
+ * Paso 6: Resumen y Creación.
  *
  * =====================================================================
- * ESTADOS, REGLAS & CONFIGURACIÓN
- * - Estados: Preparación, Activa, Pausada, Finalizada, Archivada.
- * - Reglas: Edades, Sexos, Cantidades mín/máx de jugadores y staff técnico.
- * - Configuración: Logo, Color, Icono, Plantillas de numeración y Reglamentos.
+ * GESTIÓN DE PLANTEL Y STAFF
+ * - Plantel: Jugadores activos, suspendidos, lesionados, prestados, altas/bajas e historial.
+ * - Cuerpo Técnico: Administración del staff por roles e historial de movimientos.
+ * - Uniformes: Gestión de indumentaria (Principal, Alternativo, Líbero, Entrenamiento) y patrocinadores.
  *
  * =====================================================================
- * IMPORTACIÓN Y CLONADO
- * - Importar categorías desde otras temporadas seleccionando qué copiar (no estadísticas).
- * - Duplicar categoría: Copia configuración, pero no actividad ni auditoría.
+ * CALENDARIO, ESTADÍSTICAS Y RECURSOS
+ * - Calendario: Entrenamientos, partidos, competencias y reuniones.
+ * - Estadísticas Rápidas: Récord (G/P), Sets, Puntos, Eficiencia y Racha.
+ * - Documentos y Galería: Autorizaciones, listas de buena fe, fotos y videos técnicos.
  *
  * =====================================================================
- * DRAWER, ACTION BAR & COMMAND PALETTE
- * - Tabs: Resumen, Equipos, Jugadores, Entrenadores, Competencias, Entrenamientos, Configuración, Auditoría.
- * - Action Bar: Nueva Categoría, Duplicar, Archivar, Exportar, Importar.
- * - Command Palette (CTRL+K): Buscar categoría, abrir Dashboard, Duplicar, Archivar, Editar.
+ * DRAWER, ACTION BAR Y PERMISOS
+ * - Drawer: Resumen, Plantel, Staff, Competencias, Partidos, Entrenamientos, Stats, Documentos, Configuración.
+ * - Action Bar: Nueva Temporada, Importar Plantel, Duplicar, Asignar Staff, Crear Evento.
+ * - Permisos (Permission Engine): team.view, team.create, team.players, team.staff, team.matches, team.analytics.
  *
  * =====================================================================
- * PERMISOS & AUDITORÍA
- * - Permisos (Permission Engine): category.view, category.create, category.edit, category.archive, category.configuration.
- * - Auditoría: Registro de creación, edición, cambios de reglamento, configuración, archivado y duplicación.
- *
- * =====================================================================
- * RELACIONES Y OBJETIVO FINAL
- * Una Categoría contendrá: Equipos, Entrenadores, Jugadores, Competencias, Entrenamientos, Partidos, Scout, Videos y Analytics.
- * Las Categorías serán la unidad organizativa principal de una Temporada.
+ * OBJETIVO FINAL
+ * El Equipo deberá convertirse en el centro operativo de toda la actividad deportiva.
+ * Las siguientes fases (Jugadores, Competencias, Partidos, Scout y Video) se integrarán con este dominio.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
