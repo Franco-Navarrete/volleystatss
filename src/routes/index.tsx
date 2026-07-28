@@ -1,77 +1,60 @@
 /**
- * # FASE 5 - Club Management Domain
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions.
- * Ahora comienza la construcción del ERP Deportivo. El primer dominio será Club Management.
- *
- * No quiero un CRUD de Clubes.
- * Quiero un sistema completo para administrar una institución deportiva.
- * Inspirado en: TeamSnap, Spond, Teamworks, SportEasy, PlayHQ, Stack Team App.
+ * # FASE 6 - Season Management Domain
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management.
+ * Ahora quiero implementar el dominio más importante del ERP deportivo: Season Management.
+ * Toda la actividad deportiva deberá depender de una Temporada.
  *
  * =====================================================================
  * OBJETIVO
- * Construir el dominio completo "Club". No es una ficha, es una organización con identidad,
- * estructura, personas, instalaciones y actividad deportiva administrada desde un Workspace.
- *
- * Club
- * │
- * ├── Temporada 2026
- * │     ├── Categorías
- * │     ├── Equipos
- * │     ├── Entrenadores
- * │     ├── Jugadores
- * │     ├── Competencias
- * │
- * ├── Temporada 2027
- * │     ├── Categorías
- * │     ├── Equipos
- * │     ├── Entrenadores
- * │     ├── Jugadores
- * │
- * └── Historial
+ * Construir un sistema profesional para administrar temporadas deportivas.
+ * Cada temporada representará un ciclo completo de actividad.
+ * Todas las entidades deportivas (Equipos, Competencias, Jugadores, Estadísticas) deberán relacionarse con ella.
  *
  * =====================================================================
- * DASHBOARD DEL CLUB
- * Vista ejecutiva con indicadores: Logo, Estado, Temporada activa, Plan, Jugadores, Equipos,
- * Entrenadores, Competencias, Próximos partidos, Última actividad y Acciones rápidas.
+ * DASHBOARD DE TEMPORADA
+ * Al ingresar a una temporada visualizar indicadores clave: Nombre, Estado, Club, Período,
+ * Cantidad de Equipos, Jugadores, Entrenadores, Competencias, Entrenamientos y Partidos.
  *
  * =====================================================================
- * INFORMACIÓN INSTITUCIONAL
- * Ficha completa: Nombre legal, Siglas, Logo, Banner, Colores institucionales, Fundación, Historia,
- * Contacto (Correo, Tel, WhatsApp, Web), Redes Sociales y Ubicación.
+ * DIRECTORIO DE TEMPORADAS
+ * Tabla con: Nombre, Club, Inicio, Fin, Estado, Equipos, Jugadores, Competencias, Partidos, Actividad y Acciones.
+ * Acciones: Buscar, Filtrar, Ordenar, Exportar, Duplicar, Archivar.
  *
  * =====================================================================
- * SEDES e INSTALACIONES
- * - Sedes: Un club puede tener múltiples sedes con dirección, contacto y estado.
- * - Instalaciones: Canchas (Principal/Auxiliar), Gimnasio, Sala de Musculación, Consultorio, Oficinas.
- * - Canchas: Tipo de superficie, medidas, red, iluminación, disponibilidad y fotos.
+ * CREAR TEMPORADA (Wizard completo)
+ * Paso 1: Información (Nombre, Descripción, Club, Año, Fecha inicio/fin, Color, Imagen, Estado).
+ * Paso 2: Configuración (Temporada activa, Moneda, Zona horaria, Formato fecha, Configuración deportiva).
+ * Paso 3: Inicialización (Copiar categorías, entrenadores, equipos, sponsors y configuraciones de la temporada anterior).
+ * Paso 4: Resumen y Creación.
  *
  * =====================================================================
- * ESTRUCTURA DEPORTIVA
- * - Categorías: Mini, Sub 12 a Sub 21, Mayores, Veteranos, Mixto.
- * - Equipos: Administración de la relación entre Club y Equipos (Planteles, Entrenadores, Capitanes).
- * - Cuerpo Técnico: Entrenadores, Asistentes, PF, Médicos, Kinesiólogos, Analistas, Utileros.
+ * ESTADOS, CALENDARIO & OBJETIVOS
+ * - Estados: Preparación, Activa, Pausada, Finalizada, Archivada.
+ * - Calendario: Anual con entrenamientos, competencias, eventos, reuniones y fechas importantes.
+ * - Objetivos: Deportivos, Institucionales, Económicos y de Formación.
+ * - Presupuesto: Registro de presupuesto estimado y observaciones.
  *
  * =====================================================================
- * GESTIÓN DE PERSONAS Y RECURSOS
- * - Socios: Registro de número de socio, estado, categoría y fecha de ingreso.
- * - Sponsors: Patrocinadores con logo, contrato, vigencia y archivos asociados.
- * - Documentos: Biblioteca (Reglamentos, Contratos, Estatutos, Seguros) organizada por carpetas.
- * - Galería: Material institucional (Fotos, Videos, Branding).
+ * CLONAR Y PLANTILLAS
+ * - Guardar temporada como plantilla.
+ * - Clonar: Crear temporada nueva copiando estructura (no estadísticas/resultados/auditoría) con selección manual de qué copiar.
  *
  * =====================================================================
  * DRAWER, ACTION BAR & COMMAND PALETTE
- * - Drawer: Resumen, Sedes, Instalaciones, Categorías, Equipos, Sponsors, Documentos, Configuración.
- * - Action Bar: Accesos rápidos para crear sedes, canchas, categorías, subir documentos, etc.
- * - Command Palette (CTRL+K): Buscar club, categoría, cancha, documento o sponsor.
+ * - Tabs: Resumen, Configuración, Equipos, Entrenadores, Competencias, Calendario, Objetivos, Sponsors, Actividad.
+ * - Action Bar: Nueva Temporada, Duplicar, Archivar, Finalizar, Activar.
+ * - Command Palette (CTRL+K): Buscar temporada, ir al Dashboard, Duplicar, Archivar o Activar.
  *
  * =====================================================================
- * AUDITORÍA & PERMISOS
- * Registro de cambios institucionales y control de acceso vía Permission Engine (club.view, club.edit, etc).
+ * REGLAS & RELACIONES
+ * - Un Club puede tener múltiples temporadas, pero solo una activa.
+ * - Las archivadas son de solo lectura; nunca eliminar, siempre archivar.
+ * - La Temporada es el PADRE OBLIGATORIO de: Categorías, Equipos, Jugadores, Entrenadores, Competencias, Partidos, Scout, etc.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * Un Club debe ser el centro operativo de toda la actividad deportiva.
- * Las siguientes fases (Equipos, Jugadores, Competencias y Partidos) se integrarán en este dominio.
+ * VolleyStatss deberá administrar el ciclo deportivo completo mediante temporadas.
+ * Esta estructura será la base para las siguientes fases de desarrollo.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
