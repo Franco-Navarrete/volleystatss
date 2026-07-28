@@ -38,7 +38,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
@@ -47,7 +47,8 @@ import {
   SheetHeader, 
   SheetTitle, 
   SheetDescription,
-  SheetFooter
+  SheetFooter,
+  SheetTrigger
 } from "@/components/ui/sheet";
 import { 
   Table, 
@@ -155,7 +156,24 @@ function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
   const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
+  const [selectedAuditLog, setSelectedAuditLog] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("organizations");
+  
+  // Persistencia de preferencia de vista (simulada con estado, podría ser localStorage)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
+  const breadcrumbs = useMemo(() => {
+    const base = [{ label: "Administración", value: "admin" }];
+    const tabs: Record<string, string> = {
+      organizations: "Organizaciones",
+      users: "Usuarios",
+      modules: "Módulos",
+      billing: "Suscripciones",
+      audit: "Auditoría"
+    };
+    return [...base, { label: tabs[activeTab] || "General", value: activeTab }];
+  }, [activeTab]);
 
   if (checking) {
     return (
@@ -181,12 +199,25 @@ function AdminPage() {
     );
   }
 
+  const handleAuditClick = () => {
+    setActiveTab("audit");
+  };
+
+  const handleCreateAction = (type: string) => {
+    console.log(`Iniciando Wizard para: ${type}`);
+    // Aquí se abriría el Wizard correspondiente
+    alert(`Esta funcionalidad aún no está disponible: Wizard de ${type}`);
+  };
+
   return (
     <AppShell>
       <div className="mb-6 flex items-center gap-2 text-xs font-medium text-muted-foreground overflow-hidden whitespace-nowrap">
-        <span>Administración</span>
-        <ChevronRight className="size-3" />
-        <span className="text-foreground">General</span>
+        {breadcrumbs.map((b, i) => (
+          <div key={b.value} className="flex items-center gap-2">
+            <span className={i === breadcrumbs.length - 1 ? "text-foreground font-bold" : ""}>{b.label}</span>
+            {i < breadcrumbs.length - 1 && <ChevronRight className="size-3" />}
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -205,6 +236,7 @@ function AdminPage() {
               size="icon" 
               className="size-8 rounded-md"
               onClick={() => setViewMode('table')}
+              title="Vista Tabla"
             >
               <List className="size-4" />
             </Button>
@@ -213,20 +245,54 @@ function AdminPage() {
               size="icon" 
               className="size-8 rounded-md"
               onClick={() => setViewMode('cards')}
+              title="Vista Tarjetas"
             >
               <Grid className="size-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="h-9 border-border/60">
+          <Button variant="outline" size="sm" className="h-9 border-border/60" onClick={handleAuditClick}>
             <History className="size-4 mr-2" /> Auditoría
           </Button>
-          <Button size="sm" className="h-9 shadow-glow px-4">
-            <Plus className="size-4 mr-2" /> Crear
-          </Button>
+          
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm" className="h-9 shadow-glow px-4">
+                <Plus className="size-4 mr-2" /> Crear
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>Crear Nuevo Elemento</SheetTitle>
+                <SheetDescription>Seleccione qué tipo de entidad desea crear en el sistema.</SheetDescription>
+              </SheetHeader>
+              <div className="grid gap-4 py-6">
+                {[
+                  { label: "Nueva Organización", icon: Building2, type: "org" },
+                  { label: "Nuevo Usuario", icon: Users, type: "user" },
+                  { label: "Nuevo Rol", icon: Shield, type: "role" },
+                  { label: "Nuevo Permiso", icon: Key, type: "permission" },
+                  { label: "Nuevo Módulo", icon: Package, type: "module" },
+                  { label: "Nuevo Plan", icon: CreditCard, type: "plan" },
+                  { label: "Nueva Suscripción", icon: Zap, type: "subscription" },
+                ].map((item) => (
+                  <Button 
+                    key={item.type}
+                    variant="outline" 
+                    className="justify-start h-12 text-left px-4 hover:border-primary/50 hover:bg-primary/5"
+                    onClick={() => handleCreateAction(item.label)}
+                  >
+                    <item.icon className="size-5 mr-3 text-primary" />
+                    <span>{item.label}</span>
+                    <ChevronRight className="size-4 ml-auto opacity-40" />
+                  </Button>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
-      <Tabs defaultValue="organizations" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/50 p-1 rounded-xl h-auto flex flex-wrap gap-1 border border-border/40">
           <TabsTrigger value="organizations" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
             <Building2 className="size-4 mr-2" /> Organizaciones
@@ -261,17 +327,19 @@ function AdminPage() {
         </TabsContent>
 
         <TabsContent value="billing" className="m-0 focus-visible:outline-none">
-          <SubscriptionsSection />
+          <SubscriptionsSection onSelect={setSelectedSubscription} />
         </TabsContent>
 
         <TabsContent value="audit" className="m-0 focus-visible:outline-none">
-          <AuditLogSection />
+          <AuditLogSection onSelect={setSelectedAuditLog} />
         </TabsContent>
       </Tabs>
 
       <UserDetailDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
       <OrgDetailDrawer org={selectedOrg} onClose={() => setSelectedOrg(null)} />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
+      <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
+      <AuditDetailDrawer log={selectedAuditLog} onClose={() => setSelectedAuditLog(null)} />
     </AppShell>
   );
 }
@@ -426,7 +494,10 @@ function ModulesSection({ onSelect }: { onSelect: (m: any) => void }) {
                   <CardDescription className="text-xs">{m.plan}</CardDescription>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="size-8" onClick={(e) => { e.stopPropagation(); /* config */ }}>
+              <Button variant="ghost" size="icon" className="size-8" onClick={(e) => { 
+                e.stopPropagation(); 
+                onSelect({...m, view: 'config'});
+              }}>
                 <Settings className="size-4 text-muted-foreground" />
               </Button>
             </div>
