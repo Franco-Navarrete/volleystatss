@@ -1,83 +1,82 @@
 /**
- * # FASE 12 - Match Engine
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine.
- * Ahora comienza el desarrollo del Match Engine. Este será el corazón operativo de VolleyStatss.
- * No quiero una ficha de partido. Quiero un motor completo capaz de administrar todo el ciclo de vida de un partido de voleibol.
- * Inspirado en: Data Volley, Volleyball World, FIVB Live, VolleyStation, Hudl, Balltime.
+ * # FASE 13 - Training Performance Engine
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine, ✔ Match Engine.
+ * Ahora comienza el desarrollo del Training Performance Engine. Este será el centro de trabajo diario para entrenadores y cuerpos técnicos.
+ * No quiero un calendario de entrenamientos. Quiero un sistema profesional para planificar, ejecutar, medir y analizar entrenamientos.
+ * Inspirado en: TeamBuildr, Smartabase, Teamworks, AthleteMonitoring, Hudl Practice Planner. Adaptado al voleibol.
  *
  * =====================================================================
  * OBJETIVO
- * Todo lo que ocurra durante un partido deberá depender del Match Engine:
- * El Scout, El Video, El Marcador, Los Eventos, Las Estadísticas, La IA. Todo.
+ * Administrar el ciclo completo de un entrenamiento: Planificación, Ejecución, Asistencia, Carga, Evaluación, Evolución.
+ * Todo deberá quedar registrado.
  *
  * =====================================================================
  * MODELO Y ESTADOS
- * - Modelo: Competencia ↓ Fecha ↓ Partido ↓ Set ↓ Rally ↓ Evento ↓ Estadística.
- * - Estados: Programado, Confirmado, Calentamiento, En juego, Entre sets, Suspendido, Finalizado, Validado, Archivado.
+ * - Modelo: Temporada ↓ Categoría ↓ Equipo ↓ Plan de entrenamiento ↓ Sesión ↓ Bloques ↓ Ejercicios ↓ Participación ↓ Evaluaciones.
+ * - Estados: Borrador, Planificado, Confirmado, En progreso, Finalizado, Cancelado, Archivado.
  *
  * =====================================================================
- * DIRECTORIO Y CREAR PARTIDO (Wizard)
- * - Directorio: Tabla con Fecha, Hora, Competencia, Equipos, Cancha, Estado, Resultado, Árbitros, Scout, Video.
+ * DIRECTORIO Y CREAR ENTRENAMIENTO (Wizard)
+ * - Directorio: Tabla con Fecha, Hora, Equipo, Categoría, Entrenador, Objetivo, Duración, Asistencia, Estado.
  * - Wizard:
- *   Paso 1: Información (Competencia, Fecha/Hora, Cancha, Equipos).
- *   Paso 2: Equipo Arbitral (1°, 2°, Planillero, Anotador, Líneas, Supervisor).
- *   Paso 3: Configuración (Sets, Puntuación, Tie Break, Timeouts, Challenge, Reglamento).
- *   Paso 4: Streaming (Transmisión, URL, Canal, Video en vivo).
+ *   Paso 1: Información (Nombre, Equipo, Categoría, Temporada, Fecha/Hora, Duración, Lugar, Responsable).
+ *   Paso 2: Objetivos (Principal, Secundarios, Fundamentos técnicos, Sistema táctico, Carga esperada).
+ *   Paso 3: Planificación (Calentamiento, Técnica, Táctica, Juego reducido/formal, Prep. física, Vuelta a la calma).
+ *   Paso 4: Participantes (Convocar jugadores y staff, Registrar invitados).
  *   Paso 5: Resumen y Creación.
  *
  * =====================================================================
- * PRE-MATCH, LINEUP Y SETS
- * - Pre-Match: Convocatoria, Plantel, Uniformes, Capitanes, Líberos, Calentamiento, Checklist.
- * - Lineup: Rotación inicial, Posiciones, Cambios, Capitán, Líbero, Formación.
- * - Sets: Marcador, Duración, Eventos, Timeouts, Cambios, Rallies, Estadísticas.
+ * BLOQUES, EJERCICIOS Y DIAGRAMAS
+ * - Bloques: Nombre, Tipo, Duración, Objetivo, Orden y Observaciones por cada parte de la sesión.
+ * - Ejercicios: Biblioteca reutilizable (Nombre, Descripción, Cantidad de jugadores, Materiales, Videos, Imágenes, Diagramas).
+ * - Diagramas: Cancha, Posiciones, Trayectorias, Conos, Balones, Red (Animaciones futuras).
  *
  * =====================================================================
- * RALLIES Y EVENTOS
- * - Rallies: Inicio/Fin, Duración, Ganador, Cantidad de acciones, Video y Scout asociado.
- * - Eventos: Saque, Recepción, Levantada, Ataque, Bloqueo, Defensa, Freeball, Timeout, Cambio, Sanción, Challenge.
+ * ASISTENCIA, CARGA Y EVALUACIONES
+ * - Asistencia: Presente, Ausente, Justificado, Llegó tarde, Se retiró antes.
+ * - Carga: RPE, Duración, Carga interna/externa, Fatiga.
+ * - Evaluaciones: Técnica, Táctica, Física, Mental, Compromiso.
  *
  * =====================================================================
- * LIVE SCORE Y TIMELINE
- * - Live Score: Marcador en vivo (Puntos, Sets, Timeouts, Cambios, Rotación, Servidor, Racha).
- * - Timeline: Línea de tiempo cronológica, navegación, filtros, búsqueda y relación con video.
+ * PLANIFICACIÓN SEMANAL Y CALENDARIO
+ * - Planificación Semanal: Vista para arrastrar, duplicar, mover o cancelar entrenamientos.
+ * - Calendario: Vista diaria, semanal y mensual (filtrado por equipo o entrenador).
  *
  * =====================================================================
- * ÁRBITROS, DOCUMENTOS Y DRAWER
- * - Árbitros: Gestión del equipo arbitral, Calificaciones, Observaciones e Incidentes.
- * - Documentos: Planilla oficial, Acta, Reglamento, Informes.
- * - Drawer Tabs: Resumen, Equipos, Convocatoria, Lineups, Sets, Timeline, Scout, Video, Árbitros, Auditoría.
+ * DOCUMENTOS, DRAWER Y ACCIONES
+ * - Documentos: Planificaciones, Archivos, Videos, PDFs, Presentaciones.
+ * - Drawer Tabs: Resumen, Planificación, Bloques, Ejercicios, Participantes, Asistencia, Carga, Evaluaciones, Auditoría.
+ * - Acciones: Nuevo Entrenamiento/Ejercicio, Duplicar, Cancelar, Exportar (PDF/Excel).
  *
  * =====================================================================
- * ACTION BAR, COMMAND PALETTE, PERMISOS Y AUDITORÍA
- * - Acciones: Iniciar/Finalizar, Abrir Scout/Video/Live, Agregar Evento, Exportar.
- * - Command Palette (CTRL+K): Buscar, Abrir Live/Scout/Video, Editar, Finalizar.
- * - Permisos (Permission Engine): match.view, match.create, match.start, match.live, match.scout, etc.
- * - Auditoría: Registro de creación, cambios de horario/cancha, inicio/pausa/fin, cambio de árbitros, ediciones.
+ * COMMAND PALETTE, PERMISOS Y AUDITORÍA
+ * - Command Palette (CTRL+K): Buscar entrenamiento/ejercicio, Duplicar sesión, Registrar asistencia.
+ * - Permisos: training.view, training.create, training.execute, training.attendance, training.evaluation, etc.
+ * - Auditoría: Registro de creación, edición, cambios de horario/entrenador, asistencia, evaluaciones, finalización.
  *
  * =====================================================================
  * REGLAS
- * Un Partido pertenece siempre a una Competencia. Debe generar automáticamente:
- * Sets, Timeline, Eventos, Scout, Video, Analytics e IA. Nunca eliminar; siempre archivar.
+ * Un entrenamiento pertenece a un Equipo. Puede repetirse semanalmente y reutilizar plantillas.
+ * Los ejercicios deben almacenarse en una biblioteca central. Nunca eliminar; siempre archivar.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * El Match Engine deberá convertirse en el núcleo operativo de VolleyStatss.
- * Todos los módulos futuros deberán integrarse directamente con este motor.
+ * VolleyStatss permitirá planificar, ejecutar y evaluar entrenamientos de manera profesional.
+ * Toda la información se cruzará posteriormente con Partidos, Scout, Video y Analytics.
  *
- * Match
+ * Training
  * │
- * ├── MatchSetup
- * ├── MatchOfficial
- * ├── MatchLineup
- * ├── MatchSubstitution
- * ├── MatchSet
- * ├── MatchRally
- * ├── MatchEvent
- * ├── MatchTimeline
- * ├── MatchScorecard
- * ├── MatchDocument
- * ├── MatchMedia
- * └── MatchAudit
+ * ├── TrainingSession
+ * ├── TrainingPlan
+ * ├── TrainingBlock
+ * ├── TrainingExercise
+ * ├── TrainingDiagram
+ * ├── TrainingAttendance
+ * ├── TrainingLoad
+ * ├── TrainingEvaluation
+ * ├── TrainingDocument
+ * ├── TrainingMedia
+ * └── TrainingAudit
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
