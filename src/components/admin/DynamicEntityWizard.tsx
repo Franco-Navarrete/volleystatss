@@ -346,6 +346,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
                     </div>
                   </div>
                 </div>
+              )}
 
               {entityType === "user" && currentStep === 0 && (
                 <>
