@@ -2,66 +2,66 @@
  * # RALLY CORE FRAMEWORK
  * ## Arquitectura Central de VolleyStatss
  *
- * Antes de continuar desarrollando nuevas funcionalidades quiero realizar una refactorización arquitectónica completa.
- * NO quiero seguir agregando pantallas.
- * NO quiero seguir agregando componentes.
- * NO quiero seguir agregando funcionalidades aisladas.
- * Quiero construir el núcleo (Core) de toda la plataforma.
- * Todo el sistema deberá construirse sobre este Core.
- * Ningún módulo podrá implementar lógica propia que ya exista en el Core.
- * El objetivo es que cualquier funcionalidad futura reutilice el Core.
- * La arquitectura debe ser similar a la utilizada por:
- * - GitHub Enterprise, Atlassian, Azure, AWS, Stripe, Notion, Slack, Linear.
+ * La implementación actual del Action Framework es incorrecta.
+ * Actualmente, al hacer clic en:
+ * - Nueva Organización
+ * - Nuevo Usuario
+ * - Nuevo Rol
+ * - Nuevo Permiso
+ * - Nuevo Módulo
+ * - Nuevo Plan
+ * - Nueva Suscripción
+ * el sistema muestra un alert() con un mensaje como:
+ * "Action Framework: Iniciando flujo centralizado..."
+ * y luego no ocurre absolutamente nada.
+ * Ese comportamiento debe eliminarse completamente.
+ * No quiero ningún alert(), prompt(), confirm() ni mensajes de depuración visibles para el usuario.
  *
  * ====================================================================
- * RALLY CORE
- * Crear un nuevo dominio llamado: RALLY CORE.
- * Este será el corazón de toda la plataforma. Todo deberá depender de él. Nunca al revés.
+ * OBJETIVO
+ * El Action Framework debe ser completamente transparente.
+ * El usuario nunca debe saber que existe.
+ * Debe percibir únicamente que se abrió el flujo correspondiente.
  * ====================================================================
- * RALLY CORE estará compuesto por Engines.
- * Cada Engine será responsable de un único dominio del negocio. No mezclar responsabilidades.
+ * FLUJO CORRECTO
+ * Al hacer click sobre cualquier entidad.
+ * Ejemplo: Nuevo Usuario
+ * Debe ocurrir exactamente lo siguiente.
+ * Click ↓ Cerrar Drawer "Crear Nuevo Elemento" ↓ Action Engine ↓ Resolver Entity Definition ↓ Validar permisos ↓ Validar Workspace ↓ Validar módulos ↓ Abrir Dynamic Entity Wizard ↓ Mostrar Paso 1
+ * Nunca detener el flujo. Nunca mostrar mensajes. Nunca usar alert().
  * ====================================================================
- * 1. Identity Engine: Usuarios, Autenticación, Sesiones, Tokens, Invitaciones, Login/Logout, etc.
- * 2. Organization Engine: Organizations, Jerarquías (Parent/Children), Tipos, Branding, Herencia.
- * 3. Workspace Engine: Workspace Activo, Cambio de contexto, persistencia de branding/permisos.
- * 4. Permission Engine: Roles, Permisos, Policies, Rules, Capabilities, Scopes, Herencia.
- * 5. Action Engine: Responsable de TODAS las acciones (Crear, Editar, Eliminar, Mover, Duplicar, etc).
- * 6. Navigation Engine: Menús, Breadcrumbs, Rutas, Favoritos, Historial, Deep Links.
- * 7. Module Engine: Registro de módulos, Dependencias, Marketplace, Versiones, Licencias.
- * 8. Subscription Engine: Planes, Suscripciones, Facturación, Límites, Consumo.
- * 9. Notification Engine: Toast, Alertas, Emails, Push, Mensajes.
- * 10. Audit Engine: Logs, Historial, Eventos, Cambios, Versiones, Trazabilidad.
- * 11. Search Engine: Buscador global, Filtros, Índice, Command Palette (CTRL+K).
- * 12. Event Engine: Eventos internos, Pub/Sub, Sincronización, Automatizaciones.
- * 13. AI Engine: Recomendaciones, Insights, Asistente, Análisis, Predicciones.
+ * EL ACTION FRAMEWORK ES INTERNO
+ * No debe mostrar mensajes como: "Action Framework iniciado", "Action Engine validando", "Iniciando Wizard", "Resolviendo entidad".
+ * Eso pertenece a la arquitectura interna. El usuario nunca debe verlo.
  * ====================================================================
- * TODOS LOS MÓDULOS (Live, Scout, Video, Analytics, Coach, League, Club, etc.)
- * NO podrán implementar lógica propia. Siempre deberán utilizar los Engines.
+ * ENTITY CREATION WIZARD
+ * Implementar un único Wizard reutilizable. No crear siete Wizards distintos.
+ * Debe cambiar automáticamente según la entidad seleccionada.
+ * Ejemplo: Nuevo Usuario -> Crear Usuario (Información Personal, etc.), Nueva Organización -> Crear Organización (Tipo, etc.).
  * ====================================================================
- * ACTION FRAMEWORK
- * Todo botón deberá ejecutar: Action ↓ Permission ↓ Workspace ↓ Organization ↓ Action Engine ↓ Audit ↓ Notification ↓ UI.
- * Nunca llamar directamente un modal o abrir páginas manualmente.
+ * SI EL BACKEND TODAVÍA NO EXISTE
+ * No importa. El Wizard igualmente debe abrirse. Los botones Guardar pueden estar deshabilitados.
+ * Pero el flujo debe existir. El usuario debe poder navegar: Anterior, Siguiente, Cancelar, Cerrar, Resumen.
+ * Nunca detenerse en un alert().
  * ====================================================================
- * ENTITY FRAMEWORK
- * Crear un Entity Registry (Organization, User, Role, Player, Match, Video, etc).
- * Cada Entity registra: Campos, Permisos, Acciones, Validaciones, Íconos, Relaciones.
+ * SI EL FORMULARIO TODAVÍA NO ESTÁ TERMINADO
+ * Mostrar un Wizard real con Header, Stepper, Formulario, Botones y un mensaje elegante:
+ * "Este formulario todavía está en desarrollo."
+ * Pero permitir navegar por los pasos. Nunca finalizar el flujo mostrando un mensaje.
  * ====================================================================
- * UI FRAMEWORK
- * Toda la interfaz reutilizará únicamente componentes del Core:
- * Entity Table, Entity Drawer, Entity Wizard, Entity Form, Action Bar, Toolbar, Filters, etc.
+ * ARQUITECTURA
+ * El Action Framework debe finalizar únicamente en alguno de estos destinos:
+ * OPEN_WIZARD, OPEN_DRAWER, OPEN_MODAL, OPEN_PAGE, RUN_BACKGROUND_TASK, DOWNLOAD_FILE, UPLOAD_FILE.
+ * Nunca finalizar en un alert().
  * ====================================================================
- * COMMAND PALETTE (CTRL + K)
- * Buscador global para ejecutar cualquier acción registrada sin lógica independiente.
- * ====================================================================
- * ANTES DE ESCRIBIR CÓDIGO
- * Realizar un análisis completo de la arquitectura actual.
- * Identificar código duplicado, responsabilidades mezcladas y oportunidades de reutilización.
- * Presentar propuesta antes de la implementación.
+ * DEPURACIÓN
+ * Toda la información de depuración debe ir únicamente a: console.debug() o al sistema de logs.
+ * Nunca mostrar mensajes técnicos al usuario.
  * ====================================================================
  * OBJETIVO FINAL
  * RALLY CORE será el único lugar donde vivirá la lógica transversal.
  * Los módulos únicamente implementarán reglas específicas de su dominio.
- * Base para los próximos 10 años.
+ * Plataforma Enterprise real: flujos de trabajo reales, continuos y consistentes.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
