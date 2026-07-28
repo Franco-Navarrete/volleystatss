@@ -110,10 +110,36 @@ interface DynamicEntityWizardProps {
 
 export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEntityWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [roleData, setRoleData] = useState<RoleInfoData>({
+    name: "",
+    description: "",
+    workspaceId: "",
+    organizationId: "",
+    color: "#3b82f6",
+    icon: "Shield",
+    status: "active",
+    type: "custom"
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const config = ENTITY_CONFIG[entityType];
   const totalSteps = config.steps.length;
 
+  const validateRoleStep = () => {
+    const newErrors: Record<string, string> = {};
+    if (!roleData.name.trim()) newErrors.name = "El nombre es obligatorio";
+    if (!roleData.workspaceId) newErrors.workspaceId = "Debes seleccionar un Workspace";
+    if (!roleData.organizationId) newErrors.organizationId = "Debes seleccionar una Organización";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = () => {
+    if (entityType === "role" && currentStep === 0) {
+      if (!validateRoleStep()) return;
+    }
+
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -125,9 +151,24 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     }
   };
 
+  // Reset state on open
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+      setErrors({});
+    }
+  }, [isOpen]);
+
   if (!config) return null;
 
   const Icon = config.icon;
+
+  const isNextDisabled = () => {
+    if (entityType === "role" && currentStep === 0) {
+      return !roleData.name || !roleData.workspaceId || !roleData.organizationId;
+    }
+    return currentStep === totalSteps - 1 && entityType !== "user";
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
