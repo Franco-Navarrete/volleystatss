@@ -12,6 +12,23 @@
  * Construir el dominio completo "Club". No es una ficha, es una organización con identidad,
  * estructura, personas, instalaciones y actividad deportiva administrada desde un Workspace.
  *
+ * Club
+ * │
+ * ├── Temporada 2026
+ * │     ├── Categorías
+ * │     ├── Equipos
+ * │     ├── Entrenadores
+ * │     ├── Jugadores
+ * │     ├── Competencias
+ * │
+ * ├── Temporada 2027
+ * │     ├── Categorías
+ * │     ├── Equipos
+ * │     ├── Entrenadores
+ * │     ├── Jugadores
+ * │
+ * └── Historial
+ *
  * =====================================================================
  * DASHBOARD DEL CLUB
  * Vista ejecutiva con indicadores: Logo, Estado, Temporada activa, Plan, Jugadores, Equipos,
