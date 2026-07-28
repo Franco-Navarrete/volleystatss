@@ -557,17 +557,28 @@ function LiveMatch() {
   if (analysisMode && !isMobile) {
     return (
       <CompactShell>
-        <WorkspaceLayout>
-          {/* Main content column (Video + Timeline) */}
-          <div className="h-full flex flex-col gap-3 min-h-0">
-             <div className="flex-1 min-h-0 bg-black rounded-lg overflow-hidden">
-               {/* Video would be rendered here, but we'll integrate it better in the next step */}
-               <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20">
-                 Video Analysis Area (Transitioning to Workspace)
-               </div>
-             </div>
-          </div>
-        </WorkspaceLayout>
+        <WorkspaceLayout
+          video={
+            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+              Video Workspace
+            </div>
+          }
+          timeline={
+            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+              Timeline Workspace
+            </div>
+          }
+          left={
+            <div className="h-full w-full flex flex-col p-4">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
+            </div>
+          }
+          right={
+            <div className="h-full w-full flex flex-col p-4">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
+            </div>
+          }
+        />
       </CompactShell>
     );
   }
