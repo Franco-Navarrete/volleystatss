@@ -33,7 +33,8 @@ import {
   Clock,
   ExternalLink,
   Ban,
-  Trash2
+  Trash2,
+  Copy
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
