@@ -80,6 +80,21 @@
  * OBJETIVO FINAL
  * VolleyStatss podrá organizar cualquier competencia de voleibol, desde un torneo escolar
  * hasta una liga nacional con múltiples categorías, fases y formatos.
+ *
+ * Competition
+ * │
+ * ├── CompetitionSeason
+ * ├── CompetitionFormat
+ * ├── CompetitionRuleSet
+ * ├── CompetitionPhase
+ * ├── CompetitionGroup
+ * ├── CompetitionRound (Fecha)
+ * ├── CompetitionStanding
+ * ├── CompetitionParticipant
+ * ├── CompetitionSchedule
+ * ├── CompetitionDocument
+ * ├── CompetitionMedia
+ * └── CompetitionAudit
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
