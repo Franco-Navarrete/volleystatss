@@ -705,7 +705,9 @@ function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => v
                   <p className="text-sm font-bold">Estado del Módulo</p>
                   <p className="text-[10px] text-muted-foreground">Desactivar para toda la plataforma</p>
                 </div>
-                <Badge className="bg-green-500 hover:bg-green-600">Activo</Badge>
+                <div className="flex gap-2">
+                  <Badge className="bg-green-500 hover:bg-green-600 cursor-pointer" onClick={() => alert('Esta funcionalidad aún no está disponible')}>Activo</Badge>
+                </div>
               </div>
               <div className="flex items-center justify-between p-3 rounded-xl border border-border/60">
                 <div>
@@ -716,16 +718,127 @@ function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => v
               </div>
             </div>
           </div>
-          <Button className="w-full shadow-glow py-6 font-black uppercase tracking-widest text-xs">
+          
+          <Button 
+            className="w-full shadow-glow py-6 font-black uppercase tracking-widest text-xs"
+            onClick={() => alert('Abriendo pantalla de Capacidades & Dependencias')}
+          >
             <Settings className="size-4 mr-2" /> Editar Capacidades & Dependencias
           </Button>
+
+          <Card className="border-border/60 bg-muted/20">
+            <CardHeader className="p-4">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Dependencias</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 space-y-2">
+               {module.id === 'intel' && <Badge variant="secondary" className="text-[9px]">Requiere Analytics</Badge>}
+               {module.id === 'video' && <Badge variant="secondary" className="text-[9px]">Requiere Scout</Badge>}
+               <p className="text-[10px] text-muted-foreground italic">Los módulos de RALLY están interconectados para maximizar el rendimiento.</p>
+            </CardContent>
+          </Card>
         </div>
       </SheetContent>
     </Sheet>
   );
 }
 
-function SubscriptionsSection() {
+function SubscriptionDetailDrawer({ sub, onClose }: { sub: any, onClose: () => void }) {
+  if (!sub) return null;
+  return (
+    <Sheet open={!!sub} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-[500px] p-0 border-l border-border/60">
+        <SheetHeader className="p-8 border-b border-border/40">
+          <SheetTitle className="text-2xl font-black">{sub.orgName}</SheetTitle>
+          <SheetDescription>Suscripción {sub.plan}</SheetDescription>
+        </SheetHeader>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+             <div className="p-3 rounded-xl border bg-muted/20">
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Estado</p>
+                <Badge className="mt-1">{sub.status}</Badge>
+             </div>
+             <div className="p-3 rounded-xl border bg-muted/20">
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Monto</p>
+                <p className="text-lg font-black">${sub.amount}/mes</p>
+             </div>
+          </div>
+          <div className="space-y-2">
+            <Button className="w-full justify-start h-12" variant="outline" onClick={() => alert('Esta funcionalidad aún no está disponible')}>
+              <CreditCard className="size-4 mr-2" /> Historial de Pagos
+            </Button>
+            <Button className="w-full justify-start h-12" variant="outline" onClick={() => alert('Esta funcionalidad aún no está disponible')}>
+              <Activity className="size-4 mr-2" /> Ver Consumo Detallado
+            </Button>
+          </div>
+          <div className="pt-6 flex flex-col gap-2">
+            <Button className="w-full bg-primary shadow-glow font-bold">Renovar Suscripción</Button>
+            <Button className="w-full text-destructive" variant="ghost">Suspender Servicio</Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function AuditDetailDrawer({ log, onClose }: { log: any, onClose: () => void }) {
+  if (!log) return null;
+  return (
+    <Sheet open={!!log} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-[600px] p-0 border-l border-border/60">
+        <SheetHeader className="p-8 border-b border-border/40 bg-muted/30">
+          <div className="flex items-center gap-2 text-xs font-black text-primary uppercase tracking-widest mb-2">
+             <History className="size-4" /> Evento de Auditoría
+          </div>
+          <SheetTitle className="text-xl font-black">{log.action}</SheetTitle>
+          <SheetDescription>{new Date(log.timestamp).toLocaleString()}</SheetDescription>
+        </SheetHeader>
+        <div className="p-8 space-y-6 overflow-y-auto max-h-[calc(100vh-120px)]">
+           <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground">Usuario</p>
+                 <p className="text-sm font-medium">{log.userEmail}</p>
+                 <p className="text-[10px] text-muted-foreground font-mono">{log.userId}</p>
+              </div>
+              <div className="space-y-1 text-right">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground">IP de Origen</p>
+                 <p className="text-sm font-mono">{log.ip}</p>
+              </div>
+           </div>
+
+           <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-border/60 bg-card">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Detalles de la Acción</p>
+                 <p className="text-sm">{log.details}</p>
+              </div>
+              
+              <div className="p-4 rounded-xl border border-border/60 bg-black/5 dark:bg-black/20">
+                 <p className="text-[10px] font-black uppercase text-muted-foreground mb-2 flex items-center justify-between">
+                    <span>Payload JSON</span>
+                    <Button variant="ghost" size="icon" className="size-6"><Copy className="size-3" /></Button>
+                 </p>
+                 <pre className="text-[10px] font-mono overflow-x-auto p-2 bg-black/10 rounded">
+                    {JSON.stringify({
+                       id: log.id,
+                       timestamp: log.timestamp,
+                       action: log.action,
+                       entity: log.entity,
+                       status: log.status,
+                       metadata: {
+                          browser: "Chrome 122.0.0",
+                          os: "macOS 14.3",
+                          duration: "45ms"
+                       }
+                    }, null, 2)}
+                 </pre>
+              </div>
+           </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function SubscriptionsSection({ onSelect }: { onSelect: (sub: any) => void }) {
   const listSubs = useServerFn(adminGetSubscriptions);
   const { data: subs, isLoading } = useQuery({ 
     queryKey: ["admin", "subscriptions"], 
@@ -748,7 +861,7 @@ function SubscriptionsSection() {
         </TableHeader>
         <TableBody>
           {subs?.map(s => (
-            <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30">
+            <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30" onClick={() => onSelect(s)}>
               <TableCell className="font-bold text-sm">{s.orgName}</TableCell>
               <TableCell><Badge variant="outline" className="text-[10px]">{s.plan}</Badge></TableCell>
               <TableCell>
@@ -766,7 +879,7 @@ function SubscriptionsSection() {
   );
 }
 
-function AuditLogSection() {
+function AuditLogSection({ onSelect }: { onSelect: (log: any) => void }) {
   const listLogs = useServerFn(adminGetAuditLogs);
   const { data: logs, isLoading } = useQuery({ 
     queryKey: ["admin", "audit-logs"], 
@@ -781,7 +894,7 @@ function AuditLogSection() {
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
           <History className="size-4" /> Transacciones de Sistema
         </h3>
-        <Button variant="ghost" size="sm" className="text-[10px] h-7 font-black">EXPORTAR LOGS</Button>
+        <Button variant="ghost" size="sm" className="text-[10px] h-7 font-black" onClick={() => alert('Exportando a CSV...')}>EXPORTAR LOGS</Button>
       </div>
       <div className="border border-border/60 rounded-xl overflow-hidden bg-card/40">
         <Table>
@@ -797,7 +910,7 @@ function AuditLogSection() {
           </TableHeader>
           <TableBody>
             {logs?.map(log => (
-              <TableRow key={log.id} className="hover:bg-muted/20 text-xs">
+              <TableRow key={log.id} className="cursor-pointer hover:bg-muted/20 text-xs" onClick={() => onSelect(log)}>
                 <TableCell className="text-muted-foreground font-mono">{new Date(log.timestamp).toLocaleTimeString()}</TableCell>
                 <TableCell className="font-medium">{log.userEmail}</TableCell>
                 <TableCell><Badge variant="secondary" className="text-[9px] font-mono">{log.action}</Badge></TableCell>
