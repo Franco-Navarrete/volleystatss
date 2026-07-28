@@ -567,9 +567,8 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
               </div>
             </TabsContent>
 
-            <TabsContent value="workspaces" className="m-0">
-              <div className="space-y-4">
-                <div className="border border-border/60 rounded-lg p-3 bg-muted/30 flex items-center justify-between">
+            <TabsContent value="workspaces" className="m-0 space-y-4">
+                <div className="border border-border/60 rounded-lg p-3 bg-muted/30 flex items-center justify-between cursor-pointer hover:border-primary/40 transition-colors" onClick={() => alert('Abriendo Workspace de Belgrano')}>
                   <div className="flex items-center gap-3">
                     <Building2 className="size-4 text-primary" />
                     <div>
@@ -579,18 +578,35 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
                   </div>
                   <Badge className="text-[9px]">Principal</Badge>
                 </div>
-                <Button variant="outline" className="w-full text-xs h-9 border-dashed">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-xs h-9 border-dashed"
+                  onClick={() => alert('Wizard: Asignar Organización (Paso 1: Buscar, Paso 2: Rol, Paso 3: Permisos, Paso 4: Workspace Principal, Paso 5: Confirmar)')}
+                >
                   <Plus className="size-3 mr-2" /> Asignar a otra Organización
                 </Button>
-              </div>
+            </TabsContent>
+            
+            <TabsContent value="activity" className="m-0">
+               <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-3 text-xs border-b border-border/20 pb-3">
+                       <Clock className="size-3 text-muted-foreground shrink-0 mt-0.5" />
+                       <div>
+                          <p className="font-medium">Inicio de sesión exitoso</p>
+                          <p className="text-[10px] text-muted-foreground">Hace {i * 2} horas • IP: 186.12.{i}.99</p>
+                       </div>
+                    </div>
+                  ))}
+               </div>
             </TabsContent>
           </div>
 
           <div className="p-6 border-t border-border/40 bg-muted/10 grid grid-cols-2 gap-3">
-            <Button variant="outline" size="sm" className="text-xs h-9">
+            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => alert('Usuario suspendido')}>
               <Ban className="size-3 mr-2" /> Suspender
             </Button>
-            <Button size="sm" className="text-xs h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <Button size="sm" className="text-xs h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => confirm('¿Está seguro de eliminar este usuario?')}>
               <Trash2 className="size-3 mr-2" /> Eliminar
             </Button>
           </div>
