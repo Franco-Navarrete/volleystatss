@@ -162,6 +162,12 @@ function AdminPage() {
   const [selectedAuditLog, setSelectedAuditLog] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("organizations");
   
+  // Wizard de Entidades
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [activeEntityType, setActiveEntityType] = useState<EntityType>("user");
+  
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  
   // Persistencia de preferencia de vista (simulada con estado, podría ser localStorage)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
