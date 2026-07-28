@@ -58,15 +58,17 @@
  * Event
  * │
  * ├── EventType
+ * ├── EventCategory
  * ├── EventContext
- * ├── EventMetadata
  * ├── EventTimeline
+ * ├── EventMetadata
  * ├── EventRelation
  * ├── EventComment
+ * ├── EventAttachment
  * ├── EventTag
  * ├── EventSubscription
  * ├── EventNotification
- * ├── EventDocument
+ * ├── EventVersion
  * └── EventAudit
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
