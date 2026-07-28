@@ -440,8 +440,308 @@ function ModulesSection({ onSelect }: { onSelect: (m: any) => void }) {
   );
 }
 
-function SubscriptionsSection() { return <div className="p-8 text-center text-muted-foreground">Gestión de Suscripciones Enterprise</div>; }
-function AuditLogSection() { return <div className="p-8 text-center text-muted-foreground">Historial de Auditoría Global</div>; }
-function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void }) { return <Sheet open={!!user} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Usuario</SheetTitle></SheetHeader></SheetContent></Sheet>; }
-function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) { return <Sheet open={!!org} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Organización</SheetTitle></SheetHeader></SheetContent></Sheet>; }
-function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => void }) { return <Sheet open={!!module} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Módulo</SheetTitle></SheetHeader></SheetContent></Sheet>; }
+function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void }) {
+  if (!user) return null;
+  return (
+    <Sheet open={!!user} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-[540px] p-0 border-l border-border/60">
+        <SheetHeader className="p-6 border-b border-border/40 bg-muted/20">
+          <div className="flex items-center gap-4">
+            <Avatar className="size-12 border-2 border-background shadow-sm">
+              <AvatarFallback className="bg-primary/10 text-primary font-bold">{user.email[0].toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <SheetTitle className="text-xl font-black">{user.email}</SheetTitle>
+              <SheetDescription className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-[10px] uppercase">{user.isAdmin ? 'Administrador Global' : 'Usuario Estandar'}</Badge>
+                <span className="text-[10px] text-muted-foreground">• ID: {user.id.slice(0, 8)}</span>
+              </SheetDescription>
+            </div>
+          </div>
+        </SheetHeader>
+
+        <Tabs defaultValue="overview" className="flex flex-col h-[calc(100vh-100px)]">
+          <TabsList className="w-full justify-start rounded-none border-b border-border/40 bg-transparent px-6 h-12">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none text-xs">Resumen</TabsTrigger>
+            <TabsTrigger value="workspaces" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none text-xs">Organizaciones</TabsTrigger>
+            <TabsTrigger value="activity" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none text-xs">Actividad</TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none text-xs">Seguridad</TabsTrigger>
+          </TabsList>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <TabsContent value="overview" className="m-0 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Estado de Cuenta</span>
+                  <div className="flex items-center gap-2">
+                    <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-sm font-medium">Activo</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Último Acceso</span>
+                  <div className="text-sm font-medium">Hace 2 horas</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary/60">Permisos Efectivos</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge variant="secondary" className="text-[10px]">match.create</Badge>
+                  <Badge variant="secondary" className="text-[10px]">team.manage</Badge>
+                  <Badge variant="secondary" className="text-[10px]">video.analyze</Badge>
+                  <Badge variant="secondary" className="text-[10px]">report.export</Badge>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="workspaces" className="m-0">
+              <div className="space-y-4">
+                <div className="border border-border/60 rounded-lg p-3 bg-muted/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="size-4 text-primary" />
+                    <div>
+                      <p className="text-sm font-bold">Club Atlético Belgrano</p>
+                      <p className="text-[10px] text-muted-foreground">Rol: Entrenador Principal</p>
+                    </div>
+                  </div>
+                  <Badge className="text-[9px]">Principal</Badge>
+                </div>
+                <Button variant="outline" className="w-full text-xs h-9 border-dashed">
+                  <Plus className="size-3 mr-2" /> Asignar a otra Organización
+                </Button>
+              </div>
+            </TabsContent>
+          </div>
+
+          <div className="p-6 border-t border-border/40 bg-muted/10 grid grid-cols-2 gap-3">
+            <Button variant="outline" size="sm" className="text-xs h-9">
+              <Ban className="size-3 mr-2" /> Suspender
+            </Button>
+            <Button size="sm" className="text-xs h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="size-3 mr-2" /> Eliminar
+            </Button>
+          </div>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) {
+  if (!org) return null;
+  return (
+    <Sheet open={!!org} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-[640px] p-0 border-l border-border/60">
+        <SheetHeader className="p-6 border-b border-border/40 bg-primary/5">
+          <div className="flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
+              <Building2 className="size-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <SheetTitle className="text-xl font-black">{org.name}</SheetTitle>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge className="text-[9px] font-black uppercase tracking-tighter">{org.type}</Badge>
+                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Globe className="size-3" /> Red Federada RALLY
+                </span>
+              </div>
+            </div>
+          </div>
+        </SheetHeader>
+
+        <Tabs defaultValue="overview" className="flex flex-col h-[calc(100vh-100px)]">
+          <TabsList className="w-full justify-start rounded-none border-b border-border/40 bg-transparent px-6 overflow-x-auto">
+            {['Resumen', 'Jerarquía', 'Usuarios', 'Módulos', 'Suscripción', 'Config'].map((tab) => (
+              <TabsTrigger 
+                key={tab} 
+                value={tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")} 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none text-xs px-4"
+              >
+                {tab}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            <TabsContent value="resumen" className="m-0 space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="bg-muted/30 border-none shadow-none">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase">Usuarios</p>
+                    <p className="text-xl font-black mt-1">{org.userCount || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-muted/30 border-none shadow-none">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase">Plan</p>
+                    <p className="text-sm font-black mt-1 text-primary">{org.plan || 'N/A'}</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-muted/30 border-none shadow-none">
+                  <CardContent className="p-3 text-center">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase">Estado</p>
+                    <Badge className="mt-1 bg-green-500/20 text-green-600 border-none text-[9px]">ACTIVO</Badge>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary/60 flex items-center gap-2">
+                  <Zap className="size-3" /> Módulos Activos
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {org.modules?.map((m: string) => (
+                    <div key={m} className="flex items-center gap-2 p-2 rounded-lg border border-border/40 bg-card/50">
+                      <div className="size-2 rounded-full bg-primary" />
+                      <span className="text-xs font-medium">{m}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+          </div>
+          
+          <div className="p-4 border-t border-border/40 bg-muted/5 flex justify-between gap-3">
+             <Button variant="outline" size="sm" className="text-xs font-bold px-6">Editar Organización</Button>
+             <div className="flex gap-2">
+               <Button variant="ghost" size="icon" className="size-8 text-destructive"><Trash2 className="size-4" /></Button>
+               <Button size="sm" className="text-xs font-black shadow-glow">Guardar Cambios</Button>
+             </div>
+          </div>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => void }) {
+  if (!module) return null;
+  return (
+    <Sheet open={!!module} onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-[500px] p-0 border-l border-border/60">
+        <SheetHeader className="p-8 border-b border-border/40 bg-gradient-to-br from-primary/10 to-transparent">
+          <LayoutGrid className="size-12 text-primary mb-4" />
+          <SheetTitle className="text-2xl font-black tracking-tighter">{module.name}</SheetTitle>
+          <SheetDescription className="text-sm">{module.desc}</SheetDescription>
+        </SheetHeader>
+        <div className="p-8 space-y-8">
+          <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Configuración del Producto</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-xl border border-border/60">
+                <div>
+                  <p className="text-sm font-bold">Estado del Módulo</p>
+                  <p className="text-[10px] text-muted-foreground">Desactivar para toda la plataforma</p>
+                </div>
+                <Badge className="bg-green-500 hover:bg-green-600">Activo</Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl border border-border/60">
+                <div>
+                  <p className="text-sm font-bold">Versión</p>
+                  <p className="text-[10px] text-muted-foreground">Última actualización: 2024.2.1</p>
+                </div>
+                <Badge variant="outline" className="text-[10px]">v2.4.0-stable</Badge>
+              </div>
+            </div>
+          </div>
+          <Button className="w-full shadow-glow py-6 font-black uppercase tracking-widest text-xs">
+            <Settings className="size-4 mr-2" /> Editar Capacidades & Dependencias
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function SubscriptionsSection() {
+  const listSubs = useServerFn(adminGetSubscriptions);
+  const { data: subs, isLoading } = useQuery({ 
+    queryKey: ["admin", "subscriptions"], 
+    queryFn: () => listSubs() 
+  });
+
+  if (isLoading) return <div className="p-8 text-center animate-pulse">Cargando suscripciones...</div>;
+
+  return (
+    <div className="border border-border/60 rounded-xl overflow-hidden bg-card/40">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/20">
+            <TableHead className="text-[10px] font-black uppercase">Organización</TableHead>
+            <TableHead className="text-[10px] font-black uppercase">Plan</TableHead>
+            <TableHead className="text-[10px] font-black uppercase">Estado</TableHead>
+            <TableHead className="text-[10px] font-black uppercase">Próximo Cobro</TableHead>
+            <TableHead className="text-right text-[10px] font-black uppercase">Monto</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {subs?.map(s => (
+            <TableRow key={s.id} className="cursor-pointer hover:bg-muted/30">
+              <TableCell className="font-bold text-sm">{s.orgName}</TableCell>
+              <TableCell><Badge variant="outline" className="text-[10px]">{s.plan}</Badge></TableCell>
+              <TableCell>
+                <Badge className={s.status === 'active' ? 'bg-green-500/10 text-green-600 border-green-200' : 'bg-red-500/10 text-red-600 border-red-200'}>
+                  {s.status.toUpperCase()}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-xs text-muted-foreground font-mono">{s.nextBilling}</TableCell>
+              <TableCell className="text-right font-black text-sm">${s.amount}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function AuditLogSection() {
+  const listLogs = useServerFn(adminGetAuditLogs);
+  const { data: logs, isLoading } = useQuery({ 
+    queryKey: ["admin", "audit-logs"], 
+    queryFn: () => listLogs() 
+  });
+
+  if (isLoading) return <div className="p-8 text-center animate-pulse">Cargando registros...</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between px-2">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+          <History className="size-4" /> Transacciones de Sistema
+        </h3>
+        <Button variant="ghost" size="sm" className="text-[10px] h-7 font-black">EXPORTAR LOGS</Button>
+      </div>
+      <div className="border border-border/60 rounded-xl overflow-hidden bg-card/40">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/20">
+              <TableHead className="text-[10px] font-black">Timestamp</TableHead>
+              <TableHead className="text-[10px] font-black">Usuario</TableHead>
+              <TableHead className="text-[10px] font-black">Acción</TableHead>
+              <TableHead className="text-[10px] font-black">Entidad</TableHead>
+              <TableHead className="text-[10px] font-black">IP</TableHead>
+              <TableHead className="text-right text-[10px] font-black">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {logs?.map(log => (
+              <TableRow key={log.id} className="hover:bg-muted/20 text-xs">
+                <TableCell className="text-muted-foreground font-mono">{new Date(log.timestamp).toLocaleTimeString()}</TableCell>
+                <TableCell className="font-medium">{log.userEmail}</TableCell>
+                <TableCell><Badge variant="secondary" className="text-[9px] font-mono">{log.action}</Badge></TableCell>
+                <TableCell className="text-muted-foreground italic">{log.entity}</TableCell>
+                <TableCell className="font-mono text-[10px]">{log.ip}</TableCell>
+                <TableCell className="text-right">
+                  <Badge variant={log.status === 'success' ? 'default' : 'destructive'} className="text-[9px]">
+                    {log.status.toUpperCase()}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
