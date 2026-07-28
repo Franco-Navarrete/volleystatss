@@ -1,37 +1,212 @@
 /**
- * # RALLY CORE FRAMEWORK
- * ## Arquitectura Central de VolleyStatss
+ * A partir de este momento comienza la Fase 1 del desarrollo funcional de VolleyStatss.
+ * La infraestructura del sistema ya está implementada:
+ * - RALLY CORE
+ * - Action Framework
+ * - Entity Wizard
+ * - Permission Engine
+ * - Workspace Engine
+ * - Organization Engine
  *
- * El Action Framework es uno de los pilares arquitectónicos del sistema y deberá ser utilizado por absolutamente todos los módulos actuales y futuros.
+ * No quiero seguir desarrollando infraestructura.
+ * No quiero placeholders.
+ * No quiero mensajes "En desarrollo".
+ * No quiero componentes vacíos.
+ * Quiero comenzar a implementar el negocio real.
  *
- * ====================================================================
+ * =====================================================================
+ * FASE 1
+ * Organization Management
+ * Esta será la entidad más importante de toda la plataforma.
+ * Todo el sistema dependerá de ella.
+ * Usuarios
+ * Clubes
+ * Ligas
+ * Federaciones
+ * Equipos
+ * Planes
+ * Permisos
+ * Todo comienza aquí.
+ *
+ * =====================================================================
  * OBJETIVO
- * El Action Framework es el único lugar donde vive la lógica transversal del sistema.
- * Los módulos únicamente implementarán reglas específicas de su dominio. Todo el resto deberá reutilizar el Core.
- * ====================================================================
+ * Construir completamente la administración de Organizaciones.
+ * Debe quedar terminada antes de comenzar Usuarios.
  *
- * ### 1. ENGINE FLOW (TRANSPARENTE AL USUARIO)
- * Click ↓ Acción (ACTION_TYPE) ↓ Action Engine (Validación Contexto) ↓ Dynamic Entity Wizard (UI Centralizada)
+ * =====================================================================
+ * EL WIZARD DEBE FUNCIONAR COMPLETO
+ * No placeholders.
+ * No simulaciones.
+ * No mensajes internos.
  *
- * ### 2. ACTION REGISTRY
- * - CREATE_ORGANIZATION: Flujo jerárquico para Federaciones, Ligas, Clubes.
- * - CREATE_USER: Gestión de identidades y membresías de Workspaces.
- * - MANAGE_ROLES / MANAGE_PERMISSIONS: Control de acceso basado en capacidades.
- * - PROVISION_MODULE / CONFIGURE_SUBSCRIPTION: Ciclo de vida comercial y técnico.
+ * =====================================================================
+ * PASO 1
+ * Tipo de Organización
+ * Opciones
+ * ○ Federación
+ * ○ Asociación
+ * ○ Liga
+ * ○ Club
+ * ○ Academia
+ * ○ Empresa
+ * ○ Otro
+ * Cada tipo debe mostrar una descripción.
  *
- * ### 3. DYNAMIC ENTITY WIZARD (UI CORE)
- * Un componente único (`DynamicEntityWizard.tsx`) que adapta su comportamiento:
- * - Títulos, Iconos y Pasos dinámicos según la entidad.
- * - Stepper visual con validación de estados.
- * - Navegación: [Anterior, Siguiente, Cancelar, Finalizar].
- * - Estados de desarrollo para flujos pendientes (Enterprise Elegante).
+ * =====================================================================
+ * PASO 2
+ * Información General
+ * Nombre
+ * Nombre corto
+ * Siglas
+ * Descripción
+ * Logo
+ * Banner
+ * Correo
+ * Teléfono
+ * WhatsApp
+ * Sitio Web
+ * Facebook
+ * Instagram
+ * TikTok
+ * YouTube
+ * Dirección
+ * Ciudad
+ * Provincia
+ * País
+ * Código Postal
+ * Coordenadas
+ * Estado
+ * Activo
+ * Suspendido
+ * Archivado
  *
- * ### 4. INVARIANTS
- * - NUNCA usar alert(), confirm() o mensajes técnicos de depuración en producción.
- * - Toda la lógica de resolución (Entity Definition) ocurre en segundo plano.
- * - Los errores se manejan mediante Toasts y estados de validación en el formulario.
+ * =====================================================================
+ * PASO 3
+ * Jerarquía
+ * Seleccionar organización padre.
+ * Mostrar árbol.
+ * Ejemplo.
+ * Federación Argentina
+ * └── Federación Córdoba
+ *       └── Liga Norte
+ *              └── Club Quilino
+ * Debe mostrar claramente dónde será creada.
  *
- * Esta arquitectura es la base de VolleyStatss para garantizar escalabilidad multi-tenant y modularidad absoluta.
+ * =====================================================================
+ * PASO 4
+ * Workspace
+ * Nombre del Workspace
+ * Slug
+ * Subdominio
+ * Idioma
+ * Zona horaria
+ * Moneda
+ * Formato de fecha
+ * Branding inicial
+ *
+ * =====================================================================
+ * PASO 5
+ * Plan
+ * Seleccionar plan.
+ * Mostrar comparación.
+ * Free
+ * Coach
+ * Club
+ * League
+ * Federation
+ * Enterprise
+ * Mostrar módulos incluidos.
+ *
+ * =====================================================================
+ * PASO 6
+ * Módulos
+ * Seleccionar.
+ * Live
+ * Scout
+ * Video
+ * Analytics
+ * Coach
+ * Media
+ * Intelligence
+ * Marketplace
+ * Los módulos incompatibles deben aparecer bloqueados.
+ *
+ * =====================================================================
+ * PASO 7
+ * Administrador Principal
+ * Nombre
+ * Apellido
+ * Correo
+ * Teléfono
+ * Rol inicial
+ * Enviar invitación
+ *
+ * =====================================================================
+ * PASO 8
+ * Resumen
+ * Mostrar absolutamente toda la información.
+ * Validar errores.
+ * Permitir volver.
+ * Botón. Crear Organización.
+ *
+ * =====================================================================
+ * DESPUÉS DE CREAR
+ * Crear automáticamente.
+ * Workspace
+ * Organización
+ * Administrador
+ * Rol
+ * Permisos
+ * Plan
+ * Módulos
+ * Auditoría
+ * Notificación
+ * Actualizar árbol de organizaciones.
+ * Sin recargar la página.
+ *
+ * =====================================================================
+ * DRAWER
+ * Al hacer click sobre una organización.
+ * Abrir Drawer.
+ * Tabs.
+ * Resumen
+ * Jerarquía
+ * Usuarios
+ * Equipos
+ * Competencias
+ * Roles
+ * Permisos
+ * Planes
+ * Módulos
+ * Actividad
+ * Configuración
+ *
+ * =====================================================================
+ * TABLA
+ * Implementar tabla profesional.
+ * Columnas.
+ * Logo
+ * Nombre
+ * Tipo
+ * Padre
+ * Workspace
+ * Plan
+ * Estado
+ * Usuarios
+ * Clubes hijos
+ * Última actividad
+ * Acciones
+ * Ordenamiento.
+ * Filtros.
+ * Búsqueda.
+ * Exportación.
+ *
+ * =====================================================================
+ * OBJETIVO
+ * Cuando esta fase termine.
+ * La administración de Organizaciones debe sentirse completamente terminada.
+ * Debe ser posible administrar toda la jerarquía del ecosistema VolleyStatss desde esta única entidad.
+ * No continuar con Usuarios hasta que Organización esté completamente finalizada.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
