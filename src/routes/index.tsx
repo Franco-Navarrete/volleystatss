@@ -1,75 +1,120 @@
 /**
- * # FASE 14 - Event Engine
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine, ✔ Match Engine, ✔ Training Performance Engine.
- * Antes de desarrollar Scout, Video, Live y Analytics quiero construir el Event Engine. Este será el núcleo de captura de información de toda la plataforma.
- * No quiero que Scout, Video o Live creen registros propios. Todos deberán utilizar el mismo motor de eventos.
+ * # FASE 16 - Video Intelligence Engine
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine, ✔ Match Engine, ✔ Training Performance Engine, ✔ Event Engine, ✔ Scout Engine.
+ * Ahora comienza el desarrollo del Video Intelligence Engine.
+ * No quiero un reproductor de video. No quiero un módulo para subir videos.
+ * Quiero una plataforma profesional de análisis de video completamente integrada con el Scout Engine.
+ *
+ * Inspirado en: - Data Video, - Hudl Sportscode, - VolleyStation Video, - Balltime, - Nacsport. Pero con una arquitectura moderna.
  *
  * =====================================================================
  * OBJETIVO
- * Crear un sistema único para registrar cualquier evento deportivo o institucional.
- * Toda la plataforma deberá consumir estos eventos. Un Evento representa algo que ocurrió.
+ * El video nunca será una entidad aislada. Todo video estará sincronizado con:
+ * Match Engine, Scout Engine, Event Engine, Timeline, Analytics, IA.
  *
  * =====================================================================
- * FILOSOFÍA Y MODELO
- * - Filosofía: Registro centralizado (Saque, Ataque, Cambio, Lesión, Inicio de Sesión, Video agregado, etc.).
- * - Modelo: Contexto ↓ Entidad ↓ Evento ↓ Metadata ↓ Timeline ↓ Analytics.
+ * FILOSOFÍA
+ * El video solamente muestra visualmente lo que ocurrió. La fuente de verdad siempre será:
+ * Match ↓ Event ↓ Scout ↓ Timeline ↓ Video. Nunca al revés.
  *
  * =====================================================================
- * CONTEXTO Y TIPOS
- * - Contextos: Match, Training, Competition, Player, Team, Club, Organization, Video, Scout.
- * - Tipos: Sport Event, Administrative, Medical, Training, Video, System, Notification, Custom.
+ * MODELO
+ * Match ↓ Video Session ↓ Timeline ↓ Clip ↓ Tag ↓ Playlist ↓ Analysis.
  *
  * =====================================================================
- * ESTRUCTURA DEL EVENTO Y METADATA
- * - Evento: ID, Tipo, Timestamp, Usuario, Entidad Origen/Destino, Estado, Prioridad, Metadata.
- * - Metadata: Datos dinámicos (Zona, Rotación, Velocidad, Coordenadas, Video, Duración, etc.). Sin límites de esquema.
+ * VIDEO SESSION
+ * Registrar: Nombre, Partido, Fuente, Resolución, FPS, Duración, Estado, Fecha, Operador.
  *
  * =====================================================================
- * TIMELINE Y BUSCADOR
- * - Timeline Universal: Línea cronológica global para buscar, filtrar, agrupar y relacionar eventos.
- * - Buscador Global: Búsqueda por Jugador, Equipo, Evento, Fecha, Usuario, Competencia o Entrenamiento.
+ * SOPORTE
+ * Videos locales, Streaming, Múltiples cámaras, RTSP, HLS, MP4, MOV, MKV.
  *
  * =====================================================================
- * RELACIONES, COMENTARIOS Y ETIQUETAS
- * - Relaciones: Vincular eventos con otros eventos, videos, scouts, documentos, imágenes o evaluaciones.
- * - Comentarios: Historial de comentarios por cada evento registrado.
- * - Etiquetas (Tags): Técnico, Táctico, Error, Acierto, Lesión, IA, Personalizadas.
+ * SINCRONIZACIÓN
+ * Sincronizar automáticamente: Timeline, Scout, Eventos, Sets, Rallies, Rotaciones, Marcador.
  *
  * =====================================================================
- * DRAWER Y ACCIONES
- * - Drawer Tabs: Resumen, Metadata, Timeline, Relaciones, Comentarios, Archivos, Auditoría.
- * - Action Bar: Nuevo Evento, Relacionar, Agregar Comentario, Agregar Archivo, Exportar.
+ * TIMELINE
+ * Crear Timeline profesional. Mostrar: Tiempo, Evento, Jugador, Equipo, Set, Rally, Resultado, Video, Filtros, Zoom.
  *
  * =====================================================================
- * API Y WEBSOCKET
- * - API: Todos los módulos crean eventos vía EventEngine.create(), .update(), .relate(), etc.
- * - WebSocket: Emisión en tiempo real para suscripción de Live Score, Scout, Video, Analytics e IA.
+ * REPRODUCTOR
+ * Profesional: Frame a Frame, J/K/L, Velocidad, Loop, Zoom, Pantalla completa, Mini mapa, Mini timeline, Marcadores.
  *
  * =====================================================================
- * AUDITORÍA Y REGLAS
- * - Auditoría: Registro de creación, edición, eliminación lógica y cambios en relaciones o comentarios.
- * - Reglas: Nunca eliminar físicamente; versionado obligatorio; historial completo de modificaciones.
+ * ATAJOS
+ * Configurar: J, L, K, ←, →, Shift, Ctrl, Macros, Layouts.
+ *
+ * =====================================================================
+ * CLIPS
+ * Crear clips: Manual, Automático, Desde Scout, Desde Timeline, Desde IA.
+ * Permitir: Título, Descripción, Etiquetas, Jugadores, Equipos, Categorías.
+ *
+ * =====================================================================
+ * PLAYLISTS
+ * Crear: Recepciones, Ataques, Errores, Bloqueos, Saques, Rotación 1, Rotación 2, Jugador, Entrenamiento, Comparativas.
+ *
+ * =====================================================================
+ * ETIQUETAS
+ * Agregar: Técnica, Táctica, Error, Acierto, Lesión, Importante, IA, Personalizadas.
+ *
+ * =====================================================================
+ * COMPARADOR
+ * Comparar: Dos videos, Dos jugadores, Dos partidos, Dos rotaciones, Dos equipos. Sincronizados.
+ *
+ * =====================================================================
+ * MULTICÁMARA
+ * Administrar: Cámara Principal, Lateral, Fondo, Drone, Celular. Cambiar instantáneamente.
+ *
+ * =====================================================================
+ * NOTAS
+ * Agregar: Texto, Dibujos, Flechas, Círculos, Marcadores, Comentarios.
+ *
+ * =====================================================================
+ * DIBUJOS
+ * Sobre el video: Flechas, Líneas, Rectángulos, Círculos, Zonas, Libre.
+ *
+ * =====================================================================
+ * AUTO TAGGING
+ * Cuando un evento del Scout ocurre, crear automáticamente un marcador. No utilizar IA todavía.
+ *
+ * =====================================================================
+ * DRAWER
+ * Tabs: Resumen, Timeline, Eventos, Clips, Playlists, Etiquetas, Comparaciones, Archivos, Actividad, Configuración, Auditoría.
+ *
+ * =====================================================================
+ * ACTION BAR
+ * ▶ Reproducir, ⏸ Pausar, ◀ Frame -, ▶ Frame +, 📌 Crear Clip, 🏷 Agregar Tag, 📂 Playlist, 📊 Abrir Scout, 📈 Analytics.
+ *
+ * =====================================================================
+ * COMMAND PALETTE
+ * CTRL + K: Buscar Clip, Buscar Rally, Buscar Jugador, Buscar Evento, Ir al minuto, Ir al set.
+ *
+ * =====================================================================
+ * IMPORTAR
+ * Videos, Timeline, Scout, Clips, Data Video, CSV, JSON.
+ *
+ * =====================================================================
+ * EXPORTAR
+ * MP4, Clips, Playlist, PDF, JSON, CSV.
+ *
+ * =====================================================================
+ * API
+ * VideoEngine.createClip() ↓ Timeline.link() ↓ EventEngine.relate() ↓ Analytics.update().
+ *
+ * =====================================================================
+ * PERMISOS
+ * video.view, video.upload, video.edit, video.clip, video.playlist, video.export, video.compare, video.multicam.
+ * Todos administrados exclusivamente por el Permission Engine.
+ *
+ * =====================================================================
+ * AUDITORÍA
+ * Registrar: Carga, Edición, Nuevo clip, Nueva playlist, Comparación, Exportación, Comentarios.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * VolleyStatss deberá tener un único sistema para registrar cualquier acción realizada por cualquier módulo.
- * Scout, Video, Live Score, Analytics, IA y Entrenamientos consumirán exclusivamente este motor.
- *
- * Event
- * │
- * ├── EventType
- * ├── EventCategory
- * ├── EventContext
- * ├── EventTimeline
- * ├── EventMetadata
- * ├── EventRelation
- * ├── EventComment
- * ├── EventAttachment
- * ├── EventTag
- * ├── EventSubscription
- * ├── EventNotification
- * ├── EventVersion
- * └── EventAudit
+ * VolleyStatss deberá ofrecer una plataforma profesional de análisis de video sincronizada con Scout, Match y Event Engine.
+ * El usuario deberá navegar por eventos, no por minutos del video.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
