@@ -29,6 +29,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RoleInfoStep, type RoleInfoData } from "./steps/RoleInfoStep";
 import { PermissionDefinitionStep, type PermissionDefinitionData } from "./steps/PermissionDefinitionStep";
+import { PlanInformationStep, type PlanInfoData } from "./steps/PlanInformationStep";
+import { PlanFeaturesStep, type PlanFeaturesData } from "./steps/PlanFeaturesStep";
 
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
 
@@ -89,8 +91,9 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
     title: "Nuevo Plan",
     icon: CreditCard,
     steps: [
-      { title: "Plan", description: "Nombre y precio" },
-      { title: "Límites", description: "Restricciones de uso" }
+      { title: "Información del Plan", description: "Nombre y precio" },
+      { title: "Características", description: "Módulos y límites" },
+      { title: "Resumen", description: "Revisión final" }
     ]
   },
   subscription: {
@@ -126,6 +129,22 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     category: "",
     description: ""
   });
+  const [planData, setPlanData] = useState<PlanInfoData & PlanFeaturesData>({
+    name: "",
+    code: "",
+    description: "",
+    type: "club",
+    billing: "mensual",
+    price: 0,
+    currency: "USD",
+    status: "active",
+    color: "#3b82f6",
+    icon: "CreditCard",
+    version: "v1.0",
+    modules: [],
+    limits: {},
+    features: []
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const config = ENTITY_CONFIG[entityType];
@@ -150,6 +169,16 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     return Object.keys(newErrors).length === 0;
   };
 
+  const validatePlanStep = () => {
+    const newErrors: Record<string, string> = {};
+    if (!planData.name.trim()) newErrors.name = "El nombre es obligatorio";
+    if (!planData.code.trim()) newErrors.code = "El código es obligatorio";
+    if (planData.price < 0) newErrors.price = "El precio no puede ser negativo";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = () => {
     if (entityType === "role" && currentStep === 0) {
       if (!validateRoleStep()) return;
@@ -157,6 +186,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     
     if (entityType === "permission" && currentStep === 0) {
       if (!validatePermissionStep()) return;
+    }
+
+    if (entityType === "plan" && currentStep === 0) {
+      if (!validatePlanStep()) return;
     }
 
     if (currentStep < totalSteps - 1) {
@@ -188,6 +221,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     }
     if (entityType === "permission" && currentStep === 0) {
       return !permissionData.key || !permissionData.category;
+    }
+    if (entityType === "plan" && currentStep === 0) {
+      return !planData.name || !planData.code;
     }
     return currentStep === totalSteps - 1 && entityType !== "user";
   };
@@ -266,6 +302,51 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
                 />
               )}
 
+              {entityType === "plan" && currentStep === 0 && (
+                <PlanInformationStep 
+                  data={planData}
+                  onChange={(newData) => setPlanData(prev => ({ ...prev, ...newData }))}
+                  errors={errors}
+                />
+              )}
+
+              {entityType === "plan" && currentStep === 1 && (
+                <PlanFeaturesStep 
+                  data={planData}
+                  onChange={(newData) => setPlanData(prev => ({ ...prev, ...newData }))}
+                />
+              )}
+
+              {entityType === "plan" && currentStep === 2 && (
+                <div className="space-y-6">
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border/40 space-y-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground uppercase">Plan</Label>
+                      <div className="font-bold text-lg">{planData.name} ({planData.code})</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground uppercase">Precio</Label>
+                      <div className="font-bold text-xl text-primary">{planData.price} {planData.currency} / {planData.billing}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground uppercase">Módulos</Label>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {planData.modules.length > 0 ? planData.modules.map(m => (
+                          <Badge key={m} variant="secondary" className="text-[10px]">{m}</Badge>
+                        )) : <span className="text-xs text-muted-foreground italic">Sin módulos seleccionados</span>}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground uppercase">Características</Label>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {planData.features.length > 0 ? planData.features.map(f => (
+                          <Badge key={f} variant="outline" className="text-[10px] border-primary/20 text-primary">{f}</Badge>
+                        )) : <span className="text-xs text-muted-foreground italic">Sin características adicionales</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               {entityType === "user" && currentStep === 0 && (
                 <>
                   <div className="grid gap-2">
@@ -302,9 +383,8 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
               )}
 
               {/* Mensaje de desarrollo elegante si el paso no está completo */}
-              {(entityType === "permission" || 
+              {(entityType === "permission" && currentStep > 0 || 
                 entityType === "module" || 
-                entityType === "plan" || 
                 entityType === "subscription" ||
                 (entityType === "role" && currentStep > 0) ||
                 (entityType === "user" && currentStep > 0) || 
