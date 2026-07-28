@@ -5,6 +5,20 @@
  *
  * Jerarquía: Organización ↓ Club ↓ Temporada ↓ Categoría ↓ Equipo ↓ Jugador
  *
+ * Player
+ * ├── PlayerProfile
+ * ├── PlayerRegistration
+ * ├── PlayerLicense
+ * ├── PlayerAssignment
+ * ├── PlayerMedicalRecord
+ * ├── PlayerPhysicalProfile
+ * ├── PlayerDocument
+ * ├── PlayerMedia
+ * ├── PlayerEvaluation
+ * ├── PlayerTransfer
+ * ├── PlayerStatistic
+ * └── PlayerHistory
+ *
  * =====================================================================
  * OBJETIVO
  * El Jugador es la entidad central de todo el sistema deportivo.
