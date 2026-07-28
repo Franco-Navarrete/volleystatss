@@ -65,6 +65,7 @@ import { adminListUsers } from "@/lib/admin.functions";
 import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
 import { adminGetAuditLogs, adminGetSubscriptions } from "@/lib/admin-saas-extra.functions";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
+import { DynamicEntityWizard, type EntityType } from "@/components/admin/DynamicEntityWizard";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Panel de Administración · RALLY SaaS" }] }),
@@ -161,6 +162,12 @@ function AdminPage() {
   const [selectedAuditLog, setSelectedAuditLog] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("organizations");
   
+  // Wizard de Entidades
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [activeEntityType, setActiveEntityType] = useState<EntityType>("user");
+  
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  
   // Persistencia de preferencia de vista (simulada con estado, podría ser localStorage)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
@@ -204,12 +211,16 @@ function AdminPage() {
     setActiveTab("audit");
   };
 
-  const handleCreateAction = (type: string) => {
-    console.log(`Action Framework -> Resolviendo acción: CREATE_${type.toUpperCase().replace(/\s/g, '_')}`);
-    // En la ETAPA 2, esto llamará al Action Engine centralizado
-    alert(`Action Framework: Iniciando flujo centralizado para [${type}]. 
+  const handleCreateAction = (entity: EntityType) => {
+    // Action Engine - Resolution Path
+    console.debug(`[ActionEngine] Resolviendo acción: CREATE_${entity.toUpperCase()}`);
     
-    El Action Engine validará el contexto de la organización, permisos y módulos antes de abrir el Entity Wizard dinámico.`);
+    // Inicia Wizard dinámico
+    setCreateDrawerOpen(false); // Cierra el selector
+    setActiveEntityType(entity);
+    setWizardOpen(true);
+    
+    console.debug(`[ActionEngine] Abriendo Dynamic Entity Wizard para: ${entity}`);
   };
 
   return (
@@ -257,9 +268,9 @@ function AdminPage() {
             <History className="size-4 mr-2" /> Auditoría
           </Button>
           
-          <Sheet>
+          <Sheet open={createDrawerOpen} onOpenChange={setCreateDrawerOpen}>
             <SheetTrigger asChild>
-              <Button size="sm" className="h-9 shadow-glow px-4">
+              <Button size="sm" className="h-9 shadow-glow px-4" onClick={() => setCreateDrawerOpen(true)}>
                 <Plus className="size-4 mr-2" /> Crear
               </Button>
             </SheetTrigger>
@@ -270,19 +281,19 @@ function AdminPage() {
               </SheetHeader>
               <div className="grid gap-4 py-6">
                 {[
-                  { label: "Nueva Organización", icon: Building2, type: "org" },
-                  { label: "Nuevo Usuario", icon: Users, type: "user" },
-                  { label: "Nuevo Rol", icon: Shield, type: "role" },
-                  { label: "Nuevo Permiso", icon: Key, type: "permission" },
-                  { label: "Nuevo Módulo", icon: Package, type: "module" },
-                  { label: "Nuevo Plan", icon: CreditCard, type: "plan" },
-                  { label: "Nueva Suscripción", icon: Zap, type: "subscription" },
+                  { label: "Nueva Organización", icon: Building2, type: "org" as EntityType },
+                  { label: "Nuevo Usuario", icon: Users, type: "user" as EntityType },
+                  { label: "Nuevo Rol", icon: Shield, type: "role" as EntityType },
+                  { label: "Nuevo Permiso", icon: Key, type: "permission" as EntityType },
+                  { label: "Nuevo Módulo", icon: Package, type: "module" as EntityType },
+                  { label: "Nuevo Plan", icon: CreditCard, type: "plan" as EntityType },
+                  { label: "Nueva Suscripción", icon: Zap, type: "subscription" as EntityType },
                 ].map((item) => (
                   <Button 
                     key={item.type}
                     variant="outline" 
                     className="justify-start h-12 text-left px-4 hover:border-primary/50 hover:bg-primary/5"
-                    onClick={() => handleCreateAction(item.label)}
+                    onClick={() => handleCreateAction(item.type)}
                   >
                     <item.icon className="size-5 mr-3 text-primary" />
                     <span>{item.label}</span>
@@ -343,6 +354,12 @@ function AdminPage() {
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
       <AuditDetailDrawer log={selectedAuditLog} onClose={() => setSelectedAuditLog(null)} />
+
+      <DynamicEntityWizard 
+        isOpen={wizardOpen} 
+        onClose={() => setWizardOpen(false)} 
+        entityType={activeEntityType} 
+      />
     </AppShell>
   );
 }
