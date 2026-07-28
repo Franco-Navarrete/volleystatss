@@ -1,76 +1,60 @@
 /**
- * # FASE 4 - Subscription & Licensing Management
- * Las fases anteriores implementaron: ✔ Organizaciones, ✔ Usuarios, ✔ Roles, ✔ Permisos.
- * Ahora quiero implementar completamente el sistema comercial de la plataforma.
+ * # FASE 5 - Club Management Domain
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions.
+ * Ahora comienza la construcción del ERP Deportivo. El primer dominio será Club Management.
  *
- * No quiero solamente una tabla de planes.
- * Quiero un sistema Enterprise de Suscripciones, Licencias y Consumo.
- * Inspirado en:
- * - Stripe Billing
- * - GitHub Enterprise
- * - Atlassian Cloud
- * - Microsoft 365
- * - Notion
- * - Slack
+ * No quiero un CRUD de Clubes.
+ * Quiero un sistema completo para administrar una institución deportiva.
+ * Inspirado en: TeamSnap, Spond, Teamworks, SportEasy, PlayHQ, Stack Team App.
  *
  * =====================================================================
  * OBJETIVO
- * Construir el sistema completo que determinará qué funcionalidades puede utilizar cada organización.
- * Toda la plataforma dependerá de este módulo.
+ * Construir el dominio completo "Club". No es una ficha, es una organización con identidad,
+ * estructura, personas, instalaciones y actividad deportiva administrada desde un Workspace.
  *
  * =====================================================================
- * MODELO
- * Plan ↓ Licencia ↓ Suscripción ↓ Workspace ↓ Módulos ↓ Límites ↓ Consumo
+ * DASHBOARD DEL CLUB
+ * Vista ejecutiva con indicadores: Logo, Estado, Temporada activa, Plan, Jugadores, Equipos,
+ * Entrenadores, Competencias, Próximos partidos, Última actividad y Acciones rápidas.
  *
  * =====================================================================
- * PLANES
- * Directorio de Planes con tabla: Nombre, Código, Tipo, Precio, Facturación, Límites de Usuarios/Organizaciones, Estado, Versión, Acciones.
- * Acciones: Duplicar, Editar, Archivar, Exportar.
+ * INFORMACIÓN INSTITUCIONAL
+ * Ficha completa: Nombre legal, Siglas, Logo, Banner, Colores institucionales, Fundación, Historia,
+ * Contacto (Correo, Tel, WhatsApp, Web), Redes Sociales y Ubicación.
  *
  * =====================================================================
- * CREAR PLAN (Wizard completo)
- * Paso 1: Información (Nombre, Código, Descripción, Categoría, Color, Icono, Estado).
- * Paso 2: Facturación (Mensual, Anual, Prueba, Enterprise, Precio, Moneda, Impuestos).
- * Paso 3: Módulos (Selección: Live, Scout, Video, Analytics, Coach, AI, Media, Marketplace, API).
- * Paso 4: Límites (Usuarios, Organizaciones, Clubes, Ligas, Equipos, Jugadores, Partidos, Videos, Storage, API, Exportaciones, IA).
- * Paso 5: Características (Branding, White Label, Subdominios, API, Integraciones, Soporte, Backups, Logs, SSO, MFA).
- * Paso 6: Resumen y Guardado.
+ * SEDES e INSTALACIONES
+ * - Sedes: Un club puede tener múltiples sedes con dirección, contacto y estado.
+ * - Instalaciones: Canchas (Principal/Auxiliar), Gimnasio, Sala de Musculación, Consultorio, Oficinas.
+ * - Canchas: Tipo de superficie, medidas, red, iluminación, disponibilidad y fotos.
  *
  * =====================================================================
- * SUSCRIPCIONES
- * Directorio con tabla: Organización, Plan, Estado, Inicio, Vencimiento, Renovación, Método de pago, Monto, Consumo, Acciones.
- * Estados: Trial, Activo, Suspendido, Cancelado, Expirado, Pendiente.
+ * ESTRUCTURA DEPORTIVA
+ * - Categorías: Mini, Sub 12 a Sub 21, Mayores, Veteranos, Mixto.
+ * - Equipos: Administración de la relación entre Club y Equipos (Planteles, Entrenadores, Capitanes).
+ * - Cuerpo Técnico: Entrenadores, Asistentes, PF, Médicos, Kinesiólogos, Analistas, Utileros.
  *
  * =====================================================================
- * LICENCIAS & CONSUMO
- * Cada suscripción genera licencias y rastrea consumo:
- * - Dashboard de consumo: Usuarios, Equipos, Jugadores, Competencias, Videos, Scout, IA, Storage, Bandwidth, API.
- * - Visualización: Disponible vs Utilizado con porcentajes.
+ * GESTIÓN DE PERSONAS Y RECURSOS
+ * - Socios: Registro de número de socio, estado, categoría y fecha de ingreso.
+ * - Sponsors: Patrocinadores con logo, contrato, vigencia y archivos asociados.
+ * - Documentos: Biblioteca (Reglamentos, Contratos, Estatutos, Seguros) organizada por carpetas.
+ * - Galería: Material institucional (Fotos, Videos, Branding).
  *
  * =====================================================================
- * LÍMITES & UPGRADES
- * - Si se alcanza un límite, mostrar advertencia y ofrecer actualización (no bloqueo silencioso).
- * - Flujo de Upgrade: Comparar planes, mostrar diferencias de costo e impacto (módulos/límites nuevos).
- * - Flujo de Downgrade: Validar excesos, explicar qué debe eliminar o qué dejará de funcionar.
+ * DRAWER, ACTION BAR & COMMAND PALETTE
+ * - Drawer: Resumen, Sedes, Instalaciones, Categorías, Equipos, Sponsors, Documentos, Configuración.
+ * - Action Bar: Accesos rápidos para crear sedes, canchas, categorías, subir documentos, etc.
+ * - Command Palette (CTRL+K): Buscar club, categoría, cancha, documento o sponsor.
  *
  * =====================================================================
- * MÓDULOS
- * Los módulos dependen exclusivamente del PLAN, no del rol.
- * Ejemplo: Plan Club incluye Scout/Video/Analytics pero no IA/Marketplace.
- *
- * =====================================================================
- * DRAWER DE SUSCRIPCIÓN
- * Tabs: Resumen, Facturación, Licencias, Consumo, Historial, Pagos, Actividad, Configuración.
- *
- * =====================================================================
- * AUDITORÍA, ACTION BAR & COMMAND PALETTE
- * Registro de cambios de plan, pagos y licencias.
- * Acceso rápido (CTRL+K) para buscar planes, ver consumo y administrar licenciamiento.
+ * AUDITORÍA & PERMISOS
+ * Registro de cambios institucionales y control de acceso vía Permission Engine (club.view, club.edit, etc).
  *
  * =====================================================================
  * OBJETIVO FINAL
- * VolleyStatss deberá tener un sistema profesional de suscripciones.
- * La disponibilidad de módulos dependerá del Subscription Engine; ningún módulo decidirá por sí mismo.
+ * Un Club debe ser el centro operativo de toda la actividad deportiva.
+ * Las siguientes fases (Equipos, Jugadores, Competencias y Partidos) se integrarán en este dominio.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
