@@ -1,50 +1,85 @@
 /**
- * # FASE 10 - People & Staff Management Domain
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management.
- * Ahora quiero implementar el dominio completo de administración de personas que forman parte de la estructura deportiva.
- *
- * Jerarquía: Organización ↓ Club ↓ Temporada ↓ Categoría ↓ Equipo ↓ Staff
+ * # FASE 11 - Competition Engine
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management.
+ * Ahora comienza el desarrollo del Competition Engine.
+ * No quiero un CRUD de torneos.
+ * Quiero un motor completo capaz de administrar cualquier tipo de competencia.
+ * Inspirado en:
+ * - FIVB
+ * - Volleyball World
+ * - CEV
+ * - FeVA
+ * - PlayHQ
+ * - Challonge
+ * - Toornament
  *
  * =====================================================================
  * OBJETIVO
- * Administrar todas las personas que trabajan con un Club, Equipo o Temporada.
- * Cada integrante tendrá un perfil único y podrá desempeñar múltiples funciones simultáneamente.
+ * Construir un motor flexible de competiciones.
+ * Las Competencias serán la entidad que organiza el calendario deportivo.
+ * Los Partidos dependerán de una Competencia.
  *
  * =====================================================================
- * TIPOS DE STAFF Y DASHBOARD
- * - Roles: Entrenadores, Preparadores Físicos, Analistas, Médicos, Kinesiólogos, Nutricionistas, Utileros, Managers y Admins.
- * - Dashboard: Foto, Cargo principal, Equipos asignados, Próximos eventos y Actividad reciente.
+ * JERARQUÍA
+ * Organización ↓ Club ↓ Temporada ↓ Competencia ↓ Fase ↓ Grupo ↓ Fecha ↓ Partido
  *
  * =====================================================================
- * CREACIÓN DE STAFF (Wizard)
- * Paso 1: Información Personal (Nombre, Documento, Contacto, Foto).
- * Paso 2: Información Profesional (Cargo, Especialidades, Licencias, Certificaciones, Nivel).
- * Paso 3: Asignaciones (Club, Temporada, Categoría, Equipo, Rol, Período). Permitir múltiples asignaciones activas.
- * Paso 4: Documentación (Contratos, Licencias, Seguros, Certificados).
+ * TIPOS DE COMPETENCIA
+ * Liga, Apertura, Clausura, Copa, Supercopa, Playoffs, Eliminación Simple, Doble Eliminación,
+ * Round Robin, Round Robin Doble, Grupos + Eliminación, Suizo, Hexagonal, Cuadrangular,
+ * Triangular, Personalizado. Cada formato debe ser configurable.
+ *
+ * =====================================================================
+ * DASHBOARD Y DIRECTORIO
+ * - Dashboard: Nombre, Temporada, Estado, Formato, Equipos, Partidos, Fechas, Tabla actual, Noticias.
+ * - Directorio: Tabla con búsqueda, filtros, ordenamiento y acciones (Duplicar, Archivar, Exportar).
+ *
+ * =====================================================================
+ * CREAR COMPETENCIA (Wizard)
+ * Paso 1: Información (Nombre, Descripción, Temporada, Logo, Banner).
+ * Paso 2: Formato (Tipo, Puntuación, Vueltas, Clasificados, Desempates, Playoffs).
+ * Paso 3: Participantes (Selección de equipos, Importar, Validar categoría/temporada).
+ * Paso 4: Calendario (Fechas, Días habilitados, Horarios, Generación auto/manual).
  * Paso 5: Resumen y Creación.
  *
  * =====================================================================
- * CERTIFICACIONES, ASIGNACIONES Y AGENDA
- * - Certificaciones: Registro de niveles, instituciones, fechas de emisión/vencimiento y archivos.
- * - Asignaciones: Trazabilidad completa de roles por equipo/temporada con historial de movimientos.
- * - Calendario/Agenda: Visibilidad de entrenamientos, partidos, reuniones y capacitaciones asignadas.
+ * FASES, GRUPOS Y FECHAS
+ * - Fases: Regular, Grupos, Cuartos, Semis, Final, Reclasificación (reglas independientes).
+ * - Grupos: Creación, cantidad de equipos, clasificados, sistema de desempate.
+ * - Fechas: Generar, modificar, reprogramar, suspender, cancelar.
+ *
+ * =====================================================================
+ * FIXTURE Y TABLA DE POSICIONES
+ * - Fixture: Motor automático (Round Robin, Manual, Importar, Recalcular).
+ * - Tabla: Calcular PJ, PG, PP, Sets +/-, Puntos +/-, Coeficientes, Racha.
+ *
+ * =====================================================================
+ * REGLAS DE DESEMPATE Y PARTICIPANTES
+ * - Desempates: Puntos, Victorias, Coeficiente de sets/puntos, Resultado entre sí, Sorteo.
+ * - Participantes: Equipo, Categoría, Club, Estado, Inscripción, Observaciones.
  *
  * =====================================================================
  * DOCUMENTOS, GALERÍA Y DRAWER
- * - Documentos: Repositorio central de contratos, licencias y seguros profesionales.
- * - Galería: Material técnico y visual relacionado con la actividad del staff.
- * - Drawer Tabs: Resumen, Bio, Info Profesional, Asignaciones, Certificaciones, Agenda, Documentos, Auditoría.
+ * - Documentos: Reglamento, Cronograma, Comunicados, Planillas.
+ * - Galería: Fotos, Videos, Material institucional.
+ * - Drawer Tabs: Resumen, Equipos, Fixture, Tabla, Fases, Grupos, Documentos, Auditoría, Config.
  *
  * =====================================================================
- * PERMISOS, AUDITORÍA Y REGLAS
- * - Permisos (Permission Engine): staff.view, staff.create, staff.assign, staff.documents, staff.export.
- * - Auditoría: Registro de creación, cambios de cargo, nuevas certificaciones y asignaciones.
- * - Regla: Nunca eliminar físicamente un integrante; conservar todo el historial de asignaciones.
+ * ACTION BAR, COMMAND PALETTE, PERMISOS Y AUDITORÍA
+ * - Acciones: Nueva Competencia, Generar Fixture, Reprogramar, Exportar, Archivar.
+ * - Command Palette (CTRL+K): Buscar competencia, Ir a Dashboard, Ver Tabla.
+ * - Permisos: competition.view, competition.create, competition.edit, competition.fixture, etc.
+ * - Auditoría: Registro de creación, cambios de formato, reprogramación, fixture, reglamento.
+ *
+ * =====================================================================
+ * REGLAS
+ * Una competencia siempre pertenece a una Temporada. Puede tener múltiples fases, grupos y fechas.
+ * Nunca eliminar competencias; siempre archivar.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * VolleyStatss administrará profesionalmente a todo el personal deportivo e institucional.
- * Este dominio será la base para asignar responsables en Entrenamientos, Competencias y Partidos.
+ * VolleyStatss podrá organizar cualquier competencia de voleibol, desde un torneo escolar
+ * hasta una liga nacional con múltiples categorías, fases y formatos.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
