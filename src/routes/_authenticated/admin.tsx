@@ -211,13 +211,16 @@ function AdminPage() {
     setActiveTab("audit");
   };
 
-  const handleCreateAction = (type: string) => {
+  const handleCreateAction = (entity: EntityType) => {
     // Action Engine - Resolution Path
-    console.debug(`[ActionEngine] Resolviendo acción: CREATE_${type.toUpperCase().replace(/\s/g, '_')}`);
+    console.debug(`[ActionEngine] Resolviendo acción: CREATE_${entity.toUpperCase()}`);
     
-    // Inicia Wizard dinámico sin detener el flujo con alerts
-    // TODO: Integrar con Entity Registry central
-    console.debug(`[ActionEngine] Abriendo Dynamic Entity Wizard para: ${type}`);
+    // Inicia Wizard dinámico
+    setCreateDrawerOpen(false); // Cierra el selector
+    setActiveEntityType(entity);
+    setWizardOpen(true);
+    
+    console.debug(`[ActionEngine] Abriendo Dynamic Entity Wizard para: ${entity}`);
   };
 
   return (
