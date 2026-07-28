@@ -64,20 +64,20 @@
  * El Match Engine deberá convertirse en el núcleo operativo de VolleyStatss.
  * Todos los módulos futuros deberán integrarse directamente con este motor.
  *
- * Competition
+ * Match
  * │
- * ├── CompetitionSeason
- * ├── CompetitionFormat
- * ├── CompetitionRuleSet
- * ├── CompetitionPhase
- * ├── CompetitionGroup
- * ├── CompetitionRound (Fecha)
- * ├── CompetitionStanding
- * ├── CompetitionParticipant
- * ├── CompetitionSchedule
- * ├── CompetitionDocument
- * ├── CompetitionMedia
- * └── CompetitionAudit
+ * ├── MatchSetup
+ * ├── MatchOfficial
+ * ├── MatchLineup
+ * ├── MatchSubstitution
+ * ├── MatchSet
+ * ├── MatchRally
+ * ├── MatchEvent
+ * ├── MatchTimeline
+ * ├── MatchScorecard
+ * ├── MatchDocument
+ * ├── MatchMedia
+ * └── MatchAudit
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
