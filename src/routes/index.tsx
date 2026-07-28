@@ -1,95 +1,67 @@
 /**
- * RALLY · Ecosistema Digital del Voleibol
- * Arquitectura: Enterprise SaaS Jerárquico & Multi-tenant.
- * Visión: Plataforma modular para Federaciones, Ligas, Clubes y Jugadores.
- * =====================================================================
- * ESTATUS ARQUITECTÓNICO: ACTION FRAMEWORK (ETAPA 1)
- * =====================================================================
- * Quiero realizar una refactorización completa de la forma en que funcionan todas las acciones del sistema.
- * Actualmente existen botones, menús, iconos y acciones implementadas de manera individual.
- * Eso hará que el proyecto crezca de forma desordenada.
- * Quiero reemplazar completamente esa arquitectura.
- * A partir de ahora quiero implementar un ACTION FRAMEWORK.
- * Toda acción del sistema deberá utilizar este framework.
- * Nunca más un botón decidirá directamente qué hacer.
- * =====================================================================
- * OBJETIVO
- * Centralizar absolutamente todas las acciones del sistema.
- * Ejemplos: Crear, Editar, Eliminar, Duplicar, Archivar, Activar, Desactivar,
- * Mover, Importar, Exportar, Asignar, Invitar, Cambiar Plan, Cambiar Workspace,
- * Suspender, Restablecer contraseña. Todo debe pasar por el mismo flujo.
- * =====================================================================
- * ARQUITECTURA
- * Implementar un Action Engine.
- * El flujo será: Usuario ↓ Hace click ↓ Action Engine ↓ Resolver contexto ↓ 
- * Validar Workspace ↓ Validar Organización ↓ Validar Rol ↓ Validar Permisos ↓ 
- * Validar Módulos ↓ Validar Plan ↓ Resolver tipo de acción ↓ Abrir interfaz ↓ 
- * Ejecutar acción ↓ Actualizar datos ↓ Registrar Auditoría ↓ Mostrar Toast ↓ Actualizar UI.
- * Todas las acciones deberán seguir exactamente este flujo.
- * =====================================================================
- * ACTION REGISTRY
- * Crear un registro central de acciones.
- * Ejemplo: CREATE_ORGANIZATION, EDIT_ORGANIZATION, DELETE_ORGANIZATION, 
- * CREATE_USER, EDIT_USER, DELETE_USER, CREATE_ROLE, CREATE_PERMISSION, 
- * CREATE_MODULE, CREATE_PLAN, CREATE_SUBSCRIPTION, CREATE_TEAM, CREATE_PLAYER, 
- * CREATE_MATCH, CREATE_VIDEO, CREATE_TRAINING, IMPORT_PLAYERS, EXPORT_USERS, 
- * CHANGE_PLAN, CHANGE_WORKSPACE, ASSIGN_ROLE, RESET_PASSWORD, Etc.
- * Cada acción tendrá una configuración: id, nombre, icono, descripción, 
- * categoría, permisos requeridos, módulos requeridos, tipo de interfaz, 
- * confirmación requerida, toast éxito, toast error, registro auditoría.
- * =====================================================================
- * ACTION TYPES
- * No quiero botones que abran cosas manualmente.
- * Cada acción deberá indicar: OPEN_DRAWER, OPEN_MODAL, OPEN_WIZARD, OPEN_PAGE, 
- * OPEN_CONFIRMATION, RUN_BACKGROUND_TASK, DOWNLOAD_FILE, UPLOAD_FILE, 
- * EXPORT_DATA, IMPORT_DATA.
- * El Action Engine decidirá qué interfaz abrir.
- * =====================================================================
- * ENTITY DEFINITIONS
- * Crear un sistema de definición de entidades.
- * Ejemplo: Organization, User, Role, Permission, Module, Plan, Subscription, 
- * League, Club, Team, Player, Competition, Training, Video, Scout.
- * Cada entidad deberá definir: Campos, Permisos, Acciones, Íconos, Validaciones, Relaciones.
- * No quiero lógica distribuida.
- * =====================================================================
- * ENTITY CREATION FRAMEWORK
- * Eliminar los siete Wizards independientes.
- * Crear un único Dynamic Entity Wizard.
- * Debe recibir una Entity Definition.
- * Y generar automáticamente: Título, Formulario, Pasos, Validaciones, Resumen, Confirmación.
- * No quiero componentes duplicados.
- * =====================================================================
- * ACTION BAR
- * Eliminar el botón genérico "Crear".
- * Cada módulo debe tener una barra de acciones contextual.
- * Ejemplo: 
- * Usuarios: + Crear Usuario, Importar, Exportar, Invitar, Roles, Permisos
- * Organizaciones: Nueva Organización, Mover, Fusionar, Exportar Árbol, Configuración
- * Módulos: Nuevo Módulo, Versiones, Dependencias, Marketplace, Logs
- * Planes: Nuevo Plan, Duplicar, Versiones, Promociones
- * =====================================================================
- * COMMAND PALETTE
- * Implementar un buscador global (CTRL + K).
- * Debe permitir ejecutar cualquier acción: Crear Usuario, Crear Club, 
- * Crear Liga, Asignar Rol, Cambiar Workspace, Buscar Organización, 
- * Abrir Auditoría, Ir a Módulos, Cambiar Plan.
- * Todo utilizando el Action Framework.
- * =====================================================================
- * PERMISOS
- * El Action Engine nunca debe ejecutar una acción directamente.
- * Siempre deberá verificar: Workspace activo, Organización, Rol, Permisos, Módulos, Plan.
- * Si alguna condición falla: Mostrar una explicación clara. Nunca simplemente ocultar el error.
- * =====================================================================
- * AUDITORÍA
- * Todas las acciones deberán registrarse automáticamente, sin excepciones.
- * Registrar: Usuario, Workspace, Organización, IP, Fecha, Hora, Entidad, Acción, Resultado, Duración, Cambios realizados.
- * =====================================================================
+ * # RALLY CORE FRAMEWORK
+ * ## Arquitectura Central de VolleyStatss
+ *
+ * Antes de continuar desarrollando nuevas funcionalidades quiero realizar una refactorización arquitectónica completa.
+ * NO quiero seguir agregando pantallas.
+ * NO quiero seguir agregando componentes.
+ * NO quiero seguir agregando funcionalidades aisladas.
+ * Quiero construir el núcleo (Core) de toda la plataforma.
+ * Todo el sistema deberá construirse sobre este Core.
+ * Ningún módulo podrá implementar lógica propia que ya exista en el Core.
+ * El objetivo es que cualquier funcionalidad futura reutilice el Core.
+ * La arquitectura debe ser similar a la utilizada por:
+ * - GitHub Enterprise, Atlassian, Azure, AWS, Stripe, Notion, Slack, Linear.
+ *
+ * ====================================================================
+ * RALLY CORE
+ * Crear un nuevo dominio llamado: RALLY CORE.
+ * Este será el corazón de toda la plataforma. Todo deberá depender de él. Nunca al revés.
+ * ====================================================================
+ * RALLY CORE estará compuesto por Engines.
+ * Cada Engine será responsable de un único dominio del negocio. No mezclar responsabilidades.
+ * ====================================================================
+ * 1. Identity Engine: Usuarios, Autenticación, Sesiones, Tokens, Invitaciones, Login/Logout, etc.
+ * 2. Organization Engine: Organizations, Jerarquías (Parent/Children), Tipos, Branding, Herencia.
+ * 3. Workspace Engine: Workspace Activo, Cambio de contexto, persistencia de branding/permisos.
+ * 4. Permission Engine: Roles, Permisos, Policies, Rules, Capabilities, Scopes, Herencia.
+ * 5. Action Engine: Responsable de TODAS las acciones (Crear, Editar, Eliminar, Mover, Duplicar, etc).
+ * 6. Navigation Engine: Menús, Breadcrumbs, Rutas, Favoritos, Historial, Deep Links.
+ * 7. Module Engine: Registro de módulos, Dependencias, Marketplace, Versiones, Licencias.
+ * 8. Subscription Engine: Planes, Suscripciones, Facturación, Límites, Consumo.
+ * 9. Notification Engine: Toast, Alertas, Emails, Push, Mensajes.
+ * 10. Audit Engine: Logs, Historial, Eventos, Cambios, Versiones, Trazabilidad.
+ * 11. Search Engine: Buscador global, Filtros, Índice, Command Palette (CTRL+K).
+ * 12. Event Engine: Eventos internos, Pub/Sub, Sincronización, Automatizaciones.
+ * 13. AI Engine: Recomendaciones, Insights, Asistente, Análisis, Predicciones.
+ * ====================================================================
+ * TODOS LOS MÓDULOS (Live, Scout, Video, Analytics, Coach, League, Club, etc.)
+ * NO podrán implementar lógica propia. Siempre deberán utilizar los Engines.
+ * ====================================================================
+ * ACTION FRAMEWORK
+ * Todo botón deberá ejecutar: Action ↓ Permission ↓ Workspace ↓ Organization ↓ Action Engine ↓ Audit ↓ Notification ↓ UI.
+ * Nunca llamar directamente un modal o abrir páginas manualmente.
+ * ====================================================================
+ * ENTITY FRAMEWORK
+ * Crear un Entity Registry (Organization, User, Role, Player, Match, Video, etc).
+ * Cada Entity registra: Campos, Permisos, Acciones, Validaciones, Íconos, Relaciones.
+ * ====================================================================
+ * UI FRAMEWORK
+ * Toda la interfaz reutilizará únicamente componentes del Core:
+ * Entity Table, Entity Drawer, Entity Wizard, Entity Form, Action Bar, Toolbar, Filters, etc.
+ * ====================================================================
+ * COMMAND PALETTE (CTRL + K)
+ * Buscador global para ejecutar cualquier acción registrada sin lógica independiente.
+ * ====================================================================
+ * ANTES DE ESCRIBIR CÓDIGO
+ * Realizar un análisis completo de la arquitectura actual.
+ * Identificar código duplicado, responsabilidades mezcladas y oportunidades de reutilización.
+ * Presentar propuesta antes de la implementación.
+ * ====================================================================
  * OBJETIVO FINAL
- * No quiero un conjunto de pantallas independientes.
- * Quiero un Framework de Acciones reutilizable.
- * Cualquier nueva funcionalidad que se agregue dentro de VolleyStatss deberá utilizar este Framework.
- * No deberá existir ninguna acción implementada manualmente fuera del Action Engine.
- * Este Action Framework será uno de los pilares arquitectónicos del sistema y deberá ser utilizado por absolutamente todos los módulos actuales y futuros.
+ * RALLY CORE será el único lugar donde vivirá la lógica transversal.
+ * Los módulos únicamente implementarán reglas específicas de su dominio.
+ * Base para los próximos 10 años.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
