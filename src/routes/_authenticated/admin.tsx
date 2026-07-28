@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
@@ -14,16 +14,54 @@ import {
   LayoutGrid,
   Settings,
   MoreVertical,
-  Plus
+  Plus,
+  Search,
+  Grid,
+  List,
+  Mail,
+  Calendar,
+  Eye,
+  Activity,
+  UserPlus,
+  ArrowRight,
+  Shield,
+  Key,
+  Globe,
+  Database,
+  Lock,
+  Zap,
+  Clock,
+  ExternalLink,
+  Ban,
+  Trash2
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetFooter
+} from "@/components/ui/sheet";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { adminListUsers } from "@/lib/admin.functions";
 import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
+import { OrganizationTree } from "@/components/admin/OrganizationTree";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Panel de Administración · RALLY SaaS" }] }),
