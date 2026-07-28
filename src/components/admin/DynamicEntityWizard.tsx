@@ -226,8 +226,16 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
 
             <Separator className="opacity-40" />
 
-            {/* Formulario Placeholder real según entidad */}
+            {/* Formulario real según entidad */}
             <div className="space-y-6">
+              {entityType === "role" && currentStep === 0 && (
+                <RoleInfoStep 
+                  data={roleData} 
+                  onChange={(newData) => setRoleData(prev => ({ ...prev, ...newData }))}
+                  errors={errors}
+                />
+              )}
+
               {entityType === "user" && currentStep === 0 && (
                 <>
                   <div className="grid gap-2">
@@ -264,14 +272,20 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
               )}
 
               {/* Mensaje de desarrollo elegante si el paso no está completo */}
-              {(entityType !== "user" || currentStep > 0) && (entityType !== "org" || currentStep > 0) && (
+              {(entityType === "permission" || 
+                entityType === "module" || 
+                entityType === "plan" || 
+                entityType === "subscription" ||
+                (entityType === "role" && currentStep > 0) ||
+                (entityType === "user" && currentStep > 0) || 
+                (entityType === "org" && currentStep > 0)) && (
                 <div className="p-8 rounded-2xl border border-dashed border-border/60 bg-muted/5 flex flex-col items-center text-center">
                   <div className="size-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
                     <Info className="size-6 text-muted-foreground" />
                   </div>
                   <h4 className="font-bold text-foreground">Configuración de {config.steps[currentStep].title}</h4>
                   <p className="text-sm text-muted-foreground mt-2 max-w-xs">
-                    Este componente del Action Framework está resolviendo las reglas de negocio para la entidad.
+                    Este componente está resolviendo las reglas de negocio para la entidad.
                   </p>
                   <Badge variant="outline" className="mt-6 font-bold text-[10px] uppercase tracking-widest py-1">
                     En Desarrollo
