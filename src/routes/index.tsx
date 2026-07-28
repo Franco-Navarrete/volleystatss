@@ -1,82 +1,73 @@
 /**
- * # FASE 13 - Training Performance Engine
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine, ✔ Match Engine.
- * Ahora comienza el desarrollo del Training Performance Engine. Este será el centro de trabajo diario para entrenadores y cuerpos técnicos.
- * No quiero un calendario de entrenamientos. Quiero un sistema profesional para planificar, ejecutar, medir y analizar entrenamientos.
- * Inspirado en: TeamBuildr, Smartabase, Teamworks, AthleteMonitoring, Hudl Practice Planner. Adaptado al voleibol.
+ * # FASE 14 - Event Engine
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine, ✔ Match Engine, ✔ Training Performance Engine.
+ * Antes de desarrollar Scout, Video, Live y Analytics quiero construir el Event Engine. Este será el núcleo de captura de información de toda la plataforma.
+ * No quiero que Scout, Video o Live creen registros propios. Todos deberán utilizar el mismo motor de eventos.
  *
  * =====================================================================
  * OBJETIVO
- * Administrar el ciclo completo de un entrenamiento: Planificación, Ejecución, Asistencia, Carga, Evaluación, Evolución.
- * Todo deberá quedar registrado.
+ * Crear un sistema único para registrar cualquier evento deportivo o institucional.
+ * Toda la plataforma deberá consumir estos eventos. Un Evento representa algo que ocurrió.
  *
  * =====================================================================
- * MODELO Y ESTADOS
- * - Modelo: Temporada ↓ Categoría ↓ Equipo ↓ Plan de entrenamiento ↓ Sesión ↓ Bloques ↓ Ejercicios ↓ Participación ↓ Evaluaciones.
- * - Estados: Borrador, Planificado, Confirmado, En progreso, Finalizado, Cancelado, Archivado.
+ * FILOSOFÍA Y MODELO
+ * - Filosofía: Registro centralizado (Saque, Ataque, Cambio, Lesión, Inicio de Sesión, Video agregado, etc.).
+ * - Modelo: Contexto ↓ Entidad ↓ Evento ↓ Metadata ↓ Timeline ↓ Analytics.
  *
  * =====================================================================
- * DIRECTORIO Y CREAR ENTRENAMIENTO (Wizard)
- * - Directorio: Tabla con Fecha, Hora, Equipo, Categoría, Entrenador, Objetivo, Duración, Asistencia, Estado.
- * - Wizard:
- *   Paso 1: Información (Nombre, Equipo, Categoría, Temporada, Fecha/Hora, Duración, Lugar, Responsable).
- *   Paso 2: Objetivos (Principal, Secundarios, Fundamentos técnicos, Sistema táctico, Carga esperada).
- *   Paso 3: Planificación (Calentamiento, Técnica, Táctica, Juego reducido/formal, Prep. física, Vuelta a la calma).
- *   Paso 4: Participantes (Convocar jugadores y staff, Registrar invitados).
- *   Paso 5: Resumen y Creación.
+ * CONTEXTO Y TIPOS
+ * - Contextos: Match, Training, Competition, Player, Team, Club, Organization, Video, Scout.
+ * - Tipos: Sport Event, Administrative, Medical, Training, Video, System, Notification, Custom.
  *
  * =====================================================================
- * BLOQUES, EJERCICIOS Y DIAGRAMAS
- * - Bloques: Nombre, Tipo, Duración, Objetivo, Orden y Observaciones por cada parte de la sesión.
- * - Ejercicios: Biblioteca reutilizable (Nombre, Descripción, Cantidad de jugadores, Materiales, Videos, Imágenes, Diagramas).
- * - Diagramas: Cancha, Posiciones, Trayectorias, Conos, Balones, Red (Animaciones futuras).
+ * ESTRUCTURA DEL EVENTO Y METADATA
+ * - Evento: ID, Tipo, Timestamp, Usuario, Entidad Origen/Destino, Estado, Prioridad, Metadata.
+ * - Metadata: Datos dinámicos (Zona, Rotación, Velocidad, Coordenadas, Video, Duración, etc.). Sin límites de esquema.
  *
  * =====================================================================
- * ASISTENCIA, CARGA Y EVALUACIONES
- * - Asistencia: Presente, Ausente, Justificado, Llegó tarde, Se retiró antes.
- * - Carga: RPE, Duración, Carga interna/externa, Fatiga.
- * - Evaluaciones: Técnica, Táctica, Física, Mental, Compromiso.
+ * TIMELINE Y BUSCADOR
+ * - Timeline Universal: Línea cronológica global para buscar, filtrar, agrupar y relacionar eventos.
+ * - Buscador Global: Búsqueda por Jugador, Equipo, Evento, Fecha, Usuario, Competencia o Entrenamiento.
  *
  * =====================================================================
- * PLANIFICACIÓN SEMANAL Y CALENDARIO
- * - Planificación Semanal: Vista para arrastrar, duplicar, mover o cancelar entrenamientos.
- * - Calendario: Vista diaria, semanal y mensual (filtrado por equipo o entrenador).
+ * RELACIONES, COMENTARIOS Y ETIQUETAS
+ * - Relaciones: Vincular eventos con otros eventos, videos, scouts, documentos, imágenes o evaluaciones.
+ * - Comentarios: Historial de comentarios por cada evento registrado.
+ * - Etiquetas (Tags): Técnico, Táctico, Error, Acierto, Lesión, IA, Personalizadas.
  *
  * =====================================================================
- * DOCUMENTOS, DRAWER Y ACCIONES
- * - Documentos: Planificaciones, Archivos, Videos, PDFs, Presentaciones.
- * - Drawer Tabs: Resumen, Planificación, Bloques, Ejercicios, Participantes, Asistencia, Carga, Evaluaciones, Auditoría.
- * - Acciones: Nuevo Entrenamiento/Ejercicio, Duplicar, Cancelar, Exportar (PDF/Excel).
+ * DRAWER Y ACCIONES
+ * - Drawer Tabs: Resumen, Metadata, Timeline, Relaciones, Comentarios, Archivos, Auditoría.
+ * - Action Bar: Nuevo Evento, Relacionar, Agregar Comentario, Agregar Archivo, Exportar.
  *
  * =====================================================================
- * COMMAND PALETTE, PERMISOS Y AUDITORÍA
- * - Command Palette (CTRL+K): Buscar entrenamiento/ejercicio, Duplicar sesión, Registrar asistencia.
- * - Permisos: training.view, training.create, training.execute, training.attendance, training.evaluation, etc.
- * - Auditoría: Registro de creación, edición, cambios de horario/entrenador, asistencia, evaluaciones, finalización.
+ * API Y WEBSOCKET
+ * - API: Todos los módulos crean eventos vía EventEngine.create(), .update(), .relate(), etc.
+ * - WebSocket: Emisión en tiempo real para suscripción de Live Score, Scout, Video, Analytics e IA.
  *
  * =====================================================================
- * REGLAS
- * Un entrenamiento pertenece a un Equipo. Puede repetirse semanalmente y reutilizar plantillas.
- * Los ejercicios deben almacenarse en una biblioteca central. Nunca eliminar; siempre archivar.
+ * AUDITORÍA Y REGLAS
+ * - Auditoría: Registro de creación, edición, eliminación lógica y cambios en relaciones o comentarios.
+ * - Reglas: Nunca eliminar físicamente; versionado obligatorio; historial completo de modificaciones.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * VolleyStatss permitirá planificar, ejecutar y evaluar entrenamientos de manera profesional.
- * Toda la información se cruzará posteriormente con Partidos, Scout, Video y Analytics.
+ * VolleyStatss deberá tener un único sistema para registrar cualquier acción realizada por cualquier módulo.
+ * Scout, Video, Live Score, Analytics, IA y Entrenamientos consumirán exclusivamente este motor.
  *
- * Training
+ * Event
  * │
- * ├── TrainingSession
- * ├── TrainingPlan
- * ├── TrainingBlock
- * ├── TrainingExercise
- * ├── TrainingDiagram
- * ├── TrainingAttendance
- * ├── TrainingLoad
- * ├── TrainingEvaluation
- * ├── TrainingDocument
- * ├── TrainingMedia
- * └── TrainingAudit
+ * ├── EventType
+ * ├── EventContext
+ * ├── EventMetadata
+ * ├── EventTimeline
+ * ├── EventRelation
+ * ├── EventComment
+ * ├── EventTag
+ * ├── EventSubscription
+ * ├── EventNotification
+ * ├── EventDocument
+ * └── EventAudit
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
