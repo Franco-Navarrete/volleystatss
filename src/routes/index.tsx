@@ -4,6 +4,27 @@
  * Ahora quiero implementar el dominio más importante del ERP deportivo: Season Management.
  * Toda la actividad deportiva deberá depender de una Temporada.
  *
+ * Organización
+ * │
+ * └── Club
+ *     │
+ *     ├── Temporada 2026
+ *     │   ├── Categorías
+ *     │   ├── Equipos
+ *     │   ├── Jugadores
+ *     │   ├── Entrenadores
+ *     │   ├── Competencias
+ *     │   ├── Entrenamientos
+ *     │   ├── Partidos
+ *     │   ├── Scout
+ *     │   ├── Video
+ *     │   └── Analytics
+ *     │
+ *     ├── Temporada 2027
+ *     │   ├── ...
+ *     │
+ *     └── Historial
+ *
  * =====================================================================
  * OBJETIVO
  * Construir un sistema profesional para administrar temporadas deportivas.
