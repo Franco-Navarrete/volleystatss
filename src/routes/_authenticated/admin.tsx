@@ -65,6 +65,7 @@ import { adminListUsers } from "@/lib/admin.functions";
 import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
 import { adminGetAuditLogs, adminGetSubscriptions } from "@/lib/admin-saas-extra.functions";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
+import { DynamicEntityWizard, type EntityType } from "@/components/admin/DynamicEntityWizard";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Panel de Administración · RALLY SaaS" }] }),
