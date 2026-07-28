@@ -1,64 +1,50 @@
 /**
- * # FASE 9 - Player Lifecycle Management
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management.
- * Ahora comienza el desarrollo del dominio Player Management. No es una ficha, es un sistema completo para el ciclo de vida de una persona.
+ * # FASE 10 - People & Staff Management Domain
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management.
+ * Ahora quiero implementar el dominio completo de administración de personas que forman parte de la estructura deportiva.
  *
- * Jerarquía: Organización ↓ Club ↓ Temporada ↓ Categoría ↓ Equipo ↓ Jugador
- *
- * Player
- * ├── PlayerProfile
- * ├── PlayerRegistration
- * ├── PlayerLicense
- * ├── PlayerAssignment
- * ├── PlayerMedicalRecord
- * ├── PlayerPhysicalProfile
- * ├── PlayerDocument
- * ├── PlayerMedia
- * ├── PlayerEvaluation
- * ├── PlayerTransfer
- * ├── PlayerStatistic
- * └── PlayerHistory
+ * Jerarquía: Organización ↓ Club ↓ Temporada ↓ Categoría ↓ Equipo ↓ Staff
  *
  * =====================================================================
  * OBJETIVO
- * El Jugador es la entidad central de todo el sistema deportivo.
- * Toda estadística, entrenamiento, scout, video, evolución y participación deberá relacionarse con un jugador.
+ * Administrar todas las personas que trabajan con un Club, Equipo o Temporada.
+ * Cada integrante tendrá un perfil único y podrá desempeñar múltiples funciones simultáneamente.
  *
  * =====================================================================
- * DASHBOARD Y DIRECTORIO DE JUGADOR
- * Dashboard: Foto, Bio, Equipo actual, Posición, Datos físicos (Altura/Peso/Alcances), Licencia, Médicos, Videos y Actividad.
- * Directorio: Tabla profesional con búsqueda, filtros avanzados, exportación e importación masiva.
+ * TIPOS DE STAFF Y DASHBOARD
+ * - Roles: Entrenadores, Preparadores Físicos, Analistas, Médicos, Kinesiólogos, Nutricionistas, Utileros, Managers y Admins.
+ * - Dashboard: Foto, Cargo principal, Equipos asignados, Próximos eventos y Actividad reciente.
  *
  * =====================================================================
- * CREACIÓN DE JUGADOR (Wizard)
- * Paso 1: Información Personal (Nombre, Documento, Fecha nac, Sexo, Nacionalidad, Contacto, Foto).
- * Paso 2: Información Deportiva (Club, Temporada, Categoría, Equipo, Posición, Dorsal, Mano dominante, Estado).
- * Paso 3: Datos Físicos (Altura, Peso, Alcance ataque/bloqueo, Salto vertical, Observaciones).
- * Paso 4: Documentación (Licencia, Seguro, Apto médico, DNI, Autorizaciones).
+ * CREACIÓN DE STAFF (Wizard)
+ * Paso 1: Información Personal (Nombre, Documento, Contacto, Foto).
+ * Paso 2: Información Profesional (Cargo, Especialidades, Licencias, Certificaciones, Nivel).
+ * Paso 3: Asignaciones (Club, Temporada, Categoría, Equipo, Rol, Período). Permitir múltiples asignaciones activas.
+ * Paso 4: Documentación (Contratos, Licencias, Seguros, Certificados).
  * Paso 5: Resumen y Creación.
  *
  * =====================================================================
- * GESTIÓN DE SALUD, LICENCIAS Y MOVIMIENTOS
- * - Ficha Médica: Grupo sanguíneo, alergias, medicación, historial de lesiones/cirugías y vencimiento de aptos médicos.
- * - Licencias: Número, federación, emisión/vencimiento y renovaciones históricas.
- * - Movimientos: Registro de altas, bajas, préstamos, transferencias y cambios de equipo/categoría (Historial completo).
+ * CERTIFICACIONES, ASIGNACIONES Y AGENDA
+ * - Certificaciones: Registro de niveles, instituciones, fechas de emisión/vencimiento y archivos.
+ * - Asignaciones: Trazabilidad completa de roles por equipo/temporada con historial de movimientos.
+ * - Calendario/Agenda: Visibilidad de entrenamientos, partidos, reuniones y capacitaciones asignadas.
  *
  * =====================================================================
- * RENDIMIENTO, DOCUMENTOS Y GALERÍA
- * - Rendimiento: Estructura base para conectar Partidos, Entrenamientos, Scout, Video y Evaluaciones (IA).
- * - Documentos: Repositorio central de contratos, seguros y autorizaciones.
- * - Galería: Material visual destacado del jugador (Fotos y Clips de video).
+ * DOCUMENTOS, GALERÍA Y DRAWER
+ * - Documentos: Repositorio central de contratos, licencias y seguros profesionales.
+ * - Galería: Material técnico y visual relacionado con la actividad del staff.
+ * - Drawer Tabs: Resumen, Bio, Info Profesional, Asignaciones, Certificaciones, Agenda, Documentos, Auditoría.
  *
  * =====================================================================
- * DRAWER, ACTION BAR Y PERMISOS
- * - Drawer: Resumen, Datos Personales, Info Deportiva, Equipo, Licencias, Ficha Médica, Documentos, Galería, Historial.
- * - Action Bar: Nuevo Jugador, Transferir, Cambiar Equipo, Asignar Dorsal, Exportar, Archivar.
- * - Permisos (Permission Engine): player.view, player.create, player.transfer, player.medical, player.documents, player.statistics.
+ * PERMISOS, AUDITORÍA Y REGLAS
+ * - Permisos (Permission Engine): staff.view, staff.create, staff.assign, staff.documents, staff.export.
+ * - Auditoría: Registro de creación, cambios de cargo, nuevas certificaciones y asignaciones.
+ * - Regla: Nunca eliminar físicamente un integrante; conservar todo el historial de asignaciones.
  *
  * =====================================================================
- * REGLAS Y OBJETIVO FINAL
- * Nunca eliminar físicamente un jugador (Soft Delete); conservar toda la información histórica.
- * El Jugador deberá convertirse en la entidad más importante e integrada de todo el ecosistema deportivo.
+ * OBJETIVO FINAL
+ * VolleyStatss administrará profesionalmente a todo el personal deportivo e institucional.
+ * Este dominio será la base para asignar responsables en Entrenamientos, Competencias y Partidos.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
