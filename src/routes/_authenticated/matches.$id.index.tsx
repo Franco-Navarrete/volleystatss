@@ -61,6 +61,8 @@ import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
 import { useGenderPreference } from "@/hooks/use-gender-preference";
 import { getTerminology } from "@/lib/terminology";
+import { WorkspaceLayout } from "@/components/video/analysis/WorkspaceLayout";
+import { useWorkspaceStore } from "@/lib/video/workspace-store";
 
 
 
@@ -549,6 +551,37 @@ function LiveMatch() {
     [match, teamA, teamB],
   );
 
+
+  const { analysisMode } = useWorkspaceStore();
+
+  if (analysisMode && !isMobile) {
+    return (
+      <CompactShell>
+        <WorkspaceLayout
+          video={
+            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+              Video Workspace
+            </div>
+          }
+          timeline={
+            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+              Timeline Workspace
+            </div>
+          }
+          left={
+            <div className="h-full w-full flex flex-col p-4">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
+            </div>
+          }
+          right={
+            <div className="h-full w-full flex flex-col p-4">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
+            </div>
+          }
+        />
+      </CompactShell>
+    );
+  }
 
   return (
     <CompactShell>

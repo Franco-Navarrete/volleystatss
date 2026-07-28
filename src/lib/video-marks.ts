@@ -21,7 +21,12 @@ export type VideoMarkKind =
   | "timeout"
   | "sub"
   | "sanction"
+  | "set_start"
+  | "set_end"
+  | "rally_start"
+  | "rally_end"
   | "other";
+
 
 export interface VideoMarkAI {
   /** Cajas de detección [x, y, w, h] normalizadas (0-1). */
@@ -77,8 +82,13 @@ export const MARK_COLORS: Record<VideoMarkKind, string> = {
   timeout: "#94a3b8",
   sub: "#64748b",
   sanction: "#f87171",
+  set_start: "#facc15",
+  set_end: "#facc15",
+  rally_start: "rgba(255,255,255,0.2)",
+  rally_end: "rgba(255,255,255,0.2)",
   other: "#94a3b8",
 };
+
 
 export const MARK_LABEL: Record<VideoMarkKind, string> = {
   serve: "Saque",
@@ -91,8 +101,13 @@ export const MARK_LABEL: Record<VideoMarkKind, string> = {
   timeout: "Timeout",
   sub: "Cambio",
   sanction: "Sanción",
+  set_start: "Inicio Set",
+  set_end: "Fin Set",
+  rally_start: "Inicio Rally",
+  rally_end: "Fin Rally",
   other: "Otro",
 };
+
 
 function playerLookup(teamA: Team | undefined, teamB: Team | undefined) {
   const map = new Map<string, { number: number | null; name: string | null; team: string }>();
