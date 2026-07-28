@@ -205,9 +205,11 @@ function AdminPage() {
   };
 
   const handleCreateAction = (type: string) => {
-    console.log(`Iniciando Wizard para: ${type}`);
-    // Aquí se abriría el Wizard correspondiente
-    alert(`Esta funcionalidad ya está en desarrollo: Iniciando Wizard de ${type}`);
+    console.log(`Action Framework -> Resolviendo acción: CREATE_${type.toUpperCase().replace(/\s/g, '_')}`);
+    // En la ETAPA 2, esto llamará al Action Engine centralizado
+    alert(`Action Framework: Iniciando flujo centralizado para [${type}]. 
+    
+    El Action Engine validará el contexto de la organización, permisos y módulos antes de abrir el Entity Wizard dinámico.`);
   };
 
   return (
