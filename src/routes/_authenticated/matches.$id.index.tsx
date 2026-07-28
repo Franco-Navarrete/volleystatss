@@ -61,6 +61,8 @@ import type { CoachAction } from "@/lib/coach-mode-store";
 import { useCoachMode } from "@/lib/coach-mode-store";
 import { useGenderPreference } from "@/hooks/use-gender-preference";
 import { getTerminology } from "@/lib/terminology";
+import { WorkspaceLayout } from "@/components/video/analysis/WorkspaceLayout";
+import { useWorkspaceStore } from "@/lib/video/workspace-store";
 
 
 
@@ -549,6 +551,26 @@ function LiveMatch() {
     [match, teamA, teamB],
   );
 
+
+  const { analysisMode } = useWorkspaceStore();
+
+  if (analysisMode && !isMobile) {
+    return (
+      <CompactShell>
+        <WorkspaceLayout>
+          {/* Main content column (Video + Timeline) */}
+          <div className="h-full flex flex-col gap-3 min-h-0">
+             <div className="flex-1 min-h-0 bg-black rounded-lg overflow-hidden">
+               {/* Video would be rendered here, but we'll integrate it better in the next step */}
+               <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20">
+                 Video Analysis Area (Transitioning to Workspace)
+               </div>
+             </div>
+          </div>
+        </WorkspaceLayout>
+      </CompactShell>
+    );
+  }
 
   return (
     <CompactShell>

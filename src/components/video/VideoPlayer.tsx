@@ -1,7 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { MARK_COLORS, type VideoMark } from "@/lib/video-marks";
+import { useWorkspaceStore } from "@/lib/video/workspace-store";
 import { Button } from "@/components/ui/button";
 import { Pause, Play, Maximize, ChevronsLeft, ChevronsRight, Gauge, AlertTriangle, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { VideoHUD } from "@/components/video/VideoHUD";
 import type { VideoSource } from "@/lib/video/providers";
 
@@ -48,6 +50,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [hoverMark, setHoverMark] = useState<VideoMark | null>(null);
+
+  // Layout state from store
+  const { theaterMode, analysisMode } = useWorkspaceStore();
 
   useImperativeHandle(ref, () => ({
     seekMs: (ms) => {
@@ -150,8 +155,14 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(function VideoPl
   const pct = totalMs > 0 ? (current * 1000 / totalMs) * 100 : 0;
 
   return (
-    <div ref={wrapRef} className="flex flex-col gap-2 bg-black rounded-lg overflow-hidden">
-      <div className="relative bg-black aspect-video">
+    <div ref={wrapRef} className={cn(
+      "flex flex-col gap-2 bg-black rounded-lg overflow-hidden transition-all duration-300",
+      theaterMode && !analysisMode ? "fixed inset-0 z-[100] rounded-none bg-black" : "relative"
+    )}>
+      <div className={cn(
+        "relative bg-black",
+        theaterMode && !analysisMode ? "h-full w-full" : "aspect-video"
+      )}>
         {isYouTube && !effectiveStream ? (
           <iframe
             src={effectiveSrc}
