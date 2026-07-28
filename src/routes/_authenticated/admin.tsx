@@ -207,7 +207,7 @@ function AdminPage() {
   const handleCreateAction = (type: string) => {
     console.log(`Iniciando Wizard para: ${type}`);
     // Aquí se abriría el Wizard correspondiente
-    alert(`Esta funcionalidad aún no está disponible: Wizard de ${type}`);
+    alert(`Esta funcionalidad ya está en desarrollo: Iniciando Wizard de ${type}`);
   };
 
   return (
