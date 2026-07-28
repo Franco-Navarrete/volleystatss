@@ -1,17 +1,14 @@
-/**
- * Línea de tiempo profesional zoomable/paneable.
- *
- * - Cada evento se pinta con el color del fundamento.
- * - Hover: tooltip con jugadora, fundamento, resultado y tiempo.
- * - Click en evento: selecciona la acción (via useAnalysisStore) y salta el video.
- * - Rueda del mouse: zoom sobre el cursor.
- * - Arrastrar: pan horizontal.
- * - Marcadores manuales (estrella / fuego / warn / nota) se pintan encima.
- * - Bloques de rally (buildRallyBlocks) se pintan como bandas de fondo.
- */
 import { useCallback, useMemo, useRef, useState, useEffect } from "react";
-import { MARK_COLORS, type VideoMark, buildRallyBlocks } from "@/lib/video-marks";
+import { MARK_COLORS, type VideoMark, buildRallyBlocks, MARK_LABEL } from "@/lib/video-marks";
 import { useAnalysisStore, CUSTOM_MARKER_META, type CustomMarker } from "@/lib/video/analysis-store";
+import { cn } from "@/lib/utils";
+
+function fmt(ms: number) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
 
 interface Props {
   marks: VideoMark[];
@@ -52,7 +49,6 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     return () => ro.disconnect();
   }, []);
 
-  // Al iniciar reproducción / cambiar currentMs, auto-follow si zoom activo.
   useEffect(() => {
     if (zoom <= 1) return;
     if (currentMs < startMs || currentMs > endMs) {
@@ -60,7 +56,6 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     }
   }, [currentMs, zoom, startMs, endMs, setCenterMs]);
 
-  // Al seleccionar una marca, centrar la timeline sobre ella si está fuera de vista.
   useEffect(() => {
     if (!selectedMarkId) return;
     const m = marks.find((x) => x.id === selectedMarkId);
@@ -68,8 +63,7 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     if (zoom > 1 && (m.tMs < startMs || m.tMs > endMs)) {
       setCenterMs(m.tMs);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMarkId]);
+  }, [selectedMarkId, marks, zoom, startMs, endMs, setCenterMs]);
 
   const msToX = useCallback(
     (ms: number) => ((ms - startMs) / viewportMs) * width,
@@ -90,7 +84,6 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     const factor = e.deltaY < 0 ? 1.25 : 0.8;
     const nz = Math.max(1, Math.min(200, zoom * factor));
     setZoom(nz);
-    // mantener cursor bajo el mouse
     const newViewport = total / nz;
     const newStart = cursorMs - (x / width) * newViewport;
     setCenterMs(Math.max(0, newStart + newViewport / 2));
@@ -110,7 +103,6 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
       setCenterMs(Math.max(0, dragRef.current.center + dMs));
       return;
     }
-    // hover detection: nearest mark within 6px
     let bestMark: VideoMark | undefined;
     let bestDist = 8;
     for (const m of marks) {
@@ -135,7 +127,6 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     if (dragRef.current) return;
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     const px = e.clientX - rect.left;
-    // click sobre marca si está cerca
     let best: VideoMark | undefined;
     let bestDist = 8;
     for (const m of marks) {
@@ -151,167 +142,163 @@ export function AnalysisTimeline({ marks, currentMs, totalMs, matchId, onSeek }:
     onSeek(xToMs(px));
   };
 
-  const fmt = (ms: number) => {
-    const s = Math.max(0, Math.floor(ms / 1000));
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return `${m}:${String(r).padStart(2, "0")}`;
-  };
+  const layers = [
+    { id: "video", label: "VIDEO", color: "oklch(0.62 0.24 240)" },
+    { id: "sets", label: "SETS", color: "#facc15" },
+    { id: "rallies", label: "RALLIES", color: "rgba(255,255,255,0.2)" },
+    { id: "actions", label: "ACCIONES", color: "oklch(0.62 0.24 150)" },
+    { id: "scout", label: "SCOUT", color: "oklch(0.62 0.24 25)" },
+    { id: "clips", label: "CLIPS", color: "#a855f7" },
+    { id: "comments", label: "IA", color: "#06b6d4" },
+  ];
 
   return (
-    <div className="bg-card/40 border border-border rounded-lg p-2 select-none">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 flex items-center justify-between">
-        <span>Línea de tiempo</span>
-        <div className="flex items-center gap-2">
-          <span className="tabular-nums">{fmt(currentMs)} / {fmt(total)}</span>
-          <span className="text-foreground/70 tabular-nums">{zoom.toFixed(1)}×</span>
+    <div className="bg-card/40 border border-border rounded-lg flex flex-col overflow-hidden select-none h-full">
+      <div className="px-3 py-1.5 border-b border-border/40 flex items-center justify-between bg-card/60 backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] font-black tracking-tighter text-muted-foreground">TIMELINE</span>
+          <div className="flex items-center gap-2">
+             <span className="text-[11px] tabular-nums font-mono bg-black/40 px-1.5 py-0.5 rounded border border-white/5">{fmt(currentMs)}</span>
+             <span className="text-white/20">/</span>
+             <span className="text-[11px] tabular-nums font-mono text-muted-foreground">{fmt(total)}</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-black/20 rounded border border-white/5">
+            <span className="text-[10px] text-muted-foreground font-bold">ZOOM</span>
+            <span className="text-[10px] font-mono tabular-nums">{zoom.toFixed(1)}x</span>
+          </div>
           <button
-            className="text-[10px] px-1.5 py-0.5 rounded bg-background/60 border border-border hover:border-primary/60"
+            className="text-[10px] font-bold px-2 py-1 rounded bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-colors uppercase tracking-tight"
             onClick={resetView}
-            title="Ver todo el partido"
           >
-            reset
+            Reset
           </button>
         </div>
       </div>
 
-      <div
-        ref={wrapRef}
-        className="relative h-14 bg-background/60 rounded overflow-hidden cursor-grab active:cursor-grabbing"
-        onWheel={onWheel}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseLeave}
-        onClick={onClick}
-      >
-        {/* Bandas de rally alternadas para dar contexto visual */}
-        {rallyBlocks.map((rb) => {
-          const left = msToX(rb.startMs);
-          const w = msToX(rb.endMs) - left;
-          if (left + w < 0 || left > width) return null;
-          const isSelectedRally = marks.find((m) => m.id === selectedMarkId)?.rallyId === rb.index;
-          return (
-            <div
-              key={rb.index}
-              className="absolute top-0 bottom-0"
-              style={{
-                left,
-                width: Math.max(1, w),
-                background: isSelectedRally
-                  ? "oklch(0.62 0.24 25 / 0.14)"
-                  : rb.index % 2 === 0
-                    ? "rgba(255,255,255,0.02)"
-                    : "rgba(255,255,255,0.045)",
-              }}
-            />
-          );
-        })}
-
-        {/* Ticks cada 30s (o más si viewport grande) */}
-        {(() => {
-          const step = viewportMs > 600_000 ? 60_000 : viewportMs > 120_000 ? 30_000 : 10_000;
-          const ticks: number[] = [];
-          const first = Math.ceil(startMs / step) * step;
-          for (let t = first; t < endMs; t += step) ticks.push(t);
-          return ticks.map((t) => (
-            <div key={t} className="absolute top-0 bottom-0 border-l border-border/40" style={{ left: msToX(t) }}>
-              <span className="absolute bottom-0 left-0.5 text-[9px] text-muted-foreground/80 tabular-nums">{fmt(t)}</span>
-            </div>
-          ));
-        })()}
-
-        {/* Marcas de scouting */}
-        {marks.map((m) => {
-          const x = msToX(m.tMs);
-          if (x < -2 || x > width + 2) return null;
-          const color = MARK_COLORS[m.kind] ?? "#94a3b8";
-          const isSel = selectedMarkId === m.id;
-          return (
-            <div
-              key={m.id}
-              className="absolute top-1"
-              style={{
-                left: x - 1.5,
-                width: isSel ? 5 : 3,
-                height: 40,
-                background: color,
-                borderRadius: 2,
-                boxShadow: isSel ? `0 0 8px ${color}` : undefined,
-              }}
-            />
-          );
-        })}
-
-        {/* Marcadores manuales */}
-        {markers.map((cm) => {
-          const x = msToX(cm.tMs);
-          if (x < 0 || x > width) return null;
-          const meta = CUSTOM_MARKER_META[cm.kind];
-          return (
-            <div
-              key={cm.id}
-              className="absolute -top-1 text-xs pointer-events-none"
-              style={{ left: x - 6, color: meta.color }}
-              title={`${meta.emoji} ${cm.text || meta.label}`}
+      <div className="flex flex-1 min-h-0">
+        <div className="w-20 shrink-0 border-r border-border/40 bg-black/20 flex flex-col">
+          {layers.map(layer => (
+            <div 
+              key={layer.id} 
+              className="flex-1 border-b border-border/20 px-2 flex items-center gap-1.5"
             >
-              {meta.emoji}
+              <div className="size-1.5 rounded-full" style={{ backgroundColor: layer.color }} />
+              <span className="text-[8px] font-black text-muted-foreground tracking-tighter">{layer.label}</span>
             </div>
-          );
-        })}
-
-        {/* Playhead (rojo, siempre visible) */}
-        <div
-          className="absolute -top-1 -bottom-1 w-[2px] bg-red-500 pointer-events-none shadow-[0_0_6px_rgba(239,68,68,0.9)] z-20"
-          style={{ left: msToX(currentMs) }}
-        >
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]" />
+          ))}
+          <div className="h-4" />
         </div>
 
-        {/* Indicador de tiempo bajo el cursor */}
-        {hover && !dragRef.current && (
-          <div
-            className="absolute top-0 bottom-0 w-px bg-foreground/30 pointer-events-none"
-            style={{ left: hover.x }}
-          >
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] tabular-nums bg-background/90 border border-border rounded px-1 whitespace-nowrap">
-              {fmt(xToMs(hover.x))}
-            </div>
+        <div 
+          ref={wrapRef}
+          className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
+          onWheel={onWheel}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseLeave}
+          onClick={onClick}
+        >
+          <div className="absolute inset-0 pointer-events-none">
+            {(() => {
+              const step = viewportMs > 600_000 ? 60_000 : viewportMs > 120_000 ? 30_000 : 10_000;
+              const ticks: number[] = [];
+              const first = Math.ceil(startMs / step) * step;
+              for (let t = first; t < endMs; t += step) ticks.push(t);
+              return ticks.map((t) => (
+                <div 
+                  key={t} 
+                  className="absolute top-0 bottom-0 border-l border-white/5" 
+                  style={{ left: msToX(t) }}
+                >
+                  <span className="absolute bottom-0 left-0.5 text-[8px] text-muted-foreground/40 tabular-nums font-mono">
+                    {fmt(t)}
+                  </span>
+                </div>
+              ));
+            })()}
           </div>
-        )}
-        {hover && (hover.mark || hover.marker) && (
-          <div
-            className="absolute -top-16 z-10 pointer-events-none bg-card border border-border rounded-md px-2 py-1 text-[11px] shadow-elevated whitespace-nowrap"
-            style={{ left: hover.x, transform: "translateX(-50%)" }}
-          >
-            {hover.mark && (
-              <>
-                <div className="font-semibold">{hover.mark.fundamento}</div>
-                <div className="text-muted-foreground">
-                  {hover.mark.playerName
-                    ? `#${hover.mark.playerNumber ?? "?"} ${hover.mark.playerName}`
-                    : hover.mark.team ?? ""}
-                </div>
-                <div className="text-muted-foreground">
-                  {hover.mark.result ?? ""} · {fmt(hover.mark.tMs)}
-                </div>
-              </>
-            )}
-            {hover.marker && (
-              <>
-                <div className="font-semibold">
-                  {CUSTOM_MARKER_META[hover.marker.kind].emoji}{" "}
-                  {hover.marker.text || CUSTOM_MARKER_META[hover.marker.kind].label}
-                </div>
-                <div className="text-muted-foreground">{fmt(hover.marker.tMs)}</div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
 
-      <div className="text-[10px] text-muted-foreground/80 mt-1">
-        Rueda: zoom · Arrastrar: mover · Click: saltar · Reset: ver todo el partido
+          <div className="absolute inset-0 flex flex-col">
+            {layers.map(layer => (
+              <div key={layer.id} className="flex-1 relative border-b border-border/10">
+                {layer.id === "rallies" && rallyBlocks.map((rb) => {
+                  const left = msToX(rb.startMs);
+                  const w = msToX(rb.endMs) - left;
+                  if (left + w < 0 || left > width) return null;
+                  const isSelectedRally = marks.find((m) => m.id === selectedMarkId)?.rallyId === rb.index;
+                  return (
+                    <div
+                      key={rb.index}
+                      className={cn(
+                        "absolute top-1 bottom-1 rounded-sm border transition-colors",
+                        isSelectedRally ? "bg-primary/20 border-primary/40" : "bg-white/[0.03] border-white/5"
+                      )}
+                      style={{ left, width: Math.max(2, w) }}
+                    />
+                  );
+                })}
+
+                {layer.id === "sets" && marks.filter(m => m.kind === "set_start" || (m.kind as any) === "set_end").map(m => {
+                  const x = msToX(m.tMs);
+                  if (x < 0 || x > width) return null;
+                  return (
+                    <div 
+                      key={m.id}
+                      className="absolute top-0 bottom-0 w-0.5 bg-yellow-400/50"
+                      style={{ left: x }}
+                    />
+                  );
+                })}
+
+                {layer.id === "actions" && marks.filter(m => m.kind === "point" || m.kind === "error").map(m => {
+                  const x = msToX(m.tMs);
+                  if (x < 0 || x > width) return null;
+                  const color = MARK_COLORS[m.kind];
+                  const isSel = selectedMarkId === m.id;
+                  return (
+                    <div 
+                      key={m.id}
+                      className={cn(
+                        "absolute top-1.5 bottom-1.5 w-1 rounded-full transition-all",
+                        isSel ? "scale-x-150 ring-2 ring-primary/40" : ""
+                      )}
+                      style={{ left: x - 1, backgroundColor: color }}
+                    />
+                  );
+                })}
+
+                {layer.id === "video" && (
+                   <div 
+                     className="absolute inset-y-0 w-px bg-white/20" 
+                     style={{ left: msToX(currentMs) }}
+                   />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="absolute -top-1 -bottom-1 w-[2px] bg-red-500 pointer-events-none shadow-[0_0_8px_rgba(239,68,68,0.8)] z-30"
+            style={{ left: msToX(currentMs) }}
+          >
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-red-500" />
+          </div>
+
+          {hover && !dragRef.current && (
+            <div
+              className="absolute top-0 bottom-0 w-px bg-white/20 pointer-events-none z-20"
+              style={{ left: hover.x }}
+            >
+              <div className="absolute top-0 left-2 text-[8px] tabular-nums font-mono bg-black/80 text-white/60 px-1 rounded">
+                {fmt(xToMs(hover.x))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

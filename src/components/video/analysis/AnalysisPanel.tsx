@@ -51,7 +51,7 @@ export function AnalysisPanel({ matchId, marks, currentMs, totalMs, onSeek, onSe
   useEffect(() => { lastCurrentRef.current = currentMs; }, [currentMs]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 h-full">
       {playerRef && (
         <PlaybackControls
           playerRef={playerRef}
@@ -62,13 +62,15 @@ export function AnalysisPanel({ matchId, marks, currentMs, totalMs, onSeek, onSe
       )}
       {playerRef && <SelectedActionCard marks={enriched} playerRef={playerRef} />}
 
-      <AnalysisTimeline
-        marks={enriched}
-        currentMs={currentMs}
-        totalMs={totalMs}
-        matchId={matchId}
-        onSeek={onSeek}
-      />
+      <div className="flex-1 min-h-[160px]">
+        <AnalysisTimeline
+          marks={enriched}
+          currentMs={currentMs}
+          totalMs={totalMs}
+          matchId={matchId}
+          onSeek={onSeek}
+        />
+      </div>
 
       <div className="flex items-center gap-3 text-[11px] text-muted-foreground bg-card/40 border border-border rounded-lg px-3 py-1.5">
         <label className="flex items-center gap-1.5">
@@ -95,22 +97,27 @@ export function AnalysisPanel({ matchId, marks, currentMs, totalMs, onSeek, onSe
         </label>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList>
-          <TabsTrigger value="acciones">Acciones</TabsTrigger>
-          <TabsTrigger value="rally">Rally</TabsTrigger>
-          <TabsTrigger value="marcadores">Marcadores</TabsTrigger>
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+        className="flex flex-col flex-1 min-h-0"
+      >
+        <TabsList className="bg-muted/50 p-0.5 h-8">
+          <TabsTrigger value="acciones" className="text-[10px] uppercase font-bold px-4 py-1">Acciones</TabsTrigger>
+          <TabsTrigger value="rally" className="text-[10px] uppercase font-bold px-4 py-1">Rally</TabsTrigger>
+          <TabsTrigger value="marcadores" className="text-[10px] uppercase font-bold px-4 py-1">Marcadores</TabsTrigger>
         </TabsList>
-        <TabsContent value="acciones" className="mt-2">
+        <TabsContent value="acciones" className="mt-2 flex-1 min-h-0 overflow-hidden">
           <ActionsTableVirtual marks={enriched} currentMs={currentMs} onSelect={onSelectMark} />
         </TabsContent>
-        <TabsContent value="rally" className="mt-2">
+        <TabsContent value="rally" className="mt-2 flex-1 min-h-0 overflow-hidden">
           <RallyView marks={enriched} currentMs={currentMs} onSeek={onSeek} />
         </TabsContent>
-        <TabsContent value="marcadores" className="mt-2">
+        <TabsContent value="marcadores" className="mt-2 flex-1 min-h-0 overflow-hidden">
           <CustomMarkersPanel matchId={matchId} currentMs={currentMs} onSeek={onSeek} />
         </TabsContent>
       </Tabs>
     </div>
+
   );
 }

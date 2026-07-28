@@ -60,11 +60,12 @@ export function ActionsTableVirtual({ marks, currentMs, onSelect }: Props) {
   void setRange;
 
   return (
-    <div className="bg-card/40 border border-border rounded-lg flex flex-col min-h-[240px] max-h-[420px]">
-      <div className="px-3 py-2 border-b border-border/60 text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-between">
-        <span>Acciones registradas</span>
-        <span className="text-foreground tabular-nums">{total}</span>
+    <div className="bg-card/40 border border-border rounded-lg flex flex-col h-full overflow-hidden">
+      <div className="px-3 py-1.5 border-b border-border/60 text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center justify-between bg-black/20">
+        <span>Acciones</span>
+        <span className="text-foreground tabular-nums opacity-60">{total}</span>
       </div>
+
       <div ref={scrollRef} className="overflow-y-auto flex-1">
         <table className="w-full text-xs">
           <thead className="sticky top-0 z-10 bg-card/95 backdrop-blur">
