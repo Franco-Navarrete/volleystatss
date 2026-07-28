@@ -115,6 +115,16 @@
  * OBJETIVO FINAL
  * VolleyStatss deberá ofrecer una plataforma profesional de análisis de video sincronizada con Scout, Match y Event Engine.
  * El usuario deberá navegar por eventos, no por minutos del video.
+ *
+ * EJEMPLO DE FLUJO:
+ * 00:03  🟢 Inicio del set
+ * 00:18  🏐 Saque #12
+ * 00:21  📊 Recepción +
+ * 00:23  ⚡ Ataque #
+ * 00:24  🎥 Clip generado
+ * 00:24  🤖 IA detectó bloqueo tardío
+ * 00:25  📝 Comentario del entrenador
+ * 00:26  📌 Etiqueta "Transición rápida"
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
