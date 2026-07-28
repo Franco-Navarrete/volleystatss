@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   X, 
   ChevronRight, 
@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { RoleInfoStep, type RoleInfoData } from "./steps/RoleInfoStep";
 
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
 
