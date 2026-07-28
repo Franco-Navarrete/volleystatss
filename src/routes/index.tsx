@@ -2,6 +2,94 @@
  * RALLY · Ecosistema Digital del Voleibol
  * Arquitectura: Enterprise SaaS Jerárquico & Multi-tenant.
  * Visión: Plataforma modular para Federaciones, Ligas, Clubes y Jugadores.
+ * =====================================================================
+ * ESTATUS ARQUITECTÓNICO: ACTION FRAMEWORK (ETAPA 1)
+ * =====================================================================
+ * Quiero realizar una refactorización completa de la forma en que funcionan todas las acciones del sistema.
+ * Actualmente existen botones, menús, iconos y acciones implementadas de manera individual.
+ * Eso hará que el proyecto crezca de forma desordenada.
+ * Quiero reemplazar completamente esa arquitectura.
+ * A partir de ahora quiero implementar un ACTION FRAMEWORK.
+ * Toda acción del sistema deberá utilizar este framework.
+ * Nunca más un botón decidirá directamente qué hacer.
+ * =====================================================================
+ * OBJETIVO
+ * Centralizar absolutamente todas las acciones del sistema.
+ * Ejemplos: Crear, Editar, Eliminar, Duplicar, Archivar, Activar, Desactivar,
+ * Mover, Importar, Exportar, Asignar, Invitar, Cambiar Plan, Cambiar Workspace,
+ * Suspender, Restablecer contraseña. Todo debe pasar por el mismo flujo.
+ * =====================================================================
+ * ARQUITECTURA
+ * Implementar un Action Engine.
+ * El flujo será: Usuario ↓ Hace click ↓ Action Engine ↓ Resolver contexto ↓ 
+ * Validar Workspace ↓ Validar Organización ↓ Validar Rol ↓ Validar Permisos ↓ 
+ * Validar Módulos ↓ Validar Plan ↓ Resolver tipo de acción ↓ Abrir interfaz ↓ 
+ * Ejecutar acción ↓ Actualizar datos ↓ Registrar Auditoría ↓ Mostrar Toast ↓ Actualizar UI.
+ * Todas las acciones deberán seguir exactamente este flujo.
+ * =====================================================================
+ * ACTION REGISTRY
+ * Crear un registro central de acciones.
+ * Ejemplo: CREATE_ORGANIZATION, EDIT_ORGANIZATION, DELETE_ORGANIZATION, 
+ * CREATE_USER, EDIT_USER, DELETE_USER, CREATE_ROLE, CREATE_PERMISSION, 
+ * CREATE_MODULE, CREATE_PLAN, CREATE_SUBSCRIPTION, CREATE_TEAM, CREATE_PLAYER, 
+ * CREATE_MATCH, CREATE_VIDEO, CREATE_TRAINING, IMPORT_PLAYERS, EXPORT_USERS, 
+ * CHANGE_PLAN, CHANGE_WORKSPACE, ASSIGN_ROLE, RESET_PASSWORD, Etc.
+ * Cada acción tendrá una configuración: id, nombre, icono, descripción, 
+ * categoría, permisos requeridos, módulos requeridos, tipo de interfaz, 
+ * confirmación requerida, toast éxito, toast error, registro auditoría.
+ * =====================================================================
+ * ACTION TYPES
+ * No quiero botones que abran cosas manualmente.
+ * Cada acción deberá indicar: OPEN_DRAWER, OPEN_MODAL, OPEN_WIZARD, OPEN_PAGE, 
+ * OPEN_CONFIRMATION, RUN_BACKGROUND_TASK, DOWNLOAD_FILE, UPLOAD_FILE, 
+ * EXPORT_DATA, IMPORT_DATA.
+ * El Action Engine decidirá qué interfaz abrir.
+ * =====================================================================
+ * ENTITY DEFINITIONS
+ * Crear un sistema de definición de entidades.
+ * Ejemplo: Organization, User, Role, Permission, Module, Plan, Subscription, 
+ * League, Club, Team, Player, Competition, Training, Video, Scout.
+ * Cada entidad deberá definir: Campos, Permisos, Acciones, Íconos, Validaciones, Relaciones.
+ * No quiero lógica distribuida.
+ * =====================================================================
+ * ENTITY CREATION FRAMEWORK
+ * Eliminar los siete Wizards independientes.
+ * Crear un único Dynamic Entity Wizard.
+ * Debe recibir una Entity Definition.
+ * Y generar automáticamente: Título, Formulario, Pasos, Validaciones, Resumen, Confirmación.
+ * No quiero componentes duplicados.
+ * =====================================================================
+ * ACTION BAR
+ * Eliminar el botón genérico "Crear".
+ * Cada módulo debe tener una barra de acciones contextual.
+ * Ejemplo: 
+ * Usuarios: + Crear Usuario, Importar, Exportar, Invitar, Roles, Permisos
+ * Organizaciones: Nueva Organización, Mover, Fusionar, Exportar Árbol, Configuración
+ * Módulos: Nuevo Módulo, Versiones, Dependencias, Marketplace, Logs
+ * Planes: Nuevo Plan, Duplicar, Versiones, Promociones
+ * =====================================================================
+ * COMMAND PALETTE
+ * Implementar un buscador global (CTRL + K).
+ * Debe permitir ejecutar cualquier acción: Crear Usuario, Crear Club, 
+ * Crear Liga, Asignar Rol, Cambiar Workspace, Buscar Organización, 
+ * Abrir Auditoría, Ir a Módulos, Cambiar Plan.
+ * Todo utilizando el Action Framework.
+ * =====================================================================
+ * PERMISOS
+ * El Action Engine nunca debe ejecutar una acción directamente.
+ * Siempre deberá verificar: Workspace activo, Organización, Rol, Permisos, Módulos, Plan.
+ * Si alguna condición falla: Mostrar una explicación clara. Nunca simplemente ocultar el error.
+ * =====================================================================
+ * AUDITORÍA
+ * Todas las acciones deberán registrarse automáticamente, sin excepciones.
+ * Registrar: Usuario, Workspace, Organización, IP, Fecha, Hora, Entidad, Acción, Resultado, Duración, Cambios realizados.
+ * =====================================================================
+ * OBJETIVO FINAL
+ * No quiero un conjunto de pantallas independientes.
+ * Quiero un Framework de Acciones reutilizable.
+ * Cualquier nueva funcionalidad que se agregue dentro de VolleyStatss deberá utilizar este Framework.
+ * No deberá existir ninguna acción implementada manualmente fuera del Action Engine.
+ * Este Action Framework será uno de los pilares arquitectónicos del sistema y deberá ser utilizado por absolutamente todos los módulos actuales y futuros.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
