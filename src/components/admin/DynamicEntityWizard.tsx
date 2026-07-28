@@ -31,8 +31,12 @@ import { RoleInfoStep, type RoleInfoData } from "./steps/RoleInfoStep";
 import { PermissionDefinitionStep, type PermissionDefinitionData } from "./steps/PermissionDefinitionStep";
 import { PlanInformationStep, type PlanInfoData } from "./steps/PlanInformationStep";
 import { PlanFeaturesStep, type PlanFeaturesData } from "./steps/PlanFeaturesStep";
-
 import { PlanSummaryStep } from "./steps/PlanSummaryStep";
+import { ModuleInfoStep, type ModuleInfoData } from "./steps/ModuleInfoStep";
+import { ModuleConfigStep, type ModuleConfigData } from "./steps/ModuleConfigStep";
+import { SubscriptionInfoStep, type SubscriptionInfoData } from "./steps/SubscriptionInfoStep";
+
+import { SubscriptionBillingStep, type SubscriptionBillingData } from "./steps/SubscriptionBillingStep";
 
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
 
@@ -85,8 +89,8 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
     title: "Nuevo Módulo",
     icon: Package,
     steps: [
-      { title: "Módulo", description: "Nombre y versión" },
-      { title: "Dependencias", description: "Requisitos técnicos" }
+      { title: "Información", description: "Datos básicos del módulo" },
+      { title: "Configuración", description: "Rutas y visibilidad" }
     ]
   },
   plan: {
@@ -103,7 +107,7 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
     icon: Zap,
     steps: [
       { title: "Entidad", description: "A quién pertenece" },
-      { title: "Configuración", description: "Periodo y facturación" }
+      { title: "Facturación", description: "Periodo y facturación" }
     ]
   }
 };
@@ -146,6 +150,23 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     modules: [],
     limits: {},
     features: []
+  });
+  const [moduleData, setModuleData] = useState<ModuleInfoData & ModuleConfigData>({
+    name: "",
+    code: "",
+    description: "",
+    category: "",
+    route: "",
+    order: 0,
+    visible: true,
+    requiresLicense: true
+  });
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionInfoData & SubscriptionBillingData>({
+    orgId: "",
+    planId: "",
+    frequency: "mensual",
+    currency: "USD",
+    price: 0
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -323,6 +344,19 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
                 <PlanSummaryStep data={planData} />
               )}
 
+              {entityType === "module" && currentStep === 0 && (
+                <ModuleInfoStep data={moduleData} onChange={(d) => setModuleData(p => ({...p, ...d}))} />
+              )}
+              {entityType === "module" && currentStep === 1 && (
+                <ModuleConfigStep data={moduleData} onChange={(d) => setModuleData(p => ({...p, ...d}))} />
+              )}
+              {entityType === "subscription" && currentStep === 0 && (
+                <SubscriptionInfoStep data={subscriptionData} onChange={(d) => setSubscriptionData(p => ({...p, ...d}))} />
+              )}
+              {entityType === "subscription" && currentStep === 1 && (
+                <SubscriptionBillingStep data={subscriptionData} onChange={(d) => setSubscriptionData(p => ({...p, ...d}))} />
+              )}
+
               {entityType === "user" && currentStep === 0 && (
                 <>
                   <div className="grid gap-2">
@@ -357,36 +391,19 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
                   ))}
                 </div>
               )}
-
-              {/* Mensaje de desarrollo elegante si el paso no está completo */}
-              {((entityType === "permission" && currentStep > 0) || 
-                entityType === "module" || 
-                entityType === "subscription" ||
-                (entityType === "role" && currentStep > 0) ||
-                (entityType === "user" && currentStep > 0) || 
-                (entityType === "org" && currentStep > 0)) && (
-                <div className="p-8 rounded-2xl border border-dashed border-border/60 bg-muted/5 flex flex-col items-center text-center">
-                  <div className="size-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                    <Info className="size-6 text-muted-foreground" />
-                  </div>
-                  <h4 className="font-bold text-foreground">Configuración de {config.steps[currentStep].title}</h4>
-                  <p className="text-sm text-muted-foreground mt-2 max-w-xs">
-                    Este componente está resolviendo las reglas de negocio para la entidad.
-                  </p>
-                  <Badge variant="outline" className="mt-6 font-bold text-[10px] uppercase tracking-widest py-1">
-                    En Desarrollo
-                  </Badge>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-border/40 bg-background flex items-center justify-between">
-          <Button variant="ghost" onClick={handleBack} disabled={currentStep === 0} className="font-bold">
-            <ChevronLeft className="size-4 mr-2" /> Anterior
-          </Button>
+          {currentStep > 0 ? (
+            <Button variant="ghost" onClick={handleBack} className="font-bold">
+              <ChevronLeft className="size-4 mr-2" /> Anterior
+            </Button>
+          ) : (
+            <div className="w-[100px]" />
+          )}
           <div className="flex gap-3">
             <Button variant="outline" onClick={onClose} className="font-bold">
               Cancelar
