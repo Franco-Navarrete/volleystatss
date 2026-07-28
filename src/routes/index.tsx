@@ -1,100 +1,83 @@
 /**
- * # FASE 11 - Competition Engine
- * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management.
- * Ahora comienza el desarrollo del Competition Engine.
- * No quiero un CRUD de torneos.
- * Quiero un motor completo capaz de administrar cualquier tipo de competencia.
- * Inspirado en:
- * - FIVB
- * - Volleyball World
- * - CEV
- * - FeVA
- * - PlayHQ
- * - Challonge
- * - Toornament
+ * # FASE 12 - Match Engine
+ * Las fases anteriores implementaron: ✔ Organizations, ✔ Users, ✔ Roles & Permissions, ✔ Plans & Subscriptions, ✔ Club Management, ✔ Season Management, ✔ Category Management, ✔ Team Management, ✔ Player Management, ✔ People & Staff Management, ✔ Competition Engine.
+ * Ahora comienza el desarrollo del Match Engine. Este será el corazón operativo de VolleyStatss.
+ * No quiero una ficha de partido. Quiero un motor completo capaz de administrar todo el ciclo de vida de un partido de voleibol.
+ * Inspirado en: Data Volley, Volleyball World, FIVB Live, VolleyStation, Hudl, Balltime.
  *
  * =====================================================================
  * OBJETIVO
- * Construir un motor flexible de competiciones.
- * Las Competencias serán la entidad que organiza el calendario deportivo.
- * Los Partidos dependerán de una Competencia.
+ * Todo lo que ocurra durante un partido deberá depender del Match Engine:
+ * El Scout, El Video, El Marcador, Los Eventos, Las Estadísticas, La IA. Todo.
  *
  * =====================================================================
- * JERARQUÍA
- * Organización ↓ Club ↓ Temporada ↓ Competencia ↓ Fase ↓ Grupo ↓ Fecha ↓ Partido
+ * MODELO Y ESTADOS
+ * - Modelo: Competencia ↓ Fecha ↓ Partido ↓ Set ↓ Rally ↓ Evento ↓ Estadística.
+ * - Estados: Programado, Confirmado, Calentamiento, En juego, Entre sets, Suspendido, Finalizado, Validado, Archivado.
  *
  * =====================================================================
- * TIPOS DE COMPETENCIA
- * Liga, Apertura, Clausura, Copa, Supercopa, Playoffs, Eliminación Simple, Doble Eliminación,
- * Round Robin, Round Robin Doble, Grupos + Eliminación, Suizo, Hexagonal, Cuadrangular,
- * Triangular, Personalizado. Cada formato debe ser configurable.
+ * DIRECTORIO Y CREAR PARTIDO (Wizard)
+ * - Directorio: Tabla con Fecha, Hora, Competencia, Equipos, Cancha, Estado, Resultado, Árbitros, Scout, Video.
+ * - Wizard:
+ *   Paso 1: Información (Competencia, Fecha/Hora, Cancha, Equipos).
+ *   Paso 2: Equipo Arbitral (1°, 2°, Planillero, Anotador, Líneas, Supervisor).
+ *   Paso 3: Configuración (Sets, Puntuación, Tie Break, Timeouts, Challenge, Reglamento).
+ *   Paso 4: Streaming (Transmisión, URL, Canal, Video en vivo).
+ *   Paso 5: Resumen y Creación.
  *
  * =====================================================================
- * DASHBOARD Y DIRECTORIO
- * - Dashboard: Nombre, Temporada, Estado, Formato, Equipos, Partidos, Fechas, Tabla actual, Noticias.
- * - Directorio: Tabla con búsqueda, filtros, ordenamiento y acciones (Duplicar, Archivar, Exportar).
+ * PRE-MATCH, LINEUP Y SETS
+ * - Pre-Match: Convocatoria, Plantel, Uniformes, Capitanes, Líberos, Calentamiento, Checklist.
+ * - Lineup: Rotación inicial, Posiciones, Cambios, Capitán, Líbero, Formación.
+ * - Sets: Marcador, Duración, Eventos, Timeouts, Cambios, Rallies, Estadísticas.
  *
  * =====================================================================
- * CREAR COMPETENCIA (Wizard)
- * Paso 1: Información (Nombre, Descripción, Temporada, Logo, Banner).
- * Paso 2: Formato (Tipo, Puntuación, Vueltas, Clasificados, Desempates, Playoffs).
- * Paso 3: Participantes (Selección de equipos, Importar, Validar categoría/temporada).
- * Paso 4: Calendario (Fechas, Días habilitados, Horarios, Generación auto/manual).
- * Paso 5: Resumen y Creación.
+ * RALLIES Y EVENTOS
+ * - Rallies: Inicio/Fin, Duración, Ganador, Cantidad de acciones, Video y Scout asociado.
+ * - Eventos: Saque, Recepción, Levantada, Ataque, Bloqueo, Defensa, Freeball, Timeout, Cambio, Sanción, Challenge.
  *
  * =====================================================================
- * FASES, GRUPOS Y FECHAS
- * - Fases: Regular, Grupos, Cuartos, Semis, Final, Reclasificación (reglas independientes).
- * - Grupos: Creación, cantidad de equipos, clasificados, sistema de desempate.
- * - Fechas: Generar, modificar, reprogramar, suspender, cancelar.
+ * LIVE SCORE Y TIMELINE
+ * - Live Score: Marcador en vivo (Puntos, Sets, Timeouts, Cambios, Rotación, Servidor, Racha).
+ * - Timeline: Línea de tiempo cronológica, navegación, filtros, búsqueda y relación con video.
  *
  * =====================================================================
- * FIXTURE Y TABLA DE POSICIONES
- * - Fixture: Motor automático (Round Robin, Manual, Importar, Recalcular).
- * - Tabla: Calcular PJ, PG, PP, Sets +/-, Puntos +/-, Coeficientes, Racha.
- *
- * =====================================================================
- * REGLAS DE DESEMPATE Y PARTICIPANTES
- * - Desempates: Puntos, Victorias, Coeficiente de sets/puntos, Resultado entre sí, Sorteo.
- * - Participantes: Equipo, Categoría, Club, Estado, Inscripción, Observaciones.
- *
- * =====================================================================
- * DOCUMENTOS, GALERÍA Y DRAWER
- * - Documentos: Reglamento, Cronograma, Comunicados, Planillas.
- * - Galería: Fotos, Videos, Material institucional.
- * - Drawer Tabs: Resumen, Equipos, Fixture, Tabla, Fases, Grupos, Documentos, Auditoría, Config.
+ * ÁRBITROS, DOCUMENTOS Y DRAWER
+ * - Árbitros: Gestión del equipo arbitral, Calificaciones, Observaciones e Incidentes.
+ * - Documentos: Planilla oficial, Acta, Reglamento, Informes.
+ * - Drawer Tabs: Resumen, Equipos, Convocatoria, Lineups, Sets, Timeline, Scout, Video, Árbitros, Auditoría.
  *
  * =====================================================================
  * ACTION BAR, COMMAND PALETTE, PERMISOS Y AUDITORÍA
- * - Acciones: Nueva Competencia, Generar Fixture, Reprogramar, Exportar, Archivar.
- * - Command Palette (CTRL+K): Buscar competencia, Ir a Dashboard, Ver Tabla.
- * - Permisos: competition.view, competition.create, competition.edit, competition.fixture, etc.
- * - Auditoría: Registro de creación, cambios de formato, reprogramación, fixture, reglamento.
+ * - Acciones: Iniciar/Finalizar, Abrir Scout/Video/Live, Agregar Evento, Exportar.
+ * - Command Palette (CTRL+K): Buscar, Abrir Live/Scout/Video, Editar, Finalizar.
+ * - Permisos (Permission Engine): match.view, match.create, match.start, match.live, match.scout, etc.
+ * - Auditoría: Registro de creación, cambios de horario/cancha, inicio/pausa/fin, cambio de árbitros, ediciones.
  *
  * =====================================================================
  * REGLAS
- * Una competencia siempre pertenece a una Temporada. Puede tener múltiples fases, grupos y fechas.
- * Nunca eliminar competencias; siempre archivar.
+ * Un Partido pertenece siempre a una Competencia. Debe generar automáticamente:
+ * Sets, Timeline, Eventos, Scout, Video, Analytics e IA. Nunca eliminar; siempre archivar.
  *
  * =====================================================================
  * OBJETIVO FINAL
- * VolleyStatss podrá organizar cualquier competencia de voleibol, desde un torneo escolar
- * hasta una liga nacional con múltiples categorías, fases y formatos.
+ * El Match Engine deberá convertirse en el núcleo operativo de VolleyStatss.
+ * Todos los módulos futuros deberán integrarse directamente con este motor.
  *
- * Competition
+ * Match
  * │
- * ├── CompetitionSeason
- * ├── CompetitionFormat
- * ├── CompetitionRuleSet
- * ├── CompetitionPhase
- * ├── CompetitionGroup
- * ├── CompetitionRound (Fecha)
- * ├── CompetitionStanding
- * ├── CompetitionParticipant
- * ├── CompetitionSchedule
- * ├── CompetitionDocument
- * ├── CompetitionMedia
- * └── CompetitionAudit
+ * ├── MatchSetup
+ * ├── MatchOfficial
+ * ├── MatchLineup
+ * ├── MatchSubstitution
+ * ├── MatchSet
+ * ├── MatchRally
+ * ├── MatchEvent
+ * ├── MatchTimeline
+ * ├── MatchScorecard
+ * ├── MatchDocument
+ * ├── MatchMedia
+ * └── MatchAudit
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
