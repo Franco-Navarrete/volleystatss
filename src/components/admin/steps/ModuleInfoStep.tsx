@@ -20,15 +20,27 @@ export function ModuleInfoStep({ data, onChange }: Props) {
     <div className="space-y-4">
       <div className="grid gap-2">
         <Label>Nombre del Módulo *</Label>
-        <Input value={data.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="Ej: Scouting Avanzado" />
+        <Input 
+          value={data.name} 
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ name: e.target.value })} 
+          placeholder="Ej: Scouting Avanzado" 
+        />
       </div>
       <div className="grid gap-2">
         <Label>Código *</Label>
-        <Input value={data.code} onChange={(e) => onChange({ code: e.target.value })} placeholder="Ej: mod_scout" />
+        <Input 
+          value={data.code} 
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ code: e.target.value })} 
+          placeholder="Ej: mod_scout" 
+        />
       </div>
       <div className="grid gap-2">
         <Label>Descripción</Label>
-        <Textarea value={data.description} onChange={(e) => onChange({ description: e.target.value })} placeholder="Descripción..." />
+        <Textarea 
+          value={data.description} 
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange({ description: e.target.value })} 
+          placeholder="Descripción..." 
+        />
       </div>
     </div>
   );

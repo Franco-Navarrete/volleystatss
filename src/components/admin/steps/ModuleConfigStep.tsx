@@ -20,7 +20,11 @@ export function ModuleConfigStep({ data, onChange }: Props) {
     <div className="space-y-4">
       <div className="grid gap-2">
         <Label>Ruta</Label>
-        <Input value={data.route} onChange={(e) => onChange({ route: e.target.value })} placeholder="/modules/..." />
+        <Input 
+          value={data.route} 
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ route: e.target.value })} 
+          placeholder="/modules/..." 
+        />
       </div>
       <div className="flex items-center justify-between">
         <Label>Visible en menú</Label>
