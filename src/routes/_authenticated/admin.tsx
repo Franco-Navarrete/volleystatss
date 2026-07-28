@@ -287,7 +287,7 @@ function WorkspacesSection({ onSelect }: { onSelect: (org: any) => void }) {
     <div className="h-64 bg-muted/10 animate-pulse rounded-xl" />
   </div>;
 
-  const workspaces = (data?.workspaces as OrganizationNode[]) ?? MOCK_HIERARCHY;
+  const workspaces = (data?.workspaces as any[]) ?? MOCK_HIERARCHY;
 
   return (
     <div className="space-y-4">
