@@ -308,7 +308,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
             <Button 
               onClick={handleNext} 
               className={`font-bold px-8 ${currentStep === totalSteps - 1 ? "bg-green-600 hover:bg-green-700 text-white" : "shadow-glow"}`}
-              disabled={currentStep === totalSteps - 1 && entityType !== "user"} // Solo permitir finalizar si está implementado
+              disabled={isNextDisabled()} // Solo permitir finalizar si está implementado
             >
               {currentStep === totalSteps - 1 ? "Finalizar" : "Siguiente"}
               {currentStep < totalSteps - 1 && <ChevronRight className="size-4 ml-2" />}
