@@ -1,430 +1,112 @@
 /**
- * Quiero desarrollar una plataforma SaaS moderna llamada provisionalmente "VolleyCoach AI".
- * NO quiero una aplicación simple.
- * Quiero un producto profesional escalable, preparado para venderse a clubes, entrenadores, escuelas deportivas y federaciones de voleibol.
- * El diseño debe ser moderno, minimalista, responsive, rápido y con una experiencia de usuario de primer nivel.
- * Inspirarse en Notion, Linear, ClickUp, Figma y Hudl.
- * El sistema debe tener una arquitectura modular donde cada módulo pueda crecer independientemente.
+ * # VOLLEYSTATSS
+ * # PROFESSIONAL ANALYSIS WORKSPACE V5
  *
- * ========================================================
+ * El módulo actual ya posee una buena estructura visual.
+ * A partir de este momento no quiero más cambios cosméticos.
+ * Quiero transformar esta pantalla en una herramienta profesional para analistas de voleibol.
+ * La prioridad pasa a ser la productividad.
+ *
+ * =========================================================
  * OBJETIVO
- * Crear la plataforma más completa para entrenadores de voleibol.
- * Debe unir:
- * • Biblioteca inteligente de ejercicios
- * • Planificación de entrenamientos
- * • Inteligencia Artificial
- * • Gestión de jugadores
- * • Asistencia
- * • Cobro de cuotas
- * • Gestión de temporadas
- * • Estadísticas
- * • Análisis de video
- * • Scouting
- * • Reportes automáticos
- * Todo en un solo sistema.
+ * =========================================================
+ * Reducir la cantidad de clicks.
+ * Reducir la cantidad de movimientos del mouse.
+ * Permitir analizar un partido completo utilizando principalmente teclado.
+ * Todo debe sentirse inmediato.
  *
- * ========================================================
- * DISEÑO
- * Utilizar:
- * - React
- * - TypeScript
- * - Tailwind
- * - Supabase
- * - Arquitectura escalable
- * - Componentes reutilizables
- * - Responsive
- * - Dark Mode
- * - Light Mode
- * Debe sentirse como un software premium.
- * Animaciones suaves.
- * Mucho espacio en blanco.
- * Cards.
- * Iconografía consistente.
+ * =========================================================
+ * 1. INSPECTOR INTELIGENTE
+ * =========================================================
+ * Eliminar el panel derecho actual.
+ * Reemplazarlo por un Inspector Contextual.
  *
- * ========================================================
- * LOGIN
- * Crear sistema completo de autenticación.
- * Roles:
- * Administrador
- * Entrenador
- * Asistente
- * Preparador físico
- * Jugador
- * Padre
- * Cada uno con permisos distintos.
+ * Cuando no haya ninguna selección mostrar:
+ * • Resumen del partido
+ * • Marcador
+ * • Últimos rallies
+ * • Estadísticas rápidas
  *
- * ========================================================
- * DASHBOARD
- * Al ingresar mostrar:
- * Entrenamientos de hoy
- * Partidos próximos
- * Jugadores activos
- * Jugadores lesionados
- * Cuotas pendientes
- * Asistencia promedio
- * Próximos eventos
- * Resumen semanal
- * Actividad reciente
- * Indicadores visuales
- * Gráficos
- * Calendario
+ * Cuando seleccione una acción mostrar:
+ * Jugador | Equipo | Fundamento | Resultado | Zona | Rotación | Marcador | Video | Comentarios | Etiquetas | IA (preparado) | Clip relacionado
  *
- * ========================================================
- * GESTIÓN DE CLUB
- * Crear módulos para:
- * Club
- * Categorías
- * Equipos
- * Entrenadores
- * Jugadores
- * Temporadas
- * Competiciones
+ * Cuando seleccione un Rally mostrar:
+ * Duración | Acciones | Ganador | Servidor | Rotación | Tiempo | Video | Estadísticas del rally
  *
- * Cada categoría debe tener:
- * Entrenamientos
- * Jugadores
- * Calendario
- * Cuotas
- * Asistencia
- * Estadísticas
+ * =========================================================
+ * 2. DOBLE CLICK
+ * =========================================================
+ * Toda la tabla debe soportar doble click.
+ * Doble click sobre una acción ↓ Mover el video exactamente a ese frame ↓ Seleccionar la acción ↓ Abrir el Inspector
  *
- * ========================================================
- * GESTIÓN DE JUGADORES
- * Cada jugador tendrá una ficha completa.
- * Foto
- * Nombre
- * Apellido
- * Fecha nacimiento
- * Edad
- * Posición
- * Altura
- * Peso
- * Alcance
- * Salto
- * Categoría
- * Equipo
- * Tutor
- * Teléfono
- * Email
- * Dirección
- * Observaciones
- * Historial
- * Lesiones
- * Documentación
- * Evaluaciones
- * Estadísticas
- * Videos
- * Asistencia
- * Pagos
+ * =========================================================
+ * 3. HOVER PREVIEW
+ * =========================================================
+ * Al pasar el mouse sobre una acción, mostrar una mini previsualización del video (sin hacer click).
  *
- * ========================================================
- * ASISTENCIA
- * Modo rápido.
- * Lista de jugadores.
- * Presente
- * Ausente
- * Justificado
- * Tarde
- * Debe calcular automáticamente:
- * %Asistencia
- * Ausencias consecutivas
- * Entrenamientos realizados
- * Gráficos
+ * =========================================================
+ * 4. FILTROS PROFESIONALES
+ * =========================================================
+ * Agregar una barra superior para filtrar por: Jugador, Equipo, Set, Rally, Fundamento, Resultado, Zona, Rotación, Servidor.
+ * No utilizar ventanas modales.
  *
- * ========================================================
- * CUOTAS
- * Cada jugador tendrá:
- * Estado
- * Pagó
- * Debe
- * Valor
- * Fecha vencimiento
- * Historial
- * Comprobantes
- * Método de pago
+ * =========================================================
+ * 5. TIMELINE PROFESIONAL
+ * =========================================================
+ * La Timeline actual debe evolucionar agregando capas: SETS, RALLIES, EVENTOS, CLIPS, COMENTARIOS.
+ * Cada capa debe poder ocultarse.
  *
- * Dashboard financiero.
- * Ingresos
- * Pendientes
- * Morosos
- * Cobrado por categoría
+ * =========================================================
+ * 6. CLIPS
+ * =========================================================
+ * Botón rápido para crear Clip desde la acción seleccionada, desde un Rally o desde un rango.
  *
- * ========================================================
- * BIBLIOTECA DE EJERCICIOS
- * Este será el corazón del sistema.
- * NO guardar únicamente PDFs.
- * Los PDFs deben convertirse en una base de conocimiento.
- * Cada ejercicio será un registro independiente.
+ * =========================================================
+ * 7. PLAYLISTS
+ * =========================================================
+ * Crear automáticamente: Ataques, Recepciones, Errores, Bloqueos, Saques (por jugador o por equipo).
  *
- * Campos:
- * Nombre
- * Descripción
- * Objetivo
- * Objetivos secundarios
- * Nivel
- * Edad
- * Cantidad de jugadores
- * Duración
- * Materiales
- * Complejo
- * K0
- * K1
- * K2
- * Free Ball
- * Fundamentos
- * Recepción
- * Armado
- * Ataque
- * Bloqueo
- * Defensa
- * Saque
- * Cobertura
- * Transición
- * Intensidad
- * Espacio requerido
- * Media cancha
- * Cancha completa
- * Errores frecuentes
- * Correcciones
- * Variantes
- * Consejos
- * Imagen
- * Video
- * Dibujo táctico
- * PDF origen
- * Página del PDF
- * Autor
- * Etiquetas ilimitadas
+ * =========================================================
+ * 8. TABLA
+ * =========================================================
+ * Agregar iconos: 🏐 Saque, 🧱 Bloqueo, ⚡ Ataque, 🤲 Recepción, 🛡 Defensa, ⏱ Timeout, 🟨 Tarjeta.
+ * Todo mucho más visual.
  *
- * ========================================================
- * IMPORTADOR DE PDF
- * Crear un sistema donde el entrenador pueda subir nuevos PDFs.
- * La IA deberá:
- * Extraer automáticamente cada ejercicio.
- * Separarlos.
- * Clasificarlos.
- * Eliminar duplicados.
- * Detectar fundamentos.
- * Detectar nivel.
- * Detectar duración.
- * Detectar materiales.
- * Guardar todo automáticamente en la base de datos.
+ * =========================================================
+ * 9. MODO SCOUT
+ * =========================================================
+ * Ocultar automáticamente Timeline, Tabla e Inspector cuando el usuario quiera registrar rápidamente.
+ * Mostrar solamente: Video, Captura y Marcador.
  *
- * ========================================================
- * BUSCADOR INTELIGENTE
- * No buscar únicamente por nombre.
- * Permitir consultas como:
- * "Ejercicios de saque para Sub16"
- * "Recepción con 8 jugadores"
- * "K1 de 15 minutos"
- * "Bloqueo sin material"
- * "Calentamiento divertido"
- * Utilizar búsqueda semántica.
+ * =========================================================
+ * 10. MODO ANÁLISIS
+ * =========================================================
+ * Mostrar Video, Timeline, Tabla, Inspector, Clips y Comentarios. Ideal para revisar partidos.
  *
- * ========================================================
- * CONSTRUCTOR DE ENTRENAMIENTOS
- * Crear editor visual Drag & Drop.
- * Cada bloque debe poder moverse.
- * Calentamiento
- * Parte principal
- * Juego
- * Vuelta a la calma
+ * =========================================================
+ * 11. MODO PRESENTACIÓN
+ * =========================================================
+ * Ocultar herramientas. Mostrar solamente: Video, Marcador, Comentarios y Timeline. Ideal para reuniones.
  *
- * Mostrar:
- * Tiempo
- * Objetivo
- * Materiales
- * Cantidad de jugadores
- * Video
- * Imagen
- * Observaciones
+ * =========================================================
+ * 12. ATAJOS
+ * =========================================================
+ * Agregar un Command Palette (CTRL + K) para buscar jugador, rally, acción, ir al set, tiempo o clip.
  *
- * Calcular automáticamente:
- * Duración total
- * Pelotas necesarias
- * Conos necesarios
- * Material requerido
+ * =========================================================
+ * 13. DISEÑO
+ * =========================================================
+ * Eliminar el footer. Eliminar espacios vacíos. Aumentar el tamaño del video. Compactar tarjetas.
+ * Todo debe sentirse como una aplicación de escritorio.
  *
- * ========================================================
- * INTELIGENCIA ARTIFICIAL
- * Crear un asistente deportivo.
- * Debe responder preguntas como:
- * Necesito un entrenamiento.
- * Sub16 femenino.
- * 90 minutos.
- * 12 jugadoras.
- * Trabajar:
- * Recepción
- * Ataque
- * K1
- * Debe utilizar solamente ejercicios existentes en la base de datos.
- * No inventar ejercicios.
- * Debe justificar cada elección.
- *
- * También permitir:
- * Cambiar un ejercicio
- * Reducir duración
- * Adaptar a media cancha
- * Adaptar a pocos jugadores
- * Adaptar a lluvia
- * Cambiar dificultad
- * Generar progresiones
- *
- * ========================================================
- * CALENDARIO
- * Vista:
- * Diaria
- * Semanal
- * Mensual
- *
- * Entrenamientos
- * Partidos
- * Evaluaciones
- * Eventos
- * Reuniones
- *
- * ========================================================
- * DIBUJADOR TÁCTICO
- * Crear editor similar a TacticalPad.
- * Cancha.
- * Jugadores.
- * Pelotas.
- * Conos.
- * Flechas.
- * Trayectorias.
- * Animaciones.
- * Guardar el dibujo dentro del ejercicio.
- *
- * ========================================================
- * VIDEOS
- * Cada ejercicio podrá tener:
- * Video
- * GIF
- * YouTube
- * Subida propia
- * Slow Motion
- *
- * ========================================================
- * SCOUTING
- * Crear un módulo completo.
- * Análisis de partidos.
- * Etiquetado de acciones.
- * Filtros.
- * Timeline.
- * Estadísticas.
- * Comparaciones.
- * Sincronización con video.
- *
- * ========================================================
- * ESTADÍSTICAS
- * Dashboard completo.
- * Horas entrenadas.
- * Fundamentos más trabajados.
- * Ejercicios más utilizados.
- * Tiempo dedicado a:
- * Recepción
- * Armado
- * Ataque
- * Bloqueo
- * Defensa
- * Saque
- * K1
- * K2
- * Free Ball
- * Carga semanal
- * Carga mensual
- *
- * ========================================================
- * EVALUACIONES
- * Crear rúbricas configurables.
- * Recepción
- * Armado
- * Ataque
- * Bloqueo
- * Defensa
- * Lectura
- * Comunicación
- * Mostrar evolución.
- *
- * ========================================================
- * REPORTES
- * Exportar:
- * PDF
- * Excel
- * Impresión
- * Crear informes profesionales.
- *
- * ========================================================
- * NOTIFICACIONES
- * Recordatorios.
- * Cuotas.
- * Entrenamientos.
- * Partidos.
- * Lesiones.
- *
- * ========================================================
- * CONFIGURACIÓN
- * Club
- * Logo
- * Colores
- * Temporadas
- * Categorías
- * Usuarios
- * Permisos
- *
- * ========================================================
- * ARQUITECTURA
- * El sistema debe desarrollarse por módulos independientes.
- * Debe ser fácil agregar nuevos módulos sin modificar los existentes.
- * Aplicar buenas prácticas de desarrollo.
- * Código limpio.
- * Componentes reutilizables.
- * Optimización de rendimiento.
- * Escalabilidad.
- *
- * ========================================================
- * IMPORTANTE
- * NO construir primero todas las funcionalidades.
- * Crear una arquitectura profesional desde el inicio.
- * Desarrollar el sistema por fases:
- *
- * FASE 1
- * Autenticación
- * Dashboard
- * Club
- * Jugadores
- * Categorías
- * Equipos
- * Asistencia
- * Cuotas
- *
- * FASE 2
- * Biblioteca inteligente
- * Importador de PDF
- * Buscador semántico
- * Etiquetas
- *
- * FASE 3
- * Planificador visual
- * Calendario
- * Exportaciones
- *
- * FASE 4
- * Inteligencia Artificial
- * Generador automático de entrenamientos
- * Recomendaciones
- *
- * FASE 5
- * Scouting
- * Video
- * Estadísticas
- * Evaluaciones
- * Reportes
- *
- * ========================================================
- * Este producto debe tener calidad comercial y estar preparado para convertirse en la plataforma de referencia para entrenadores y clubes de voleibol.
+ * =========================================================
+ * OBJETIVO FINAL
+ * =========================================================
+ * Quiero que el usuario pueda analizar un partido completo con la menor cantidad posible de clicks.
+ * Toda la navegación debe sentirse inmediata.
+ * La interfaz debe priorizar velocidad, precisión y productividad.
+ * No agregar nuevas funcionalidades deportivas. Todo el esfuerzo debe enfocarse exclusivamente en optimizar la experiencia de uso.
  */
-
 
 
 
