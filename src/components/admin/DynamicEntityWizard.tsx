@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RoleInfoStep, type RoleInfoData } from "./steps/RoleInfoStep";
+import { PermissionDefinitionStep, type PermissionDefinitionData } from "./steps/PermissionDefinitionStep";
 
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
 
@@ -120,6 +121,11 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     status: "active",
     type: "custom"
   });
+  const [permissionData, setPermissionData] = useState<PermissionDefinitionData>({
+    key: "",
+    category: "",
+    description: ""
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const config = ENTITY_CONFIG[entityType];
@@ -135,9 +141,22 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     return Object.keys(newErrors).length === 0;
   };
 
+  const validatePermissionStep = () => {
+    const newErrors: Record<string, string> = {};
+    if (!permissionData.key.trim()) newErrors.key = "La key es obligatoria";
+    if (!permissionData.category) newErrors.category = "Debes seleccionar una categoría";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = () => {
     if (entityType === "role" && currentStep === 0) {
       if (!validateRoleStep()) return;
+    }
+    
+    if (entityType === "permission" && currentStep === 0) {
+      if (!validatePermissionStep()) return;
     }
 
     if (currentStep < totalSteps - 1) {
@@ -166,6 +185,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
   const isNextDisabled = () => {
     if (entityType === "role" && currentStep === 0) {
       return !roleData.name || !roleData.workspaceId || !roleData.organizationId;
+    }
+    if (entityType === "permission" && currentStep === 0) {
+      return !permissionData.key || !permissionData.category;
     }
     return currentStep === totalSteps - 1 && entityType !== "user";
   };
@@ -232,6 +254,14 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
                 <RoleInfoStep 
                   data={roleData} 
                   onChange={(newData) => setRoleData(prev => ({ ...prev, ...newData }))}
+                  errors={errors}
+                />
+              )}
+
+              {entityType === "permission" && currentStep === 0 && (
+                <PermissionDefinitionStep 
+                  data={permissionData}
+                  onChange={(newData) => setPermissionData(prev => ({ ...prev, ...newData }))}
                   errors={errors}
                 />
               )}
