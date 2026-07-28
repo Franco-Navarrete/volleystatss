@@ -153,7 +153,6 @@ function AdminPage() {
   const { isAdmin, checking } = useIsAdmin();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
-  const [selectedRole, setSelectedRole] = useState<any>(null);
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
@@ -288,7 +287,7 @@ function WorkspacesSection({ onSelect }: { onSelect: (org: any) => void }) {
     <div className="h-64 bg-muted/10 animate-pulse rounded-xl" />
   </div>;
 
-  const workspaces = data?.workspaces ?? MOCK_HIERARCHY;
+  const workspaces = (data?.workspaces as OrganizationNode[]) ?? MOCK_HIERARCHY;
 
   return (
     <div className="space-y-4">
@@ -302,88 +301,6 @@ function WorkspacesSection({ onSelect }: { onSelect: (org: any) => void }) {
       </div>
       <OrganizationTree data={workspaces} onSelect={onSelect} />
     </div>
-  );
-}
-
-function HierarchyRow({ node, level }: { node: any, level: number }) {
-  const [isExpanded, setIsExpanded] = useState(level < 2);
-  const hasChildren = node.children && node.children.length > 0;
-
-  const typeLabels: Record<OrgType, string> = {
-    federacion: 'Federación',
-    asociacion: 'Asociación',
-    liga: 'Liga',
-    club: 'Club',
-    categoria: 'Categoría',
-    equipo: 'Equipo'
-  };
-
-  const typeColors: Record<OrgType, string> = {
-    federacion: 'bg-purple-500/10 text-purple-600 border-purple-200 dark:border-purple-900',
-    asociacion: 'bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-900',
-    liga: 'bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-900',
-    club: 'bg-green-500/10 text-green-600 border-green-200 dark:border-green-900',
-    categoria: 'bg-slate-500/10 text-slate-600 border-slate-200 dark:border-slate-900',
-    equipo: 'bg-rose-500/10 text-rose-600 border-rose-200 dark:border-rose-900'
-  };
-
-  return (
-    <>
-      <div 
-        className={`group flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer`}
-        onClick={() => setIsExpanded(!isExpanded)}
-        style={{ paddingLeft: `${(level * 24) + 16}px` }}
-      >
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          {hasChildren ? (
-            isExpanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />
-          ) : (
-            <div className="size-4" />
-          )}
-          <div className={`size-8 rounded-lg ${typeColors[node.type as OrgType] || 'bg-muted'} flex items-center justify-center shrink-0 border`}>
-            <Building2 className="size-4" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm truncate">{node.name}</span>
-              <Badge variant="outline" className={`text-[10px] uppercase font-black px-1.5 py-0 h-4 ${typeColors[node.type as OrgType] || 'bg-muted'}`}>
-                {typeLabels[node.type as OrgType] || node.type}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
-              {node.userCount !== undefined && <span className="flex items-center gap-1"><Users className="size-3" /> {node.userCount}</span>}
-              {node.plan && (
-                <>
-                  <span>•</span>
-                  <span className="flex items-center gap-1"><Package className="size-3" /> {node.plan}</span>
-                </>
-              )}
-              <span>•</span>
-              <span className="flex items-center gap-1">WS: {node.id.slice(0, 5)}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="hidden sm:flex items-center gap-2">
-          {node.modules?.slice(0, 2).map((m: string) => (
-            <Badge key={m} variant="secondary" className="text-[10px] bg-background border-border/40">{m}</Badge>
-          ))}
-          {node.modules?.length > 2 && <span className="text-[10px] text-muted-foreground">+{node.modules.length - 2}</span>}
-        </div>
-
-        <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical className="size-4" />
-        </Button>
-      </div>
-      
-      {hasChildren && isExpanded && (
-        <div className="animate-in slide-in-from-top-1 duration-200">
-          {node.children!.map((child: any) => (
-            <HierarchyRow key={child.id} node={child} level={level + 1} />
-          ))}
-        </div>
-      )}
-    </>
   );
 }
 
@@ -446,12 +363,6 @@ function UsersSection({ viewMode, onSelect }: { viewMode: 'table' | 'cards', onS
   );
 }
 
-function SubscriptionsSection() { return <div className="p-8 text-center text-muted-foreground">Gestión de Suscripciones Enterprise</div>; }
-function AuditLogSection() { return <div className="p-8 text-center text-muted-foreground">Historial de Auditoría Global</div>; }
-function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void }) { return <Sheet open={!!user} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Usuario</SheetTitle></SheetHeader></SheetContent></Sheet>; }
-function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) { return <Sheet open={!!org} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Organización</SheetTitle></SheetHeader></SheetContent></Sheet>; }
-function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => void }) { return <Sheet open={!!module} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Módulo</SheetTitle></SheetHeader></SheetContent></Sheet>; }
-
 function PermissionsCatalogSection() {
   const listPerms = useServerFn(adminListPermissionsCatalog);
   const { data: perms, isLoading } = useQuery({ 
@@ -466,7 +377,7 @@ function PermissionsCatalogSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Catálogo Central de Capacidades</h2>
+        <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Catálogo Central de Capacidades</h2>
         <Badge variant="outline" className="border-primary/20 text-primary">Global Scope</Badge>
       </div>
       
@@ -478,7 +389,7 @@ function PermissionsCatalogSection() {
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-2">
               {perms?.filter(p => p.category === cat).map(p => (
-                <div key={p.id} className="flex items-center justify-between group">
+                <div key={p.id} className="flex items-center justify-between group cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors">
                   <span className="text-sm font-medium">{p.name}</span>
                   <code className="text-[9px] bg-muted px-1 rounded opacity-60 group-hover:opacity-100 transition-opacity">{p.id}</code>
                 </div>
@@ -491,7 +402,7 @@ function PermissionsCatalogSection() {
   );
 }
 
-function ModulesSection() {
+function ModulesSection({ onSelect }: { onSelect: (m: any) => void }) {
   const modules = [
     { id: 'live', name: 'RALLY Live', desc: 'Registro de partidos en tiempo real.', plan: 'Free+' },
     { id: 'scout', name: 'RALLY Scout', desc: 'Análisis técnico avanzado de video.', plan: 'Club+' },
@@ -500,9 +411,9 @@ function ModulesSection() {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {modules.map(m => (
-        <Card key={m.id} className="border-border/60 bg-card/40">
+        <Card key={m.id} className="border-border/60 bg-card/40 cursor-pointer hover:border-primary/40 transition-colors" onClick={() => onSelect(m)}>
           <CardHeader className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -514,18 +425,22 @@ function ModulesSection() {
                   <CardDescription className="text-xs">{m.plan}</CardDescription>
                 </div>
               </div>
-              <Settings className="size-4 text-muted-foreground cursor-pointer hover:text-foreground" />
+              <Button variant="ghost" size="icon" className="size-8" onClick={(e) => { e.stopPropagation(); /* config */ }}>
+                <Settings className="size-4 text-muted-foreground" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <p className="text-sm text-muted-foreground">{m.desc}</p>
-            <div className="mt-4 pt-4 border-t border-border/40 flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">Disponibilidad Global</span>
-              <Badge variant="outline" className="text-[10px] text-green-500 border-green-500/20 bg-green-500/5">Activo</Badge>
-            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2">{m.desc}</p>
           </CardContent>
         </Card>
       ))}
     </div>
   );
 }
+
+function SubscriptionsSection() { return <div className="p-8 text-center text-muted-foreground">Gestión de Suscripciones Enterprise</div>; }
+function AuditLogSection() { return <div className="p-8 text-center text-muted-foreground">Historial de Auditoría Global</div>; }
+function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void }) { return <Sheet open={!!user} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Usuario</SheetTitle></SheetHeader></SheetContent></Sheet>; }
+function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) { return <Sheet open={!!org} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Organización</SheetTitle></SheetHeader></SheetContent></Sheet>; }
+function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => void }) { return <Sheet open={!!module} onOpenChange={onClose}><SheetContent className="w-[400px]"><SheetHeader><SheetTitle>Detalle de Módulo</SheetTitle></SheetHeader></SheetContent></Sheet>; }
