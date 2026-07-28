@@ -354,6 +354,12 @@ function AdminPage() {
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
       <AuditDetailDrawer log={selectedAuditLog} onClose={() => setSelectedAuditLog(null)} />
+
+      <DynamicEntityWizard 
+        isOpen={wizardOpen} 
+        onClose={() => setWizardOpen(false)} 
+        entityType={activeEntityType} 
+      />
     </AppShell>
   );
 }
