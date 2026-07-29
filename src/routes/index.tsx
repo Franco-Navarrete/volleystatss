@@ -1,124 +1,160 @@
 /**
- * # CORRECCIÓN CRÍTICA
- * # ELIMINAR TODOS LOS PLACEHOLDERS DEL ORGANIZATION DRAWER
+ * # RALLY CORE
+ * # USER ASSIGNMENT ENGINE
+ * # IMPLEMENTACIÓN COMPLETA
  *
- * El Organization Drawer todavía contiene múltiples acciones de desarrollo.
- * Actualmente existen botones y pestañas que ejecutan únicamente:
- * alert()
- * console.log()
- * TODO
- * Stubs
- * Placeholders
- * Mensajes como:
- * "Wizard: Crear sub-entidad"
- * "Abriendo editor global"
- * Estos componentes nunca deben existir en producción.
+ * ## CONTEXTO
+ * Actualmente el módulo Usuarios presenta un problema crítico.
+ * En el Drawer de un Usuario, dentro de la pestaña "Organizaciones", el botón:
+ * ➕ Asignar a otra Organización
+ * no ejecuta ninguna acción real.
+ * Actualmente muestra un alert() del navegador con un mensaje como:
+ * "Wizard: Asignar Organización (Paso 1..., Paso 2...)"
+ * Esto indica que el flujo sigue utilizando un Placeholder o Stub de desarrollo.
+ * En producción esto nunca debe ocurrir.
  *
- * ============================================================
+ * ======================================================================
  * OBJETIVO
- * Eliminar completamente cualquier placeholder del Organization Drawer.
- * Toda acción debe ejecutar un flujo real.
- * Nunca mostrar alert().
- * Nunca mostrar mensajes internos.
- * Nunca dejar botones sin funcionalidad.
+ * ======================================================================
+ * Eliminar completamente todos los placeholders relacionados con la asignación de organizaciones y roles.
+ * Implementar un sistema profesional de asignaciones de usuarios.
+ * No utilizar:
+ * - alert()
+ * - prompt()
+ * - confirm()
+ * - console.log()
+ * - TODO
+ * - Placeholder Components
+ * - Mock Components
+ * Toda acción debe abrir un Wizard real.
  *
- * ============================================================
- * ACCIONES RÁPIDAS
- * ============================================================
+ * ======================================================================
+ * ARQUITECTURA
+ * ======================================================================
+ * No quiero relacionar directamente: Usuario ↓ Organización
+ * Quiero una entidad independiente: UserAssignment
+ * La estructura será: User ↓ UserAssignment ↓ Organization ↓ Role ↓ Workspace ↓ ExtraPermissions
+ * Cada usuario podrá tener múltiples asignaciones.
+ * Cada asignación tendrá su propio rol.
+ * Cada asignación tendrá su propio Workspace.
+ * Cada asignación tendrá permisos adicionales.
  *
- * Crear hijo
- * Actualmente: alert("Wizard: Crear sub-entidad")
- * Debe: Abrir inmediatamente el Wizard Crear Organización.
- * Con: Parent Organization preseleccionada automáticamente.
- * Ejemplo: Club Quilino ↓ Crear Equipo o Crear Escuela o Crear Filial según el tipo permitido.
+ * ======================================================================
+ * NUEVA TABLA
+ * ======================================================================
+ * Crear entidad: UserAssignment
+ * Campos: ID, UserId, OrganizationId, WorkspaceId, RoleId, IsPrimary, Status, StartDate, EndDate, CreatedBy, UpdatedBy, Audit
  *
- * Mover
- * Actualmente no hace nada. Debe abrir un Wizard.
- * Paso 1: Seleccionar nueva organización padre. Mostrar árbol. Buscar. Expandir. Contraer.
- * Paso 2: Validar. No permitir ciclos. No permitir mover una organización dentro de sí misma.
- * Paso 3: Resumen. Confirmar. Actualizar inmediatamente el árbol.
+ * ======================================================================
+ * DRAWER DEL USUARIO
+ * ======================================================================
+ * Pestaña Organizaciones: Reemplazar completamente el diseño actual.
+ * Mostrar una tabla profesional.
+ * Columnas: Principal, Organización, Tipo, Workspace, Rol, Permisos Extra, Estado, Fecha Asignación, Acciones
  *
- * Duplicar
- * Actualmente no hace nada. Debe abrir un Wizard.
- * Opciones: Duplicar configuración. Duplicar módulos. Duplicar usuarios. Duplicar permisos. Duplicar equipos. Duplicar categorías. Duplicar temporadas.
- * Seleccionar nombre. Crear.
+ * ======================================================================
+ * BOTÓN + Asignar Organización
+ * ======================================================================
+ * Al hacer clic: Nunca mostrar alert(). Nunca mostrar mensajes del navegador.
+ * Abrir inmediatamente el: RALLY CORE ENTITY WIZARD
  *
- * Eliminar
- * No eliminar físicamente. Debe abrir Confirm Dialog.
- * Mostrar impacto: Usuarios. Equipos. Competencias. Temporadas.
- * Solicitar confirmación. Realizar Soft Delete.
+ * ======================================================================
+ * WIZARD: Asignar Organización
+ * ======================================================================
+ * Stepper:
+ * 1. Organización
+ * 2. Rol
+ * 3. Workspace
+ * 4. Permisos
+ * 5. Confirmación
  *
- * ============================================================
- * TAB RESUMEN
- * ============================================================
- * Actualmente incompleto.
- * Mostrar: Información general. Descripción. Estado. Plan. Usuarios. Equipos. Temporadas. Competencias. Actividad reciente. Acciones rápidas.
+ * ======================================================================
+ * PASO 1: Seleccionar Organización
+ * ======================================================================
+ * Mostrar árbol jerárquico: Federación ↓ Asociación ↓ Liga ↓ Club ↓ Equipo
+ * Buscador. Expandir. Contraer. Ruta completa. Seleccionar.
  *
- * ============================================================
- * TAB JERARQUÍA
- * ============================================================
- * Mostrar árbol completo. Padre. Hijos. Nietos. Cantidad de organizaciones.
- * Permitir: Mover. Crear hijo. Expandir. Colapsar.
+ * ======================================================================
+ * PASO 2: Seleccionar Rol
+ * ======================================================================
+ * Cargar únicamente los Roles disponibles para esa Organización.
+ * Mostrar: Administrador, Director Deportivo, Entrenador Principal, Entrenador Asistente, Scout, Analista, Preparador Físico, Médico, Jugador, Árbitro, Personalizados
  *
- * ============================================================
- * TAB USUARIOS
- * ============================================================
- * Eliminar placeholders. Mostrar tabla: Nombre. Rol. Estado. Último acceso.
- * Acciones: Agregar usuario. Eliminar. Cambiar rol.
+ * ======================================================================
+ * PASO 3: Workspace
+ * ======================================================================
+ * Seleccionar Workspace: Default, Club, Liga, Federación, Personalizado
+ * Checkbox: Workspace Principal
  *
- * ============================================================
- * TAB MÓDULOS
- * ============================================================
- * Actualmente vacío.
- * Mostrar módulos activos: Live Scout Video Analytics Training Coach Marketplace API IA
- * Permitir: Activar. Desactivar. Configurar.
+ * ======================================================================
+ * PASO 4: Permisos adicionales
+ * ======================================================================
+ * Permitir agregar permisos sin modificar el Rol.
+ * Ejemplos: Crear Competencias, Editar Equipos, Editar Jugadores, Administrar Videos, Ver Analytics, Exportar Reportes, Administrar IA
  *
- * ============================================================
- * TAB SUSCRIPCIÓN
- * ============================================================
- * Actualmente muestra: alert("Abriendo editor global")
- * Debe reemplazarse por un editor completo.
- * Mostrar: Plan. Estado. Fecha inicio. Fecha vencimiento. Renovación. Usuarios. Storage. Videos. API. IA.
- * Cambiar plan. Suspender. Cancelar. Renovar.
+ * ======================================================================
+ * PASO 5: Confirmación
+ * ======================================================================
+ * Mostrar: Usuario, Organización, Rol, Workspace, Permisos, Principal
+ * Botón: Asignar
  *
- * ============================================================
- * TAB CONFIGURACIÓN
- * ============================================================
- * Eliminar placeholders.
- * Mostrar: Nombre. Slug. Color. Icono. Zona horaria. Idioma. País. Ciudad. Dominio. Configuraciones avanzadas.
+ * ======================================================================
+ * AL CONFIRMAR
+ * ======================================================================
+ * Crear UserAssignment. Actualizar automáticamente: Drawer, Tabla, Organization Tree, Workspace, Permission Engine, Audit.
+ * Mostrar Toast: "Usuario asignado correctamente." Nunca recargar la página.
  *
- * ============================================================
- * WIZARDS
- * ============================================================
- * Todos los botones deben abrir Wizards reales.
- * Nunca alerts. Nunca prompts. Nunca confirm() del navegador.
- * Utilizar exclusivamente: Rally Core Wizard
+ * ======================================================================
+ * ACCIONES
+ * ======================================================================
+ * Cada fila tendrá: Editar, Cambiar Rol, Cambiar Workspace, Cambiar Permisos, Marcar Principal, Suspender Asignación, Eliminar Asignación
  *
- * ============================================================
- * DRAWERS
- * ============================================================
- * Todo debe abrirse mediante Drawers. No nuevas páginas. No alerts.
+ * ======================================================================
+ * CAMBIAR ROL
+ * ======================================================================
+ * No utilizar alert(). Abrir Drawer. Seleccionar nuevo Rol. Actualizar permisos efectivos automáticamente.
  *
- * ============================================================
- * ÁRBOL
- * ============================================================
- * Cuando una organización cambie: Actualizar automáticamente sin recargar la página.
+ * ======================================================================
+ * CAMBIAR WORKSPACE
+ * ======================================================================
+ * Abrir Drawer. Seleccionar Workspace. Actualizar inmediatamente.
  *
- * ============================================================
- * REGLA GENERAL
- * ============================================================
- * Buscar en todo el proyecto cualquier:
- * alert( prompt( confirm( console.log( TODO Placeholder ComingSoon DevelopmentCard BusinessRuleResolver MockComponent StubComponent EntityPlaceholder ActionFramework Placeholder
- * y reemplazarlos por implementaciones reales.
+ * ======================================================================
+ * CAMBIAR PERMISOS
+ * ======================================================================
+ * Mostrar únicamente permisos adicionales. Nunca modificar el Rol base.
  *
- * ============================================================
+ * ======================================================================
+ * ELIMINAR ASIGNACIÓN
+ * ======================================================================
+ * No eliminar el Usuario. Eliminar únicamente la relación.
+ * Solicitar confirmación mediante el Confirm Dialog del sistema. Nunca utilizar confirm() del navegador.
+ *
+ * ======================================================================
+ * REGLAS
+ * ======================================================================
+ * Un Usuario puede pertenecer a múltiples Organizaciones.
+ * Cada Organización puede tener: Rol distinto, Workspace distinto, Permisos distintos.
+ * Una asignación principal. No permitir duplicados. No permitir dos asignaciones principales.
+ *
+ * ======================================================================
+ * AUDITORÍA
+ * ======================================================================
+ * Registrar: Asignación creada, Rol cambiado, Workspace cambiado, Permisos modificados, Asignación suspendida, Asignación eliminada.
+ *
+ * ======================================================================
+ * BUSCAR EN TODO EL PROYECTO
+ * ======================================================================
+ * Eliminar cualquier: alert( prompt( confirm( console.log( TODO Stub Mock Placeholder BusinessRule Resolver DevelopmentCard ActionFramework Placeholder
+ * Relacionado con: UserAssignment, RoleAssignment, OrganizationAssignment, WorkspaceAssignment
+ *
+ * ======================================================================
  * OBJETIVO FINAL
- * Quiero que el módulo Organizations sea completamente funcional.
- * No debe existir ninguna acción que muestre mensajes de desarrollo.
- * Cada botón debe ejecutar un flujo real.
- * Cada pestaña debe mostrar información real.
- * Cada acción debe modificar el árbol de organizaciones utilizando el Organization Engine.
- * El usuario nunca debe percibir que existen funcionalidades sin implementar.
+ * ======================================================================
+ * Quiero un sistema Enterprise de asignación de usuarios.
+ * Los usuarios podrán pertenecer a múltiples organizaciones con diferentes roles, workspaces y permisos.
+ * Toda la experiencia debe realizarse mediante Wizards y Drawers del RALLY CORE.
+ * No debe existir ningún placeholder, alert() o mensaje interno del framework.
  */
 
 
