@@ -1,126 +1,89 @@
 /**
- * Objetivo
- * Quiero rediseñar completamente el flujo para crear un nuevo partido.
- * El objetivo es que el usuario complete el partido en pocos pasos y que toda la lógica de rotaciones y roles se genere automáticamente, similar a Data Volley pero con una experiencia de usuario mucho más simple.
- *
- * Flujo de creación
- * El asistente debe dividirse en pasos.
- *
- * Paso 1 – Información del partido
- * Solicitar:
- * - Competencia
- * - Categoría
- * - Fecha
- * - Hora
- * - Local
- * - Visitante
- * - Cantidad de sets (3 o 5)
- * - Lugar (opcional)
- *
- * Paso 2 – Mi equipo
- * El usuario selecciona un equipo ya creado.
- * Automáticamente cargar: jugadores números roles altura (si existe) mano hábil posición habitual
- * Mostrar una lista.
- * Permitir seleccionar: convocados sexteto inicial líbero(s) capitán
- * No volver a pedir el rol porque ya está registrado en la base de datos.
- *
- * Paso 3 – Equipo rival
- * El rival puede crearse rápidamente.
- * No es obligatorio cargar nombres.
- * La interfaz deberá permitir ingresar únicamente: Número de camiseta.
- * Ejemplo: 4, 6, 8, 10, 12, 15
- * Opcionalmente permitir agregar nombres si el usuario los conoce.
- *
- * Paso 4 – Formación inicial
- * Mostrar una cancha de voleibol interactiva con las seis zonas.
- * El usuario arrastra los jugadores del rival a: Zona 1, Zona 2, Zona 3, Zona 4, Zona 5, Zona 6
- * Ejemplo:
- * Zona 1 = Nº4
- * Zona 2 = Nº12
- * Zona 3 = Nº8
- * Zona 4 = Nº15
- * Zona 5 = Nº6
- * Zona 6 = Nº10
- *
- * Paso 5 – Identificar el armador
- * Preguntar únicamente: ¿Qué número corresponde al armador?
- * Ejemplo: Nº4
- * No solicitar ningún otro rol.
- *
- * Motor automático de roles
- * Una vez conocido el armador, el sistema debe identificar automáticamente el resto de los roles.
- * Seguir siempre el patrón del sistema 5-1:
- * Armador
- * ↓
- * Punta
- * ↓
- * Central
- * ↓
- * Opuesto
- * ↓
- * Punta
- * ↓
- * Central
- * ↓
- * (vuelve al Armador)
- * Recorrer la rotación respetando el orden de las zonas: 1 → 6 → 5 → 4 → 3 → 2 → 1
- * Asignar automáticamente: Armador, Punta 1, Central 1, Opuesto, Punta 2, Central 2
- * No pedir esta información al usuario.
- *
- * Generar automáticamente las seis rotaciones
- * Una vez creada la rotación inicial, generar: Rotación 1 a Rotación 6.
- * Cada rotación debe actualizar: zona, delantero/zaguero, posibilidad de bloqueo, posibilidad de ataque de primer tiempo, ubicación del armador.
- *
- * Motor de rotaciones
- * Crear un servicio independiente llamado: RotationEngine
- * Debe contener funciones como:
- * - detectarRotacionInicial()
- * - asignarRoles()
- * - generarRotaciones()
- * - rotar()
- * - obtenerRotacionActual()
- * - obtenerJugadorPorZona()
- * - obtenerZonaPorJugador()
- * - obtenerRolJugador()
- * - esDelantero()
- * - esZaguero()
- * - puedeBloquear()
- * - puedeAtacarPrimerTiempo()
- * Toda la lógica del sistema deberá depender de este motor.
- *
- * Preparar para futuras funciones
- * Diseñar la arquitectura para reutilizar el mismo motor en:
- * - Estadísticas en vivo.
- * - Scouting.
- * - Análisis por rotación.
- * - K1 / K2.
- * - Recepción.
- * - Ataque / Bloqueo / Defensa.
- * - Video sincronizado.
- * - Informes posteriores al partido.
- * No duplicar lógica.
- *
- * Validaciones
- * Validar automáticamente: solo un armador; solo un opuesto; exactamente dos puntas; exactamente dos centrales; seis jugadores distintos; ninguna zona vacía; ningún número repetido.
- * Mostrar mensajes claros si existe algún error.
- *
- * Interfaz
- * La experiencia debe ser visual. Utilizar:
- * - Cancha de voleibol interactiva.
- * - Drag & Drop.
- * - Tarjetas para los jugadores.
- * - Indicadores de zonas.
- * - Colores distintos para cada rol.
- * - Vista previa de la rotación detectada y de las seis rotaciones antes de comenzar el partido.
- * Todo debe actualizarse en tiempo real mientras el usuario mueve jugadores.
- *
  * Objetivo principal
- * El entrenador no debe pensar en la rotación. Solo debe:
- * 1. Elegir su equipo.
- * 2. Cargar los seis jugadores rivales.
- * 3. Arrastrarlos a sus posiciones iniciales.
- * 4. Indicar cuál es el armador.
- * El sistema debe deducir automáticamente toda la estructura táctica del rival y dejar el partido listo para comenzar.
+ * El entrenador debe poder preparar un partido en menos de dos minutos.
+ * La interfaz debe sentirse como una herramienta profesional de scouting.
+ * No debe parecer un formulario. Debe sentirse como una preparación táctica.
+ *
+ * Nuevo flujo
+ * PASO 1
+ * Seleccionar Liga, Equipo Local y Equipo Visitante.
+ * Una vez seleccionados ambos equipos, cargar automáticamente: jugadores, números, roles (solo del equipo propio), colores y escudos.
+ * No mostrar todavía la información administrativa.
+ *
+ * PASO 2
+ * Mostrar dos canchas de voleibol una al lado de la otra.
+ * LOCAL                     VISITANTE
+ * 🏐                         🏐
+ * Zona 4                  Zona 4
+ * Zona 3                  Zona 3
+ * Zona 2                  Zona 2
+ * Zona 5                  Zona 5
+ * Zona 6                  Zona 6
+ * Zona 1                  Zona 1
+ *
+ * PASO 3
+ * Mi equipo
+ * Mostrar todos los jugadores como tarjetas.
+ * Ejemplo: 12 Gómez (Armador), 15 López (Central), 8 Pérez (Punta).
+ * Simplemente arrastrarlos a la cancha. No pedir el rol (ya existe en la base de datos).
+ *
+ * PASO 4
+ * Equipo rival
+ * Mostrar solamente: N°4, N°6, N°8, N°10, N°12, N°15.
+ * El entrenador los arrastra a la cancha.
+ * Luego seleccionar solamente: ✅ ¿Cuál es el armador? (Nº4, Nº6, Nº8, Nº10, Nº12, Nº15).
+ * Nada más.
+ *
+ * PASO 5
+ * Cuando se selecciona el armador:
+ * El sistema deberá ejecutar automáticamente el Rotation Engine.
+ * Detectar: Armador, Punta 1, Punta 2, Central 1, Central 2, Opuesto.
+ * Mostrar inmediatamente debajo de la cancha:
+ * 4  Armador
+ * 12 Punta
+ * 8  Central
+ * 15 Opuesto
+ * 6  Punta
+ * 10 Central
+ * Todo automático.
+ *
+ * PASO 6
+ * Mostrar una nueva tarjeta llamada "Vista previa táctica". Debe mostrar:
+ * - Rotación detectada (R1 a R6).
+ * - Delanteros (ej. 12, 8, 15) y Zagueros (ej. 4, 6, 10).
+ * - Armador delantero (SI/NO) o Armador zaguero (SI/NO).
+ *
+ * PASO 7
+ * Generar automáticamente una vista de las seis rotaciones (R1 a R6).
+ * Al hacer clic en cualquiera: Actualizar la cancha mostrando esa rotación.
+ *
+ * PASO 8
+ * Recién ahora mostrar la información administrativa al final de la pantalla:
+ * Fecha, Hora, Categoría, Árbitro, Planillero, Sets, Puntos, Saque inicial.
+ * Estas opciones son importantes pero no deben interrumpir la preparación táctica.
+ *
+ * Mejoras visuales
+ * - Eliminar los bloques vacíos que dicen "Elegí un equipo". Reemplazarlos por una cancha vacía.
+ * - La interfaz debe reaccionar inmediatamente al seleccionar un equipo.
+ * - Mostrar las tarjetas de jugadores con colores por rol:
+ *   🟦 Armador, 🟩 Central, 🟨 Punta, 🟥 Opuesto, 🟪 Líbero.
+ * - Agregar un panel lateral llamado "Resumen del partido" que muestre permanentemente Liga, Categoría, Local, Visitante, Rotación actual, Sistema táctico, Armador, Líbero, Capitán y Saque inicial.
+ *
+ * Arquitectura
+ * Separar completamente la Información administrativa de la Información táctica.
+ * La información táctica debe ocupar el 70% de la pantalla y la administrativa el 30%.
+ *
+ * Objetivo UX
+ * Transmitir la sensación de estar preparando un partido profesional. Prioridad:
+ * 1. Elegir equipos. 2. Formación. 3. Roles automáticos. 4. Verificar rotaciones. 5. Datos administrativos. 6. Comenzar.
+ *
+ * Diferencial: "Detectar formación desde la cancha"
+ * El usuario arrastra los seis jugadores a las zonas donde los ve antes del primer saque y marca al armador. El sistema muestra:
+ * - Rotación actual (R1-R6).
+ * - Quiénes son delanteros y zagueros.
+ * - Dónde estará el armador en recepción (K1).
+ * - Qué central atacará primer tiempo.
+ * - Qué punta atacará por zona 4.
  */
 
 
