@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { 
   X, 
   ChevronRight, 
@@ -129,7 +132,13 @@ interface DynamicEntityWizardProps {
   targetEntity?: any;
 }
 
+import { adminSetRole, adminSetExtraRole } from "@/lib/admin.functions";
+
 export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity }: DynamicEntityWizardProps) {
+  const queryClient = useQueryClient();
+  const setRole = useServerFn(adminSetRole);
+  const setExtraRole = useServerFn(adminSetExtraRole);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [roleData, setRoleData] = useState<RoleInfoData>({
     name: "",
@@ -216,7 +225,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (entityType === "role" && currentStep === 0) {
       if (!validateRoleStep()) return;
     }
@@ -233,8 +242,47 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
       setCurrentStep(currentStep + 1);
     } else {
       // Logic for finishing the wizard
-      console.log(`[Wizard] Finalizing creation of: ${entityType}`);
-      onClose();
+      if (entityType === "change_role" && targetEntity) {
+        setIsSubmitting(true);
+        try {
+          const newRoleId = changeRoleData.roleId;
+          
+          if (newRoleId === "admin") {
+            await setRole({ data: { userId: targetEntity.id, isAdmin: true } });
+          } else if (newRoleId === "user") {
+            await setRole({ data: { userId: targetEntity.id, isAdmin: false } });
+          } else {
+            // Es un rol extra (scorekeeper/analyst/coach)
+            // Primero nos aseguramos de que no sea admin global si estamos bajando de rango
+            if (targetEntity.isAdmin) {
+              await setRole({ data: { userId: targetEntity.id, isAdmin: false } });
+            }
+            
+            // Mapeo de roles internos a lo que espera adminSetExtraRole
+            const roleMapping: Record<string, any> = {
+              "scorekeeper": "planillero",
+              "coach": "entrenador",
+              "analyst": "analyst" // Nota: el serverfn parece esperar 'planillero' o 'entrenador' solamente segun ExtraRole type, 
+                                   // pero vamos a enviar lo que tenemos o ajustar.
+            };
+            
+            const extraRole = roleMapping[newRoleId] || newRoleId;
+            await setExtraRole({ data: { userId: targetEntity.id, roles: [extraRole] } });
+          }
+          
+          toast.success("Rol actualizado correctamente");
+          await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+          onClose();
+        } catch (error: any) {
+          console.error("Error updating role:", error);
+          toast.error(error.message || "Error al actualizar el rol");
+        } finally {
+          setIsSubmitting(false);
+        }
+      } else {
+        console.log(`[Wizard] Finalizing creation of: ${entityType}`);
+        onClose();
+      }
     }
   };
 
@@ -479,10 +527,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
             <Button 
               onClick={handleNext} 
               className={`font-bold px-8 ${currentStep === totalSteps - 1 ? "bg-green-600 hover:bg-green-700 text-white" : "shadow-glow"}`}
-              disabled={isNextDisabled()} // Solo permitir finalizar si está implementado
+              disabled={isNextDisabled() || isSubmitting} // Solo permitir finalizar si está implementado
             >
-              {currentStep === totalSteps - 1 ? "Finalizar" : "Siguiente"}
-              {currentStep < totalSteps - 1 && <ChevronRight className="size-4 ml-2" />}
+              {isSubmitting ? "Procesando..." : (currentStep === totalSteps - 1 ? "Finalizar" : "Siguiente")}
+              {!isSubmitting && currentStep < totalSteps - 1 && <ChevronRight className="size-4 ml-2" />}
             </Button>
           </div>
         </div>
