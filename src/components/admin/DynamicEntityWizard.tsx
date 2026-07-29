@@ -262,7 +262,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
             const roleMapping: Record<string, ExtraRole> = {
               "scorekeeper": "planillero",
               "coach": "entrenador",
-              "analyst": "analyst"
+              "analyst": "analyst",
+              "scout": "planillero", // Mapeos temporales hasta expandir DB
+              "referee": "planillero",
+              "video_operator": "planillero"
             };
             
             const extraRole = roleMapping[newRoleId] || (newRoleId as ExtraRole);
