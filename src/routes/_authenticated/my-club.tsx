@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useVolley } from "@/lib/volley-store";
 import { Building2, Users, Layers, Plus, ChevronRight, UserPlus } from "lucide-react";
@@ -55,8 +55,10 @@ function MyClubPage() {
             <Button variant="outline" size="sm">
               Editar Club
             </Button>
-            <Button size="sm" className="shadow-glow">
-              <Plus className="size-4 mr-2" /> Nueva Categoría
+            <Button size="sm" className="shadow-glow" asChild>
+              <Link to="/teams">
+                <Plus className="size-4 mr-2" /> Nueva Categoría
+              </Link>
             </Button>
           </div>
         </div>
