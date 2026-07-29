@@ -8,7 +8,7 @@ const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const passwordSchema = z.string().min(8).max(72);
 const uuidSchema = z.string().uuid();
 
-export type ExtraRole = "entrenador" | "planillero";
+export type ExtraRole = "entrenador" | "planillero" | "analyst";
 
 type AuthCtx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -41,7 +41,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const admins = new Set((rolesRes.data ?? []).filter((r) => r.role === "admin").map((r) => r.user_id));
     const extraRolesByUser = new Map<string, ExtraRole[]>();
     for (const r of rolesRes.data ?? []) {
-      if (r.role === "entrenador" || r.role === "planillero") {
+      if (r.role === "entrenador" || r.role === "planillero" || r.role === "analyst") {
         const arr = extraRolesByUser.get(r.user_id) ?? [];
         arr.push(r.role as ExtraRole);
         extraRolesByUser.set(r.user_id, arr);
@@ -84,7 +84,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         password: passwordSchema,
         leagueIds: z.array(uuidSchema).max(200),
         canCreateMatches: z.boolean(),
-        extraRoles: z.array(z.enum(["entrenador", "planillero"])).max(2).optional().default([]),
+        extraRoles: z.array(z.enum(["entrenador", "planillero", "analyst"])).max(3).optional().default([]),
       })
       .parse(input),
   )
@@ -182,7 +182,7 @@ export const adminSetExtraRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: uuidSchema,
-        roles: z.array(z.enum(["entrenador", "planillero"])).max(2),
+        roles: z.array(z.enum(["entrenador", "planillero", "analyst"])).max(3),
       })
       .parse(input),
   )
@@ -195,7 +195,7 @@ export const adminSetExtraRole = createServerFn({ method: "POST" })
       .from("user_roles")
       .delete()
       .eq("user_id", data.userId)
-      .in("role", ["entrenador", "planillero"]);
+      .in("role", ["entrenador", "planillero", "analyst"]);
     if (delErr) throw delErr;
 
     const unique = Array.from(new Set(data.roles));
