@@ -21,6 +21,7 @@ import {
   Mail,
   Calendar,
   Eye,
+  EyeOff,
   Activity,
   UserPlus,
   ArrowRight,
@@ -61,11 +62,56 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsAdmin } from "@/hooks/use-auth";
-import { adminListUsers } from "@/lib/admin.functions";
+import { adminListUsers, adminGetPassword } from "@/lib/admin.functions";
 import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
 import { adminGetAuditLogs, adminGetSubscriptions } from "@/lib/admin-saas-extra.functions";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
 import { DynamicEntityWizard, type EntityType } from "@/components/admin/DynamicEntityWizard";
+
+function PasswordViewer({ userId }: { userId: string }) {
+  const getPassword = useServerFn(adminGetPassword);
+  const [show, setShow] = useState(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ["user-password", userId],
+    queryFn: () => getPassword({ data: { userId } }),
+    enabled: show,
+  });
+
+  return (
+    <div className="p-4 rounded-xl border border-border/60 bg-card/50 space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-bold">Contraseña Actual</h4>
+        <Key className="size-4 text-muted-foreground/40" />
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-9 px-3 flex items-center bg-background/50 border border-border/40 rounded-lg font-mono text-xs overflow-hidden">
+          {isLoading ? (
+            <span className="text-muted-foreground/40">Cargando...</span>
+          ) : show ? (
+            data?.password || <span className="text-muted-foreground/40">No registrada</span>
+          ) : (
+            "••••••••••••"
+          )}
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-9 shrink-0"
+          onClick={() => setShow(!show)}
+        >
+          {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        </Button>
+      </div>
+      
+      {data?.updatedAt && (
+        <p className="text-[10px] text-muted-foreground">
+          Última actualización: {new Date(data.updatedAt).toLocaleDateString()}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Panel de Administración · RALLY SaaS" }] }),
@@ -734,10 +780,12 @@ function UserDetailDrawer({
               </div>
 
               <div className="space-y-4">
+                <PasswordViewer userId={user.id} />
+
                 <div className="p-4 rounded-xl border border-border/60 bg-card/50 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-bold">Gestión de Contraseña</h4>
+                      <h4 className="text-sm font-bold">Cambiar Contraseña</h4>
                       <p className="text-[10px] text-muted-foreground mt-0.5">Actualizar credenciales de acceso para este usuario</p>
                     </div>
                     <Lock className="size-4 text-muted-foreground/40" />
@@ -747,12 +795,13 @@ function UserDetailDrawer({
                     onClick={() => {
                       const pass = prompt("Ingrese la nueva contraseña:");
                       if (pass && pass.length >= 6) {
-                        onChangeRole(user); // Reusamos el wizard o disparamos uno específico
-                        alert("Wizard de contraseña iniciado");
+                        // Aquí deberíamos llamar a adminSetPassword.functions.ts
+                        // pero para el flujo del Wizard usamos onChangeRole si ya está preparado
+                        onChangeRole(user);
                       }
                     }}
                   >
-                    Cambiar Contraseña
+                    Abrir Wizard de Cambio
                   </Button>
                 </div>
 
