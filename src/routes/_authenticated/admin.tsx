@@ -635,12 +635,14 @@ function UserDetailDrawer({
   user, 
   onClose, 
   onChangeRole,
-  onAddAccess
+  onAddAccess,
+  requestConfirmation
 }: { 
   user: any, 
   onClose: () => void, 
   onChangeRole: (u: any) => void,
-  onAddAccess: (u: any) => void
+  onAddAccess: (u: any) => void,
+  requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void
 }) {
   if (!user) return null;
   return (
@@ -872,7 +874,15 @@ function UserDetailDrawer({
   );
 }
 
-function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) {
+function OrgDetailDrawer({ 
+  org, 
+  onClose,
+  requestConfirmation
+}: { 
+  org: any, 
+  onClose: () => void,
+  requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void
+}) {
   if (!org) return null;
   return (
     <Sheet open={!!org} onOpenChange={onClose}>
