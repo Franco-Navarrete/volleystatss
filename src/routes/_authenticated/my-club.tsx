@@ -92,27 +92,31 @@ function MyClubPage() {
                 <Card className="border-dashed">
                   <CardContent className="py-10 text-center">
                     <p className="text-sm text-muted-foreground">Aún no tienes equipos o categorías configuradas.</p>
-                    <Button variant="link" className="mt-2">Crear mi primer equipo</Button>
+                    <Button variant="link" className="mt-2" asChild>
+                      <Link to="/teams">Crear mi primer equipo</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               ) : (
                 myTeams.map(team => (
-                  <Card key={team.id} className="group hover:border-primary/40 transition-colors cursor-pointer">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={`size-10 rounded-full flex items-center justify-center text-white font-bold`} style={{ backgroundColor: team.color }}>
-                          {team.shortName.substring(0, 2).toUpperCase()}
+                  <Link key={team.id} to="/teams">
+                    <Card className="group hover:border-primary/40 transition-colors cursor-pointer">
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={`size-10 rounded-full flex items-center justify-center text-white font-bold`} style={{ backgroundColor: team.color }}>
+                            {team.shortName.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <h3 className="font-bold leading-none">{team.name}</h3>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {team.category ? `Categoría ${team.category}` : 'Sin categoría'} · {team.players.length} jugadores
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-bold leading-none">{team.name}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {team.category ? `Categoría ${team.category}` : 'Sin categoría'} · {team.players.length} jugadores
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </CardContent>
-                  </Card>
+                        <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))
               )}
             </div>
