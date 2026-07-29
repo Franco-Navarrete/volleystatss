@@ -191,6 +191,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
   const [changeRoleData, setChangeRoleData] = useState({
     roleId: targetEntity?.isAdmin ? "admin" : "user"
   });
+  const [orgWizardData, setOrgWizardData] = useState({
+    type: ""
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const config = ENTITY_CONFIG[entityType];
@@ -319,10 +322,13 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     if (entityType === "plan" && currentStep === 0) {
       return !planData.name || !planData.code;
     }
+    if (entityType === "org" && currentStep === 0) {
+      return !orgWizardData.type;
+    }
     if (entityType === "change_role" && currentStep === 0) {
       return !changeRoleData.roleId;
     }
-    return currentStep === totalSteps - 1 && entityType !== "user" && entityType !== "change_role";
+    return currentStep === totalSteps - 1 && entityType !== "user" && entityType !== "change_role" && entityType !== "org";
   };
 
   return (
@@ -500,11 +506,23 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                 <div className="grid gap-4">
                   <Label>Tipo de Organización</Label>
                   {["Federación", "Asociación", "Liga", "Club", "Academia", "Otro"].map((type) => (
-                    <div key={type} className="flex items-center gap-3 p-4 rounded-xl border border-border/60 hover:border-primary/40 cursor-pointer transition-all hover:bg-primary/5">
-                      <div className="size-5 rounded-full border-2 border-primary/20 flex items-center justify-center">
-                        <div className="size-2 rounded-full bg-primary opacity-0" />
+                    <div 
+                      key={type} 
+                      onClick={() => setOrgWizardData({ ...orgWizardData, type })}
+                      className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all hover:bg-primary/5 ${
+                        orgWizardData.type === type 
+                          ? "border-primary bg-primary/10 shadow-glow" 
+                          : "border-border/60 hover:border-primary/40"
+                      }`}
+                    >
+                      <div className={`size-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        orgWizardData.type === type ? "border-primary" : "border-primary/20"
+                      }`}>
+                        {orgWizardData.type === type && (
+                          <div className="size-2 rounded-full bg-primary" />
+                        )}
                       </div>
-                      <span className="font-medium">{type}</span>
+                      <span className={`font-medium ${orgWizardData.type === type ? "text-primary" : ""}`}>{type}</span>
                     </div>
                   ))}
                 </div>
