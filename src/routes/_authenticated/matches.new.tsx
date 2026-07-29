@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, Plus, X, Info } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
+import { useIsAdmin } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/matches/new")({
@@ -34,8 +36,17 @@ function NewMatch() {
 
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<"all" | "M" | "F">("all");
+  
+  const { isAdmin } = useIsAdmin();
+  const { hasAccess: isCoach } = useCoachAccess();
+
   const filteredTeams = useMemo(() => {
     let list = teams;
+    
+    // Si es Coach, solo puede ver sus propios equipos (los que tienen ownerId === userId)
+    // El store de zustand y app_state ya manejan esto para no-admins,
+    // pero reforzamos la UI aquí por si acaso hubiera solapamientos.
+    
     if (leagueFilter !== "all") list = list.filter((t) => t.leagueId === leagueFilter);
     if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
     return list;

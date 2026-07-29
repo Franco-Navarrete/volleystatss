@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Radio, Trash2 } from "lucide-react";
 import { useCanCreateMatches, useCanDeleteMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
 import { toast } from "sonner";
@@ -33,20 +34,36 @@ function MatchesIndex() {
   const localMatches = useVolley((s) => s.matches);
   const localTeams = useVolley((s) => s.teams);
   const deleteMatch = useVolley((s) => s.deleteMatch);
+  
+  const { user } = useIsAdmin();
   const { isAdmin } = useIsAdmin();
+  const { hasAccess: isCoach } = useCoachAccess();
   const adminAll = useAllUsersAppState();
+
   const matches = useMemo(() => {
-    if (!isAdmin || !adminAll.data) return localMatches;
-    const byId = new Map(localMatches.map((m) => [m.id, m]));
-    for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
-    return [...byId.values()];
+    // Si es admin, ve todo el sistema (Merged App State)
+    if (isAdmin) {
+      if (!adminAll.data) return localMatches;
+      const byId = new Map(localMatches.map((m) => [m.id, m]));
+      for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
+      return [...byId.values()];
+    }
+    
+    // Si es Coach (como franco@gmail.com), solo ve lo que él creó 
+    // o lo que está en su estado local (localMatches ya está filtrado por RLS en app_state)
+    return localMatches;
   }, [isAdmin, adminAll.data, localMatches]);
+
   const teams = useMemo(() => {
-    if (!isAdmin || !adminAll.data) return localTeams;
-    const byId = new Map(localTeams.map((t) => [t.id, t]));
-    for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
-    return [...byId.values()];
+    if (isAdmin) {
+      if (!adminAll.data) return localTeams;
+      const byId = new Map(localTeams.map((t) => [t.id, t]));
+      for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
+      return [...byId.values()];
+    }
+    return localTeams;
   }, [isAdmin, adminAll.data, localTeams]);
+
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
