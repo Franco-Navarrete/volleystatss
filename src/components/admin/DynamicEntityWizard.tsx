@@ -191,6 +191,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
   const [changeRoleData, setChangeRoleData] = useState({
     roleId: targetEntity?.isAdmin ? "admin" : "user"
   });
+  const [orgWizardData, setOrgWizardData] = useState({
+    type: ""
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const config = ENTITY_CONFIG[entityType];
