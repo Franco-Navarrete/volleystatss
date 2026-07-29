@@ -37,6 +37,7 @@ import { ModuleConfigStep, type ModuleConfigData } from "./steps/ModuleConfigSte
 import { SubscriptionInfoStep, type SubscriptionInfoData } from "./steps/SubscriptionInfoStep";
 
 import { SubscriptionBillingStep, type SubscriptionBillingData } from "./steps/SubscriptionBillingStep";
+import { ChangeRoleStep } from "./steps/ChangeRoleStep";
 
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription" | "change_role";
 
@@ -125,9 +126,10 @@ interface DynamicEntityWizardProps {
   isOpen: boolean;
   onClose: () => void;
   entityType: EntityType;
+  targetEntity?: any;
 }
 
-export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEntityWizardProps) {
+export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity }: DynamicEntityWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [roleData, setRoleData] = useState<RoleInfoData>({
     name: "",
@@ -176,6 +178,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     frequency: "mensual",
     currency: "USD",
     price: 0
+  });
+  const [changeRoleData, setChangeRoleData] = useState({
+    roleId: targetEntity?.isAdmin ? "admin" : "user"
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -240,8 +245,11 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     if (isOpen) {
       setCurrentStep(0);
       setErrors({});
+      if (entityType === "change_role" && targetEntity) {
+        setChangeRoleData({ roleId: targetEntity.isAdmin ? "admin" : "user" });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, entityType, targetEntity]);
 
   if (!config) return null;
 
@@ -364,6 +372,14 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
               )}
               {entityType === "subscription" && currentStep === 1 && (
                 <SubscriptionBillingStep data={subscriptionData} onChange={(d) => setSubscriptionData(p => ({...p, ...d}))} />
+              )}
+
+              {entityType === "change_role" && currentStep === 0 && (
+                <ChangeRoleStep 
+                  currentRole={targetEntity?.isAdmin ? "admin" : "user"} 
+                  selectedRoleId={changeRoleData.roleId}
+                  onSelect={(id: string) => setChangeRoleData({ roleId: id })}
+                />
               )}
 
               {entityType === "user" && currentStep === 0 && (

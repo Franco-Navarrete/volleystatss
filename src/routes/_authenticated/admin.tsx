@@ -350,7 +350,15 @@ function AdminPage() {
         </TabsContent>
       </Tabs>
 
-      <UserDetailDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
+      <UserDetailDrawer 
+        user={selectedUser} 
+        onClose={() => setSelectedUser(null)} 
+        onChangeRole={(u) => {
+          setActiveEntityType("change_role" as any);
+          setWizardTargetEntity(u);
+          setWizardOpen(true);
+        }}
+      />
       <OrgDetailDrawer org={selectedOrg} onClose={() => setSelectedOrg(null)} />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
@@ -358,8 +366,12 @@ function AdminPage() {
 
       <DynamicEntityWizard 
         isOpen={wizardOpen} 
-        onClose={() => setWizardOpen(false)} 
-        entityType={activeEntityType} 
+        onClose={() => {
+          setWizardOpen(false);
+          setWizardTargetEntity(null);
+        }} 
+        entityType={activeEntityType}
+        targetEntity={wizardTargetEntity}
       />
     </AppShell>
   );
