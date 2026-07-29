@@ -574,10 +574,10 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
                   <div className="text-sm font-medium">Hace 2 horas</div>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Rol</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Rol del Sistema</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{user.isAdmin ? 'Administrador' : 'Usuario Estandar'}</span>
-                    <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => alert('Wizard: Cambiar Rol')}>
+                    <span className="text-sm font-medium">{user.isAdmin ? 'Administrador' : 'Usuario Estándar'}</span>
+                    <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => alert('Wizard: Cambiar Rol ( scorekeeper | admin | coach | scout | analyst )')}>
                       <Settings className="size-3" />
                     </Button>
                   </div>
