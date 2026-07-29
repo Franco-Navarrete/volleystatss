@@ -25,6 +25,7 @@ import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedStatsCombinadasRouteImport } from './routes/_authenticated/stats-combinadas'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedRankingsRouteImport } from './routes/_authenticated/rankings'
+import { Route as AuthenticatedMyClubRouteImport } from './routes/_authenticated/my-club'
 import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
 import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -122,6 +123,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedRankingsRoute = AuthenticatedRankingsRouteImport.update({
   id: '/rankings',
   path: '/rankings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMyClubRoute = AuthenticatedMyClubRouteImport.update({
+  id: '/my-club',
+  path: '/my-club',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaguesRoute = AuthenticatedLeaguesRouteImport.update({
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
+  '/my-club': typeof AuthenticatedMyClubRoute
   '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
+  '/my-club': typeof AuthenticatedMyClubRoute
   '/rankings': typeof AuthenticatedRankingsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
   '/_authenticated/leagues': typeof AuthenticatedLeaguesRoute
+  '/_authenticated/my-club': typeof AuthenticatedMyClubRoute
   '/_authenticated/rankings': typeof AuthenticatedRankingsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
@@ -339,6 +348,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/intelligence'
     | '/leagues'
+    | '/my-club'
     | '/rankings'
     | '/settings'
     | '/stats-combinadas'
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/intelligence'
     | '/leagues'
+    | '/my-club'
     | '/rankings'
     | '/settings'
     | '/stats-combinadas'
@@ -406,6 +417,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/intelligence'
     | '/_authenticated/leagues'
+    | '/_authenticated/my-club'
     | '/_authenticated/rankings'
     | '/_authenticated/settings'
     | '/_authenticated/stats-combinadas'
@@ -555,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/rankings'
       fullPath: '/rankings'
       preLoaderRoute: typeof AuthenticatedRankingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-club': {
+      id: '/_authenticated/my-club'
+      path: '/my-club'
+      fullPath: '/my-club'
+      preLoaderRoute: typeof AuthenticatedMyClubRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leagues': {
@@ -729,6 +748,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
   AuthenticatedLeaguesRoute: typeof AuthenticatedLeaguesRoute
+  AuthenticatedMyClubRoute: typeof AuthenticatedMyClubRoute
   AuthenticatedRankingsRoute: typeof AuthenticatedRankingsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatsCombinadasRoute: typeof AuthenticatedStatsCombinadasRoute
@@ -748,6 +768,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
   AuthenticatedLeaguesRoute: AuthenticatedLeaguesRoute,
+  AuthenticatedMyClubRoute: AuthenticatedMyClubRoute,
   AuthenticatedRankingsRoute: AuthenticatedRankingsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatsCombinadasRoute: AuthenticatedStatsCombinadasRoute,

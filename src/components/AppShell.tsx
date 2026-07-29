@@ -34,6 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <nav className="flex items-center gap-1 text-sm overflow-x-auto">
             <NavLink to="/dashboard">Panel</NavLink>
+            <NavLink to="/my-club">Mi Club</NavLink>
             <NavLink to="/leagues">Ligas</NavLink>
             <NavLink to="/teams">Equipos</NavLink>
             <NavLink to="/matches">Partidos</NavLink>
