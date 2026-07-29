@@ -165,6 +165,7 @@ function AdminPage() {
   // Wizard de Entidades
   const [wizardOpen, setWizardOpen] = useState(false);
   const [activeEntityType, setActiveEntityType] = useState<EntityType>("user");
+  const [wizardTargetEntity, setWizardTargetEntity] = useState<any>(null);
   
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   
@@ -349,7 +350,15 @@ function AdminPage() {
         </TabsContent>
       </Tabs>
 
-      <UserDetailDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
+      <UserDetailDrawer 
+        user={selectedUser} 
+        onClose={() => setSelectedUser(null)} 
+        onChangeRole={(u) => {
+          setActiveEntityType("change_role" as any);
+          setWizardTargetEntity(u);
+          setWizardOpen(true);
+        }}
+      />
       <OrgDetailDrawer org={selectedOrg} onClose={() => setSelectedOrg(null)} />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
@@ -357,8 +366,12 @@ function AdminPage() {
 
       <DynamicEntityWizard 
         isOpen={wizardOpen} 
-        onClose={() => setWizardOpen(false)} 
-        entityType={activeEntityType} 
+        onClose={() => {
+          setWizardOpen(false);
+          setWizardTargetEntity(null);
+        }} 
+        entityType={activeEntityType}
+        targetEntity={wizardTargetEntity}
       />
     </AppShell>
   );
@@ -534,7 +547,7 @@ function ModulesSection({ onSelect }: { onSelect: (m: any) => void }) {
   );
 }
 
-function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void }) {
+function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose: () => void, onChangeRole: (u: any) => void }) {
   if (!user) return null;
   return (
     <Sheet open={!!user} onOpenChange={onClose}>
@@ -580,7 +593,7 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
                   <span className="text-[10px] font-bold uppercase text-muted-foreground">Rol del Sistema</span>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{user.isAdmin ? 'Administrador' : 'Usuario Estándar'}</span>
-                    <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => alert('Wizard: Cambiar Rol ( scorekeeper | admin | coach | scout | analyst )')}>
+                    <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => onChangeRole(user)}>
                       <Settings className="size-3" />
                     </Button>
                   </div>

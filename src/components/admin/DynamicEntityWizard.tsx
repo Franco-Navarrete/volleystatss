@@ -37,8 +37,9 @@ import { ModuleConfigStep, type ModuleConfigData } from "./steps/ModuleConfigSte
 import { SubscriptionInfoStep, type SubscriptionInfoData } from "./steps/SubscriptionInfoStep";
 
 import { SubscriptionBillingStep, type SubscriptionBillingData } from "./steps/SubscriptionBillingStep";
+import { ChangeRoleStep } from "./steps/ChangeRoleStep";
 
-export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
+export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription" | "change_role";
 
 interface Step {
   title: string;
@@ -109,6 +110,15 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
       { title: "Entidad", description: "A quién pertenece" },
       { title: "Facturación", description: "Periodo y facturación" }
     ]
+  },
+  change_role: {
+    title: "Cambiar Rol de Sistema",
+    icon: Shield,
+    steps: [
+      { title: "Selección de Rol", description: "Elegir el nuevo nivel de acceso" },
+      { title: "Impacto de Permisos", description: "Revisar cambios en capacidades" },
+      { title: "Confirmación", description: "Aplicar cambios al usuario" }
+    ]
   }
 };
 
@@ -116,9 +126,10 @@ interface DynamicEntityWizardProps {
   isOpen: boolean;
   onClose: () => void;
   entityType: EntityType;
+  targetEntity?: any;
 }
 
-export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEntityWizardProps) {
+export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity }: DynamicEntityWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [roleData, setRoleData] = useState<RoleInfoData>({
     name: "",
@@ -167,6 +178,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     frequency: "mensual",
     currency: "USD",
     price: 0
+  });
+  const [changeRoleData, setChangeRoleData] = useState({
+    roleId: targetEntity?.isAdmin ? "admin" : "user"
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -231,8 +245,11 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     if (isOpen) {
       setCurrentStep(0);
       setErrors({});
+      if (entityType === "change_role" && targetEntity) {
+        setChangeRoleData({ roleId: targetEntity.isAdmin ? "admin" : "user" });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, entityType, targetEntity]);
 
   if (!config) return null;
 
@@ -248,7 +265,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
     if (entityType === "plan" && currentStep === 0) {
       return !planData.name || !planData.code;
     }
-    return currentStep === totalSteps - 1 && entityType !== "user";
+    if (entityType === "change_role" && currentStep === 0) {
+      return !changeRoleData.roleId;
+    }
+    return currentStep === totalSteps - 1 && entityType !== "user" && entityType !== "change_role";
   };
 
   return (
@@ -355,6 +375,50 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType }: DynamicEnti
               )}
               {entityType === "subscription" && currentStep === 1 && (
                 <SubscriptionBillingStep data={subscriptionData} onChange={(d) => setSubscriptionData(p => ({...p, ...d}))} />
+              )}
+
+              {entityType === "change_role" && currentStep === 0 && (
+                <ChangeRoleStep 
+                  currentRole={targetEntity?.isAdmin ? "admin" : "user"} 
+                  selectedRoleId={changeRoleData.roleId}
+                  onSelect={(id: string) => setChangeRoleData({ roleId: id })}
+                />
+              )}
+
+              {entityType === "change_role" && currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex gap-3">
+                    <Shield className="size-5 text-primary shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-bold">Resumen de Cambios</p>
+                      <p className="text-muted-foreground mt-1">
+                        El usuario pasará de ser <span className="font-bold text-foreground">{targetEntity?.isAdmin ? 'Administrador' : 'Usuario Estándar'}</span> a <span className="font-bold text-foreground capitalize">{changeRoleData.roleId}</span>.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 mt-6">
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Nuevos Permisos</p>
+                    <div className="flex flex-wrap gap-2">
+                      {["match.live", "scout.create", "video.view", "report.export"].map(p => (
+                        <Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {entityType === "change_role" && currentStep === 2 && (
+                <div className="text-center py-8 space-y-4">
+                  <div className="size-16 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 mx-auto border border-green-500/20 shadow-sm">
+                    <Check className="size-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold">¡Todo listo!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Haga clic en finalizar para aplicar el nuevo rol a <strong>{targetEntity?.email}</strong>.
+                    </p>
+                  </div>
+                </div>
               )}
 
               {entityType === "user" && currentStep === 0 && (
