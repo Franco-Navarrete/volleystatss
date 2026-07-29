@@ -404,9 +404,12 @@ function UsersSection({ viewMode, onSelect }: { viewMode: 'table' | 'cards', onS
 
   return (
     <div className="grid gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Directorio de Usuarios</h2>
-        <Badge variant="secondary">{users?.length} Usuarios</Badge>
+        <div className="flex items-center gap-2">
+          <Input placeholder="Filtrar por rol..." className="h-8 text-[10px] w-[150px]" />
+          <Badge variant="secondary">{users?.length} Usuarios</Badge>
+        </div>
       </div>
 
       {viewMode === 'table' ? (
