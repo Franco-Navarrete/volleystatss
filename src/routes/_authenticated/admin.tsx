@@ -640,7 +640,11 @@ function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose:
                   variant="outline" 
                   size="sm"
                   className="text-[10px] h-7 border-dashed font-bold"
-                  onClick={() => alert('Wizard: Asignar Organización')}
+                  onClick={() => {
+                    setActiveEntityType("org");
+                    setWizardTargetEntity(user);
+                    setWizardOpen(true);
+                  }}
                 >
                   <Plus className="size-3 mr-1" /> Agregar Acceso
                 </Button>
