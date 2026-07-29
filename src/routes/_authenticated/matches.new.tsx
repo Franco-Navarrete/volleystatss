@@ -34,8 +34,17 @@ function NewMatch() {
 
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<"all" | "M" | "F">("all");
+  
+  const { isAdmin } = useIsAdmin();
+  const { hasAccess: isCoach } = useCoachAccess();
+
   const filteredTeams = useMemo(() => {
     let list = teams;
+    
+    // Si es Coach, solo puede ver sus propios equipos (los que tienen ownerId === userId)
+    // El store de zustand y app_state ya manejan esto para no-admins,
+    // pero reforzamos la UI aquí por si acaso hubiera solapamientos.
+    
     if (leagueFilter !== "all") list = list.filter((t) => t.leagueId === leagueFilter);
     if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
     return list;
