@@ -53,6 +53,16 @@ import {
   SheetTrigger
 } from "@/components/ui/sheet";
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { 
   Table, 
   TableBody, 
   TableCell, 
@@ -746,9 +756,19 @@ function UserDetailDrawer({
                             <Button variant="ghost" size="icon" className="size-7" onClick={() => alert('Cambiar Permisos')}>
                               <Key className="size-3 text-muted-foreground" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="size-7 text-destructive" onClick={() => confirm('¿Eliminar acceso?')}>
-                              <Trash2 className="size-3" />
-                            </Button>
+                             <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="size-7 text-destructive hover:bg-destructive/10" 
+                                onClick={() => requestConfirmation({
+                                  title: "¿Eliminar acceso?",
+                                  description: `¿Estás seguro de que deseas eliminar el acceso de este usuario a la organización "${row.org}"? Esta acción no se puede deshacer.`,
+                                  variant: "destructive",
+                                  onConfirm: () => console.log('Acceso eliminado')
+                                })}
+                              >
+                               <Trash2 className="size-3" />
+                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -820,7 +840,16 @@ function UserDetailDrawer({
             <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => alert('Usuario suspendido')}>
               <Ban className="size-3 mr-2" /> Suspender
             </Button>
-            <Button size="sm" className="text-xs h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => confirm('¿Está seguro de eliminar este usuario?')}>
+            <Button 
+              size="sm" 
+              className="text-xs h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+              onClick={() => requestConfirmation({
+                title: "¿Eliminar Usuario?",
+                description: `Estás a punto de eliminar permanentemente al usuario ${user.email}. Se perderán todos sus registros de actividad y accesos.`,
+                variant: "destructive",
+                onConfirm: () => console.log('Usuario eliminado')
+              })}
+            >
               <Trash2 className="size-3 mr-2" /> Eliminar
             </Button>
           </div>
@@ -913,7 +942,16 @@ function OrgDetailDrawer({ org, onClose }: { org: any, onClose: () => void }) {
                     <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Duplicar configuración')}>
                        <Copy className="size-3 mr-2" /> Duplicar
                     </Button>
-                    <Button variant="outline" className="text-xs h-9 justify-start text-destructive" onClick={() => confirm('¿Eliminar organización?')}>
+                    <Button 
+                      variant="outline" 
+                      className="text-xs h-9 justify-start text-destructive hover:bg-destructive/5 hover:border-destructive/30" 
+                      onClick={() => requestConfirmation({
+                        title: "¿Eliminar Organización?",
+                        description: `¿Estás seguro de que deseas eliminar "${org.name}"? Esto afectará a todas las sub-entidades y usuarios asociados.`,
+                        variant: "destructive",
+                        onConfirm: () => console.log('Organización eliminada')
+                      })}
+                    >
                        <Trash2 className="size-3 mr-2" /> Eliminar
                     </Button>
                  </div>
