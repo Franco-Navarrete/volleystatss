@@ -132,7 +132,7 @@ interface DynamicEntityWizardProps {
   targetEntity?: any;
 }
 
-import { adminSetRole, adminSetExtraRole } from "@/lib/admin.functions";
+import { adminSetRole, adminSetExtraRole, type ExtraRole } from "@/lib/admin.functions";
 
 export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity }: DynamicEntityWizardProps) {
   const queryClient = useQueryClient();
