@@ -1,257 +1,141 @@
 /**
- * # RALLY CORE
- * # USER ASSIGNMENT V2
- * # ORGANIZACIÓN + ROL + LIGA
+ * Quiero implementar un sistema inteligente para identificar automáticamente los roles del equipo rival en un partido de voleibol.
  *
- * ## OBJETIVO
- * Rediseñar completamente el sistema de asignación de usuarios.
- * No quiero que un Usuario tenga un único Rol.
- * Quiero que cada Usuario tenga múltiples Asignaciones.
- * Cada Asignación pertenece a una Organización.
- * Cada Organización tiene su propio Rol.
- * Cada Organización puede tener acceso únicamente a determinadas Ligas.
- * El Rol deja de pertenecer al Usuario.
- * El Rol pasa a pertenecer a la Asignación.
+ * Objetivo
+ * El usuario NO debe ingresar manualmente el rol de todos los jugadores.
+ * Solo deberá indicar: Los seis números de camiseta que están en cancha. Qué número corresponde al armador. La ubicación inicial (zonas 1 a 6) de los seis jugadores al comenzar el set.
+ * A partir de esa información, el sistema deberá asignar automáticamente el rol del resto de los jugadores.
  *
- * ============================================================
- * NUEVO MODELO
- * Usuario
+ * Datos de entrada
+ * Ejemplo:
+ * Zona 1 → Nº4
+ * Zona 2 → Nº12
+ * Zona 3 → Nº8
+ * Zona 4 → Nº15
+ * Zona 5 → Nº6
+ * Zona 6 → Nº10
+ * Armador: Nº4
+ *
+ * Regla de asignación
+ * El sistema deberá recorrer la rotación en sentido horario comenzando desde el armador.
+ * El patrón de roles será siempre:
+ * Armador
  * ↓
- * Asignaciones
+ * Punta
  * ↓
- * Organización
+ * Central
  * ↓
- * Rol
+ * Opuesto
  * ↓
- * Ligas
+ * Punta
  * ↓
- * Permisos
- *
- * ============================================================
- * EJEMPLO
- * Franco Navarrete
- *
- * Asignación 1
- * Organización Club Quilino
- * Rol Entrenador Principal
- * Ligas ✔ Liga Apertura ✔ Honor
- * ------------------------------------------------
- * Asignación 2
- * Organización Federación Cordobesa
- * Rol Administrador
- * Todas las ligas
- * ------------------------------------------------
- * Asignación 3
- * Internacional Villa Ocampo
- * Rol Planillero
- * Ligas ✔ Internacional Villa Ocampo ✔ Clausura
- *
- * ============================================================
- * DRAWER DEL USUARIO
- * Eliminar completamente el diseño actual.
- * Crear una pestaña llamada
- * ASIGNACIONES
- * No "Organizaciones"
- * No "Roles"
- * Todo será administrado desde un solo lugar.
- *
- * ============================================================
- * TABLA
- * Columnas
- * Principal
- * Organización
- * Tipo
- * Rol
- * Cantidad de Ligas
- * Estado
- * Última modificación
- * Acciones
- *
- * Ejemplo ⭐ Club Quilino Club Entrenador Principal 3 ligas Activo ⋮
- *
- * ============================================================
- * BOTÓN
- * + Nueva Asignación
- * Abrir Wizard.
- * Nunca utilizar alert().
- * Nunca utilizar prompt().
- *
- * ============================================================
- * WIZARD
- * Asignación de Usuario
- * 5 pasos
- *
- * ============================================================
- * PASO 1
- * Seleccionar Organización
- * Árbol jerárquico.
- * Federación ↓ Asociación ↓ Liga ↓ Club ↓ Equipo
- * Buscador.
- * Expandir.
- * Contraer.
- *
- * ============================================================
- * PASO 2
- * Rol
- * Mostrar tarjetas.
- * No Select.
- * No Dropdown.
- * No Radio pequeño.
- * Tarjetas grandes.
+ * Central
+ * ↓
+ * (vuelve al Armador)
+ * No se deben solicitar más datos al usuario.
  *
  * Ejemplo
- * ┌────────────────────┐
- * 👑 Administrador
- * Acceso total
- * └────────────────────┘
- * ┌────────────────────┐
- * 📋 Planillero
- * Carga partidos
- * Scout
- * Planillas
- * └────────────────────┘
- * ┌────────────────────┐
- * 🏐 Entrenador
- * Jugadores
- * Entrenamientos
- * Analytics
- * └────────────────────┘
- * ┌────────────────────┐
- * 📊 Analista
- * Video
- * Analytics
- * Scout
- * └────────────────────┘
- * ┌────────────────────┐
- * 🎥 Operador Video
- * Video
- * Clips
- * Streaming
- * └────────────────────┘
- * ┌────────────────────┐
- * 🧾 Árbitro
- * Planillas
- * Resultados
- * Validación
- * └────────────────────┘
+ * Entrada:
+ * Zona1 = Nº4
+ * Zona2 = Nº12
+ * Zona3 = Nº8
+ * Zona4 = Nº15
+ * Zona5 = Nº6
+ * Zona6 = Nº10
+ * Armador = Nº4
  *
- * Al seleccionar una tarjeta.
- * Mostrar.
- * Permisos incluidos.
- * Permisos restringidos.
+ * Salida esperada:
+ * Número Rol
+ * 4 Armador
+ * 12 Punta
+ * 8 Central
+ * 15 Opuesto
+ * 6 Punta
+ * 10 Central
  *
- * ============================================================
- * PASO 3
- * Acceso a Ligas
- * Eliminar completamente los Checkboxes actuales.
- * Reemplazar por una Tabla.
- * Columnas
- * Liga
- * Temporada
- * Puede Crear Partidos
- * Puede Editar
- * Estado
- * Seleccionar
+ * Algoritmo
+ * 1. Encontrar la zona donde se encuentra el armador.
+ * 2. Recorrer las zonas en sentido horario respetando la rotación del voleibol:
+ *    1 → 6 → 5 → 4 → 3 → 2 → 1
+ * 3. Asignar los roles siguiendo exactamente este orden:
+ *    Armador
+ *    Punta
+ *    Central
+ *    Opuesto
+ *    Punta
+ *    Central
+ * 4. Guardar esa asignación para todo el set.
+ * 5. Los roles nunca cambian durante el set.
+ * 6. Solo cambia la posición de cada jugador al rotar.
  *
- * Ejemplo
- * ☑ Liga Apertura 2026 ✔ ✔ Activo
- * ☑ Honor 2026 ✔ ✖ Activo
- * ☐ Clausura 2026 ✖ ✖ Activo
+ * Rotaciones automáticas
+ * Agregar un botón: Rotó el rival
+ * Cuando se presione: Mover todos los jugadores una posición en sentido horario.
+ * Ejemplo:
+ * Antes
+ * Zona1 = 4
+ * Zona2 = 12
+ * Zona3 = 8
+ * Zona4 = 15
+ * Zona5 = 6
+ * Zona6 = 10
+ * Después
+ * Zona1 = 12
+ * Zona2 = 8
+ * Zona3 = 15
+ * Zona4 = 6
+ * Zona5 = 10
+ * Zona6 = 4
+ * Los roles NO deben modificarse. Solo cambia la zona donde se encuentra cada jugador.
  *
- * ============================================================
- * PASO 4
- * Permisos Adicionales
- * Agregar permisos específicos.
- * No modificar el Rol.
- * Solo sumar permisos.
- *
- * Ejemplo
- * ☑ Exportar PDF
- * ☑ Administrar Videos
- * ☐ Administrar Usuarios
- * ☐ Configuración
- *
- * ============================================================
- * PASO 5
- * Resumen
- * Usuario
- * Organización
+ * Estructura de datos sugerida
+ * Cada jugador debe almacenar:
+ * Número
  * Rol
- * Cantidad de ligas
- * Permisos adicionales
- * Workspace Principal
- * Botón Crear Asignación
+ * Zona actual
+ * Fila (Delantero / Zaguero)
+ * Puede bloquear (Sí / No)
+ * Puede atacar por el centro (Sí / No)
+ * Estos datos deben actualizarse automáticamente después de cada rotación.
  *
- * ============================================================
- * PANEL DE ROLES
- * Cada tarjeta debe mostrar.
- * Nombre
- * Descripción
- * Icono
- * Color
- * Cantidad de permisos
- * Permisos incluidos
- * Permisos restringidos
+ * Lógica para el líbero
+ * Más adelante el sistema deberá permitir indicar que un central fue reemplazado por el líbero.
+ * Cuando esto ocurra:
+ * - Mantener el rol original del central.
+ * - Marcar que el jugador visible en cancha es el líbero.
+ * - Continuar utilizando el rol del central para todas las estadísticas y la lógica de rotación.
+ * - No modificar el orden de la rotación.
  *
- * ============================================================
- * RESUMEN VISUAL
- * Mostrar.
- * ✔ Puede
- * Crear Partidos
- * Scouting
- * Video
- * Marcador
- * Timeline
- * --------------------------------
- * ✖ No puede
- * Usuarios
- * Roles
- * Organizaciones
- * Configuración
+ * Compatibilidad futura
+ * Diseñar este módulo para que pueda utilizarse posteriormente en:
+ * - Estadísticas por rotación.
+ * - Estadísticas por jugador.
+ * - Análisis de K1.
+ * - Análisis de K2.
+ * - Recepción.
+ * - Ataques por zona.
+ * - Bloqueos.
+ * - Ubicación automática del armador.
+ * - Simulación táctica.
+ * - Análisis en video sincronizado.
  *
- * ============================================================
- * TABLA PRINCIPAL DE USUARIOS
- * Eliminar columna Rol.
- * Agregar.
- * Organización Principal
- * Rol Principal
- * Asignaciones
+ * Requisitos de implementación
+ * - Toda la lógica debe ser automática.
+ * - No solicitar el rol de los otros cinco jugadores.
+ * - La asignación debe calcularse únicamente a partir del armador y la formación inicial.
+ * - La lógica debe ser independiente de los nombres de los jugadores, funcionando también con solo números de camiseta.
+ * - El código debe ser modular para reutilizar el motor de rotaciones en otros módulos del sistema.
+ * - Crear funciones separadas para:
+ *   - Detectar la zona del armador.
+ *   - Asignar roles automáticamente.
+ *   - Rotar jugadores.
+ *   - Obtener la rotación actual (R1 a R6).
+ *   - Consultar el rol de cualquier jugador según su número de camiseta.
+ *   - Consultar qué jugador ocupa una zona determinada en cualquier momento.
  *
- * Ejemplo
- * Usuario Franco Organización Club Quilino Rol Entrenador Asignaciones 3
- * ------------------------------------------------
- * Al hacer click sobre el número.
- * Abrir directamente la pestaña
- * Asignaciones
- *
- * ============================================================
- * PERMISSION ENGINE
- * Actualizar automáticamente.
- * Todos los permisos deberán calcularse desde:
- * User ↓ Assignments ↓ Role ↓ Extra Permissions
- * Nunca desde User directamente.
- *
- * ============================================================
- * AUDITORÍA
- * Registrar.
- * Nueva Asignación
- * Rol cambiado
- * Ligas modificadas
- * Permisos agregados
- * Permisos eliminados
- * Asignación suspendida
- * Asignación eliminada
- *
- * ============================================================
- * OBJETIVO FINAL
- * Quiero un sistema Enterprise donde un Usuario pueda pertenecer a múltiples Organizaciones.
- * Cada Organización tendrá:
- * • Rol diferente
- * • Ligas diferentes
- * • Permisos diferentes
- * • Workspace diferente
- * Todo administrado desde un único módulo de Asignaciones.
- * Nunca volver a utilizar Roles Globales.
+ * Consideración importante
+ * Implementar esta lógica solo para sistemas 5-1, pero diseñar la arquitectura de forma que en el futuro sea sencillo agregar soporte para otros sistemas tácticos (por ejemplo, 6-2 o 4-2) sin tener que reescribir el motor de rotaciones.
+ * La asignación de roles debe depender de una configuración del sistema táctico y no de valores fijos en el código.
  */
 
 
