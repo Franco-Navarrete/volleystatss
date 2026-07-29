@@ -38,7 +38,7 @@ import { SubscriptionInfoStep, type SubscriptionInfoData } from "./steps/Subscri
 
 import { SubscriptionBillingStep, type SubscriptionBillingData } from "./steps/SubscriptionBillingStep";
 
-export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription";
+export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription" | "change_role";
 
 interface Step {
   title: string;
@@ -108,6 +108,15 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
     steps: [
       { title: "Entidad", description: "A quién pertenece" },
       { title: "Facturación", description: "Periodo y facturación" }
+    ]
+  },
+  change_role: {
+    title: "Cambiar Rol de Sistema",
+    icon: Shield,
+    steps: [
+      { title: "Selección de Rol", description: "Elegir el nuevo nivel de acceso" },
+      { title: "Impacto de Permisos", description: "Revisar cambios en capacidades" },
+      { title: "Confirmación", description: "Aplicar cambios al usuario" }
     ]
   }
 };

@@ -165,6 +165,7 @@ function AdminPage() {
   // Wizard de Entidades
   const [wizardOpen, setWizardOpen] = useState(false);
   const [activeEntityType, setActiveEntityType] = useState<EntityType>("user");
+  const [wizardTargetEntity, setWizardTargetEntity] = useState<any>(null);
   
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   
@@ -534,7 +535,7 @@ function ModulesSection({ onSelect }: { onSelect: (m: any) => void }) {
   );
 }
 
-function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void }) {
+function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose: () => void, onChangeRole: (u: any) => void }) {
   if (!user) return null;
   return (
     <Sheet open={!!user} onOpenChange={onClose}>
@@ -580,7 +581,7 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
                   <span className="text-[10px] font-bold uppercase text-muted-foreground">Rol del Sistema</span>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{user.isAdmin ? 'Administrador' : 'Usuario Estándar'}</span>
-                    <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => alert('Wizard: Cambiar Rol ( scorekeeper | admin | coach | scout | analyst )')}>
+                    <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => onChangeRole(user)}>
                       <Settings className="size-3" />
                     </Button>
                   </div>
