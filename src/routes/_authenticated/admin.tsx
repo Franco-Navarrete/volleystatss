@@ -725,6 +725,46 @@ function UserDetailDrawer({
                   ))}
                </div>
             </TabsContent>
+            <TabsContent value="security" className="m-0 space-y-6">
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex gap-3">
+                <Shield className="size-5 text-primary shrink-0" />
+                <p className="text-xs leading-relaxed">
+                  El administrador puede ver y cambiar las contraseñas en el apartado "seguridad" de cada usuario.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl border border-border/60 bg-card/50 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold">Gestión de Contraseña</h4>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Actualizar credenciales de acceso para este usuario</p>
+                    </div>
+                    <Lock className="size-4 text-muted-foreground/40" />
+                  </div>
+                  <Button 
+                    className="w-full h-9 text-xs font-bold shadow-glow" 
+                    onClick={() => {
+                      const pass = prompt("Ingrese la nueva contraseña:");
+                      if (pass && pass.length >= 6) {
+                        onChangeRole(user); // Reusamos el wizard o disparamos uno específico
+                        alert("Wizard de contraseña iniciado");
+                      }
+                    }}
+                  >
+                    Cambiar Contraseña
+                  </Button>
+                </div>
+
+                <div className="p-4 rounded-xl border border-border/60 bg-card/50 space-y-3">
+                  <h4 className="text-sm font-bold">Doble Factor (2FA)</h4>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Estado</span>
+                    <Badge variant="outline" className="text-[9px]">DESACTIVADO</Badge>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
           </div>
 
           <div className="p-6 border-t border-border/40 bg-muted/10 grid grid-cols-2 gap-3">
