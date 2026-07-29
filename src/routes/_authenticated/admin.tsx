@@ -225,6 +225,19 @@ function AdminPage() {
   
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "destructive" | "default";
+  } | null>(null);
+
+  const requestConfirmation = (config: NonNullable<typeof confirmConfig>) => {
+    setConfirmConfig(config);
+    setConfirmOpen(true);
+  };
+  
   // Persistencia de preferencia de vista (simulada con estado, podría ser localStorage)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
