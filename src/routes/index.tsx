@@ -1,81 +1,257 @@
 /**
  * # RALLY CORE
- * # NUEVO ROL DEL SISTEMA
- * # PLANILLERO
+ * # USER ASSIGNMENT V2
+ * # ORGANIZACIÓN + ROL + LIGA
  *
  * ## OBJETIVO
- * Agregar un nuevo Rol del Sistema llamado: Planillero
- * Este rol estará destinado a usuarios responsables de registrar partidos, planillas electrónicas, scouting y estadísticas.
- * No es un administrador. No debe tener acceso al ERP completo.
- * Debe tener acceso únicamente a las herramientas necesarias para cumplir su función.
+ * Rediseñar completamente el sistema de asignación de usuarios.
+ * No quiero que un Usuario tenga un único Rol.
+ * Quiero que cada Usuario tenga múltiples Asignaciones.
+ * Cada Asignación pertenece a una Organización.
+ * Cada Organización tiene su propio Rol.
+ * Cada Organización puede tener acceso únicamente a determinadas Ligas.
+ * El Rol deja de pertenecer al Usuario.
+ * El Rol pasa a pertenecer a la Asignación.
  *
- * ======================================================================
- * ROL
- * ======================================================================
- * Nombre: Planillero
- * Código: scorekeeper
- * Tipo: System Role
- * Color: Azul
- * Icono: Clipboard / Scoreboard
- * Descripción: Usuario autorizado para registrar partidos, cargar resultados, realizar scouting y administrar la planilla digital.
+ * ============================================================
+ * NUEVO MODELO
+ * Usuario
+ * ↓
+ * Asignaciones
+ * ↓
+ * Organización
+ * ↓
+ * Rol
+ * ↓
+ * Ligas
+ * ↓
+ * Permisos
  *
- * ======================================================================
- * PERMISOS
- * ======================================================================
- * Crear un grupo exclusivo de permisos.
- * match.view, match.live, match.start, match.finish, match.lineup, match.timeline, match.scoreboard
- * scout.view, scout.create, scout.edit, scout.live
- * video.view, video.clip
- * competition.view, competition.matchs
- * team.view, player.view
- * report.export
+ * ============================================================
+ * EJEMPLO
+ * Franco Navarrete
  *
- * ======================================================================
- * NO PERMITIR
- * ======================================================================
- * No puede: Administrar usuarios, organizaciones, módulos, planes, suscripciones, permisos, roles.
- * No puede eliminar organizaciones o usuarios ni cambiar configuraciones globales.
+ * Asignación 1
+ * Organización Club Quilino
+ * Rol Entrenador Principal
+ * Ligas ✔ Liga Apertura ✔ Honor
+ * ------------------------------------------------
+ * Asignación 2
+ * Organización Federación Cordobesa
+ * Rol Administrador
+ * Todas las ligas
+ * ------------------------------------------------
+ * Asignación 3
+ * Internacional Villa Ocampo
+ * Rol Planillero
+ * Ligas ✔ Internacional Villa Ocampo ✔ Clausura
  *
- * ======================================================================
- * USUARIOS
- * ======================================================================
- * Desde el Drawer del Usuario permitir:
- * Cambiar Rol ↓ Seleccionar Planillero ↓ Guardar (Actualizar inmediatamente).
- *
- * ======================================================================
+ * ============================================================
  * DRAWER DEL USUARIO
- * ======================================================================
- * Agregar una nueva acción: Cambiar Rol.
- * Abrir un Drawer que muestre: Rol actual, Nuevo Rol, Descripción, Permisos que obtendrá, Permisos que perderá.
- * Botón: Guardar Cambios.
+ * Eliminar completamente el diseño actual.
+ * Crear una pestaña llamada
+ * ASIGNACIONES
+ * No "Organizaciones"
+ * No "Roles"
+ * Todo será administrado desde un solo lugar.
  *
- * ======================================================================
- * TABLA DE USUARIOS
- * ======================================================================
- * Agregar filtro por Rol: Administrador, Entrenador, Planillero, Scout, Analista, Jugador, Árbitro, Personalizados.
+ * ============================================================
+ * TABLA
+ * Columnas
+ * Principal
+ * Organización
+ * Tipo
+ * Rol
+ * Cantidad de Ligas
+ * Estado
+ * Última modificación
+ * Acciones
  *
- * ======================================================================
- * BADGES
- * ======================================================================
- * Mostrar un Badge azul "PLANILLERO" en todas las tablas, Drawer y Perfil.
+ * Ejemplo ⭐ Club Quilino Club Entrenador Principal 3 ligas Activo ⋮
  *
- * ======================================================================
- * MATCH ENGINE
- * ======================================================================
- * Cuando un usuario tenga el rol Planillero, mostrar accesos directos a: Scouting, Planilla, Marcador, Timeline, Video.
+ * ============================================================
+ * BOTÓN
+ * + Nueva Asignación
+ * Abrir Wizard.
+ * Nunca utilizar alert().
+ * Nunca utilizar prompt().
  *
- * ======================================================================
+ * ============================================================
+ * WIZARD
+ * Asignación de Usuario
+ * 5 pasos
+ *
+ * ============================================================
+ * PASO 1
+ * Seleccionar Organización
+ * Árbol jerárquico.
+ * Federación ↓ Asociación ↓ Liga ↓ Club ↓ Equipo
+ * Buscador.
+ * Expandir.
+ * Contraer.
+ *
+ * ============================================================
+ * PASO 2
+ * Rol
+ * Mostrar tarjetas.
+ * No Select.
+ * No Dropdown.
+ * No Radio pequeño.
+ * Tarjetas grandes.
+ *
+ * Ejemplo
+ * ┌────────────────────┐
+ * 👑 Administrador
+ * Acceso total
+ * └────────────────────┘
+ * ┌────────────────────┐
+ * 📋 Planillero
+ * Carga partidos
+ * Scout
+ * Planillas
+ * └────────────────────┘
+ * ┌────────────────────┐
+ * 🏐 Entrenador
+ * Jugadores
+ * Entrenamientos
+ * Analytics
+ * └────────────────────┘
+ * ┌────────────────────┐
+ * 📊 Analista
+ * Video
+ * Analytics
+ * Scout
+ * └────────────────────┘
+ * ┌────────────────────┐
+ * 🎥 Operador Video
+ * Video
+ * Clips
+ * Streaming
+ * └────────────────────┘
+ * ┌────────────────────┐
+ * 🧾 Árbitro
+ * Planillas
+ * Resultados
+ * Validación
+ * └────────────────────┘
+ *
+ * Al seleccionar una tarjeta.
+ * Mostrar.
+ * Permisos incluidos.
+ * Permisos restringidos.
+ *
+ * ============================================================
+ * PASO 3
+ * Acceso a Ligas
+ * Eliminar completamente los Checkboxes actuales.
+ * Reemplazar por una Tabla.
+ * Columnas
+ * Liga
+ * Temporada
+ * Puede Crear Partidos
+ * Puede Editar
+ * Estado
+ * Seleccionar
+ *
+ * Ejemplo
+ * ☑ Liga Apertura 2026 ✔ ✔ Activo
+ * ☑ Honor 2026 ✔ ✖ Activo
+ * ☐ Clausura 2026 ✖ ✖ Activo
+ *
+ * ============================================================
+ * PASO 4
+ * Permisos Adicionales
+ * Agregar permisos específicos.
+ * No modificar el Rol.
+ * Solo sumar permisos.
+ *
+ * Ejemplo
+ * ☑ Exportar PDF
+ * ☑ Administrar Videos
+ * ☐ Administrar Usuarios
+ * ☐ Configuración
+ *
+ * ============================================================
+ * PASO 5
+ * Resumen
+ * Usuario
+ * Organización
+ * Rol
+ * Cantidad de ligas
+ * Permisos adicionales
+ * Workspace Principal
+ * Botón Crear Asignación
+ *
+ * ============================================================
+ * PANEL DE ROLES
+ * Cada tarjeta debe mostrar.
+ * Nombre
+ * Descripción
+ * Icono
+ * Color
+ * Cantidad de permisos
+ * Permisos incluidos
+ * Permisos restringidos
+ *
+ * ============================================================
+ * RESUMEN VISUAL
+ * Mostrar.
+ * ✔ Puede
+ * Crear Partidos
+ * Scouting
+ * Video
+ * Marcador
+ * Timeline
+ * --------------------------------
+ * ✖ No puede
+ * Usuarios
+ * Roles
+ * Organizaciones
+ * Configuración
+ *
+ * ============================================================
+ * TABLA PRINCIPAL DE USUARIOS
+ * Eliminar columna Rol.
+ * Agregar.
+ * Organización Principal
+ * Rol Principal
+ * Asignaciones
+ *
+ * Ejemplo
+ * Usuario Franco Organización Club Quilino Rol Entrenador Asignaciones 3
+ * ------------------------------------------------
+ * Al hacer click sobre el número.
+ * Abrir directamente la pestaña
+ * Asignaciones
+ *
+ * ============================================================
+ * PERMISSION ENGINE
+ * Actualizar automáticamente.
+ * Todos los permisos deberán calcularse desde:
+ * User ↓ Assignments ↓ Role ↓ Extra Permissions
+ * Nunca desde User directamente.
+ *
+ * ============================================================
  * AUDITORÍA
- * ======================================================================
- * Registrar: Rol asignado, Rol eliminado, Rol modificado (Usuario, Administrador, Fecha, Hora).
+ * Registrar.
+ * Nueva Asignación
+ * Rol cambiado
+ * Ligas modificadas
+ * Permisos agregados
+ * Permisos eliminados
+ * Asignación suspendida
+ * Asignación eliminada
  *
- * ======================================================================
+ * ============================================================
  * OBJETIVO FINAL
- * ======================================================================
- * Quiero que el rol Planillero sea un rol oficial del sistema.
- * Debe poder asignarse desde cualquier Usuario.
- * Debe tener únicamente los permisos necesarios para registrar partidos y estadísticas.
- * No debe tener permisos administrativos sobre el ecosistema RALLY.
+ * Quiero un sistema Enterprise donde un Usuario pueda pertenecer a múltiples Organizaciones.
+ * Cada Organización tendrá:
+ * • Rol diferente
+ * • Ligas diferentes
+ * • Permisos diferentes
+ * • Workspace diferente
+ * Todo administrado desde un único módulo de Asignaciones.
+ * Nunca volver a utilizar Roles Globales.
  */
 
 
