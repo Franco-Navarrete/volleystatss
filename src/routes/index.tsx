@@ -1,111 +1,124 @@
 /**
- * # VOLLEYSTATSS
- * # PROFESSIONAL ANALYSIS WORKSPACE V5
+ * # CORRECCIÓN CRÍTICA
+ * # ELIMINAR TODOS LOS PLACEHOLDERS DEL ORGANIZATION DRAWER
  *
- * El módulo actual ya posee una buena estructura visual.
- * A partir de este momento no quiero más cambios cosméticos.
- * Quiero transformar esta pantalla en una herramienta profesional para analistas de voleibol.
- * La prioridad pasa a ser la productividad.
+ * El Organization Drawer todavía contiene múltiples acciones de desarrollo.
+ * Actualmente existen botones y pestañas que ejecutan únicamente:
+ * alert()
+ * console.log()
+ * TODO
+ * Stubs
+ * Placeholders
+ * Mensajes como:
+ * "Wizard: Crear sub-entidad"
+ * "Abriendo editor global"
+ * Estos componentes nunca deben existir en producción.
  *
- * =========================================================
+ * ============================================================
  * OBJETIVO
- * =========================================================
- * Reducir la cantidad de clicks.
- * Reducir la cantidad de movimientos del mouse.
- * Permitir analizar un partido completo utilizando principalmente teclado.
- * Todo debe sentirse inmediato.
+ * Eliminar completamente cualquier placeholder del Organization Drawer.
+ * Toda acción debe ejecutar un flujo real.
+ * Nunca mostrar alert().
+ * Nunca mostrar mensajes internos.
+ * Nunca dejar botones sin funcionalidad.
  *
- * =========================================================
- * 1. INSPECTOR INTELIGENTE
- * =========================================================
- * Eliminar el panel derecho actual.
- * Reemplazarlo por un Inspector Contextual.
+ * ============================================================
+ * ACCIONES RÁPIDAS
+ * ============================================================
  *
- * Cuando no haya ninguna selección mostrar:
- * • Resumen del partido
- * • Marcador
- * • Últimos rallies
- * • Estadísticas rápidas
+ * Crear hijo
+ * Actualmente: alert("Wizard: Crear sub-entidad")
+ * Debe: Abrir inmediatamente el Wizard Crear Organización.
+ * Con: Parent Organization preseleccionada automáticamente.
+ * Ejemplo: Club Quilino ↓ Crear Equipo o Crear Escuela o Crear Filial según el tipo permitido.
  *
- * Cuando seleccione una acción mostrar:
- * Jugador | Equipo | Fundamento | Resultado | Zona | Rotación | Marcador | Video | Comentarios | Etiquetas | IA (preparado) | Clip relacionado
+ * Mover
+ * Actualmente no hace nada. Debe abrir un Wizard.
+ * Paso 1: Seleccionar nueva organización padre. Mostrar árbol. Buscar. Expandir. Contraer.
+ * Paso 2: Validar. No permitir ciclos. No permitir mover una organización dentro de sí misma.
+ * Paso 3: Resumen. Confirmar. Actualizar inmediatamente el árbol.
  *
- * Cuando seleccione un Rally mostrar:
- * Duración | Acciones | Ganador | Servidor | Rotación | Tiempo | Video | Estadísticas del rally
+ * Duplicar
+ * Actualmente no hace nada. Debe abrir un Wizard.
+ * Opciones: Duplicar configuración. Duplicar módulos. Duplicar usuarios. Duplicar permisos. Duplicar equipos. Duplicar categorías. Duplicar temporadas.
+ * Seleccionar nombre. Crear.
  *
- * =========================================================
- * 2. DOBLE CLICK
- * =========================================================
- * Toda la tabla debe soportar doble click.
- * Doble click sobre una acción ↓ Mover el video exactamente a ese frame ↓ Seleccionar la acción ↓ Abrir el Inspector
+ * Eliminar
+ * No eliminar físicamente. Debe abrir Confirm Dialog.
+ * Mostrar impacto: Usuarios. Equipos. Competencias. Temporadas.
+ * Solicitar confirmación. Realizar Soft Delete.
  *
- * =========================================================
- * 3. HOVER PREVIEW
- * =========================================================
- * Al pasar el mouse sobre una acción, mostrar una mini previsualización del video (sin hacer click).
+ * ============================================================
+ * TAB RESUMEN
+ * ============================================================
+ * Actualmente incompleto.
+ * Mostrar: Información general. Descripción. Estado. Plan. Usuarios. Equipos. Temporadas. Competencias. Actividad reciente. Acciones rápidas.
  *
- * =========================================================
- * 4. FILTROS PROFESIONALES
- * =========================================================
- * Agregar una barra superior para filtrar por: Jugador, Equipo, Set, Rally, Fundamento, Resultado, Zona, Rotación, Servidor.
- * No utilizar ventanas modales.
+ * ============================================================
+ * TAB JERARQUÍA
+ * ============================================================
+ * Mostrar árbol completo. Padre. Hijos. Nietos. Cantidad de organizaciones.
+ * Permitir: Mover. Crear hijo. Expandir. Colapsar.
  *
- * =========================================================
- * 5. TIMELINE PROFESIONAL
- * =========================================================
- * La Timeline actual debe evolucionar agregando capas: SETS, RALLIES, EVENTOS, CLIPS, COMENTARIOS.
- * Cada capa debe poder ocultarse.
+ * ============================================================
+ * TAB USUARIOS
+ * ============================================================
+ * Eliminar placeholders. Mostrar tabla: Nombre. Rol. Estado. Último acceso.
+ * Acciones: Agregar usuario. Eliminar. Cambiar rol.
  *
- * =========================================================
- * 6. CLIPS
- * =========================================================
- * Botón rápido para crear Clip desde la acción seleccionada, desde un Rally o desde un rango.
+ * ============================================================
+ * TAB MÓDULOS
+ * ============================================================
+ * Actualmente vacío.
+ * Mostrar módulos activos: Live Scout Video Analytics Training Coach Marketplace API IA
+ * Permitir: Activar. Desactivar. Configurar.
  *
- * =========================================================
- * 7. PLAYLISTS
- * =========================================================
- * Crear automáticamente: Ataques, Recepciones, Errores, Bloqueos, Saques (por jugador o por equipo).
+ * ============================================================
+ * TAB SUSCRIPCIÓN
+ * ============================================================
+ * Actualmente muestra: alert("Abriendo editor global")
+ * Debe reemplazarse por un editor completo.
+ * Mostrar: Plan. Estado. Fecha inicio. Fecha vencimiento. Renovación. Usuarios. Storage. Videos. API. IA.
+ * Cambiar plan. Suspender. Cancelar. Renovar.
  *
- * =========================================================
- * 8. TABLA
- * =========================================================
- * Agregar iconos: 🏐 Saque, 🧱 Bloqueo, ⚡ Ataque, 🤲 Recepción, 🛡 Defensa, ⏱ Timeout, 🟨 Tarjeta.
- * Todo mucho más visual.
+ * ============================================================
+ * TAB CONFIGURACIÓN
+ * ============================================================
+ * Eliminar placeholders.
+ * Mostrar: Nombre. Slug. Color. Icono. Zona horaria. Idioma. País. Ciudad. Dominio. Configuraciones avanzadas.
  *
- * =========================================================
- * 9. MODO SCOUT
- * =========================================================
- * Ocultar automáticamente Timeline, Tabla e Inspector cuando el usuario quiera registrar rápidamente.
- * Mostrar solamente: Video, Captura y Marcador.
+ * ============================================================
+ * WIZARDS
+ * ============================================================
+ * Todos los botones deben abrir Wizards reales.
+ * Nunca alerts. Nunca prompts. Nunca confirm() del navegador.
+ * Utilizar exclusivamente: Rally Core Wizard
  *
- * =========================================================
- * 10. MODO ANÁLISIS
- * =========================================================
- * Mostrar Video, Timeline, Tabla, Inspector, Clips y Comentarios. Ideal para revisar partidos.
+ * ============================================================
+ * DRAWERS
+ * ============================================================
+ * Todo debe abrirse mediante Drawers. No nuevas páginas. No alerts.
  *
- * =========================================================
- * 11. MODO PRESENTACIÓN
- * =========================================================
- * Ocultar herramientas. Mostrar solamente: Video, Marcador, Comentarios y Timeline. Ideal para reuniones.
+ * ============================================================
+ * ÁRBOL
+ * ============================================================
+ * Cuando una organización cambie: Actualizar automáticamente sin recargar la página.
  *
- * =========================================================
- * 12. ATAJOS
- * =========================================================
- * Agregar un Command Palette (CTRL + K) para buscar jugador, rally, acción, ir al set, tiempo o clip.
+ * ============================================================
+ * REGLA GENERAL
+ * ============================================================
+ * Buscar en todo el proyecto cualquier:
+ * alert( prompt( confirm( console.log( TODO Placeholder ComingSoon DevelopmentCard BusinessRuleResolver MockComponent StubComponent EntityPlaceholder ActionFramework Placeholder
+ * y reemplazarlos por implementaciones reales.
  *
- * =========================================================
- * 13. DISEÑO
- * =========================================================
- * Eliminar el footer. Eliminar espacios vacíos. Aumentar el tamaño del video. Compactar tarjetas.
- * Todo debe sentirse como una aplicación de escritorio.
- *
- * =========================================================
+ * ============================================================
  * OBJETIVO FINAL
- * =========================================================
- * Quiero que el usuario pueda analizar un partido completo con la menor cantidad posible de clicks.
- * Toda la navegación debe sentirse inmediata.
- * La interfaz debe priorizar velocidad, precisión y productividad.
- * No agregar nuevas funcionalidades deportivas. Todo el esfuerzo debe enfocarse exclusivamente en optimizar la experiencia de uso.
+ * Quiero que el módulo Organizations sea completamente funcional.
+ * No debe existir ninguna acción que muestre mensajes de desarrollo.
+ * Cada botón debe ejecutar un flujo real.
+ * Cada pestaña debe mostrar información real.
+ * Cada acción debe modificar el árbol de organizaciones utilizando el Organization Engine.
+ * El usuario nunca debe percibir que existen funcionalidades sin implementar.
  */
 
 
