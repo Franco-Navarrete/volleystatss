@@ -322,10 +322,13 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     if (entityType === "plan" && currentStep === 0) {
       return !planData.name || !planData.code;
     }
+    if (entityType === "org" && currentStep === 0) {
+      return !orgWizardData.type;
+    }
     if (entityType === "change_role" && currentStep === 0) {
       return !changeRoleData.roleId;
     }
-    return currentStep === totalSteps - 1 && entityType !== "user" && entityType !== "change_role";
+    return currentStep === totalSteps - 1 && entityType !== "user" && entityType !== "change_role" && entityType !== "org";
   };
 
   return (
