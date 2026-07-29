@@ -262,8 +262,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
             const roleMapping: Record<string, any> = {
               "scorekeeper": "planillero",
               "coach": "entrenador",
-              "analyst": "analyst" // Nota: el serverfn parece esperar 'planillero' o 'entrenador' solamente segun ExtraRole type, 
-                                   // pero vamos a enviar lo que tenemos o ajustar.
+              "analyst": "planillero" // Temporalmente mapeamos analista a planillero hasta que el enum de DB se actualice
             };
             
             const extraRole = roleMapping[newRoleId] || newRoleId;
