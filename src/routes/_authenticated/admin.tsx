@@ -633,24 +633,68 @@ function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose:
               </div>
             </TabsContent>
 
-            <TabsContent value="workspaces" className="m-0 space-y-4">
-                <div className="border border-border/60 rounded-lg p-3 bg-muted/30 flex items-center justify-between cursor-pointer hover:border-primary/40 transition-colors" onClick={() => alert('Abriendo Workspace de Belgrano')}>
-                  <div className="flex items-center gap-3">
-                    <Building2 className="size-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-bold">Club Atlético Belgrano</p>
-                      <p className="text-[10px] text-muted-foreground">Rol: Entrenador Principal</p>
-                    </div>
-                  </div>
-                  <Badge className="text-[9px]">Principal</Badge>
-                </div>
+            <TabsContent value="workspaces" className="m-0 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary/60">Asignaciones de Liga</h3>
                 <Button 
                   variant="outline" 
-                  className="w-full text-xs h-9 border-dashed"
-                  onClick={() => alert('Wizard: Asignar Organización (Paso 1: Buscar, Paso 2: Rol, Paso 3: Permisos, Paso 4: Workspace Principal, Paso 5: Confirmar)')}
+                  size="sm"
+                  className="text-[10px] h-7 border-dashed font-bold"
+                  onClick={() => alert('Wizard: Asignar Organización')}
                 >
-                  <Plus className="size-3 mr-2" /> Asignar a otra Organización
+                  <Plus className="size-3 mr-1" /> Agregar Acceso
                 </Button>
+              </div>
+
+              <div className="border border-border/60 rounded-xl overflow-hidden bg-card/40">
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-[10px] font-black uppercase">Liga</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase">Organización</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase">Rol</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase">Scout</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase">Estado</TableHead>
+                      <TableHead className="text-right text-[10px] font-black uppercase">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[
+                      { liga: 'Liga Nacional A1', org: 'Belgrano', rol: 'Coach', scout: true, principal: true },
+                      { liga: 'Copa Argentina', org: 'Federación Córdoba', rol: 'Analista', scout: false, principal: false }
+                    ].map((row, i) => (
+                      <TableRow key={i} className="hover:bg-muted/20">
+                        <TableCell className="text-xs font-bold">{row.liga}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{row.org}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-[9px] font-bold uppercase">{row.rol}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={`text-[9px] ${row.scout ? 'border-green-500/30 text-green-600' : 'opacity-40'}`}>
+                            {row.scout ? 'Habilitado' : 'No'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-500/10 text-green-600 border-none text-[9px]">{row.principal ? 'Principal' : 'Activo'}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="size-7" onClick={() => alert('Cambiar Rol')}>
+                              <Shield className="size-3 text-primary" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="size-7" onClick={() => alert('Cambiar Permisos')}>
+                              <Key className="size-3 text-muted-foreground" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="size-7 text-destructive" onClick={() => confirm('¿Eliminar acceso?')}>
+                              <Trash2 className="size-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </TabsContent>
             
             <TabsContent value="activity" className="m-0">
