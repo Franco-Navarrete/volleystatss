@@ -358,6 +358,11 @@ function AdminPage() {
           setWizardTargetEntity(u);
           setWizardOpen(true);
         }}
+        onAddAccess={(u) => {
+          setActiveEntityType("org");
+          setWizardTargetEntity(u);
+          setWizardOpen(true);
+        }}
       />
       <OrgDetailDrawer org={selectedOrg} onClose={() => setSelectedOrg(null)} />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
@@ -557,7 +562,17 @@ function ModulesSection({ onSelect }: { onSelect: (m: any) => void }) {
   );
 }
 
-function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose: () => void, onChangeRole: (u: any) => void }) {
+function UserDetailDrawer({ 
+  user, 
+  onClose, 
+  onChangeRole,
+  onAddAccess
+}: { 
+  user: any, 
+  onClose: () => void, 
+  onChangeRole: (u: any) => void,
+  onAddAccess: (u: any) => void
+}) {
   if (!user) return null;
   return (
     <Sheet open={!!user} onOpenChange={onClose}>
@@ -640,7 +655,7 @@ function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose:
                   variant="outline" 
                   size="sm"
                   className="text-[10px] h-7 border-dashed font-bold"
-                  onClick={() => alert('Wizard: Asignar Organización')}
+                  onClick={() => onAddAccess(user)}
                 >
                   <Plus className="size-3 mr-1" /> Agregar Acceso
                 </Button>
