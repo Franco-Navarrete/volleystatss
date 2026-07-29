@@ -1,89 +1,94 @@
 /**
- * Objetivo principal
- * El entrenador debe poder preparar un partido en menos de dos minutos.
- * La interfaz debe sentirse como una herramienta profesional de scouting.
- * No debe parecer un formulario. Debe sentirse como una preparación táctica.
+ * Objetivo
+ * Quiero rediseñar el flujo de trabajo del rol Entrenador (Coach) para que pueda administrar toda la información deportiva desde un único lugar.
+ * El entrenador debe poder administrar sus clubes, categorías, jugadores, equipos rivales y partidos de forma simple, siguiendo la lógica utilizada por softwares profesionales como Data Volley, pero con una experiencia mucho más intuitiva.
  *
- * Nuevo flujo
- * PASO 1
- * Seleccionar Liga, Equipo Local y Equipo Visitante.
- * Una vez seleccionados ambos equipos, cargar automáticamente: jugadores, números, roles (solo del equipo propio), colores y escudos.
- * No mostrar todavía la información administrativa.
+ * 1. Rol Entrenador
+ * Cada usuario con el rol Coach / Entrenador podrá administrar únicamente la información de los clubes a los que fue asignado.
+ * Un entrenador puede estar asignado a: Un club. Varios clubes.
+ * El sistema siempre debe respetar esos permisos.
  *
- * PASO 2
- * Mostrar dos canchas de voleibol una al lado de la otra.
- * LOCAL                     VISITANTE
- * 🏐                         🏐
- * Zona 4                  Zona 4
- * Zona 3                  Zona 3
- * Zona 2                  Zona 2
- * Zona 5                  Zona 5
- * Zona 6                  Zona 6
- * Zona 1                  Zona 1
+ * 2. Clubes
+ * Cada entrenador debe poder visualizar únicamente los clubes donde posee permisos.
+ * Si solo tiene un club asignado: Seleccionarlo automáticamente.
+ * Si tiene varios clubes:
+ * Mostrar un selector al ingresar al módulo.
+ * Ejemplo:
+ * ¿Con qué club desea trabajar?
+ * ○ Club Independiente
+ * ○ Club Virgen Niña
+ * ○ Club Uruguay
+ * Una vez seleccionado el club, todas las acciones posteriores deberán realizarse dentro de ese club.
  *
- * PASO 3
- * Mi equipo
- * Mostrar todos los jugadores como tarjetas.
- * Ejemplo: 12 Gómez (Armador), 15 López (Central), 8 Pérez (Punta).
- * Simplemente arrastrarlos a la cancha. No pedir el rol (ya existe en la base de datos).
+ * 3. Categorías
+ * Cada club tendrá sus propias categorías.
+ * Ejemplo: Sub 14 Femenino Sub 16 Masculino Primera División Maxi Vóley
+ * Las categorías pertenecen al club.
+ * Nunca son compartidas entre clubes.
  *
- * PASO 4
+ * 4. Jugadores
+ * Cada categoría tendrá su plantel.
+ * Cada jugador deberá almacenar como mínimo: Nombre y apellido Número de camiseta Rol Armador Punta Central Opuesto Líbero Mano hábil Fecha de nacimiento (opcional) Altura (opcional)
+ * Los roles solamente serán obligatorios para los jugadores del club propio.
+ *
+ * 5. Equipos rivales
+ * El entrenador podrá crear equipos rivales.
+ * Para un equipo rival solamente será obligatorio cargar: Nombre del equipo. Números de camiseta de los jugadores. Identificar cuál de ellos es el armador.
+ * No será obligatorio cargar: nombres; altura; mano hábil; posiciones.
+ *
+ * 6. Asignación automática de roles del rival
+ * Una vez indicado cuál jugador es el armador, el sistema deberá asignar automáticamente los demás roles.
+ * No solicitar los otros roles al usuario.
+ * Utilizar siempre el patrón del sistema 5-1:
+ * Armador↓Punta↓Central↓Opuesto↓Punta↓Central
+ * El sistema deberá detectar automáticamente: Armador Punta 1 Central 1 Opuesto Punta 2 Central 2
+ * El usuario nunca deberá ingresar estos datos manualmente.
+ *
+ * 7. Creación de un partido
+ * Al crear un nuevo partido, el sistema debe seguir el siguiente flujo.
+ *
+ * Paso 1
+ * Seleccionar el club.
+ * Si el entrenador solo tiene un club asignado:
+ * Seleccionarlo automáticamente.
+ * Si posee varios clubes:
+ * Solicitar cuál utilizar.
+ *
+ * Paso 2
+ * Una vez seleccionado el club:
+ * Mostrar únicamente las categorías pertenecientes a ese club.
+ * Ejemplo:
+ * Club seleccionado
+ * Club Virgen Niña
+ * Categorías
+ * ○ Sub 14
+ * ○ Sub 16
+ * ○ Sub 18
+ * ○ Primera
+ * Nunca mostrar categorías de otros clubes.
+ *
+ * Paso 3
+ * Seleccionar la categoría.
+ * Automáticamente cargar: jugadores; roles; números; líbero; capitán (si existe).
+ *
+ * Paso 4
+ * Seleccionar el equipo rival.
+ * Permitir: elegir uno existente; crear uno nuevo.
+ *
+ * Paso 5
+ * Mostrar una cancha interactiva para ambos equipos.
+ * Equipo propio
+ * Mostrar los jugadores de la categoría seleccionada.
+ * Permitir arrastrarlos a la cancha.
+ * Los roles ya existen.
+ * No volver a solicitarlos.
  * Equipo rival
- * Mostrar solamente: N°4, N°6, N°8, N°10, N°12, N°15.
- * El entrenador los arrastra a la cancha.
- * Luego seleccionar solamente: ✅ ¿Cuál es el armador? (Nº4, Nº6, Nº8, Nº10, Nº12, Nº15).
- * Nada más.
- *
- * PASO 5
- * Cuando se selecciona el armador:
- * El sistema deberá ejecutar automáticamente el Rotation Engine.
- * Detectar: Armador, Punta 1, Punta 2, Central 1, Central 2, Opuesto.
- * Mostrar inmediatamente debajo de la cancha:
- * 4  Armador
- * 12 Punta
- * 8  Central
- * 15 Opuesto
- * 6  Punta
- * 10 Central
- * Todo automático.
- *
- * PASO 6
- * Mostrar una nueva tarjeta llamada "Vista previa táctica". Debe mostrar:
- * - Rotación detectada (R1 a R6).
- * - Delanteros (ej. 12, 8, 15) y Zagueros (ej. 4, 6, 10).
- * - Armador delantero (SI/NO) o Armador zaguero (SI/NO).
- *
- * PASO 7
- * Generar automáticamente una vista de las seis rotaciones (R1 a R6).
- * Al hacer clic en cualquiera: Actualizar la cancha mostrando esa rotación.
- *
- * PASO 8
- * Recién ahora mostrar la información administrativa al final de la pantalla:
- * Fecha, Hora, Categoría, Árbitro, Planillero, Sets, Puntos, Saque inicial.
- * Estas opciones son importantes pero no deben interrumpir la preparación táctica.
- *
- * Mejoras visuales
- * - Eliminar los bloques vacíos que dicen "Elegí un equipo". Reemplazarlos por una cancha vacía.
- * - La interfaz debe reaccionar inmediatamente al seleccionar un equipo.
- * - Mostrar las tarjetas de jugadores con colores por rol:
- *   🟦 Armador, 🟩 Central, 🟨 Punta, 🟥 Opuesto, 🟪 Líbero.
- * - Agregar un panel lateral llamado "Resumen del partido" que muestre permanentemente Liga, Categoría, Local, Visitante, Rotación actual, Sistema táctico, Armador, Líbero, Capitán y Saque inicial.
- *
- * Arquitectura
- * Separar completamente la Información administrativa de la Información táctica.
- * La información táctica debe ocupar el 70% de la pantalla y la administrativa el 30%.
- *
- * Objetivo UX
- * Transmitir la sensación de estar preparando un partido profesional. Prioridad:
- * 1. Elegir equipos. 2. Formación. 3. Roles automáticos. 4. Verificar rotaciones. 5. Datos administrativos. 6. Comenzar.
- *
- * Diferencial: "Detectar formación desde la cancha"
- * El usuario arrastra los seis jugadores a las zonas donde los ve antes del primer saque y marca al armador. El sistema muestra:
- * - Rotación actual (R1-R6).
- * - Quiénes son delanteros y zagueros.
- * - Dónde estará el armador en recepción (K1).
- * - Qué central atacará primer tiempo.
- * - Qué punta atacará por zona 4.
+ * Mostrar únicamente los números de camiseta.
+ * Permitir arrastrarlos a las zonas de la cancha.
+ * Luego seleccionar únicamente:
+ * ¿Cuál es el armador?
+ * A partir de esa información:
+ * Ejecutar automáticamente el motor de rotaciones.
  */
 
 
