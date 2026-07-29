@@ -21,6 +21,7 @@ import {
   Mail,
   Calendar,
   Eye,
+  EyeOff,
   Activity,
   UserPlus,
   ArrowRight,
@@ -61,7 +62,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsAdmin } from "@/hooks/use-auth";
-import { adminListUsers } from "@/lib/admin.functions";
+import { adminListUsers, adminGetPassword } from "@/lib/admin.functions";
 import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
 import { adminGetAuditLogs, adminGetSubscriptions } from "@/lib/admin-saas-extra.functions";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
