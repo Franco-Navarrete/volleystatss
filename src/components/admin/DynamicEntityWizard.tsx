@@ -231,6 +231,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
 
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
+    } else {
+      // Logic for finishing the wizard
+      console.log(`[Wizard] Finalizing creation of: ${entityType}`);
+      onClose();
     }
   };
 
