@@ -446,7 +446,17 @@ function UsersSection({ viewMode, onSelect }: { viewMode: 'table' | 'cards', onS
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">Default</TableCell>
                   <TableCell>
-                    <Badge variant={u.isAdmin ? "default" : "outline"} className="capitalize text-[10px]">{u.isAdmin ? "Admin" : "User"}</Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {u.isAdmin && <Badge className="text-[10px] uppercase">Admin</Badge>}
+                      {u.extraRoles?.map((role: string) => (
+                        <Badge key={role} variant="secondary" className="text-[10px] uppercase bg-primary/10 text-primary border-primary/20">
+                          {role === 'planillero' ? 'Planillero' : role === 'entrenador' ? 'Coach' : role}
+                        </Badge>
+                      ))}
+                      {!u.isAdmin && (!u.extraRoles || u.extraRoles.length === 0) && (
+                        <Badge variant="outline" className="text-[10px] uppercase">User</Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell><Badge className="bg-green-500/10 text-green-600 border-green-200 text-[10px]">Activo</Badge></TableCell>
                   <TableCell className="text-right"><MoreVertical className="size-4 text-muted-foreground inline" /></TableCell>
@@ -559,8 +569,16 @@ function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose:
             </Avatar>
             <div>
               <SheetTitle className="text-xl font-black">{user.email}</SheetTitle>
-              <SheetDescription className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-[10px] uppercase">{user.isAdmin ? 'Administrador Global' : 'Usuario Estandar'}</Badge>
+              <SheetDescription className="flex items-center gap-2 mt-1 flex-wrap">
+                {user.isAdmin && <Badge variant="outline" className="text-[10px] uppercase">Administrador Global</Badge>}
+                {user.extraRoles?.map((role: string) => (
+                  <Badge key={role} variant="secondary" className="text-[10px] uppercase bg-primary/10 text-primary border-primary/20">
+                    {role === 'planillero' ? 'Planillero' : role === 'entrenador' ? 'Coach' : role === 'analyst' ? 'Analista' : role}
+                  </Badge>
+                ))}
+                {!user.isAdmin && (!user.extraRoles || user.extraRoles.length === 0) && (
+                  <Badge variant="outline" className="text-[10px] uppercase">Usuario Estandar</Badge>
+                )}
                 <span className="text-[10px] text-muted-foreground">• ID: {user.id.slice(0, 8)}</span>
               </SheetDescription>
             </div>
@@ -592,7 +610,11 @@ function UserDetailDrawer({ user, onClose, onChangeRole }: { user: any, onClose:
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase text-muted-foreground">Rol del Sistema</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{user.isAdmin ? 'Administrador' : 'Usuario Estándar'}</span>
+                    <span className="text-sm font-medium">
+                      {user.isAdmin ? 'Administrador' : user.extraRoles?.length > 0 
+                        ? user.extraRoles.map((r: string) => r === 'planillero' ? 'Planillero' : r === 'entrenador' ? 'Coach' : r).join(', ')
+                        : 'Usuario Estándar'}
+                    </span>
                     <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => onChangeRole(user)}>
                       <Settings className="size-3" />
                     </Button>
