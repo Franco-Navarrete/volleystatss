@@ -432,8 +432,13 @@ function AdminPage() {
           setWizardTargetEntity(u);
           setWizardOpen(true);
         }}
+        requestConfirmation={requestConfirmation}
       />
-      <OrgDetailDrawer org={selectedOrg} onClose={() => setSelectedOrg(null)} />
+      <OrgDetailDrawer 
+        org={selectedOrg} 
+        onClose={() => setSelectedOrg(null)} 
+        requestConfirmation={requestConfirmation}
+      />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
       <AuditDetailDrawer log={selectedAuditLog} onClose={() => setSelectedAuditLog(null)} />
