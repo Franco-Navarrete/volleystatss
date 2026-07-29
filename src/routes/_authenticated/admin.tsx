@@ -404,9 +404,12 @@ function UsersSection({ viewMode, onSelect }: { viewMode: 'table' | 'cards', onS
 
   return (
     <div className="grid gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Directorio de Usuarios</h2>
-        <Badge variant="secondary">{users?.length} Usuarios</Badge>
+        <div className="flex items-center gap-2">
+          <Input placeholder="Filtrar por rol..." className="h-8 text-[10px] w-[150px]" />
+          <Badge variant="secondary">{users?.length} Usuarios</Badge>
+        </div>
       </div>
 
       {viewMode === 'table' ? (
@@ -572,6 +575,15 @@ function UserDetailDrawer({ user, onClose }: { user: any, onClose: () => void })
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase text-muted-foreground">Último Acceso</span>
                   <div className="text-sm font-medium">Hace 2 horas</div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Rol del Sistema</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{user.isAdmin ? 'Administrador' : 'Usuario Estándar'}</span>
+                    <Button variant="ghost" size="icon" className="size-6 text-primary" onClick={() => alert('Wizard: Cambiar Rol ( scorekeeper | admin | coach | scout | analyst )')}>
+                      <Settings className="size-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
