@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Radio, Trash2 } from "lucide-react";
 import { useCanCreateMatches, useCanDeleteMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
 import { toast } from "sonner";

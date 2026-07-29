@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, Plus, X, Info } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
+import { useIsAdmin } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/matches/new")({
