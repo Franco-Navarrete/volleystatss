@@ -527,6 +527,108 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                   ))}
                 </div>
               )}
+
+              {entityType === "org" && currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="org-name">Nombre de la Organización</Label>
+                    <Input id="org-name" placeholder="Ej: Club Atlético Rally" className="h-11" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="org-slug">Slug / Identificador</Label>
+                    <div className="flex gap-2">
+                      <div className="bg-muted px-3 flex items-center rounded-lg text-xs font-mono border border-border/60">rally.app/</div>
+                      <Input id="org-slug" placeholder="club-rally" className="h-11" />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Logo</Label>
+                    <div className="border-2 border-dashed border-border/60 rounded-xl p-8 flex flex-col items-center justify-center gap-2 hover:border-primary/40 transition-colors cursor-pointer">
+                      <Building2 className="size-8 text-muted-foreground/40" />
+                      <p className="text-xs text-muted-foreground font-medium">Subir imagen (PNG/JPG)</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {entityType === "org" && currentStep === 2 && (
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="org-country">País</Label>
+                    <Input id="org-country" placeholder="Ej: Argentina" className="h-11" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="org-city">Ciudad / Región</Label>
+                    <Input id="org-city" placeholder="Ej: Córdoba" className="h-11" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="org-address">Dirección (Opcional)</Label>
+                    <Input id="org-address" placeholder="Ej: Av. Colón 1234" className="h-11" />
+                  </div>
+                </div>
+              )}
+
+              {entityType === "org" && currentStep === 3 && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">Seleccione el plan de suscripción inicial para esta organización.</p>
+                  {["Free", "Coach", "Club", "League", "Enterprise"].map((plan) => (
+                    <div 
+                      key={plan}
+                      className="flex items-center justify-between p-4 rounded-xl border border-border/60 hover:border-primary/40 cursor-pointer transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="size-5 text-primary" />
+                        <div>
+                          <p className="font-bold">{plan}</p>
+                          <p className="text-[10px] text-muted-foreground">Detalles del plan {plan.toLowerCase()}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">Seleccionar</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {entityType === "org" && currentStep === 4 && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">Módulos que estarán disponibles para esta organización.</p>
+                  {["Live Scoring", "Advanced Scouting", "Video Analysis", "Performance Intelligence"].map((mod) => (
+                    <div key={mod} className="flex items-center justify-between p-3 rounded-xl border border-border/40 bg-muted/5">
+                      <div className="flex items-center gap-3">
+                        <Package className="size-4 text-primary/60" />
+                        <span className="text-sm font-medium">{mod}</span>
+                      </div>
+                      <div className="size-5 rounded-md border border-primary/40 bg-primary/10 flex items-center justify-center">
+                        <Check className="size-3 text-primary" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {entityType === "org" && currentStep === 5 && (
+                <div className="text-center py-8 space-y-4">
+                  <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto border border-primary/20 shadow-glow">
+                    <Building2 className="size-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold">Resumen de Organización</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Se creará una organización de tipo <strong>{orgWizardData.type}</strong>.
+                    </p>
+                  </div>
+                  <div className="bg-muted/30 p-4 rounded-xl text-left text-xs space-y-2 border border-border/40">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground uppercase font-black tracking-tighter">Tipo:</span>
+                      <span className="font-bold">{orgWizardData.type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground uppercase font-black tracking-tighter">Plan:</span>
+                      <span className="font-bold">Club (Demo)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
