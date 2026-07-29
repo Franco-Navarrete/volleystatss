@@ -1,160 +1,81 @@
 /**
  * # RALLY CORE
- * # USER ASSIGNMENT ENGINE
- * # IMPLEMENTACIÓN COMPLETA
+ * # NUEVO ROL DEL SISTEMA
+ * # PLANILLERO
  *
- * ## CONTEXTO
- * Actualmente el módulo Usuarios presenta un problema crítico.
- * En el Drawer de un Usuario, dentro de la pestaña "Organizaciones", el botón:
- * ➕ Asignar a otra Organización
- * no ejecuta ninguna acción real.
- * Actualmente muestra un alert() del navegador con un mensaje como:
- * "Wizard: Asignar Organización (Paso 1..., Paso 2...)"
- * Esto indica que el flujo sigue utilizando un Placeholder o Stub de desarrollo.
- * En producción esto nunca debe ocurrir.
+ * ## OBJETIVO
+ * Agregar un nuevo Rol del Sistema llamado: Planillero
+ * Este rol estará destinado a usuarios responsables de registrar partidos, planillas electrónicas, scouting y estadísticas.
+ * No es un administrador. No debe tener acceso al ERP completo.
+ * Debe tener acceso únicamente a las herramientas necesarias para cumplir su función.
  *
  * ======================================================================
- * OBJETIVO
+ * ROL
  * ======================================================================
- * Eliminar completamente todos los placeholders relacionados con la asignación de organizaciones y roles.
- * Implementar un sistema profesional de asignaciones de usuarios.
- * No utilizar:
- * - alert()
- * - prompt()
- * - confirm()
- * - console.log()
- * - TODO
- * - Placeholder Components
- * - Mock Components
- * Toda acción debe abrir un Wizard real.
+ * Nombre: Planillero
+ * Código: scorekeeper
+ * Tipo: System Role
+ * Color: Azul
+ * Icono: Clipboard / Scoreboard
+ * Descripción: Usuario autorizado para registrar partidos, cargar resultados, realizar scouting y administrar la planilla digital.
  *
  * ======================================================================
- * ARQUITECTURA
+ * PERMISOS
  * ======================================================================
- * No quiero relacionar directamente: Usuario ↓ Organización
- * Quiero una entidad independiente: UserAssignment
- * La estructura será: User ↓ UserAssignment ↓ Organization ↓ Role ↓ Workspace ↓ ExtraPermissions
- * Cada usuario podrá tener múltiples asignaciones.
- * Cada asignación tendrá su propio rol.
- * Cada asignación tendrá su propio Workspace.
- * Cada asignación tendrá permisos adicionales.
+ * Crear un grupo exclusivo de permisos.
+ * match.view, match.live, match.start, match.finish, match.lineup, match.timeline, match.scoreboard
+ * scout.view, scout.create, scout.edit, scout.live
+ * video.view, video.clip
+ * competition.view, competition.matchs
+ * team.view, player.view
+ * report.export
  *
  * ======================================================================
- * NUEVA TABLA
+ * NO PERMITIR
  * ======================================================================
- * Crear entidad: UserAssignment
- * Campos: ID, UserId, OrganizationId, WorkspaceId, RoleId, IsPrimary, Status, StartDate, EndDate, CreatedBy, UpdatedBy, Audit
+ * No puede: Administrar usuarios, organizaciones, módulos, planes, suscripciones, permisos, roles.
+ * No puede eliminar organizaciones o usuarios ni cambiar configuraciones globales.
+ *
+ * ======================================================================
+ * USUARIOS
+ * ======================================================================
+ * Desde el Drawer del Usuario permitir:
+ * Cambiar Rol ↓ Seleccionar Planillero ↓ Guardar (Actualizar inmediatamente).
  *
  * ======================================================================
  * DRAWER DEL USUARIO
  * ======================================================================
- * Pestaña Organizaciones: Reemplazar completamente el diseño actual.
- * Mostrar una tabla profesional.
- * Columnas: Principal, Organización, Tipo, Workspace, Rol, Permisos Extra, Estado, Fecha Asignación, Acciones
+ * Agregar una nueva acción: Cambiar Rol.
+ * Abrir un Drawer que muestre: Rol actual, Nuevo Rol, Descripción, Permisos que obtendrá, Permisos que perderá.
+ * Botón: Guardar Cambios.
  *
  * ======================================================================
- * BOTÓN + Asignar Organización
+ * TABLA DE USUARIOS
  * ======================================================================
- * Al hacer clic: Nunca mostrar alert(). Nunca mostrar mensajes del navegador.
- * Abrir inmediatamente el: RALLY CORE ENTITY WIZARD
+ * Agregar filtro por Rol: Administrador, Entrenador, Planillero, Scout, Analista, Jugador, Árbitro, Personalizados.
  *
  * ======================================================================
- * WIZARD: Asignar Organización
+ * BADGES
  * ======================================================================
- * Stepper:
- * 1. Organización
- * 2. Rol
- * 3. Workspace
- * 4. Permisos
- * 5. Confirmación
+ * Mostrar un Badge azul "PLANILLERO" en todas las tablas, Drawer y Perfil.
  *
  * ======================================================================
- * PASO 1: Seleccionar Organización
+ * MATCH ENGINE
  * ======================================================================
- * Mostrar árbol jerárquico: Federación ↓ Asociación ↓ Liga ↓ Club ↓ Equipo
- * Buscador. Expandir. Contraer. Ruta completa. Seleccionar.
- *
- * ======================================================================
- * PASO 2: Seleccionar Rol
- * ======================================================================
- * Cargar únicamente los Roles disponibles para esa Organización.
- * Mostrar: Administrador, Director Deportivo, Entrenador Principal, Entrenador Asistente, Scout, Analista, Preparador Físico, Médico, Jugador, Árbitro, Personalizados
- *
- * ======================================================================
- * PASO 3: Workspace
- * ======================================================================
- * Seleccionar Workspace: Default, Club, Liga, Federación, Personalizado
- * Checkbox: Workspace Principal
- *
- * ======================================================================
- * PASO 4: Permisos adicionales
- * ======================================================================
- * Permitir agregar permisos sin modificar el Rol.
- * Ejemplos: Crear Competencias, Editar Equipos, Editar Jugadores, Administrar Videos, Ver Analytics, Exportar Reportes, Administrar IA
- *
- * ======================================================================
- * PASO 5: Confirmación
- * ======================================================================
- * Mostrar: Usuario, Organización, Rol, Workspace, Permisos, Principal
- * Botón: Asignar
- *
- * ======================================================================
- * AL CONFIRMAR
- * ======================================================================
- * Crear UserAssignment. Actualizar automáticamente: Drawer, Tabla, Organization Tree, Workspace, Permission Engine, Audit.
- * Mostrar Toast: "Usuario asignado correctamente." Nunca recargar la página.
- *
- * ======================================================================
- * ACCIONES
- * ======================================================================
- * Cada fila tendrá: Editar, Cambiar Rol, Cambiar Workspace, Cambiar Permisos, Marcar Principal, Suspender Asignación, Eliminar Asignación
- *
- * ======================================================================
- * CAMBIAR ROL
- * ======================================================================
- * No utilizar alert(). Abrir Drawer. Seleccionar nuevo Rol. Actualizar permisos efectivos automáticamente.
- *
- * ======================================================================
- * CAMBIAR WORKSPACE
- * ======================================================================
- * Abrir Drawer. Seleccionar Workspace. Actualizar inmediatamente.
- *
- * ======================================================================
- * CAMBIAR PERMISOS
- * ======================================================================
- * Mostrar únicamente permisos adicionales. Nunca modificar el Rol base.
- *
- * ======================================================================
- * ELIMINAR ASIGNACIÓN
- * ======================================================================
- * No eliminar el Usuario. Eliminar únicamente la relación.
- * Solicitar confirmación mediante el Confirm Dialog del sistema. Nunca utilizar confirm() del navegador.
- *
- * ======================================================================
- * REGLAS
- * ======================================================================
- * Un Usuario puede pertenecer a múltiples Organizaciones.
- * Cada Organización puede tener: Rol distinto, Workspace distinto, Permisos distintos.
- * Una asignación principal. No permitir duplicados. No permitir dos asignaciones principales.
+ * Cuando un usuario tenga el rol Planillero, mostrar accesos directos a: Scouting, Planilla, Marcador, Timeline, Video.
  *
  * ======================================================================
  * AUDITORÍA
  * ======================================================================
- * Registrar: Asignación creada, Rol cambiado, Workspace cambiado, Permisos modificados, Asignación suspendida, Asignación eliminada.
- *
- * ======================================================================
- * BUSCAR EN TODO EL PROYECTO
- * ======================================================================
- * Eliminar cualquier: alert( prompt( confirm( console.log( TODO Stub Mock Placeholder BusinessRule Resolver DevelopmentCard ActionFramework Placeholder
- * Relacionado con: UserAssignment, RoleAssignment, OrganizationAssignment, WorkspaceAssignment
+ * Registrar: Rol asignado, Rol eliminado, Rol modificado (Usuario, Administrador, Fecha, Hora).
  *
  * ======================================================================
  * OBJETIVO FINAL
  * ======================================================================
- * Quiero un sistema Enterprise de asignación de usuarios.
- * Los usuarios podrán pertenecer a múltiples organizaciones con diferentes roles, workspaces y permisos.
- * Toda la experiencia debe realizarse mediante Wizards y Drawers del RALLY CORE.
- * No debe existir ningún placeholder, alert() o mensaje interno del framework.
+ * Quiero que el rol Planillero sea un rol oficial del sistema.
+ * Debe poder asignarse desde cualquier Usuario.
+ * Debe tener únicamente los permisos necesarios para registrar partidos y estadísticas.
+ * No debe tener permisos administrativos sobre el ecosistema RALLY.
  */
 
 
