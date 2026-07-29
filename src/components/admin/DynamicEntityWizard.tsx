@@ -259,13 +259,13 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
             }
             
             // Mapeo de roles internos a lo que espera adminSetExtraRole
-            const roleMapping: Record<string, any> = {
+            const roleMapping: Record<string, ExtraRole> = {
               "scorekeeper": "planillero",
               "coach": "entrenador",
-              "analyst": "planillero" // Temporalmente mapeamos analista a planillero hasta que el enum de DB se actualice
+              "analyst": "analyst"
             };
             
-            const extraRole = roleMapping[newRoleId] || newRoleId;
+            const extraRole = roleMapping[newRoleId] || (newRoleId as ExtraRole);
             await setExtraRole({ data: { userId: targetEntity.id, roles: [extraRole] } });
           }
           
