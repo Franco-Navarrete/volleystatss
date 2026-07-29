@@ -1,24 +1,55 @@
 /**
- * Quiero implementar un sistema inteligente para identificar automáticamente los roles del equipo rival en un partido de voleibol.
- *
  * Objetivo
- * El usuario NO debe ingresar manualmente el rol de todos los jugadores.
- * Solo deberá indicar: Los seis números de camiseta que están en cancha. Qué número corresponde al armador. La ubicación inicial (zonas 1 a 6) de los seis jugadores al comenzar el set.
- * A partir de esa información, el sistema deberá asignar automáticamente el rol del resto de los jugadores.
+ * Quiero rediseñar completamente el flujo para crear un nuevo partido.
+ * El objetivo es que el usuario complete el partido en pocos pasos y que toda la lógica de rotaciones y roles se genere automáticamente, similar a Data Volley pero con una experiencia de usuario mucho más simple.
  *
- * Datos de entrada
+ * Flujo de creación
+ * El asistente debe dividirse en pasos.
+ *
+ * Paso 1 – Información del partido
+ * Solicitar:
+ * - Competencia
+ * - Categoría
+ * - Fecha
+ * - Hora
+ * - Local
+ * - Visitante
+ * - Cantidad de sets (3 o 5)
+ * - Lugar (opcional)
+ *
+ * Paso 2 – Mi equipo
+ * El usuario selecciona un equipo ya creado.
+ * Automáticamente cargar: jugadores números roles altura (si existe) mano hábil posición habitual
+ * Mostrar una lista.
+ * Permitir seleccionar: convocados sexteto inicial líbero(s) capitán
+ * No volver a pedir el rol porque ya está registrado en la base de datos.
+ *
+ * Paso 3 – Equipo rival
+ * El rival puede crearse rápidamente.
+ * No es obligatorio cargar nombres.
+ * La interfaz deberá permitir ingresar únicamente: Número de camiseta.
+ * Ejemplo: 4, 6, 8, 10, 12, 15
+ * Opcionalmente permitir agregar nombres si el usuario los conoce.
+ *
+ * Paso 4 – Formación inicial
+ * Mostrar una cancha de voleibol interactiva con las seis zonas.
+ * El usuario arrastra los jugadores del rival a: Zona 1, Zona 2, Zona 3, Zona 4, Zona 5, Zona 6
  * Ejemplo:
- * Zona 1 → Nº4
- * Zona 2 → Nº12
- * Zona 3 → Nº8
- * Zona 4 → Nº15
- * Zona 5 → Nº6
- * Zona 6 → Nº10
- * Armador: Nº4
+ * Zona 1 = Nº4
+ * Zona 2 = Nº12
+ * Zona 3 = Nº8
+ * Zona 4 = Nº15
+ * Zona 5 = Nº6
+ * Zona 6 = Nº10
  *
- * Regla de asignación
- * El sistema deberá recorrer la rotación en sentido horario comenzando desde el armador.
- * El patrón de roles será siempre:
+ * Paso 5 – Identificar el armador
+ * Preguntar únicamente: ¿Qué número corresponde al armador?
+ * Ejemplo: Nº4
+ * No solicitar ningún otro rol.
+ *
+ * Motor automático de roles
+ * Una vez conocido el armador, el sistema debe identificar automáticamente el resto de los roles.
+ * Seguir siempre el patrón del sistema 5-1:
  * Armador
  * ↓
  * Punta
@@ -32,110 +63,64 @@
  * Central
  * ↓
  * (vuelve al Armador)
- * No se deben solicitar más datos al usuario.
+ * Recorrer la rotación respetando el orden de las zonas: 1 → 6 → 5 → 4 → 3 → 2 → 1
+ * Asignar automáticamente: Armador, Punta 1, Central 1, Opuesto, Punta 2, Central 2
+ * No pedir esta información al usuario.
  *
- * Ejemplo
- * Entrada:
- * Zona1 = Nº4
- * Zona2 = Nº12
- * Zona3 = Nº8
- * Zona4 = Nº15
- * Zona5 = Nº6
- * Zona6 = Nº10
- * Armador = Nº4
+ * Generar automáticamente las seis rotaciones
+ * Una vez creada la rotación inicial, generar: Rotación 1 a Rotación 6.
+ * Cada rotación debe actualizar: zona, delantero/zaguero, posibilidad de bloqueo, posibilidad de ataque de primer tiempo, ubicación del armador.
  *
- * Salida esperada:
- * Número Rol
- * 4 Armador
- * 12 Punta
- * 8 Central
- * 15 Opuesto
- * 6 Punta
- * 10 Central
+ * Motor de rotaciones
+ * Crear un servicio independiente llamado: RotationEngine
+ * Debe contener funciones como:
+ * - detectarRotacionInicial()
+ * - asignarRoles()
+ * - generarRotaciones()
+ * - rotar()
+ * - obtenerRotacionActual()
+ * - obtenerJugadorPorZona()
+ * - obtenerZonaPorJugador()
+ * - obtenerRolJugador()
+ * - esDelantero()
+ * - esZaguero()
+ * - puedeBloquear()
+ * - puedeAtacarPrimerTiempo()
+ * Toda la lógica del sistema deberá depender de este motor.
  *
- * Algoritmo
- * 1. Encontrar la zona donde se encuentra el armador.
- * 2. Recorrer las zonas en sentido horario respetando la rotación del voleibol:
- *    1 → 6 → 5 → 4 → 3 → 2 → 1
- * 3. Asignar los roles siguiendo exactamente este orden:
- *    Armador
- *    Punta
- *    Central
- *    Opuesto
- *    Punta
- *    Central
- * 4. Guardar esa asignación para todo el set.
- * 5. Los roles nunca cambian durante el set.
- * 6. Solo cambia la posición de cada jugador al rotar.
- *
- * Rotaciones automáticas
- * Agregar un botón: Rotó el rival
- * Cuando se presione: Mover todos los jugadores una posición en sentido horario.
- * Ejemplo:
- * Antes
- * Zona1 = 4
- * Zona2 = 12
- * Zona3 = 8
- * Zona4 = 15
- * Zona5 = 6
- * Zona6 = 10
- * Después
- * Zona1 = 12
- * Zona2 = 8
- * Zona3 = 15
- * Zona4 = 6
- * Zona5 = 10
- * Zona6 = 4
- * Los roles NO deben modificarse. Solo cambia la zona donde se encuentra cada jugador.
- *
- * Estructura de datos sugerida
- * Cada jugador debe almacenar:
- * Número
- * Rol
- * Zona actual
- * Fila (Delantero / Zaguero)
- * Puede bloquear (Sí / No)
- * Puede atacar por el centro (Sí / No)
- * Estos datos deben actualizarse automáticamente después de cada rotación.
- *
- * Lógica para el líbero
- * Más adelante el sistema deberá permitir indicar que un central fue reemplazado por el líbero.
- * Cuando esto ocurra:
- * - Mantener el rol original del central.
- * - Marcar que el jugador visible en cancha es el líbero.
- * - Continuar utilizando el rol del central para todas las estadísticas y la lógica de rotación.
- * - No modificar el orden de la rotación.
- *
- * Compatibilidad futura
- * Diseñar este módulo para que pueda utilizarse posteriormente en:
- * - Estadísticas por rotación.
- * - Estadísticas por jugador.
- * - Análisis de K1.
- * - Análisis de K2.
+ * Preparar para futuras funciones
+ * Diseñar la arquitectura para reutilizar el mismo motor en:
+ * - Estadísticas en vivo.
+ * - Scouting.
+ * - Análisis por rotación.
+ * - K1 / K2.
  * - Recepción.
- * - Ataques por zona.
- * - Bloqueos.
- * - Ubicación automática del armador.
- * - Simulación táctica.
- * - Análisis en video sincronizado.
+ * - Ataque / Bloqueo / Defensa.
+ * - Video sincronizado.
+ * - Informes posteriores al partido.
+ * No duplicar lógica.
  *
- * Requisitos de implementación
- * - Toda la lógica debe ser automática.
- * - No solicitar el rol de los otros cinco jugadores.
- * - La asignación debe calcularse únicamente a partir del armador y la formación inicial.
- * - La lógica debe ser independiente de los nombres de los jugadores, funcionando también con solo números de camiseta.
- * - El código debe ser modular para reutilizar el motor de rotaciones en otros módulos del sistema.
- * - Crear funciones separadas para:
- *   - Detectar la zona del armador.
- *   - Asignar roles automáticamente.
- *   - Rotar jugadores.
- *   - Obtener la rotación actual (R1 a R6).
- *   - Consultar el rol de cualquier jugador según su número de camiseta.
- *   - Consultar qué jugador ocupa una zona determinada en cualquier momento.
+ * Validaciones
+ * Validar automáticamente: solo un armador; solo un opuesto; exactamente dos puntas; exactamente dos centrales; seis jugadores distintos; ninguna zona vacía; ningún número repetido.
+ * Mostrar mensajes claros si existe algún error.
  *
- * Consideración importante
- * Implementar esta lógica solo para sistemas 5-1, pero diseñar la arquitectura de forma que en el futuro sea sencillo agregar soporte para otros sistemas tácticos (por ejemplo, 6-2 o 4-2) sin tener que reescribir el motor de rotaciones.
- * La asignación de roles debe depender de una configuración del sistema táctico y no de valores fijos en el código.
+ * Interfaz
+ * La experiencia debe ser visual. Utilizar:
+ * - Cancha de voleibol interactiva.
+ * - Drag & Drop.
+ * - Tarjetas para los jugadores.
+ * - Indicadores de zonas.
+ * - Colores distintos para cada rol.
+ * - Vista previa de la rotación detectada y de las seis rotaciones antes de comenzar el partido.
+ * Todo debe actualizarse en tiempo real mientras el usuario mueve jugadores.
+ *
+ * Objetivo principal
+ * El entrenador no debe pensar en la rotación. Solo debe:
+ * 1. Elegir su equipo.
+ * 2. Cargar los seis jugadores rivales.
+ * 3. Arrastrarlos a sus posiciones iniciales.
+ * 4. Indicar cuál es el armador.
+ * El sistema debe deducir automáticamente toda la estructura táctica del rival y dejar el partido listo para comenzar.
  */
 
 
