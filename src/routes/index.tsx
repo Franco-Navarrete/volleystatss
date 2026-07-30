@@ -3,6 +3,7 @@
  * El entrenador debe poder administrar sus clubes, categorías, jugadores, equipos rivales y partidos de forma simple.
  * en "partidos" tengo que ver los partidos programados para mi equipo y los partidos que mis equipos jugaron.
  * en combinadas tiene que ser mi equipo vs los equipos contra los que jugue.
+ * y en "liga" la liga que tiene que aparecer es la que esta disputando mi equipo.
  *
 
 
