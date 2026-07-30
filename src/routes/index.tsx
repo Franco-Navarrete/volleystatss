@@ -10,7 +10,8 @@
  * intelligence solo funciona para los partidos que disputa mi equipo
  * el modo "video" tambien solo funciona para mi equipo, y el historial de partidos tiene que ser de mi equipo
   * en la tabla de posiciones tienes que mostrar la tabla de la liga en la que esta jugando mi equipo
-13:  */
+13:  * y en partido finalizados, tienen que verse los partidos finalizados de la liga en la que esta jugando mi equipo
+14:  */
 
 /**
  * 1. Rol Entrenador (Espacio "Mi Club")
