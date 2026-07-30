@@ -67,7 +67,7 @@ function LeaguesPage() {
   }, [leagues, teams, isAdmin, currentUserId]);
 
   const active =
-    (selected && filteredLeagues.find((l) => l.id === selected)) || filteredLeagues[0];
+    (selected && filteredLeagues.find((l) => l.id === selected)) || filteredLeagues[0] || (isAdmin ? leagues[0] : null);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const standings = useMemo(
     () => (active ? computeStandings(teams, matches, active.id) : []),
