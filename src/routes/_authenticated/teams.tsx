@@ -384,7 +384,8 @@ function TeamsPage() {
     const q = query.trim().toLowerCase();
     const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     let list = teams.filter((t) => {
-      // Si el usuario es entrenador (no admin), filtrar solo sus equipos
+      // Si el usuario es entrenador (no admin), filtrar estrictamente sus equipos
+      // El campo ownerId debe coincidir con el ID del usuario actual.
       if (!isAdmin && currentUserId && t.ownerId !== currentUserId) return false;
 
       if (filterLeague === "none" && t.leagueId) return false;
