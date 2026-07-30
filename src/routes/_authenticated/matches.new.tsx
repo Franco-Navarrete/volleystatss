@@ -538,18 +538,20 @@ function TeamPicker({
       color: "#64748b",
       ownerId: user?.id,
     });
-    // Create 12 generic players (1-12) as requested: "solo con el numero de camiseta"
+    // Create 18 generic players (1-18) to allow for subs and liberos: "necesito poder crear mas de 6 jugadores"
     const store = useVolley.getState();
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 1; i <= 18; i++) {
       store.addPlayer(teamId, {
         name: `Jugador ${i}`,
         number: i,
+        // Mark players 17 and 18 as liberos by default to facilitate quick setup
+        position: i > 16 ? "libero" : undefined,
       });
     }
     onSelect(teamId);
     setNewName("");
     setIsAdding(false);
-    toast.success("Equipo creado con 12 jugadores (1-12)");
+    toast.success("Equipo creado con 18 jugadores (1-18)");
   };
 
   return (
