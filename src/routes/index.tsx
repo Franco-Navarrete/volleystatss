@@ -9,7 +9,8 @@
  * en "premios" el equipo ideal tiene que estar formado por jugadores que estan en la misma liga que mi club. sin importar el genero
  * intelligence solo funciona para los partidos que disputa mi equipo
  * el modo "video" tambien solo funciona para mi equipo, y el historial de partidos tiene que ser de mi equipo
- */
+  * en la tabla de posiciones tienes que mostrar la tabla de la liga en la que esta jugando mi equipo
+13:  */
 
 /**
  * 1. Rol Entrenador (Espacio "Mi Club")
