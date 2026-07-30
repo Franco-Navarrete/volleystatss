@@ -6,6 +6,7 @@ import { listMatchVideos, type MatchVideoRow } from "@/hooks/use-match-video";
 import { useMatchSessionStore } from "@/lib/match-session/store";
 import { Button } from "@/components/ui/button";
 import { Video, Plus, LayoutGrid } from "lucide-react";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { MatchSessionCard } from "@/components/match-center/MatchSessionCard";
 import { MatchSessionFilters, type Filters } from "@/components/match-center/MatchSessionFilters";
 
@@ -34,6 +35,8 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 function MatchCenterHome() {
+  const { user } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
@@ -57,7 +60,14 @@ function MatchCenterHome() {
   );
 
   const rows = useMemo(() => {
-    const list = matches.map((m) => {
+    // Para entrenadores: filtrar matches por propiedad de equipo
+    let sourceMatches = matches;
+    if (!isAdmin && user) {
+      const myTeamIds = new Set(teams.filter(t => t.ownerId === user.id).map(t => t.id));
+      sourceMatches = matches.filter(m => myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId));
+    }
+
+    const list = sourceMatches.map((m) => {
       const v = videoByMatch.get(m.id) ?? null;
       const session = sessions[m.id];
       const a = teamById.get(m.teamAId);
