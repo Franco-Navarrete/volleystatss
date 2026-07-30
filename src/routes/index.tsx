@@ -15,6 +15,7 @@
  * en caso de que no haya otro equipo, tengo que poder crearlo para poder tomar las estadisticas. solo con el numero de camiseta, sin necesidad de poner mas informacion de ellos como las que tengo que poner cuando creo un jugador de mi equipo
  * necesito poder crear mas de 6 jugadores por si tienen cambios, libero, etc
  * tengo que poder seleccionar a cualquier jugador que este fuera de la cancha como libero 1 y libero 2
+ * Implementar validaciones para asegurar que Líbero 1 y Líbero 2 no puedan quedar simultáneamente “en cancha” si el sistema considera que no están habilitados según la formación y los cambios registrados. tampoco me sale la opcion para poder seleccionar los judaores. tengo que encontrar la forma de poder elegir el numero de camiseta de los jugadores que estan en cancha
  */
 
 /**
