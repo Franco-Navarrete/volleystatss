@@ -4,9 +4,10 @@
  * en "partidos" tengo que ver los partidos programados para mi equipo y los partidos que mis equipos jugaron.
  * en combinadas tiene que ser mi equipo vs los equipos contra los que jugue.
  * y en "liga" la liga que tiene que aparecer es la que esta disputando mi equipo.
- *
+ * en "premios" el equipo ideal tiene que estar formado por jugadores que estan en la misma liga que mi club. sin importar el genero
+ */
 
-
+/**
  * 1. Rol Entrenador (Espacio "Mi Club")
  * Cada usuario con el rol Coach / Entrenador contará con un espacio centralizado llamado "Mi Club" para gestionar su información deportiva.
  * Podrá administrar únicamente la información de los clubes a los que fue asignado.

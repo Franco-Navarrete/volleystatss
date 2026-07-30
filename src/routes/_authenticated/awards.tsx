@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Award, Crown, Shield, Sparkles, Star, Target, Trophy, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import {
@@ -26,6 +26,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/awards")({
   head: () => ({ meta: [{ title: "Premios Rally · RALLY" }] }),
@@ -33,6 +34,8 @@ export const Route = createFileRoute("/_authenticated/awards")({
 });
 
 function AwardsPage() {
+  const { user } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
   const matches = useVolley((s) => s.matches);
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
@@ -42,15 +45,35 @@ function AwardsPage() {
   const [categoryFilter, setCategoryFilter] = useState<"all" | TeamCategory>("all");
   const [weights, setWeights] = useState(DEFAULT_WEIGHTS);
 
+  // If coach and no league selected, try to find their club's league
+  useEffect(() => {
+    if (!isAdmin && user && leagueFilter === "all" && leagues.length > 0) {
+      const myTeams = teams.filter((t) => t.ownerId === user.id);
+      const myLeagueIds = Array.from(new Set(myTeams.map((t) => t.leagueId).filter(Boolean)));
+      if (myLeagueIds.length > 0) {
+        setLeagueFilter(myLeagueIds[0] as string);
+      }
+    }
+  }, [isAdmin, user, teams, leagues, leagueFilter]);
+
   // Filter teams first to scope which players count.
   const scopedTeams = useMemo(() => {
     return teams.filter((t) => {
+      // Coach restriction: only same league as their club(s) if not admin
+      if (!isAdmin && user) {
+        const myTeams = teams.filter((team) => team.ownerId === user.id);
+        const myLeagueIds = new Set(myTeams.map((team) => team.leagueId).filter(Boolean));
+        if (myLeagueIds.size > 0 && (!t.leagueId || !myLeagueIds.has(t.leagueId))) {
+          return false;
+        }
+      }
+
       if (leagueFilter !== "all" && t.leagueId !== leagueFilter) return false;
       if (genderFilter !== "all" && t.gender !== genderFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       return true;
     });
-  }, [teams, leagueFilter, genderFilter, categoryFilter]);
+  }, [teams, leagueFilter, genderFilter, categoryFilter, isAdmin, user]);
 
   const scopedTeamIds = useMemo(() => new Set(scopedTeams.map((t) => t.id)), [scopedTeams]);
 
