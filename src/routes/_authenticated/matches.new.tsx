@@ -37,20 +37,31 @@ function NewMatch() {
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<"all" | "M" | "F">("all");
   
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin, user } = useIsAdmin();
   const { hasAccess: isCoach } = useCoachAccess();
 
   const filteredTeams = useMemo(() => {
     let list = teams;
     
-    // Si es Coach, solo puede ver sus propios equipos (los que tienen ownerId === userId)
-    // El store de zustand y app_state ya manejan esto para no-admins,
-    // pero reforzamos la UI aquí por si acaso hubiera solapamientos.
+    // Si es Coach, filtramos según la visión Saas
+    if (!isAdmin && isCoach) {
+      // Mis ligas (basadas en mis equipos)
+      const myTeams = teams.filter(t => t.ownerId === user?.id);
+      const myLeagueIds = new Set(myTeams.filter(t => t.leagueId).map(t => t.leagueId));
+      
+      list = list.filter(t => {
+        // Mi equipo
+        if (t.ownerId === user?.id) return true;
+        // Equipo de mi misma liga
+        if (t.leagueId && myLeagueIds.has(t.leagueId)) return true;
+        return false;
+      });
+    }
     
     if (leagueFilter !== "all") list = list.filter((t) => t.leagueId === leagueFilter);
     if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
     return list;
-  }, [teams, leagueFilter, genderFilter]);
+  }, [teams, leagueFilter, genderFilter, isAdmin, isCoach, user?.id]);
 
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
