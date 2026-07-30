@@ -525,9 +525,63 @@ function TeamPicker({
   selectedId: string;
   onSelect: (id: string) => void;
 }) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const addTeam = useVolley((s) => s.addTeam);
+  const { user } = useIsAdmin();
+
+  const handleAdd = () => {
+    if (!newName.trim()) return;
+    const teamId = addTeam({
+      name: newName.trim(),
+      shortName: newName.trim().substring(0, 3).toUpperCase(),
+      color: "#64748b",
+      ownerId: user?.id,
+    });
+    // Create 12 generic players (1-12) as requested: "solo con el numero de camiseta"
+    const store = useVolley.getState();
+    for (let i = 1; i <= 12; i++) {
+      store.addPlayer(teamId, {
+        name: `Jugador ${i}`,
+        number: i,
+      });
+    }
+    onSelect(teamId);
+    setNewName("");
+    setIsAdding(false);
+    toast.success("Equipo creado con 12 jugadores (1-12)");
+  };
+
   return (
     <section className="rounded-2xl bg-card border border-border/60 p-5">
-      <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">{label}</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{label}</h2>
+        {!isAdding && (
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 px-2" onClick={() => setIsAdding(true)}>
+            <Plus className="size-3" />
+            Crear rápido
+          </Button>
+        )}
+      </div>
+
+      {isAdding ? (
+        <div className="flex gap-2 mb-4">
+          <input
+            autoFocus
+            type="text"
+            placeholder="Nombre del equipo"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            className="flex-1 bg-background border border-input rounded-md px-3 py-1 text-sm"
+          />
+          <Button size="sm" onClick={handleAdd}>OK</Button>
+          <Button size="sm" variant="ghost" onClick={() => setIsAdding(false)}>
+            <X className="size-4" />
+          </Button>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-2">
         {teams.filter((t) => t.id !== excludeId).map((t) => {
           const active = selectedId === t.id;
@@ -547,6 +601,8 @@ function TeamPicker({
     </section>
   );
 }
+
+
 
 function LineupPicker({
   team, lineup, onAssign,
