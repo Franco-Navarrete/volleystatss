@@ -34,12 +34,29 @@ const secondaryColorSchema = z.string().trim().max(20).optional().nullable();
 export const listTeams = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+
+    // Verificar si el usuario es admin
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    const isAdmin = !!roleData;
+
+    let teamsQuery = supabase
+      .from("teams")
+      .select("id, league_id, club_id, name, short_name, color, logo_url, gender, category, owner_id, secondary_color, club, created_at");
+
+    // Si no es admin, filtrar por owner_id en la base de datos para mayor seguridad
+    if (!isAdmin) {
+      teamsQuery = teamsQuery.eq("owner_id", userId);
+    }
+
     const [teamsRes, playersRes, clubsRes] = await Promise.all([
-      supabase
-        .from("teams")
-        .select("id, league_id, club_id, name, short_name, color, logo_url, gender, category, owner_id, secondary_color, club, created_at")
-        .order("created_at", { ascending: true }),
+      teamsQuery.order("created_at", { ascending: true }),
       supabase
         .from("players")
         .select("id, team_id, name, number, position, photo_url, created_at")
