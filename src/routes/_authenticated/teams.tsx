@@ -159,14 +159,11 @@ function TeamsPage() {
 
   const perms = useCanManageTeams();
   const legacyCanEdit = perms.allowed;
-  const { isAdmin } = useIsAdmin();
   const { allowed: canCreate } = useCanCreateTeam();
-  const { user: authUser } = useAuthUser();
   const myClubQ = useMyClub();
   const myClub = myClubQ.data ?? null;
   const needsClubFirst = canCreate && !isAdmin && !myClub;
   const [showClubDialog, setShowClubDialog] = useState(false);
-  const currentUserId = authUser?.id;
   const canManage = (t?: { ownerId?: string } | null) =>
     isAdmin || (!!t && !!currentUserId && t.ownerId === currentUserId);
   // Retained for global admin-only operations (e.g. auto-migration of legacy leagues).
