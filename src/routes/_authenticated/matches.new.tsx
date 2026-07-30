@@ -732,40 +732,40 @@ function SlotCell({
             )}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-60 p-1 max-h-72 overflow-y-auto" align="center">
-          <div className="px-2 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-            Elegir jugador · P{label}
+        <PopoverContent className="w-64 p-1 z-50 max-h-[400px] overflow-y-auto" align="center">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-1.5 border-b border-border/60 mb-1">
+            Elegir para P{label}
           </div>
-          {players.length === 0 && (
-            <p className="text-xs text-muted-foreground px-2 py-3 text-center">Sin jugadores en el equipo.</p>
+          {players.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-2 py-3 text-center">Sin jugadores.</p>
+          ) : (
+            <div className="grid grid-cols-4 gap-1 p-1">
+              {players.map((pl) => {
+                const taken = takenIds.includes(pl.id);
+                const isCurrent = player?.id === pl.id;
+                return (
+                  <button
+                    key={pl.id}
+                    type="button"
+                    onClick={() => { onPick(pl.id); setOpen(false); }}
+                    disabled={taken}
+                    className={`flex flex-col items-center justify-center p-1.5 rounded-md transition-all h-14 ${
+                      isCurrent 
+                        ? "bg-primary text-primary-foreground shadow-lg" 
+                        : taken 
+                          ? "opacity-30 cursor-not-allowed bg-secondary/50" 
+                          : "hover:bg-secondary bg-secondary/20 border border-border/40"
+                    }`}
+                  >
+                    <span className="text-base scoreboard-digit font-black leading-none">{pl.number}</span>
+                    <span className="text-[7px] uppercase mt-1 truncate w-full text-center px-0.5 font-bold leading-tight">
+                      {pl.name.split(' ')[0]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
-          {players.map((pl) => {
-            const taken = takenIds.includes(pl.id);
-            const isCurrent = player?.id === pl.id;
-            return (
-              <button
-                key={pl.id}
-                type="button"
-                disabled={taken}
-                onClick={() => { onPick(pl.id); setOpen(false); }}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left transition-colors ${isCurrent ? "bg-primary/10" : "hover:bg-secondary"} disabled:opacity-40 disabled:cursor-not-allowed`}
-              >
-                {pl.photoUrl ? (
-                  <img src={pl.photoUrl} alt="" className="size-7 rounded-full object-cover shrink-0" />
-                ) : (
-                  <span className="size-7 rounded-full scoreboard-digit font-bold flex items-center justify-center text-xs shrink-0 bg-secondary">{pl.number}</span>
-                )}
-                <span className="truncate flex-1 flex flex-col">
-                  <span className="truncate">#{pl.number} {pl.name}</span>
-                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                    {pl.position ? PLAYER_POSITION_LABEL[pl.position] : "Sin posición"}
-                  </span>
-                </span>
-                {taken && <span className="text-[9px] uppercase text-muted-foreground">en cancha</span>}
-                {isCurrent && <Check className="size-3.5 text-primary" />}
-              </button>
-            );
-          })}
         </PopoverContent>
       </Popover>
     </div>
