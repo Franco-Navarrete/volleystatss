@@ -70,17 +70,37 @@ function StatsCombinadasPage() {
   const t = getTerminology(globalGender);
 
   const matches = useMemo(() => {
-    if (!isAdmin || !adminAll.data) return localMatches;
-    const byId = new Map(localMatches.map((m) => [m.id, m]));
-    for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
-    return [...byId.values()];
-  }, [isAdmin, adminAll.data, localMatches]);
+    // 1. Obtener base (Merge de todos si es admin)
+    let base = localMatches;
+    if (isAdmin && adminAll.data) {
+      const byId = new Map(localMatches.map((m) => [m.id, m]));
+      for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
+      base = [...byId.values()];
+    }
+
+    // 2. Si no es admin, filtrar por "Mis equipos" (Coach)
+    if (!isAdmin) {
+      const myTeamIds = new Set(localTeams.map(t => t.id));
+      return base.filter(m => myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId));
+    }
+    return base;
+  }, [isAdmin, adminAll.data, localMatches, localTeams]);
 
   const teams = useMemo(() => {
-    if (!isAdmin || !adminAll.data) return localTeams;
-    const byId = new Map(localTeams.map((t) => [t.id, t]));
-    for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
-    return [...byId.values()];
+    // 1. Obtener base
+    let base = localTeams;
+    if (isAdmin && adminAll.data) {
+      const byId = new Map(localTeams.map((t) => [t.id, t]));
+      for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
+      base = [...byId.values()];
+    }
+
+    // 2. Si no es admin, solo sus propios equipos
+    if (!isAdmin) {
+      const currentUserId = useVolley.getState().currentUser?.id;
+      return base.filter(t => t.ownerId === currentUserId);
+    }
+    return base;
   }, [isAdmin, adminAll.data, localTeams]);
 
   const leagues = useMemo(() => {
