@@ -222,6 +222,7 @@ function NewMatch() {
         <RolePicker
           team={teamA}
           label="Roles · local"
+          lineup={lineupA}
           captain={captainA} setCaptain={setCaptainA}
           libero1={liberoA1} setLibero1={setLiberoA1}
           libero2={liberoA2} setLibero2={setLiberoA2}
@@ -229,6 +230,7 @@ function NewMatch() {
         <RolePicker
           team={teamB}
           label="Roles · visitante"
+          lineup={lineupB}
           captain={captainB} setCaptain={setCaptainB}
           libero1={liberoB1} setLibero1={setLiberoB1}
           libero2={liberoB2} setLibero2={setLiberoB2}
@@ -771,16 +773,21 @@ function SlotCell({
 }
 
 function RolePicker({
-  team, label, captain, setCaptain, libero1, setLibero1, libero2, setLibero2,
+  team, label, lineup, captain, setCaptain, libero1, setLibero1, libero2, setLibero2,
 }: {
   team: ReturnType<typeof useVolley.getState>["teams"][number] | undefined;
   label: string;
+  lineup: Slot[];
   captain: string; setCaptain: (v: string) => void;
   libero1: string; setLibero1: (v: string) => void;
   libero2: string; setLibero2: (v: string) => void;
 }) {
   const players = team?.players ?? [];
-  const liberoPlayers = players.filter((p) => p.position === "libero");
+  const onCourtIds = new Set(lineup.filter((id): id is string => !!id));
+
+  // The requirement is: "tengo que poder seleccionar a cualquier jugador que este fuera de la cancha como libero 1 y libero 2"
+  const availableForLibero = players.filter((p) => !onCourtIds.has(p.id));
+
   const renderSelect = (
     value: string,
     onChange: (v: string) => void,
@@ -796,11 +803,12 @@ function RolePicker({
       <option value="">— Sin asignar —</option>
       {list.map((p) => (
         <option key={p.id} value={p.id} disabled={exclude.includes(p.id)}>
-          #{p.number} {p.name}
+          #{p.number} {p.name} {p.position === "libero" ? "(L)" : ""}
         </option>
       ))}
     </select>
   );
+
   return (
     <section className="rounded-2xl bg-card border border-border/60 p-5">
       <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">{label}</h2>
@@ -814,11 +822,11 @@ function RolePicker({
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 1</span>
-            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean), liberoPlayers)}
+            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean), availableForLibero)}
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 2</span>
-            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean), liberoPlayers)}
+            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean), availableForLibero)}
           </label>
         </div>
       )}

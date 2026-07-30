@@ -14,6 +14,7 @@
  * al crear un nuevo partido, me tienen que salir mis equipos y algun equipo que este cargado en la misma liga, si no la opcion de crear un partido de 0 con un equipo rival de 0
  * en caso de que no haya otro equipo, tengo que poder crearlo para poder tomar las estadisticas. solo con el numero de camiseta, sin necesidad de poner mas informacion de ellos como las que tengo que poner cuando creo un jugador de mi equipo
  * necesito poder crear mas de 6 jugadores por si tienen cambios, libero, etc
+ * tengo que poder seleccionar a cualquier jugador que este fuera de la cancha como libero 1 y libero 2
  */
 
 /**
