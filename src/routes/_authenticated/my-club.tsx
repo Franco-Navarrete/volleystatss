@@ -101,7 +101,7 @@ function MyClubPage() {
                 </Card>
               ) : (
                 myTeams.map(team => (
-                  <Link key={team.id} to="/teams">
+                  <Link key={team.id} to="/teams" search={{ teamId: team.id }}>
                     <Card className="group hover:border-primary/40 transition-colors cursor-pointer">
                       <CardContent className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -109,9 +109,14 @@ function MyClubPage() {
                             {team.shortName.substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <h3 className="font-bold leading-none">{team.name}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold leading-none">{team.name}</h3>
+                              <Badge variant="secondary" className="text-[10px] h-4 uppercase font-black bg-primary/10 text-primary border-none">
+                                {team.category ? `Sub ${team.category}` : 'Libre'}
+                              </Badge>
+                            </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {team.category ? `Categoría ${team.category}` : 'Sin categoría'} · {team.players.length} jugadores
+                              {team.players.length} jugadores en el plantel
                             </p>
                           </div>
                         </div>

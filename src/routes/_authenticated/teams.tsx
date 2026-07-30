@@ -346,8 +346,16 @@ function TeamsPage() {
     setPage(1);
   }, [query, filterLeague, filterGender, filterCategory, filterStatus, sortBy]);
 
-  // Auto-scroll to detail panel when a team is selected, so the user doesn't
-  // have to manually scroll past the grid to see the team's contents.
+  // Manejar selección por URL
+  const search = Route.useSearch();
+  const queryTeamId = (search as any).teamId as string | undefined;
+  useEffect(() => {
+    if (queryTeamId && !selected) {
+      setSelected(queryTeamId);
+    }
+  }, [queryTeamId, selected]);
+
+  // Auto-scroll to detail panel when a team is selected
   useEffect(() => {
     if (!selected) return;
     if (typeof window === "undefined") return;
@@ -375,6 +383,9 @@ function TeamsPage() {
     const q = query.trim().toLowerCase();
     const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     let list = teams.filter((t) => {
+      // Si el usuario es entrenador (no admin), filtrar solo sus equipos
+      if (!isAdmin && currentUserId && t.ownerId !== currentUserId) return false;
+
       if (filterLeague === "none" && t.leagueId) return false;
       if (filterLeague !== "all" && filterLeague !== "none" && t.leagueId !== filterLeague) return false;
       if (filterGender !== "all" && t.gender !== filterGender) return false;
