@@ -2,7 +2,9 @@
  * Objetivo
  * El entrenador debe poder administrar sus clubes, categorías, jugadores, equipos rivales y partidos de forma simple.
  * en "partidos" tengo que ver los partidos programados para mi equipo y los partidos que mis equipos jugaron.
+ * en combinadas tiene que ser mi equipo vs los equipos contra los que jugue.
  *
+
 
  * 1. Rol Entrenador (Espacio "Mi Club")
  * Cada usuario con el rol Coach / Entrenador contará con un espacio centralizado llamado "Mi Club" para gestionar su información deportiva.
