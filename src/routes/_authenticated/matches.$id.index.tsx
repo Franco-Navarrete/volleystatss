@@ -1380,8 +1380,10 @@ function LiveMatch() {
               ...designated,
               ...t.players.filter((p) => p.position === "libero").map((p) => p.id),
             ]);
+            // The requirement is: "tengo que poder seleccionar a cualquier jugador que este fuera de la cancha como libero 1 y libero 2"
+            // We allow any player not on court to enter as a libero, though we might still want to highlight designated ones.
             const liberos = t.players.filter(
-              (p) => liberoCandidateIds.has(p.id) && !onCourtSet.has(p.id),
+              (p) => !onCourtSet.has(p.id),
             );
             const totalLiberos = t.players.filter((p) => liberoCandidateIds.has(p.id)).length;
             const allOnCourt = totalLiberos > 0 && liberos.length === 0;
@@ -1429,13 +1431,21 @@ function LiveMatch() {
                   <>
                     <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Líbero que ENTRA</p>
                     <div className="grid grid-cols-3 md:grid-cols-2 gap-1.5">
-                      {liberos.map((p) => (
-                        <button key={p.id} onClick={() => setLiberoState({ ...liberoState, liberoId: p.id })}
-                          className="flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg bg-secondary hover:bg-success/20 active:scale-95 transition">
-                          <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
-                          <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
-                        </button>
-                      ))}
+                      {liberos.map((p) => {
+                        const isDesignated = liberoCandidateIds.has(p.id);
+                        return (
+                          <button key={p.id} onClick={() => setLiberoState({ ...liberoState, liberoId: p.id })}
+                            className={`flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg transition active:scale-95 ${
+                              isDesignated ? "bg-success/20 hover:bg-success/30" : "bg-secondary hover:bg-secondary/80"
+                            }`}>
+                            <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[11px] md:text-sm truncate leading-tight">{p.name}</span>
+                              {isDesignated && <span className="text-[8px] uppercase font-bold text-success/80">Líbero</span>}
+                            </div>
+                          </button>
+                        );
+                      })}
                       {liberos.length === 0 && (
                         <p className="col-span-3 md:col-span-2 text-center text-xs text-muted-foreground py-3">
                           {allOnCourt
