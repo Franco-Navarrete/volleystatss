@@ -110,6 +110,9 @@ function StatsCombinadasPage() {
     return [...byId.values()];
   }, [isAdmin, adminAll.data, localLeagues]);
 
+  const { user } = useIsAdmin();
+  const currentUserId = user?.id;
+
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const playerById = useMemo(() => {
     const m = new Map<string, { player: Player; team: Team }>();
