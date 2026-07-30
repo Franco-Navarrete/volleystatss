@@ -37,7 +37,7 @@ function NewMatch() {
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<"all" | "M" | "F">("all");
   
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin, user } = useIsAdmin();
   const { hasAccess: isCoach } = useCoachAccess();
 
   const filteredTeams = useMemo(() => {
