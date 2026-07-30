@@ -40,6 +40,18 @@ function MatchesIndex() {
   const { hasAccess: isCoach } = useCoachAccess();
   const adminAll = useAllUsersAppState();
 
+  const teams = useMemo(() => {
+    if (isAdmin) {
+      if (!adminAll.data) return localTeams;
+      const byId = new Map(localTeams.map((t) => [t.id, t]));
+      for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
+      return [...byId.values()];
+    }
+    return localTeams;
+  }, [isAdmin, adminAll.data, localTeams]);
+
+  const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
   const matches = useMemo(() => {
     // 1. Obtener la base de partidos (Merge de todos los usuarios si es admin)
     let baseMatches = localMatches;
@@ -56,21 +68,27 @@ function MatchesIndex() {
 
     // 3. Si es Coach (como franco@gmail.com) u otro rol, filtramos:
     //    Debe ver partidos donde al menos uno de sus equipos participe.
-    const myTeamIds = new Set(localTeams.map(t => t.id));
-    return baseMatches.filter(m => myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId));
-  }, [isAdmin, adminAll.data, localMatches, localTeams]);
+    //    Y además, los partidos finalizados de la liga en la que están sus equipos.
+    const myTeams = localTeams;
+    const myTeamIds = new Set(myTeams.map(t => t.id));
+    const myLeagueIds = new Set(myTeams.filter(t => t.leagueId).map(t => t.leagueId));
 
-  const teams = useMemo(() => {
-    if (isAdmin) {
-      if (!adminAll.data) return localTeams;
-      const byId = new Map(localTeams.map((t) => [t.id, t]));
-      for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
-      return [...byId.values()];
-    }
-    return localTeams;
-  }, [isAdmin, adminAll.data, localTeams]);
+    return baseMatches.filter(m => {
+      // Participa mi equipo
+      if (myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId)) return true;
+      
+      // Es un partido finalizado de mi liga
+      if (m.status === "finished") {
+        const teamA = teamById.get(m.teamAId);
+        const teamB = teamById.get(m.teamBId);
+        if (teamA?.leagueId && myLeagueIds.has(teamA.leagueId)) return true;
+        if (teamB?.leagueId && myLeagueIds.has(teamB.leagueId)) return true;
+      }
 
-  const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+      return false;
+    });
+  }, [isAdmin, adminAll.data, localMatches, localTeams, teamById]);
+
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
