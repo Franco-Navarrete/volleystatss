@@ -40,6 +40,18 @@ function MatchesIndex() {
   const { hasAccess: isCoach } = useCoachAccess();
   const adminAll = useAllUsersAppState();
 
+  const teams = useMemo(() => {
+    if (isAdmin) {
+      if (!adminAll.data) return localTeams;
+      const byId = new Map(localTeams.map((t) => [t.id, t]));
+      for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
+      return [...byId.values()];
+    }
+    return localTeams;
+  }, [isAdmin, adminAll.data, localTeams]);
+
+  const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
+
   const matches = useMemo(() => {
     // 1. Obtener la base de partidos (Merge de todos los usuarios si es admin)
     let baseMatches = localMatches;
@@ -77,17 +89,6 @@ function MatchesIndex() {
     });
   }, [isAdmin, adminAll.data, localMatches, localTeams, teamById]);
 
-  const teams = useMemo(() => {
-    if (isAdmin) {
-      if (!adminAll.data) return localTeams;
-      const byId = new Map(localTeams.map((t) => [t.id, t]));
-      for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
-      return [...byId.values()];
-    }
-    return localTeams;
-  }, [isAdmin, adminAll.data, localTeams]);
-
-  const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
