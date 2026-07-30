@@ -222,6 +222,7 @@ function NewMatch() {
         <RolePicker
           team={teamA}
           label="Roles · local"
+          lineup={lineupA}
           captain={captainA} setCaptain={setCaptainA}
           libero1={liberoA1} setLibero1={setLiberoA1}
           libero2={liberoA2} setLibero2={setLiberoA2}
@@ -229,6 +230,7 @@ function NewMatch() {
         <RolePicker
           team={teamB}
           label="Roles · visitante"
+          lineup={lineupB}
           captain={captainB} setCaptain={setCaptainB}
           libero1={liberoB1} setLibero1={setLiberoB1}
           libero2={liberoB2} setLibero2={setLiberoB2}
