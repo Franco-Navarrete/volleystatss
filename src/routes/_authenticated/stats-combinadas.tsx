@@ -86,6 +86,9 @@ function StatsCombinadasPage() {
     return base;
   }, [isAdmin, adminAll.data, localMatches, localTeams]);
 
+  const { user } = useIsAdmin();
+  const currentUserId = user?.id;
+
   const teams = useMemo(() => {
     // 1. Obtener base
     let base = localTeams;
@@ -96,12 +99,11 @@ function StatsCombinadasPage() {
     }
 
     // 2. Si no es admin, solo sus propios equipos
-    if (!isAdmin) {
-      const currentUserId = useVolley.getState().currentUser?.id;
+    if (!isAdmin && currentUserId) {
       return base.filter(t => t.ownerId === currentUserId);
     }
     return base;
-  }, [isAdmin, adminAll.data, localTeams]);
+  }, [isAdmin, adminAll.data, localTeams, currentUserId]);
 
   const leagues = useMemo(() => {
     if (!isAdmin || !adminAll.data) return localLeagues;
@@ -110,8 +112,6 @@ function StatsCombinadasPage() {
     return [...byId.values()];
   }, [isAdmin, adminAll.data, localLeagues]);
 
-  const { user } = useIsAdmin();
-  const currentUserId = user?.id;
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const playerById = useMemo(() => {
