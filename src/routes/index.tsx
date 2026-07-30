@@ -1,8 +1,9 @@
 /**
  * Objetivo
- * Quiero rediseñar el flujo de trabajo del rol Entrenador (Coach) para que pueda administrar toda la información deportiva desde un único lugar.
- * El entrenador debe poder administrar sus clubes, categorías, jugadores, equipos rivales y partidos de forma simple, siguiendo la lógica utilizada por softwares profesionales como Data Volley, pero con una experiencia mucho más intuitiva.
+ * El entrenador debe poder administrar sus clubes, categorías, jugadores, equipos rivales y partidos de forma simple.
+ * en "partidos" tengo que ver los partidos programados para mi equipo y los partidos que mis equipos jugaron.
  *
+
  * 1. Rol Entrenador (Espacio "Mi Club")
  * Cada usuario con el rol Coach / Entrenador contará con un espacio centralizado llamado "Mi Club" para gestionar su información deportiva.
  * Podrá administrar únicamente la información de los clubes a los que fue asignado.
