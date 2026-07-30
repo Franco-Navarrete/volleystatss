@@ -527,7 +527,13 @@ function TeamPicker({
 }) {
   return (
     <section className="rounded-2xl bg-card border border-border/60 p-5">
-      <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">{label}</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold">{label}</h2>
+        <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 px-2" onClick={() => toast.info("Funcionalidad de crear equipo rival rápido en desarrollo")}>
+          <Plus className="size-3" />
+          Crear equipo rápido
+        </Button>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         {teams.filter((t) => t.id !== excludeId).map((t) => {
           const active = selectedId === t.id;

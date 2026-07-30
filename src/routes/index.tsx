@@ -12,6 +12,7 @@
  * en la tabla de posiciones tienes que mostrar la tabla de la liga en la que esta jugando mi equipo
  * y en partido finalizados, tienen que verse los partidos finalizados de la liga en la que esta jugando mi equipo
  * al crear un nuevo partido, me tienen que salir mis equipos y algun equipo que este cargado en la misma liga, si no la opcion de crear un partido de 0 con un equipo rival de 0
+ * en caso de que no haya otro equipo, tengo que poder crearlo para poder tomar las estadisticas. solo con el numero de camiseta, sin necesidad de poner mas informacion de ellos como las que tengo que poner cuando creo un jugador de mi equipo
  */
 
 /**
