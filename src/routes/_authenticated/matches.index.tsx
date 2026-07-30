@@ -41,18 +41,24 @@ function MatchesIndex() {
   const adminAll = useAllUsersAppState();
 
   const matches = useMemo(() => {
-    // Si es admin, ve todo el sistema (Merged App State)
+    // 1. Obtener la base de partidos (Merge de todos los usuarios si es admin)
+    let baseMatches = localMatches;
     if (isAdmin) {
-      if (!adminAll.data) return localMatches;
-      const byId = new Map(localMatches.map((m) => [m.id, m]));
-      for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
-      return [...byId.values()];
+      if (adminAll.data) {
+        const byId = new Map(localMatches.map((m) => [m.id, m]));
+        for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
+        baseMatches = [...byId.values()];
+      }
     }
-    
-    // Si es Coach (como franco@gmail.com), solo ve lo que él creó 
-    // o lo que está en su estado local (localMatches ya está filtrado por RLS en app_state)
-    return localMatches;
-  }, [isAdmin, adminAll.data, localMatches]);
+
+    // 2. Si es admin, ve todo.
+    if (isAdmin) return baseMatches;
+
+    // 3. Si es Coach (como franco@gmail.com) u otro rol, filtramos:
+    //    Debe ver partidos donde al menos uno de sus equipos participe.
+    const myTeamIds = new Set(localTeams.map(t => t.id));
+    return baseMatches.filter(m => myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId));
+  }, [isAdmin, adminAll.data, localMatches, localTeams]);
 
   const teams = useMemo(() => {
     if (isAdmin) {
