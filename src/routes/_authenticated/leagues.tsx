@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, type StatsMode } from "@/lib/volley-store";
 import { useTeamMutations } from "@/hooks/use-cloud-teams";
 import { Button } from "@/components/ui/button";
