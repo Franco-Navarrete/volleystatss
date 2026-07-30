@@ -347,7 +347,8 @@ function TeamsPage() {
   }, [query, filterLeague, filterGender, filterCategory, filterStatus, sortBy]);
 
   // Manejar selección por URL
-  const { teamId: queryTeamId } = Route.useSearch<{ teamId?: string }>();
+  const search = Route.useSearch();
+  const queryTeamId = (search as any).teamId as string | undefined;
   useEffect(() => {
     if (queryTeamId && !selected) {
       setSelected(queryTeamId);
