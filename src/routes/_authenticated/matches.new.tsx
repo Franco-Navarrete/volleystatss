@@ -601,8 +601,8 @@ function TeamPicker({
     </section>
   );
 }
-  );
-}
+
+
 
 function LineupPicker({
   team, lineup, onAssign,
