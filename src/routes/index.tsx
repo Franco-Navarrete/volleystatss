@@ -269,12 +269,6 @@ function PublicHome() {
                   >
                     Explorar ligas
                   </Link>
-                  <Link
-                    to="/auth"
-                    className="h-12 px-8 rounded-xl bg-background border border-border/60 font-bold flex items-center justify-center hover:bg-secondary/20 transition-all text-base"
-                  >
-                    Crear cuenta gratuita
-                  </Link>
                 </div>
               </div>
               <div className="grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:shrink-0 lg:max-w-md w-full">
