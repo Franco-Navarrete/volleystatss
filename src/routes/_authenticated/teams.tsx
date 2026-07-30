@@ -126,6 +126,10 @@ async function fileToCompressedDataUrl(file: File): Promise<string> {
 }
 
 function TeamsPage() {
+  const { user: authUser } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
+  const currentUserId = authUser?.id;
+
   const teamsQ = useCloudTeams();
   const { globalGender } = useGenderPreference();
   const t = getTerminology(globalGender);
