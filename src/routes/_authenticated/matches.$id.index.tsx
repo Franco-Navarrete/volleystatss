@@ -2461,6 +2461,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                   const takenElsewhere = onCourt && slotOfPl !== pickingSlot;
                   const isCurrent = lineup[pickingSlot] === pl.id;
                   const isLib = isLiberoPlayer(pl.id);
+                  // Requirement: "tengo que poder seleccionar a cualquier jugador que este fuera de la cancha como libero 1 y libero 2"
+                  // However, standard volleyball rules apply on-court: a libero can't play in the front row.
                   const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
                   const currentPidInSlot = lineup[pickingSlot];
                   const otherLiberoOnCourt = isLib && lineup.some(
