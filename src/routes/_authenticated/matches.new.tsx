@@ -822,11 +822,17 @@ function RolePicker({
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 1</span>
-            {renderSelect(libero1, setLibero1, [libero2].filter(Boolean), availableForLibero)}
+            {renderSelect(libero1, (v) => {
+              if (v && v === libero2) setLibero2("");
+              setLibero1(v);
+            }, [], availableForLibero)}
           </label>
           <label className="text-sm">
             <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 2</span>
-            {renderSelect(libero2, setLibero2, [libero1].filter(Boolean), availableForLibero)}
+            {renderSelect(libero2, (v) => {
+              if (v && v === libero1) setLibero1("");
+              setLibero2(v);
+            }, [], availableForLibero)}
           </label>
         </div>
       )}
