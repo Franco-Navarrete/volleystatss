@@ -45,6 +45,7 @@ interface Props {
   toUsedB: number;
   actionsDisabled: boolean;
   rallyCtx: RallyContext;
+  isReadOnly?: boolean;
   // Handlers
   onUndo: () => void;
   canUndo: boolean;
@@ -90,6 +91,7 @@ export function MobileMatchShell(p: Props) {
     toUsedB,
     actionsDisabled,
     rallyCtx,
+    isReadOnly = false,
     onUndo,
     canUndo,
     onOpenSetting,
@@ -285,7 +287,15 @@ export function MobileMatchShell(p: Props) {
         onPointerUp={onPointerUp}
         onClick={onCourtTap}
       >
-        <div className="w-full h-full" onClick={(e) => e.stopPropagation()}>
+        <div className={`w-full h-full ${isReadOnly ? 'pointer-events-none opacity-80 grayscale-[0.3]' : ''}`} onClick={(e) => e.stopPropagation()}>
+          {isReadOnly && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-background/20 backdrop-blur-[1px] pointer-events-none">
+              <div className="bg-card/95 border border-border shadow-xl px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                <Shirt className="size-3.5 text-amber-500" />
+                Solo lectura · Tu club no participa
+              </div>
+            </div>
+          )}
           {courtSlot}
         </div>
 
@@ -302,7 +312,7 @@ export function MobileMatchShell(p: Props) {
           aria-label="Deshacer"
           className={`absolute left-3 bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 grid place-items-center size-12 rounded-full shadow-xl border border-border/60 bg-card/95 backdrop-blur text-foreground active:scale-95 transition-all ${
             !navVisible ? "bottom-[calc(16px+env(safe-area-inset-bottom))]" : ""
-          } ${!canUndo ? "opacity-40" : "hover:bg-secondary"}`}
+          } ${(!canUndo || isReadOnly) ? "opacity-0 pointer-events-none scale-90" : "hover:bg-secondary"}`}
         >
           <Undo2 className="size-5" />
         </button>
@@ -366,7 +376,7 @@ export function MobileMatchShell(p: Props) {
             icon={<Target className="size-5" />}
             label="Armado"
             onClick={onOpenSetting}
-            disabled={!isLive || actionsDisabled || !isCoach}
+            disabled={!isLive || actionsDisabled || !isCoach || isReadOnly}
             highlight
           />
           <NavBtn
