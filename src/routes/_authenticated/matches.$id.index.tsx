@@ -2179,7 +2179,7 @@ function FormationSide({
               <Popover>
                 <PopoverTrigger asChild>
                   <button 
-                    className="absolute -top-1 -left-1 z-[40] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                    className="absolute -top-1 -left-1 z-[50] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Edit3 className="size-2.5 text-foreground" />
