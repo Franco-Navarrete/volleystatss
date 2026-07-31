@@ -660,6 +660,7 @@ function LineupPicker({
                       key={idx}
                       label={label}
                       sub={sub}
+                      teamId={team.id}
                       teamColor={team.color}
                       player={p}
                       players={team.players}
@@ -679,10 +680,11 @@ function LineupPicker({
 }
 
 function SlotCell({
-  label, sub, teamColor, player, players, takenIds, onPick, onClear,
+  label, sub, teamId, teamColor, player, players, takenIds, onPick, onClear,
 }: {
   label: string;
   sub?: string;
+  teamId: string;
   teamColor: string;
   player: ReturnType<typeof useVolley.getState>["teams"][number]["players"][number] | undefined;
   players: ReturnType<typeof useVolley.getState>["teams"][number]["players"];
@@ -729,7 +731,7 @@ function SlotCell({
                       onBlur={(e) => {
                         const val = parseInt(e.target.value);
                         if (!isNaN(val) && val !== player.number) {
-                          useVolley.getState().updatePlayer(team.id, player.id, { number: val });
+                          useVolley.getState().updatePlayer(teamId, player.id, { number: val });
                           toast.success("Dorsal actualizado");
                         }
                       }}
