@@ -2148,7 +2148,7 @@ function FormationSide({
         return (
           <div
             key={slot.role}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 h-[19%] sm:h-[21%] md:h-[23%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
             <Popover>
@@ -2292,7 +2292,7 @@ function FormationSide({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-[10px] text-muted-foreground hover:text-foreground mt-1"
+                      className="h-6 text-[9px] text-muted-foreground hover:text-foreground mt-0.5"
                       onClick={() => onPlayerClick(side, p.id)}
                     >
                       Abrir panel de acciones
