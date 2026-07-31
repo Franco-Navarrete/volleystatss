@@ -275,7 +275,7 @@ function IntelligencePage() {
                         </div>
                       </button>
                       <button
-                        onClick={() => handleDelete(r.id)}
+                        onClick={() => handleDelete(r)}
                         className="p-2 rounded-md text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
                         title="Eliminar informe"
                       >
