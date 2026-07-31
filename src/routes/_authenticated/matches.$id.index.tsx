@@ -394,6 +394,18 @@ function LiveMatch() {
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teams, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride;
+  const { user } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
+
+  // Restriction for Coach franco@gmail.com: only stats for their team
+  const isMyMatch = useMemo(() => {
+    if (isAdmin) return true;
+    if (!user) return false;
+    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
+    return myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId);
+  }, [isAdmin, user, match.teamAId, match.teamBId]);
+
+  const canScout = isAdmin || (isCoach && isMyMatch);
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
   const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
