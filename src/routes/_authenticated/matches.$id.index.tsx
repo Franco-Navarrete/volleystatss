@@ -853,6 +853,12 @@ function LiveMatch() {
                 receiverIds={receiverIds}
                 formationByTeam={formationByTeam}
                 activePlayerId={pendingPlayer?.playerId ?? null}
+                updatePlayer={updatePlayer}
+                setLiberoA1={setLiberoA1}
+                setLiberoA2={setLiberoA2}
+                setLiberoB1={setLiberoB1}
+                setLiberoB2={setLiberoB2}
+                setOpponentSetter={setOpponentSetter}
               />
 
               {/* Chips flotantes de contexto (no consumen alto de layout) */}
