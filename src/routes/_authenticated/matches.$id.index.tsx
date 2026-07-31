@@ -2143,7 +2143,7 @@ function FormationSide({
         const bpDim = !!blockPickInfo && !bpEligible;
         const dx = projectX(slot.x, slot.y);
         const dy = projectY(slot.x, slot.y);
-        const isOpponentSetter = (match.metadata as any)?.opponentSetterId === p.id;
+        const isOpponentSetter = (match as Match).metadata?.opponentSetterId === p.id;
         
         return (
           <div
