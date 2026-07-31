@@ -2151,47 +2151,42 @@ function FormationSide({
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-[19%] sm:h-[21%] md:h-[23%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
-            <Popover>
-              <PopoverTrigger asChild>
-                <div 
-                  className="w-full h-full relative cursor-pointer group/badge"
-                  onClick={(e) => {
-                    if (e.shiftKey || e.metaKey || e.ctrlKey) return;
-                    e.stopPropagation();
-                    onPlayerClick(side, p.id);
-                  }}
-                >
-                  <CourtPlayerBadge
-                    player={p}
-                    team={team}
-                    match={match}
-                    isServer={isServer}
-                    isLibero={isLibero}
-                    isReceiverHighlight={isReceiverHighlight}
-                    active={!!activePlayerId && activePlayerId === p.id}
-                    dimmed={!onCourtActive}
-                    className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
-                  />
-                  {isOpponentSetter && (
-                    <div className="absolute -top-1 -right-1 z-20 bg-primary rounded-full p-0.5 border border-white shadow-sm">
-                      <Target className="size-2.5 text-white" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 rounded-full bg-primary/0 group-hover/badge:bg-primary/5 transition-colors" />
+            <div className="w-full h-full relative cursor-pointer group/badge" onClick={() => onPlayerClick(side, p.id)}>
+              <CourtPlayerBadge
+                player={p}
+                team={team}
+                match={match}
+                isServer={isServer}
+                isLibero={isLibero}
+                isReceiverHighlight={isReceiverHighlight}
+                active={!!activePlayerId && activePlayerId === p.id}
+                dimmed={!onCourtActive}
+                className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
+              />
+              {isOpponentSetter && (
+                <div className="absolute -top-1 -right-1 z-20 bg-primary rounded-full p-0.5 border border-white shadow-sm">
+                  <Target className="size-2.5 text-white" />
                 </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
-                <div className="flex items-center gap-2 border-b border-border/60 pb-2">
-                  <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
-                    {p.number}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold truncate">{p.name}</div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                      {PLAYER_POSITION_LABEL[p.position ?? "universal"]}
+              )}
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="absolute -top-1 -left-1 z-[40] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Edit3 className="size-2.5 text-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
+                  <div className="flex items-center gap-2 border-b border-border/60 pb-1">
+                    <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
+                      {p.number}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold truncate">{p.name}</div>
                     </div>
                   </div>
-                </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
