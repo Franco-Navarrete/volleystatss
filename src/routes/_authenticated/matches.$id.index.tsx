@@ -2151,7 +2151,14 @@ function FormationSide({
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-[19%] sm:h-[21%] md:h-[23%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
-            <div className="w-full h-full relative cursor-pointer group/badge" onClick={() => onPlayerClick(side, p.id)}>
+            <div className="w-full h-full relative group/badge">
+              <div 
+                className="absolute inset-0 z-[10] cursor-pointer" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlayerClick(side, p.id);
+                }} 
+              />
               <CourtPlayerBadge
                 player={p}
                 team={team}
