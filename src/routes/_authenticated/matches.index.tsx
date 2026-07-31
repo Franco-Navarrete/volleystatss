@@ -118,7 +118,7 @@ function MatchesIndex() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-extrabold">Partidos</h1>
-          <p className="text-muted-foreground text-sm">Fixture, partidos en vivo y resultados.</p>
+          <p className="text-muted-foreground text-sm">Fixture, partidos en vivo y resultados. {isCoach && !isAdmin && "Solo podés hacer estadísticas de los partidos de tu equipo."}</p>
         </div>
         {canCreate && (
           <div className="flex gap-2">
