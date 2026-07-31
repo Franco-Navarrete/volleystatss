@@ -2297,17 +2297,18 @@ function FormationSide({
                       className="h-6 text-[9px] text-muted-foreground hover:text-foreground mt-0.5"
                       onClick={() => onPlayerClick(side, p.id)}
                     >
-                      Abrir panel de acciones
+                    Abrir panel de acciones
                     </Button>
                   </div>
                 </div>
               </PopoverContent>
             </Popover>
           </div>
-        );
-      })}
-    </div>
-  );
+        </div>
+      );
+    })}
+  </div>
+);
 }
 
 function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; onClose: () => void }) {
