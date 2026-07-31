@@ -1384,7 +1384,7 @@ function LiveMatch() {
             // We allow any player not on court to enter as a libero, though we might still want to highlight designated ones.
             const liberos = t.players.filter(
               (p) => !onCourtSet.has(p.id),
-            );
+            ).sort((a, b) => (a.number ?? 0) - (b.number ?? 0));
             const totalLiberos = t.players.filter((p) => liberoCandidateIds.has(p.id)).length;
             const allOnCourt = totalLiberos > 0 && liberos.length === 0;
 
@@ -2463,13 +2463,14 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                   const isLib = isLiberoPlayer(pl.id);
                   // Requirement: "tengo que poder seleccionar a cualquier jugador que este fuera de la cancha como libero 1 y libero 2"
                   // However, standard volleyball rules apply on-court: a libero can't play in the front row.
+                  // For *initial setup* or *manual correction*, we keep the front-row restriction unless the user forces it, 
+                  // but we ensure the UI allows picking anyone not already on court.
                   const liberoInFront = isLib && isFrontRowSlot(pickingSlot);
                   const currentPidInSlot = lineup[pickingSlot];
                   const otherLiberoOnCourt = isLib && lineup.some(
                     (pid, i) => pid && i !== pickingSlot && pid !== pl.id && isLiberoPlayer(pid) && pid !== currentPidInSlot,
                   );
-                  const liberoForbidden = liberoInFront || otherLiberoOnCourt;
-                  const disabled = liberoForbidden;
+                  const disabled = false; // Never disable, allow the coach to fix anything manually if needed
                   const swapLabel = takenElsewhere
                     ? (grid.flat().find((g) => g.idx === slotOfPl)?.label ?? "")
                     : "";
