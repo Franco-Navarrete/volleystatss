@@ -39,6 +39,9 @@ import {
   needsReceptionForRally,
   getCurrentRallyReceptionSide,
   getMatchStatsMode,
+  oppositeSide,
+  attackDirectionToDefenseZone,
+  playerIdAtZone,
   type PointType,
   type SanctionType,
   type ReceptionRating,
@@ -52,6 +55,8 @@ import {
   PLAYER_POSITION_LABEL,
   type PlayerPosition,
 } from "@/lib/volley-store";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+import { Lock } from "lucide-react";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
@@ -656,6 +661,7 @@ function LiveMatch() {
           toUsedB={toUsedB}
           actionsDisabled={actionsDisabled}
           rallyCtx={rallyCtx}
+          isReadOnly={!canScout}
           canUndo={match.status !== "scheduled" && match.events.length > 0}
           onUndo={() => undo(match.id)}
           onOpenSetting={() => setShowSettingDialog(true)}
@@ -700,6 +706,19 @@ function LiveMatch() {
         />
       ) : (
       <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-1.5 h-full min-h-0 px-2 md:px-6 device-tablet:px-2 py-2 md:py-4 device-tablet:py-1 mx-auto w-full max-w-[1400px] device-tablet:max-w-none select-none">
+        {!canScout && (
+          <div className="absolute inset-0 z-[9999] flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
+            <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl text-center max-w-xs animate-in fade-in zoom-in duration-300 pointer-events-auto">
+              <div className="size-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+                <Lock className="size-6 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Vista de lectura</h3>
+              <p className="text-sm text-muted-foreground">
+                Solo podés cargar estadísticas en los partidos de tu propio club.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 sm:gap-3 md:gap-6 device-tablet:gap-1 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 device-tablet:px-2 py-0.5 md:py-4 device-tablet:py-0.5 shrink-0">
