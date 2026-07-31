@@ -1,6 +1,31 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Volleyball } from "lucide-react";
+import {
+  Volleyball,
+  Edit3,
+  Target,
+  UserCheck,
+  X,
+  ArrowLeftRight,
+  ChartBarBig,
+  Check,
+  Crosshair,
+  Film,
+  Flag,
+  Hourglass,
+  Keyboard,
+  Minus,
+  MoreVertical,
+  Play,
+  Plus,
+  RotateCcw,
+  RotateCw,
+  Search,
+  Settings2,
+  Shirt,
+  Undo2,
+  Users,
+} from "lucide-react";
 import {
   useVolley,
   setsWon,
@@ -20,9 +45,12 @@ import {
   type SettingQuality,
   type Team,
   type Match,
+  type Player,
   type AttackZone,
   type AttackDirection,
   ATTACK_ZONE_LABEL,
+  PLAYER_POSITION_LABEL,
+  type PlayerPosition,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
@@ -65,9 +93,6 @@ import { WorkspaceLayout } from "@/components/video/analysis/WorkspaceLayout";
 import { useWorkspaceStore } from "@/lib/video/workspace-store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-
-
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -84,32 +109,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  ArrowLeftRight,
-  ChartBarBig,
-  Check,
-  Crosshair,
-  Edit3,
-  Film,
-  Flag,
-  Hourglass,
-  Keyboard,
-  Minus,
-  MoreVertical,
-  Play,
-  Plus,
-  RotateCcw,
-  RotateCw,
-  Search,
-  Settings2,
-  Shirt,
-  Target,
-  Undo2,
-  Users,
-  X,
-  UserCheck,
-} from "lucide-react";
-import { PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
@@ -690,6 +689,12 @@ function LiveMatch() {
               receiverIds={receiverIds}
               formationByTeam={formationByTeam}
               activePlayerId={pendingPlayer?.playerId ?? null}
+              updatePlayer={updatePlayer}
+              setLiberoA1={setLiberoA1}
+              setLiberoA2={setLiberoA2}
+              setLiberoB1={setLiberoB1}
+              setLiberoB2={setLiberoB2}
+              setOpponentSetter={setOpponentSetter}
             />
           }
         />
@@ -853,6 +858,12 @@ function LiveMatch() {
                 receiverIds={receiverIds}
                 formationByTeam={formationByTeam}
                 activePlayerId={pendingPlayer?.playerId ?? null}
+                updatePlayer={updatePlayer}
+                setLiberoA1={setLiberoA1}
+                setLiberoA2={setLiberoA2}
+                setLiberoB1={setLiberoB1}
+                setLiberoB2={setLiberoB2}
+                setOpponentSetter={setOpponentSetter}
               />
 
               {/* Chips flotantes de contexto (no consumen alto de layout) */}
@@ -1813,13 +1824,22 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId }: {
+function CourtView({ 
+  match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
+}: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
   formationByTeam?: Partial<Record<"A" | "B", "reception" | "attack">>;
   activePlayerId?: string | null;
+  updatePlayer: (teamId: string, playerId: string, updates: Partial<Player>) => void;
+  setLiberoA1: (lid: string | null) => void;
+  setLiberoA2: (lid: string | null) => void;
+  setLiberoB1: (lid: string | null) => void;
+  setLiberoB2: (lid: string | null) => void;
+  setOpponentSetter: (playerId: string | null) => void;
 }) {
   const blockPick = useCoachRally((s) => s.blockPick);
   const blockPickInfo = blockPick
@@ -1927,6 +1947,12 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                 onPlayerClick={onPlayerClick}
                 activePlayerId={activePlayerId ?? null}
                 blockPickInfo={blockPickInfo}
+                updatePlayer={updatePlayer}
+                setLiberoA1={setLiberoA1}
+                setLiberoA2={setLiberoA2}
+                setLiberoB1={setLiberoB1}
+                setLiberoB2={setLiberoB2}
+                setOpponentSetter={setOpponentSetter}
               />
             );
           }
@@ -1981,16 +2007,94 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       const bpPicked = !!blockPickInfo && pid && blockPickInfo.picks.has(pid);
                       const bpDim = !!blockPickInfo && !bpEligible;
                       return (
-                        <button
+                        <div
                           key={`${ci}-${idx}`}
-                          onClick={() => p && onPlayerClick(col.side, p.id)}
-                          disabled={!p}
-                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""} ${bpEligible ? "z-[30] ring-4 ring-emerald-400 animate-pulse cursor-pointer" : ""} ${bpPicked ? "z-[30] ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
+                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden group/badge ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""} ${bpEligible ? "z-[30] ring-4 ring-emerald-400 animate-pulse cursor-pointer" : ""} ${bpPicked ? "z-[30] ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
                           style={isLibero
                             ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                             : { background: col.team.color, borderColor: pairColor ?? undefined }}
                           title={p ? `#${p.number} ${p.name}` : ""}
                         >
+                          <div 
+                            className="absolute inset-0 z-10 cursor-pointer" 
+                            onClick={(e) => {
+                              if (p) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onPlayerClick(col.side, p.id);
+                              }
+                            }}
+                          />
+                          <div className="absolute top-0 left-0 z-20">
+                            {p && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button 
+                                    className="bg-background/90 hover:bg-background rounded-full p-0.5 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Edit3 className="size-2 text-foreground" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
+                                  <div className="flex items-center gap-2 border-b border-border/60 pb-1">
+                                    <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
+                                      {p.number}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-xs font-bold truncate">{p.name}</div>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] uppercase text-muted-foreground font-black">Camiseta</Label>
+                                      <div className="flex items-center gap-1">
+                                        <Input
+                                          type="number"
+                                          className="h-7 text-xs px-2"
+                                          defaultValue={p.number}
+                                          onBlur={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (!isNaN(val) && val !== p.number) {
+                                              updatePlayer(col.team.id, p.id, { number: val });
+                                              toast.success("Dorsal actualizado");
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] uppercase text-muted-foreground font-black">Posición</Label>
+                                      <select
+                                        className="w-full h-7 rounded-md border border-input bg-background px-1 py-0 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                                        value={p.position ?? "universal"}
+                                        onChange={(e) => {
+                                          updatePlayer(col.team.id, p.id, { position: e.target.value as any });
+                                          toast.success("Posición actualizada");
+                                        }}
+                                      >
+                                        {Object.entries(PLAYER_POSITION_LABEL).map(([val, lab]) => (
+                                          <option key={val} value={val}>{lab}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1.5 pt-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-[9px] text-muted-foreground hover:text-foreground mt-0.5"
+                                      onClick={() => onPlayerClick(col.side, p.id)}
+                                    >
+                                      Abrir panel de acciones
+                                    </Button>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
                           <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl device-tablet:text-4xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
                           {p && (
                             <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] device-tablet:text-[17px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
@@ -2008,7 +2112,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                             <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 sm:px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[7px] [@media(max-width:360px)]:text-[5px] sm:text-[8px] font-bold uppercase tracking-widest">Saque</span>
                           )}
 
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -2024,6 +2128,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
 
 function FormationSide({
   side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId, blockPickInfo,
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
 }: {
   side: "A" | "B"; team: Team; onCourt: string[];
   formation: ReturnType<typeof useFormation>;
@@ -2033,6 +2138,12 @@ function FormationSide({
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   activePlayerId?: string | null;
   blockPickInfo?: { blockingSide: "A" | "B"; eligible: Set<string>; picks: Set<string> } | null;
+  updatePlayer: (teamId: string, playerId: string, updates: Partial<Player>) => void;
+  setLiberoA1: (lid: string | null) => void;
+  setLiberoA2: (lid: string | null) => void;
+  setLiberoB1: (lid: string | null) => void;
+  setLiberoB2: (lid: string | null) => void;
+  setOpponentSetter: (playerId: string | null) => void;
 }) {
   // Mapeo del slot (formation coords) → coords absolutas dentro de la mitad de cancha.
   //   formation.y: 0 = en la red, 100 = línea final
@@ -2151,7 +2262,15 @@ function FormationSide({
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-[19%] sm:h-[21%] md:h-[23%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
-            <div className="w-full h-full relative cursor-pointer group/badge" onClick={() => onPlayerClick(side, p.id)}>
+            <div className="w-full h-full relative group/badge">
+              <div 
+                className="absolute inset-0 z-[10] cursor-pointer" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onPlayerClick(side, p.id);
+                }} 
+              />
               <CourtPlayerBadge
                 player={p}
                 team={team}
@@ -2172,7 +2291,7 @@ function FormationSide({
               <Popover>
                 <PopoverTrigger asChild>
                   <button 
-                    className="absolute -top-1 -left-1 z-[40] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                    className="absolute -top-1 -left-1 z-[50] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Edit3 className="size-2.5 text-foreground" />
@@ -2199,7 +2318,7 @@ function FormationSide({
                         onBlur={(e) => {
                           const val = parseInt(e.target.value);
                           if (!isNaN(val) && val !== p.number) {
-                            useVolley.getState().updatePlayer(team.id, p.id, { number: val });
+                            updatePlayer(team.id, p.id, { number: val });
                             toast.success("Dorsal actualizado");
                           }
                         }}
@@ -2212,7 +2331,7 @@ function FormationSide({
                       className="w-full h-7 rounded-md border border-input bg-background px-1 py-0 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                       value={p.position ?? "universal"}
                       onChange={(e) => {
-                        useVolley.getState().updatePlayer(team.id, p.id, { position: e.target.value as any });
+                        updatePlayer(team.id, p.id, { position: e.target.value as any });
                         toast.success("Posición actualizada");
                       }}
                     >
@@ -2231,18 +2350,7 @@ function FormationSide({
                       className="h-7 text-[10px] justify-start gap-2"
                       onClick={() => {
                         const newSetterId = isOpponentSetter ? null : p.id;
-                        useVolley.setState((state) => ({
-                          matches: state.matches.map((m) => {
-                            if (m.id !== match.id) return m;
-                            return {
-                              ...m,
-                              metadata: {
-                                ...(m.metadata || {}),
-                                opponentSetterId: newSetterId
-                              }
-                            };
-                          })
-                        }));
+                        setOpponentSetter(newSetterId);
                         toast.success(isOpponentSetter ? "Armador removido" : "Armador rival asignado");
                       }}
                     >
@@ -2257,13 +2365,8 @@ function FormationSide({
                         className="h-7 text-[10px] gap-1 px-1"
                         onClick={() => {
                           const isCurrent = (side === "A" ? match.liberoA1Id : match.liberoB1Id) === p.id;
-                          useVolley.setState((state) => ({
-                            matches: state.matches.map((m) => {
-                              if (m.id !== match.id) return m;
-                              if (side === "A") return { ...m, liberoA1Id: isCurrent ? null : p.id };
-                              return { ...m, liberoB1Id: isCurrent ? null : p.id };
-                            })
-                          }));
+                          if (side === "A") setLiberoA1(isCurrent ? null : p.id);
+                          else setLiberoB1(isCurrent ? null : p.id);
                           toast.success(isCurrent ? "Líbero 1 removido" : "Designado Líbero 1");
                         }}
                       >
@@ -2276,13 +2379,8 @@ function FormationSide({
                         className="h-7 text-[10px] gap-1 px-1"
                         onClick={() => {
                           const isCurrent = (side === "A" ? match.liberoA2Id : match.liberoB2Id) === p.id;
-                          useVolley.setState((state) => ({
-                            matches: state.matches.map((m) => {
-                              if (m.id !== match.id) return m;
-                              if (side === "A") return { ...m, liberoA2Id: isCurrent ? null : p.id };
-                              return { ...m, liberoB2Id: isCurrent ? null : p.id };
-                            })
-                          }));
+                          if (side === "A") setLiberoA2(isCurrent ? null : p.id);
+                          else setLiberoB2(isCurrent ? null : p.id);
                           toast.success(isCurrent ? "Líbero 2 removido" : "Designado Líbero 2");
                         }}
                       >
@@ -2303,12 +2401,12 @@ function FormationSide({
                 </div>
               </PopoverContent>
             </Popover>
+            </div>
           </div>
-        </div>
-      );
-    })}
-  </div>
-);
+        );
+      })}
+    </div>
+  );
 }
 
 function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; onClose: () => void }) {
