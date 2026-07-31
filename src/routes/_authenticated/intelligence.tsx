@@ -130,11 +130,18 @@ function IntelligencePage() {
   }
 
 
-  async function handleDelete(id?: string) {
-    if (!id) return;
+  async function handleDelete(report: IntelligenceReport) {
+    if (!report.id) return;
+    
+    // Safety check: Coach can only delete their own reports
+    if (restricted && report.userId !== user?.id) {
+      setError("No tenés permisos para eliminar este informe");
+      return;
+    }
+
     try {
-      await delFn({ data: { id } });
-      setReports((prev) => prev.filter((r) => r.id !== id));
+      await delFn({ data: { id: report.id } });
+      setReports((prev) => prev.filter((r) => r.id !== report.id));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error eliminando informe");
     }
