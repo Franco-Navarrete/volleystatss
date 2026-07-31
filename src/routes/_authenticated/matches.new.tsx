@@ -407,7 +407,10 @@ function NewMatch() {
                 mainRefereeName: mainReferee.trim(),
                 secondRefereeName: secondReferee.trim() || undefined,
                 scorekeeperName: scorekeeper.trim(),
-                
+                metadata: {
+                  setterAId: setterA || null,
+                  setterBId: setterB || null,
+                }
               });
               if (mode === "live") startMatch(id);
               navigate({ to: "/matches/$id", params: { id } });
