@@ -53,7 +53,7 @@ import {
   type PlayerPosition,
 } from "@/lib/volley-store";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
-import { Lock, Edit3 } from "lucide-react";
+import { Lock } from "lucide-react";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
