@@ -19,7 +19,7 @@
  * quiero cargar la posicion de los jugadores una vez que este adentro de la cancha y sus numeros de camiseta tambien
  * aca tengo que seleccionar cual es el armador rival y poder cambiar el numero de las camisetas de los jugadores
  * al principio no puedo seleccionar al jugador que es armador ni poner su numero de camisetas
- * eso tiene que suceder al principio. luego de confirmar se tiene que poder registrar las estadisticas de forma normal
+ * en este punto tengo que poder seleccionar al armador rival y los numeros de camiseta. luego de confirmar se comienza a tomar estadisticas
  */
 
 /**
