@@ -414,10 +414,10 @@ export function CourtPlayerBadge({
             className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
             style={{
               background: isLibero ? "#ffffff" : team.color,
-              border: `${isLibero ? 4 : 3}px solid ${isLibero ? team.color : "rgba(255,255,255,0.9)"}`,
+              border: `${isLibero ? 3 : 2}px solid ${isLibero ? team.color : "rgba(255,255,255,0.9)"}`,
               boxShadow: isLibero
-                ? `0 0 0 2px #ffffff, 0 0 0 5px ${borderColor}`
-                : `0 0 0 2px ${borderColor}`,
+                ? `0 0 0 1px #ffffff, 0 0 0 4px ${borderColor}`
+                : `0 0 0 1px ${borderColor}`,
             }}
           >
             {player.photoUrl && imgOk ? (
@@ -431,7 +431,7 @@ export function CourtPlayerBadge({
               />
             ) : (
               <span
-                className="scoreboard-digit font-black leading-none text-[clamp(1rem,4vw,2.2rem)]"
+                className="scoreboard-digit font-black leading-none text-[clamp(0.85rem,3.2vw,1.8rem)]"
                 style={{
                   color: isLibero ? team.color : "#ffffff",
                   textShadow: isLibero
@@ -445,11 +445,11 @@ export function CourtPlayerBadge({
           </span>
 
           <span
-            className="absolute -bottom-1 -right-1 min-w-[45%] h-[45%] px-1 rounded-full flex items-center justify-center scoreboard-digit font-black text-[clamp(0.7rem,2.2vw,1.2rem)] leading-none tabular-nums shadow-md"
+            className="absolute -bottom-0.5 -right-0.5 min-w-[42%] h-[42%] px-1 rounded-full flex items-center justify-center scoreboard-digit font-black text-[clamp(0.6rem,1.8vw,1rem)] leading-none tabular-nums shadow-md"
             style={{
               background: "#111827",
               color: "#ffffff",
-              border: `2px solid ${borderColor}`,
+              border: `1.5px solid ${borderColor}`,
             }}
           >
             {player.number}
