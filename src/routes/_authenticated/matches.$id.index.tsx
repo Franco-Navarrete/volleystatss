@@ -697,7 +697,7 @@ function LiveMatch() {
       <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-1.5 h-full min-h-0 px-2 md:px-6 device-tablet:px-2 py-2 md:py-4 device-tablet:py-1 mx-auto w-full max-w-[1400px] device-tablet:max-w-none select-none">
 
         {/* Scoreboard header */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:gap-6 device-tablet:gap-3 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 device-tablet:px-3 py-0.5 md:py-4 device-tablet:py-1 shrink-0">
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 sm:gap-3 md:gap-6 device-tablet:gap-1 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 device-tablet:px-2 py-0.5 md:py-4 device-tablet:py-0.5 shrink-0">
           <ScoreColumn team={leftTeam} score={leftSide === "A" ? currentSet.scoreA : currentSet.scoreB} sets={leftSide === "A" ? w.a : w.b} align="right" serving={server.side === leftSide} onScoreClick={() => isLive && setShowScoreDialog(true)} />
           <div className="text-center px-1 md:px-4 flex flex-row md:flex-col items-center justify-center gap-1.5 md:gap-0">
             <div className="flex flex-col items-center">
@@ -1744,7 +1744,7 @@ function ScoreColumn({ team, score, sets, align, serving, onScoreClick }: {
       disabled={!onScoreClick}
       className={`inline-flex items-center gap-1 ${onScoreClick ? "cursor-pointer hover:opacity-80 active:scale-95 transition-all" : ""}`}
     >
-      <span className="scoreboard-digit text-3xl sm:text-4xl md:text-7xl device-tablet:text-4xl font-black leading-none text-primary">{score}</span>
+      <span className="scoreboard-digit text-2xl sm:text-3xl md:text-7xl device-tablet:text-2xl font-black leading-none text-primary">{score}</span>
       {onScoreClick && <Edit3 className="size-3 md:size-4 text-muted-foreground opacity-60" />}
     </button>
   );
@@ -2148,43 +2148,45 @@ function FormationSide({
         return (
           <div
             key={slot.role}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 h-[19%] sm:h-[21%] md:h-[23%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="w-full h-full relative cursor-pointer group/badge">
-                  <CourtPlayerBadge
-                    player={p}
-                    team={team}
-                    match={match}
-                    isServer={isServer}
-                    isLibero={isLibero}
-                    isReceiverHighlight={isReceiverHighlight}
-                    active={!!activePlayerId && activePlayerId === p.id}
-                    dimmed={!onCourtActive}
-                    className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
-                  />
-                  {isOpponentSetter && (
-                    <div className="absolute -top-1 -right-1 z-20 bg-primary rounded-full p-0.5 border border-white shadow-sm">
-                      <Target className="size-2.5 text-white" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 rounded-full bg-primary/0 group-hover/badge:bg-primary/5 transition-colors" />
+            <div className="w-full h-full relative cursor-pointer group/badge" onClick={() => onPlayerClick(side, p.id)}>
+              <CourtPlayerBadge
+                player={p}
+                team={team}
+                match={match}
+                isServer={isServer}
+                isLibero={isLibero}
+                isReceiverHighlight={isReceiverHighlight}
+                active={!!activePlayerId && activePlayerId === p.id}
+                dimmed={!onCourtActive}
+                className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
+              />
+              {isOpponentSetter && (
+                <div className="absolute -top-1 -right-1 z-20 bg-primary rounded-full p-0.5 border border-white shadow-sm">
+                  <Target className="size-2.5 text-white" />
                 </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-3 flex flex-col gap-3" side="top" align="center">
-                <div className="flex items-center gap-2 border-b border-border/60 pb-2">
-                  <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white font-black text-xs">
-                    {p.number}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">{p.name}</div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                      {PLAYER_POSITION_LABEL[p.position ?? "universal"]}
+              )}
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="absolute -top-1 -left-1 z-[40] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Edit3 className="size-2.5 text-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
+                  <div className="flex items-center gap-2 border-b border-border/60 pb-1">
+                    <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
+                      {p.number}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold truncate">{p.name}</div>
                     </div>
                   </div>
-                </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
@@ -2222,7 +2224,6 @@ function FormationSide({
                 </div>
 
                 <div className="space-y-1.5 pt-1">
-                  <p className="text-[10px] uppercase text-muted-foreground font-black">Acciones rápidas</p>
                   <div className="flex flex-col gap-1">
                     <Button
                       variant={isOpponentSetter ? "default" : "outline"}
@@ -2293,20 +2294,21 @@ function FormationSide({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-[10px] text-muted-foreground hover:text-foreground mt-1"
+                      className="h-6 text-[9px] text-muted-foreground hover:text-foreground mt-0.5"
                       onClick={() => onPlayerClick(side, p.id)}
                     >
-                      Abrir panel de acciones
+                    Abrir panel de acciones
                     </Button>
                   </div>
                 </div>
               </PopoverContent>
             </Popover>
           </div>
-        );
-      })}
-    </div>
-  );
+        </div>
+      );
+    })}
+  </div>
+);
 }
 
 function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; onClose: () => void }) {
