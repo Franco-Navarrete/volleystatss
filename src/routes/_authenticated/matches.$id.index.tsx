@@ -2387,12 +2387,12 @@ function FormationSide({
                 </div>
               </PopoverContent>
             </Popover>
+            </div>
           </div>
-        </div>
-      );
-    })}
-  </div>
-);
+        );
+      })}
+    </div>
+  );
 }
 
 function TimeoutCountdown({ team, used, onClose }: { team: Team; used: number; onClose: () => void }) {
