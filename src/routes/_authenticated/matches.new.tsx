@@ -69,6 +69,8 @@ function NewMatch() {
   const [lineupB, setLineupB] = useState<Slot[]>(emptyLineup);
   const [captainA, setCaptainA] = useState<string>("");
   const [captainB, setCaptainB] = useState<string>("");
+  const [setterA, setSetterA] = useState<string>("");
+  const [setterB, setSetterB] = useState<string>("");
   const [liberoA1, setLiberoA1] = useState<string>("");
   const [liberoA2, setLiberoA2] = useState<string>("");
   const [liberoB1, setLiberoB1] = useState<string>("");
@@ -224,6 +226,14 @@ function NewMatch() {
           label="Roles · local"
           lineup={lineupA}
           captain={captainA} setCaptain={setCaptainA}
+          setter={setterA} setSetter={setSetterA}
+          opponentSetterId={teamA?.metadata?.opponentSetterId || ""}
+          onOpponentSetterChange={(id) => {
+            if (!teamA) return;
+            useVolley.setState((state) => ({
+              teams: state.teams.map((t) => t.id === teamA.id ? { ...t, metadata: { ...t.metadata, opponentSetterId: id || null } } : t)
+            }));
+          }}
           libero1={liberoA1} setLibero1={setLiberoA1}
           libero2={liberoA2} setLibero2={setLiberoA2}
         />
@@ -232,6 +242,14 @@ function NewMatch() {
           label="Roles · visitante"
           lineup={lineupB}
           captain={captainB} setCaptain={setCaptainB}
+          setter={setterB} setSetter={setSetterB}
+          opponentSetterId={teamB?.metadata?.opponentSetterId || ""}
+          onOpponentSetterChange={(id) => {
+            if (!teamB) return;
+            useVolley.setState((state) => ({
+              teams: state.teams.map((t) => t.id === teamB.id ? { ...t, metadata: { ...t.metadata, opponentSetterId: id || null } } : t)
+            }));
+          }}
           libero1={liberoB1} setLibero1={setLiberoB1}
           libero2={liberoB2} setLibero2={setLiberoB2}
         />
@@ -389,7 +407,10 @@ function NewMatch() {
                 mainRefereeName: mainReferee.trim(),
                 secondRefereeName: secondReferee.trim() || undefined,
                 scorekeeperName: scorekeeper.trim(),
-                
+                metadata: {
+                  setterAId: setterA || null,
+                  setterBId: setterB || null,
+                }
               });
               if (mode === "live") startMatch(id);
               navigate({ to: "/matches/$id", params: { id } });
@@ -792,12 +813,14 @@ function SlotCell({
 }
 
 function RolePicker({
-  team, label, lineup, captain, setCaptain, libero1, setLibero1, libero2, setLibero2,
+  team, label, lineup, captain, setCaptain, setter, setSetter, opponentSetterId, onOpponentSetterChange, libero1, setLibero1, libero2, setLibero2,
 }: {
   team: ReturnType<typeof useVolley.getState>["teams"][number] | undefined;
   label: string;
   lineup: Slot[];
   captain: string; setCaptain: (v: string) => void;
+  setter: string; setSetter: (v: string) => void;
+  opponentSetterId: string; onOpponentSetterChange: (id: string) => void;
   libero1: string; setLibero1: (v: string) => void;
   libero2: string; setLibero2: (v: string) => void;
 }) {
@@ -835,31 +858,20 @@ function RolePicker({
         <p className="text-sm text-muted-foreground text-center py-4">Elegí un equipo.</p>
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <label className="text-sm">
               <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Capitán</span>
               {renderSelect(captain, setCaptain, [], players)}
             </label>
             <label className="text-sm">
+              <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Armador</span>
+              {renderSelect(setter, setSetter, [], players)}
+            </label>
+            <label className="text-sm">
               <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Armador Rival</span>
               <select
-                value={team.metadata?.opponentSetterId || ""}
-                onChange={(e) => {
-                  const setterId = e.target.value;
-                  useVolley.setState((state) => ({
-                    teams: state.teams.map((t) => {
-                      if (t.id !== team.id) return t;
-                      return {
-                        ...t,
-                        metadata: {
-                          ...(t.metadata || {}),
-                          opponentSetterId: setterId || null,
-                        },
-                      };
-                    }),
-                  }));
-                  toast.success("Armador rival actualizado");
-                }}
+                value={opponentSetterId}
+                onChange={(e) => onOpponentSetterChange(e.target.value)}
                 className="w-full bg-background border border-input rounded-md px-2 py-2 text-sm"
               >
                 <option value="">— Sin asignar —</option>
