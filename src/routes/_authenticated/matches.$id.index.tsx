@@ -2153,7 +2153,14 @@ function FormationSide({
           >
             <Popover>
               <PopoverTrigger asChild>
-                <div className="w-full h-full relative cursor-pointer group/badge">
+                <div 
+                  className="w-full h-full relative cursor-pointer group/badge"
+                  onClick={(e) => {
+                    if (e.shiftKey || e.metaKey || e.ctrlKey) return;
+                    e.stopPropagation();
+                    onPlayerClick(side, p.id);
+                  }}
+                >
                   <CourtPlayerBadge
                     player={p}
                     team={team}
