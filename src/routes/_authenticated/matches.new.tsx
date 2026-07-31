@@ -660,6 +660,7 @@ function LineupPicker({
                       key={idx}
                       label={label}
                       sub={sub}
+                      teamId={team.id}
                       teamColor={team.color}
                       player={p}
                       players={team.players}
@@ -679,10 +680,11 @@ function LineupPicker({
 }
 
 function SlotCell({
-  label, sub, teamColor, player, players, takenIds, onPick, onClear,
+  label, sub, teamId, teamColor, player, players, takenIds, onPick, onClear,
 }: {
   label: string;
   sub?: string;
+  teamId: string;
   teamColor: string;
   player: ReturnType<typeof useVolley.getState>["teams"][number]["players"][number] | undefined;
   players: ReturnType<typeof useVolley.getState>["teams"][number]["players"];
@@ -720,7 +722,24 @@ function SlotCell({
                     {player.number}
                   </div>
                 )}
-                <div className="text-[10px] truncate max-w-full font-semibold px-1">#{player.number} {player.name}</div>
+                <div className="text-[10px] truncate max-w-full font-semibold px-1 flex flex-col items-center">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      defaultValue={player.number}
+                      onClick={(e) => e.stopPropagation()}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val !== player.number) {
+                          useVolley.getState().updatePlayer(teamId, player.id, { number: val });
+                          toast.success("Dorsal actualizado");
+                        }
+                      }}
+                      className="w-8 h-4 text-[9px] bg-background/50 border border-border/40 rounded text-center focus:bg-background focus:outline-none"
+                    />
+                  </div>
+                  <span className="truncate w-full text-center">#{player.number} {player.name.split(' ')[0]}</span>
+                </div>
               </>
             ) : (
               <>
@@ -815,25 +834,60 @@ function RolePicker({
       {!team ? (
         <p className="text-sm text-muted-foreground text-center py-4">Elegí un equipo.</p>
       ) : (
-        <div className="grid sm:grid-cols-3 gap-3">
-          <label className="text-sm">
-            <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Capitán</span>
-            {renderSelect(captain, setCaptain, [], players)}
-          </label>
-          <label className="text-sm">
-            <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 1</span>
-            {renderSelect(libero1, (v) => {
-              if (v && v === libero2) setLibero2("");
-              setLibero1(v);
-            }, [], availableForLibero)}
-          </label>
-          <label className="text-sm">
-            <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 2</span>
-            {renderSelect(libero2, (v) => {
-              if (v && v === libero1) setLibero1("");
-              setLibero2(v);
-            }, [], availableForLibero)}
-          </label>
+        <div className="flex flex-col gap-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="text-sm">
+              <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Capitán</span>
+              {renderSelect(captain, setCaptain, [], players)}
+            </label>
+            <label className="text-sm">
+              <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Armador Rival</span>
+              <select
+                value={team.metadata?.opponentSetterId || ""}
+                onChange={(e) => {
+                  const setterId = e.target.value;
+                  useVolley.setState((state) => ({
+                    teams: state.teams.map((t) => {
+                      if (t.id !== team.id) return t;
+                      return {
+                        ...t,
+                        metadata: {
+                          ...(t.metadata || {}),
+                          opponentSetterId: setterId || null,
+                        },
+                      };
+                    }),
+                  }));
+                  toast.success("Armador rival actualizado");
+                }}
+                className="w-full bg-background border border-input rounded-md px-2 py-2 text-sm"
+              >
+                <option value="">— Sin asignar —</option>
+                {players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    #{p.number} {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="text-sm">
+              <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 1</span>
+              {renderSelect(libero1, (v) => {
+                if (v && v === libero2) setLibero2("");
+                setLibero1(v);
+              }, [], availableForLibero)}
+            </label>
+            <label className="text-sm">
+              <span className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Líbero 2</span>
+              {renderSelect(libero2, (v) => {
+                if (v && v === libero1) setLibero1("");
+                setLibero2(v);
+              }, [], availableForLibero)}
+            </label>
+          </div>
         </div>
       )}
     </section>

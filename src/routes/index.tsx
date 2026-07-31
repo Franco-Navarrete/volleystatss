@@ -18,6 +18,7 @@
  * Implementar validaciones para asegurar que Líbero 1 y Líbero 2 no puedan quedar simultáneamente “en cancha” si el sistema considera que no están habilitados según la formación y los cambios registrados. tampoco me sale la opcion para poder seleccionar los judaores. tengo que encontrar la forma de poder elegir el numero de camiseta de los jugadores que estan en cancha
  * quiero cargar la posicion de los jugadores una vez que este adentro de la cancha y sus numeros de camiseta tambien
  * aca tengo que seleccionar cual es el armador rival y poder cambiar el numero de las camisetas de los jugadores
+ * al principio no puedo seleccionar al jugador que es armador ni poner su numero de camisetas
  * eso tiene que suceder al principio. luego de confirmar se tiene que poder registrar las estadisticas de forma normal
  */
 

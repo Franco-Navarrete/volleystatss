@@ -158,6 +158,8 @@ export interface Team {
   club?: string;
   /** Owner user id (Supabase auth) — coach or admin who owns the team. */
   ownerId?: string;
+  /** Datos tácticos adicionales. */
+  metadata?: Record<string, any>;
 }
 
 
