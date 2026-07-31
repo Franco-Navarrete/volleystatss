@@ -53,7 +53,7 @@ import {
   type PlayerPosition,
 } from "@/lib/volley-store";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
-import { Lock } from "lucide-react";
+import { Lock, Edit3 } from "lucide-react";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
@@ -1709,7 +1709,7 @@ function LiveMatch() {
                 payload.attackerId,
                 { attackZone, attackDirection: payload.attackDirection, isCounter },
               );
-              const defenseSide = oppositeSide(integratedRally.side);
+              const defenseSide = integratedRally.side === "A" ? "B" : "A";
               const defenseOnCourt = defenseSide === "A" ? match.onCourtA : match.onCourtB;
               const defenderZone = attackDirectionToDefenseZone(payload.attackDirection);
               const defenderId = playerIdAtZone(defenseOnCourt, defenderZone);
@@ -1717,7 +1717,7 @@ function LiveMatch() {
               return !!defenderId;
             }
             if (payload.action === "block") {
-              recordPoint(match.id, oppositeSide(integratedRally.side), "block", null);
+              recordPoint(match.id, integratedRally.side === "A" ? "B" : "A", "block", null);
               setIntegratedRally(null);
               return;
             }
