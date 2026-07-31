@@ -795,7 +795,7 @@ function LiveMatch() {
         {needsSetStart && (
           <div className="rounded-lg md:rounded-xl border-2 border-success/60 bg-success/10 px-3 py-2 md:px-5 md:py-3 flex flex-col items-center justify-center gap-2 md:gap-3 shrink-0">
             <p className="text-xs md:text-sm font-semibold text-center">
-              Formación confirmada. Tocá <span className="text-success font-bold">Iniciar Set {match.currentSet}</span> cuando arranque el juego.
+              Formación confirmada. Tocá <span className="text-success font-bold">Iniciar Set {match.currentSet}</span> para comenzar a tomar estadísticas.
             </p>
             <div className="flex items-center justify-center gap-2">
               <span className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground font-bold">Saque:</span>
