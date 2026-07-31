@@ -2233,6 +2233,7 @@ function FormationSide({
               <div 
                 className="absolute inset-0 z-[10] cursor-pointer" 
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   onPlayerClick(side, p.id);
                 }} 
