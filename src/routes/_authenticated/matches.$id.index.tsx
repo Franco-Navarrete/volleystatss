@@ -1981,16 +1981,93 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                       const bpPicked = !!blockPickInfo && pid && blockPickInfo.picks.has(pid);
                       const bpDim = !!blockPickInfo && !bpEligible;
                       return (
-                        <button
+                        <div
                           key={`${ci}-${idx}`}
-                          onClick={() => p && onPlayerClick(col.side, p.id)}
-                          disabled={!p}
-                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""} ${bpEligible ? "z-[30] ring-4 ring-emerald-400 animate-pulse cursor-pointer" : ""} ${bpPicked ? "z-[30] ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
+                          className={`relative rounded-full flex flex-col items-center justify-center text-white font-black shadow-md transition-all active:scale-95 hover:ring-2 sm:hover:ring-4 hover:ring-white/30 aspect-square size-[clamp(2rem,8vw,4.5rem)] md:size-[clamp(3rem,6vw,6rem)] device-tablet:size-[clamp(3.25rem,7vw,6.25rem)] max-w-[86%] max-h-[86%] overflow-hidden group/badge ${isServer ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-primary" : ""} ${pairColor || isLibero ? "border-[2px] [@media(max-width:360px)]:border sm:border-[3px] md:border-4" : ""} ${isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 sm:ring-4 ring-yellow-300 animate-pulse" : ""} ${isReceptionTarget && !isReceiverHighlight ? "ring-2 [@media(max-width:360px)]:ring-1 ring-white/50" : ""} ${activePlayerId && pid === activePlayerId ? "player-active" : ""} ${bpEligible ? "z-[30] ring-4 ring-emerald-400 animate-pulse cursor-pointer" : ""} ${bpPicked ? "z-[30] ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
                           style={isLibero
                             ? { background: "#ffffff", color: col.team.color, borderColor: col.team.color }
                             : { background: col.team.color, borderColor: pairColor ?? undefined }}
                           title={p ? `#${p.number} ${p.name}` : ""}
                         >
+                          <div 
+                            className="absolute inset-0 z-10 cursor-pointer" 
+                            onClick={(e) => {
+                              if (p) {
+                                e.stopPropagation();
+                                onPlayerClick(col.side, p.id);
+                              }
+                            }}
+                          />
+                          <div className="absolute top-0 left-0 z-20">
+                            {p && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button 
+                                    className="bg-background/90 hover:bg-background rounded-full p-0.5 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Edit3 className="size-2 text-foreground" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
+                                  <div className="flex items-center gap-2 border-b border-border/60 pb-1">
+                                    <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
+                                      {p.number}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-xs font-bold truncate">{p.name}</div>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] uppercase text-muted-foreground font-black">Camiseta</Label>
+                                      <div className="flex items-center gap-1">
+                                        <Input
+                                          type="number"
+                                          className="h-7 text-xs px-2"
+                                          defaultValue={p.number}
+                                          onBlur={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (!isNaN(val) && val !== p.number) {
+                                              useVolley.getState().updatePlayer(col.team.id, p.id, { number: val });
+                                              toast.success("Dorsal actualizado");
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] uppercase text-muted-foreground font-black">Posición</Label>
+                                      <select
+                                        className="w-full h-7 rounded-md border border-input bg-background px-1 py-0 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                                        value={p.position ?? "universal"}
+                                        onChange={(e) => {
+                                          useVolley.getState().updatePlayer(col.team.id, p.id, { position: e.target.value as any });
+                                          toast.success("Posición actualizada");
+                                        }}
+                                      >
+                                        {Object.entries(PLAYER_POSITION_LABEL).map(([val, lab]) => (
+                                          <option key={val} value={val}>{lab}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1.5 pt-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-[9px] text-muted-foreground hover:text-foreground mt-0.5"
+                                      onClick={() => onPlayerClick(col.side, p.id)}
+                                    >
+                                      Abrir panel de acciones
+                                    </Button>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
                           <span className="scoreboard-digit leading-none text-sm [@media(max-width:360px)]:text-xs sm:text-xl md:text-3xl device-tablet:text-4xl" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{p?.number ?? "?"}</span>
                           {p && (
                             <span className="max-w-[90%] truncate text-[9px] [@media(max-width:360px)]:text-[7px] sm:text-[13px] md:text-[16px] device-tablet:text-[17px] font-bold leading-tight" style={{ textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000' }}>{p.name}</span>
