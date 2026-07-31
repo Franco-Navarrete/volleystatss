@@ -34,16 +34,24 @@ export const Route = createFileRoute("/_authenticated/leagues")({
 });
 
 function LeaguesPage() {
-  const leagues = useVolley((s) => s.leagues);
+  const { user } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
+  const rawLeagues = useVolley((s) => s.leagues);
   const teams = useVolley((s) => s.teams);
   const matches = useVolley((s) => s.matches);
   const addLeague = useVolley((s) => s.addLeague);
   const removeLeague = useVolley((s) => s.removeLeague);
   const updateTeam = useVolley((s) => s.updateTeam);
   const updateLeague = useVolley((s) => s.updateLeague);
+
+  const leagues = useMemo(() => {
+    if (isAdmin || !user) return rawLeagues;
+    const myTeams = teams.filter((t) => t.ownerId === user.id);
+    const myLeagueIds = new Set(myTeams.map((t) => t.leagueId).filter(Boolean));
+    return rawLeagues.filter((l) => myLeagueIds.has(l.id));
+  }, [rawLeagues, teams, isAdmin, user]);
   const mutations = useTeamMutations();
-  const isAdmin = useIsAdmin().isAdmin;
-  const currentUserId = useAuthUser().user?.id;
+  const currentUserId = user?.id;
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");

@@ -52,6 +52,8 @@ import {
   PLAYER_POSITION_LABEL,
   type PlayerPosition,
 } from "@/lib/volley-store";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+import { Lock } from "lucide-react";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
 import { AttackHeatmap } from "@/components/AttackHeatmap";
@@ -389,6 +391,18 @@ function LiveMatch() {
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teams, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride;
+  const { user } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
+
+  // Restriction for Coach franco@gmail.com: only stats for their team
+  const isMyMatch = useMemo(() => {
+    if (isAdmin) return true;
+    if (!user) return false;
+    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
+    return myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId);
+  }, [isAdmin, user, match.teamAId, match.teamBId]);
+
+  const canScout = isAdmin || (isCoach && isMyMatch);
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
   const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
@@ -598,7 +612,7 @@ function LiveMatch() {
 
   if (analysisMode && !isMobile) {
     return (
-      <CompactShell>
+      <CompactShell isReadOnly={!canScout}>
         <WorkspaceLayout
           video={
             <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
@@ -626,7 +640,7 @@ function LiveMatch() {
   }
 
   return (
-    <CompactShell>
+    <CompactShell isReadOnly={!canScout}>
       <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />
@@ -656,6 +670,7 @@ function LiveMatch() {
           toUsedB={toUsedB}
           actionsDisabled={actionsDisabled}
           rallyCtx={rallyCtx}
+          isReadOnly={!canScout}
           canUndo={match.status !== "scheduled" && match.events.length > 0}
           onUndo={() => undo(match.id)}
           onOpenSetting={() => setShowSettingDialog(true)}
@@ -700,6 +715,19 @@ function LiveMatch() {
         />
       ) : (
       <div className="relative flex flex-col gap-1.5 md:gap-3 device-tablet:gap-1.5 h-full min-h-0 px-2 md:px-6 device-tablet:px-2 py-2 md:py-4 device-tablet:py-1 mx-auto w-full max-w-[1400px] device-tablet:max-w-none select-none">
+        {!canScout && (
+          <div className="absolute inset-0 z-[9999] flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
+            <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl text-center max-w-xs animate-in fade-in zoom-in duration-300 pointer-events-auto">
+              <div className="size-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+                <Lock className="size-6 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Vista de lectura</h3>
+              <p className="text-sm text-muted-foreground">
+                Solo podés cargar estadísticas en los partidos de tu propio club.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Scoreboard header */}
         <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 sm:gap-3 md:gap-6 device-tablet:gap-1 rounded-lg md:rounded-xl bg-card border border-border/60 px-2 sm:px-4 md:px-8 device-tablet:px-2 py-0.5 md:py-4 device-tablet:py-0.5 shrink-0">
@@ -1681,7 +1709,7 @@ function LiveMatch() {
                 payload.attackerId,
                 { attackZone, attackDirection: payload.attackDirection, isCounter },
               );
-              const defenseSide = oppositeSide(integratedRally.side);
+              const defenseSide = integratedRally.side === "A" ? "B" : "A";
               const defenseOnCourt = defenseSide === "A" ? match.onCourtA : match.onCourtB;
               const defenderZone = attackDirectionToDefenseZone(payload.attackDirection);
               const defenderId = playerIdAtZone(defenseOnCourt, defenderZone);
@@ -1689,7 +1717,7 @@ function LiveMatch() {
               return !!defenderId;
             }
             if (payload.action === "block") {
-              recordPoint(match.id, oppositeSide(integratedRally.side), "block", null);
+              recordPoint(match.id, integratedRally.side === "A" ? "B" : "A", "block", null);
               setIntegratedRally(null);
               return;
             }
@@ -1712,7 +1740,7 @@ function LiveMatch() {
   );
 }
 
-function CompactShell({ children }: { children: React.ReactNode }) {
+function CompactShell({ children, isReadOnly }: { children: React.ReactNode; isReadOnly?: boolean }) {
   const navigate = useNavigate();
   const handleBack = () => {
     // Prefer real browser history so we return to whichever page (perfil de jugador,
@@ -1732,13 +1760,21 @@ function CompactShell({ children }: { children: React.ReactNode }) {
           </div>
           <span className="font-bold text-xs md:text-base tracking-tight">RALLY</span>
         </Link>
-        <button
-          type="button"
-          onClick={handleBack}
-          className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold min-h-10 flex items-center bg-transparent border-0 cursor-pointer"
-        >
-          ← Volver
-        </button>
+        <div className="flex items-center gap-2">
+          {isReadOnly && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] md:text-xs font-bold text-amber-500">
+              <Lock className="size-3" />
+              LECTURA
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold min-h-10 flex items-center bg-transparent border-0 cursor-pointer"
+          >
+            ← Volver
+          </button>
+        </div>
       </header>
       <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
     </div>

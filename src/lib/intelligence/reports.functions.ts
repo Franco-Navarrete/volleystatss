@@ -17,6 +17,7 @@ export interface IntelligenceReport {
   summaryMd: string;
   model?: string;
   createdAt?: number;
+  userId?: string;
 }
 
 // Validación laxa del análisis (solo verificamos que exista y sea versión 1).
@@ -119,6 +120,7 @@ export const generateIntelligenceReport = createServerFn({ method: "POST" })
       summaryMd: summary,
       model: MODEL,
       createdAt: new Date(row.created_at).getTime(),
+      userId: context.userId,
     };
   });
 
@@ -127,7 +129,7 @@ export const listIntelligenceReports = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<IntelligenceReport[]> => {
     const { data, error } = await context.supabase
       .from("intelligence_reports")
-      .select("id, scope, scope_ref, title, insights, analysis, summary_md, model, created_at")
+      .select("id, scope, scope_ref, title, insights, analysis, summary_md, model, created_at, user_id")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
@@ -135,7 +137,7 @@ export const listIntelligenceReports = createServerFn({ method: "GET" })
       const rowAny = r as unknown as {
         id: string; scope: string; scope_ref: string | null; title: string;
         insights: unknown; analysis: unknown; summary_md: string | null;
-        model: string | null; created_at: string;
+        model: string | null; created_at: string; user_id: string;
       };
       return {
         id: rowAny.id,
@@ -147,6 +149,7 @@ export const listIntelligenceReports = createServerFn({ method: "GET" })
         summaryMd: rowAny.summary_md ?? "",
         model: rowAny.model ?? undefined,
         createdAt: new Date(rowAny.created_at).getTime(),
+        userId: rowAny.user_id,
       };
     });
   });
