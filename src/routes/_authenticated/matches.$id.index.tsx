@@ -2197,7 +2197,7 @@ function FormationSide({
                         onBlur={(e) => {
                           const val = parseInt(e.target.value);
                           if (!isNaN(val) && val !== p.number) {
-                            updatePlayer(team.id, p.id, { number: val });
+                            useVolley.getState().updatePlayer(team.id, p.id, { number: val });
                             toast.success("Dorsal actualizado");
                           }
                         }}
@@ -2210,7 +2210,7 @@ function FormationSide({
                       className="w-full h-7 rounded-md border border-input bg-background px-1 py-0 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                       value={p.position ?? "universal"}
                       onChange={(e) => {
-                        updatePlayer(team.id, p.id, { position: e.target.value as any });
+                        useVolley.getState().updatePlayer(team.id, p.id, { position: e.target.value as any });
                         toast.success("Posición actualizada");
                       }}
                     >
