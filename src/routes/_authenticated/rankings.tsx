@@ -16,6 +16,7 @@ import {
 import { computeHistoricalStats, RANKING_METRICS, type RankingMetric } from "@/lib/historical-stats";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy } from "lucide-react";
+import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/rankings")({
   head: () => ({ meta: [{ title: "Rankings · RALLY" }] }),
@@ -27,10 +28,29 @@ function RankingsPage() {
   const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
 
-  const allAggregates = useMemo(
-    () => computeHistoricalStats(matches, teams),
-    [matches, teams],
-  );
+  const { user } = useAuthUser();
+  const { isAdmin } = useIsAdmin();
+
+  const allAggregates = useMemo(() => {
+    let filteredMatches = matches;
+    let filteredTeams = teams;
+
+    // Coach restriction: only same league as their club(s) if not admin
+    if (!isAdmin && user) {
+      const myTeams = teams.filter((team) => team.ownerId === user.id);
+      const myLeagueIds = new Set(myTeams.map((team) => team.leagueId).filter(Boolean));
+      if (myLeagueIds.size > 0) {
+        filteredTeams = teams.filter((t) => !t.leagueId || myLeagueIds.has(t.leagueId));
+        filteredMatches = matches.filter((m) => {
+          const leagueA = teams.find(t => t.id === m.teamAId)?.leagueId;
+          const leagueB = teams.find(t => t.id === m.teamBId)?.leagueId;
+          return (leagueA && myLeagueIds.has(leagueA)) || (leagueB && myLeagueIds.has(leagueB));
+        });
+      }
+    }
+
+    return computeHistoricalStats(filteredMatches, filteredTeams);
+  }, [matches, teams, isAdmin, user]);
 
   const { globalGender, setGlobalGender } = useGenderPreference();
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
