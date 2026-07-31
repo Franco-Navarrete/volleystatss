@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Volleyball } from "lucide-react";
 import {
   useVolley,
@@ -63,6 +63,8 @@ import { useGenderPreference } from "@/hooks/use-gender-preference";
 import { getTerminology } from "@/lib/terminology";
 import { WorkspaceLayout } from "@/components/video/analysis/WorkspaceLayout";
 import { useWorkspaceStore } from "@/lib/video/workspace-store";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 
 
@@ -105,6 +107,7 @@ import {
   Undo2,
   Users,
   X,
+  UserCheck,
 } from "lucide-react";
 import { PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 
@@ -197,6 +200,46 @@ function LiveMatch() {
   const overrideScore = useVolley((s) => s.overrideScore);
   const undo = useVolley((s) => s.undoLastEvent);
   const finishMatch = useVolley((s) => s.finishMatch);
+  const updatePlayer = useVolley((s) => s.updatePlayer);
+  const setLiberoA1 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setLiberoA2 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setLiberoB1 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setLiberoB2 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setOpponentSetter = useCallback((playerId: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map((m) => {
+        if (m.id !== match.id) return m;
+        return {
+          ...m,
+          metadata: {
+            ...(m.metadata || {}),
+            opponentSetterId: playerId
+          }
+        };
+      })
+    }));
+  }, [match?.id]);
 
   const teamA = useMemo(() => teams.find((t) => t.id === match?.teamAId), [teams, match]);
   const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);
@@ -2100,24 +2143,165 @@ function FormationSide({
         const bpDim = !!blockPickInfo && !bpEligible;
         const dx = projectX(slot.x, slot.y);
         const dy = projectY(slot.x, slot.y);
+        const isOpponentSetter = (match as Match).metadata?.opponentSetterId === p.id;
+        
         return (
           <div
             key={slot.role}
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-[18%] sm:h-[20%] md:h-[22%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
-            <CourtPlayerBadge
-              player={p}
-              team={team}
-              match={match}
-              isServer={isServer}
-              isLibero={isLibero}
-              isReceiverHighlight={isReceiverHighlight}
-              active={!!activePlayerId && activePlayerId === p.id}
-              dimmed={!onCourtActive}
-              onClick={() => onPlayerClick(side, p.id)}
-              className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full cursor-pointer" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
-            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="w-full h-full relative cursor-pointer group/badge">
+                  <CourtPlayerBadge
+                    player={p}
+                    team={team}
+                    match={match}
+                    isServer={isServer}
+                    isLibero={isLibero}
+                    isReceiverHighlight={isReceiverHighlight}
+                    active={!!activePlayerId && activePlayerId === p.id}
+                    dimmed={!onCourtActive}
+                    className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
+                  />
+                  {isOpponentSetter && (
+                    <div className="absolute -top-1 -right-1 z-20 bg-primary rounded-full p-0.5 border border-white shadow-sm">
+                      <Target className="size-2.5 text-white" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-full bg-primary/0 group-hover/badge:bg-primary/5 transition-colors" />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3 flex flex-col gap-3" side="top" align="center">
+                <div className="flex items-center gap-2 border-b border-border/60 pb-2">
+                  <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white font-black text-xs">
+                    {p.number}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold truncate">{p.name}</div>
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                      {PLAYER_POSITION_LABEL[p.position ?? "universal"]}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-muted-foreground font-black">Camiseta</Label>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        className="h-7 text-xs px-2"
+                        defaultValue={p.number}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val !== p.number) {
+                            useVolley.getState().updatePlayer(team.id, p.id, { number: val });
+                            toast.success("Dorsal actualizado");
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-muted-foreground font-black">Posición</Label>
+                    <select
+                      className="w-full h-7 rounded-md border border-input bg-background px-1 py-0 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                      value={p.position ?? "universal"}
+                      onChange={(e) => {
+                        useVolley.getState().updatePlayer(team.id, p.id, { position: e.target.value as any });
+                        toast.success("Posición actualizada");
+                      }}
+                    >
+                      {Object.entries(PLAYER_POSITION_LABEL).map(([val, lab]) => (
+                        <option key={val} value={val}>{lab}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <p className="text-[10px] uppercase text-muted-foreground font-black">Acciones rápidas</p>
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      variant={isOpponentSetter ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-[10px] justify-start gap-2"
+                      onClick={() => {
+                        const newSetterId = isOpponentSetter ? null : p.id;
+                        useVolley.setState((state) => ({
+                          matches: state.matches.map((m) => {
+                            if (m.id !== match.id) return m;
+                            return {
+                              ...m,
+                              metadata: {
+                                ...(m.metadata || {}),
+                                opponentSetterId: newSetterId
+                              }
+                            };
+                          })
+                        }));
+                        toast.success(isOpponentSetter ? "Armador removido" : "Armador rival asignado");
+                      }}
+                    >
+                      <Target className="size-3" />
+                      {isOpponentSetter ? "Quitar Armador Rival" : "Es Armador Rival"}
+                    </Button>
+
+                    <div className="grid grid-cols-2 gap-1">
+                      <Button
+                        variant={(side === "A" ? match.liberoA1Id : match.liberoB1Id) === p.id ? "default" : "outline"}
+                        size="sm"
+                        className="h-7 text-[10px] gap-1 px-1"
+                        onClick={() => {
+                          const isCurrent = (side === "A" ? match.liberoA1Id : match.liberoB1Id) === p.id;
+                          useVolley.setState((state) => ({
+                            matches: state.matches.map((m) => {
+                              if (m.id !== match.id) return m;
+                              if (side === "A") return { ...m, liberoA1Id: isCurrent ? null : p.id };
+                              return { ...m, liberoB1Id: isCurrent ? null : p.id };
+                            })
+                          }));
+                          toast.success(isCurrent ? "Líbero 1 removido" : "Designado Líbero 1");
+                        }}
+                      >
+                        <UserCheck className="size-3 shrink-0" />
+                        Líbero 1
+                      </Button>
+                      <Button
+                        variant={(side === "A" ? match.liberoA2Id : match.liberoB2Id) === p.id ? "default" : "outline"}
+                        size="sm"
+                        className="h-7 text-[10px] gap-1 px-1"
+                        onClick={() => {
+                          const isCurrent = (side === "A" ? match.liberoA2Id : match.liberoB2Id) === p.id;
+                          useVolley.setState((state) => ({
+                            matches: state.matches.map((m) => {
+                              if (m.id !== match.id) return m;
+                              if (side === "A") return { ...m, liberoA2Id: isCurrent ? null : p.id };
+                              return { ...m, liberoB2Id: isCurrent ? null : p.id };
+                            })
+                          }));
+                          toast.success(isCurrent ? "Líbero 2 removido" : "Designado Líbero 2");
+                        }}
+                      >
+                        <UserCheck className="size-3 shrink-0" />
+                        Líbero 2
+                      </Button>
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[10px] text-muted-foreground hover:text-foreground mt-1"
+                      onClick={() => onPlayerClick(side, p.id)}
+                    >
+                      Abrir panel de acciones
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         );
       })}

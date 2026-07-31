@@ -486,6 +486,8 @@ export interface Match {
   scorekeeperName?: string;
   statsAssistantName?: string;
   venue?: string;
+  /** Datos tácticos adicionales. */
+  metadata?: Record<string, any>;
 }
 
 /** Semilla de categorías sugeridas para partidos (editable en Ajustes). */
