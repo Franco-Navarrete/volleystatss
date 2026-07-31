@@ -431,7 +431,7 @@ export function CourtPlayerBadge({
               />
             ) : (
               <span
-                className="scoreboard-digit font-black leading-none text-[clamp(0.85rem,3vw,1.7rem)]"
+                className="scoreboard-digit font-black leading-none text-[clamp(1rem,4vw,2.2rem)]"
                 style={{
                   color: isLibero ? team.color : "#ffffff",
                   textShadow: isLibero
@@ -445,7 +445,7 @@ export function CourtPlayerBadge({
           </span>
 
           <span
-            className="absolute -bottom-1 -right-1 min-w-[42%] h-[42%] px-1 rounded-full flex items-center justify-center scoreboard-digit font-black text-[clamp(0.6rem,1.8vw,1rem)] leading-none tabular-nums shadow-md"
+            className="absolute -bottom-1 -right-1 min-w-[45%] h-[45%] px-1 rounded-full flex items-center justify-center scoreboard-digit font-black text-[clamp(0.7rem,2.2vw,1.2rem)] leading-none tabular-nums shadow-md"
             style={{
               background: "#111827",
               color: "#ffffff",
