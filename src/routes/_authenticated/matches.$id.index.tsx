@@ -2173,13 +2173,13 @@ function FormationSide({
                   <div className="absolute inset-0 rounded-full bg-primary/0 group-hover/badge:bg-primary/5 transition-colors" />
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-3 flex flex-col gap-3" side="top" align="center">
+              <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
                 <div className="flex items-center gap-2 border-b border-border/60 pb-2">
-                  <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white font-black text-xs">
+                  <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
                     {p.number}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">{p.name}</div>
+                    <div className="text-xs font-bold truncate">{p.name}</div>
                     <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
                       {PLAYER_POSITION_LABEL[p.position ?? "universal"]}
                     </div>
@@ -2222,7 +2222,6 @@ function FormationSide({
                 </div>
 
                 <div className="space-y-1.5 pt-1">
-                  <p className="text-[10px] uppercase text-muted-foreground font-black">Acciones rápidas</p>
                   <div className="flex flex-col gap-1">
                     <Button
                       variant={isOpponentSetter ? "default" : "outline"}
