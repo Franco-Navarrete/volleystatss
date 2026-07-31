@@ -51,8 +51,7 @@ function LeaguesPage() {
     return rawLeagues.filter((l) => myLeagueIds.has(l.id));
   }, [rawLeagues, teams, isAdmin, user]);
   const mutations = useTeamMutations();
-  const isAdmin = useIsAdmin().isAdmin;
-  const currentUserId = useAuthUser().user?.id;
+  const currentUserId = user?.id;
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
