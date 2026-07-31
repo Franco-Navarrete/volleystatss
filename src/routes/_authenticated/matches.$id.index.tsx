@@ -201,15 +201,35 @@ function LiveMatch() {
   const undo = useVolley((s) => s.undoLastEvent);
   const finishMatch = useVolley((s) => s.finishMatch);
   const updatePlayer = useVolley((s) => s.updatePlayer);
-  const setLiberoA1 = useVolley((s) => (id: string, lid: string | null) => s.matches = s.matches.map(m => m.id === id ? {...m, liberoA1Id: lid} : m));
-  const setLiberoA2 = useVolley((s) => (id: string, lid: string | null) => s.matches = s.matches.map(m => m.id === id ? {...m, liberoA2Id: lid} : m));
-  const setLiberoB1 = useVolley((s) => (id: string, lid: string | null) => s.matches = s.matches.map(m => m.id === id ? {...m, liberoB1Id: lid} : m));
-  const setLiberoB2 = useVolley((s) => (id: string, lid: string | null) => s.matches = s.matches.map(m => m.id === id ? {...m, liberoB2Id: lid} : m));
-  const setOpponentSetter = useVolley((s) => (matchId: string, playerId: string | null) => {
-    // We'll use a custom property in the match metadata for this
-    set((state) => ({
-      matches: state.matches.map((m) => {
-        if (m.id !== matchId) return m;
+  const setLiberoA1 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setLiberoA2 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setLiberoB1 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setLiberoB2 = useCallback((lid: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
+    }));
+  }, [match?.id]);
+  const setOpponentSetter = useCallback((playerId: string | null) => {
+    if (!match) return;
+    useVolley.setState((s) => ({
+      matches: s.matches.map((m) => {
+        if (m.id !== match.id) return m;
         return {
           ...m,
           metadata: {
@@ -219,7 +239,7 @@ function LiveMatch() {
         };
       })
     }));
-  });
+  }, [match?.id]);
 
   const teamA = useMemo(() => teams.find((t) => t.id === match?.teamAId), [teams, match]);
   const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);
