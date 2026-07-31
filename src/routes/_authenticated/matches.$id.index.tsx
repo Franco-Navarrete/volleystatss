@@ -1819,13 +1819,22 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 }
 
 
-function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId }: {
+function CourtView({ 
+  match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
+}: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   receivingSide: "A" | "B"; needsReception: boolean; receiverIds: Set<string>;
   formationByTeam?: Partial<Record<"A" | "B", "reception" | "attack">>;
   activePlayerId?: string | null;
+  updatePlayer: (teamId: string, playerId: string, updates: Partial<Player>) => void;
+  setLiberoA1: (lid: string | null) => void;
+  setLiberoA2: (lid: string | null) => void;
+  setLiberoB1: (lid: string | null) => void;
+  setLiberoB2: (lid: string | null) => void;
+  setOpponentSetter: (playerId: string | null) => void;
 }) {
   const blockPick = useCoachRally((s) => s.blockPick);
   const blockPickInfo = blockPick
