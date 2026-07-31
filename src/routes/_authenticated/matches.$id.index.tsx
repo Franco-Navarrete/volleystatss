@@ -1993,6 +1993,7 @@ function CourtView({ match, teamA, teamB, leftSide, serverPlayerId, serverSide, 
                             className="absolute inset-0 z-10 cursor-pointer" 
                             onClick={(e) => {
                               if (p) {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 onPlayerClick(col.side, p.id);
                               }
