@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Volleyball } from "lucide-react";
+import { Volleyball, Edit3, Target, UserCheck, X } from "lucide-react";
 import {
   useVolley,
   setsWon,
@@ -20,9 +20,11 @@ import {
   type SettingQuality,
   type Team,
   type Match,
+  type Player,
   type AttackZone,
   type AttackDirection,
   ATTACK_ZONE_LABEL,
+  PLAYER_POSITION_LABEL,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
@@ -1821,7 +1823,7 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 
 function CourtView({ 
   match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
-  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPickInfo
 }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
@@ -1835,6 +1837,7 @@ function CourtView({
   setLiberoB1: (lid: string | null) => void;
   setLiberoB2: (lid: string | null) => void;
   setOpponentSetter: (playerId: string | null) => void;
+  blockPickInfo?: { blockingSide: "A" | "B"; eligible: Set<string>; picks: Set<string> } | null;
 }) {
   const blockPick = useCoachRally((s) => s.blockPick);
   const blockPickInfo = blockPick
@@ -1942,6 +1945,12 @@ function CourtView({
                 onPlayerClick={onPlayerClick}
                 activePlayerId={activePlayerId ?? null}
                 blockPickInfo={blockPickInfo}
+                updatePlayer={updatePlayer}
+                setLiberoA1={setLiberoA1}
+                setLiberoA2={setLiberoA2}
+                setLiberoB1={setLiberoB1}
+                setLiberoB2={setLiberoB2}
+                setOpponentSetter={setOpponentSetter}
               />
             );
           }
@@ -2117,6 +2126,7 @@ function CourtView({
 
 function FormationSide({
   side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId, blockPickInfo,
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
 }: {
   side: "A" | "B"; team: Team; onCourt: string[];
   formation: ReturnType<typeof useFormation>;
@@ -2126,6 +2136,12 @@ function FormationSide({
   onPlayerClick: (side: "A" | "B", playerId: string) => void;
   activePlayerId?: string | null;
   blockPickInfo?: { blockingSide: "A" | "B"; eligible: Set<string>; picks: Set<string> } | null;
+  updatePlayer: (teamId: string, playerId: string, updates: Partial<Player>) => void;
+  setLiberoA1: (lid: string | null) => void;
+  setLiberoA2: (lid: string | null) => void;
+  setLiberoB1: (lid: string | null) => void;
+  setLiberoB2: (lid: string | null) => void;
+  setOpponentSetter: (playerId: string | null) => void;
 }) {
   // Mapeo del slot (formation coords) → coords absolutas dentro de la mitad de cancha.
   //   formation.y: 0 = en la red, 100 = línea final
