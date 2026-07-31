@@ -689,6 +689,12 @@ function LiveMatch() {
               receiverIds={receiverIds}
               formationByTeam={formationByTeam}
               activePlayerId={pendingPlayer?.playerId ?? null}
+              updatePlayer={updatePlayer}
+              setLiberoA1={setLiberoA1}
+              setLiberoA2={setLiberoA2}
+              setLiberoB1={setLiberoB1}
+              setLiberoB2={setLiberoB2}
+              setOpponentSetter={setOpponentSetter}
             />
           }
         />
@@ -1820,7 +1826,7 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 
 function CourtView({ 
   match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
-  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPickInfo
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
 }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
@@ -1834,7 +1840,6 @@ function CourtView({
   setLiberoB1: (lid: string | null) => void;
   setLiberoB2: (lid: string | null) => void;
   setOpponentSetter: (playerId: string | null) => void;
-  blockPickInfo?: { blockingSide: "A" | "B"; eligible: Set<string>; picks: Set<string> } | null;
 }) {
   const blockPick = useCoachRally((s) => s.blockPick);
   const blockPickInfo = blockPick
