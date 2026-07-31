@@ -1760,13 +1760,21 @@ function CompactShell({ children }: { children: React.ReactNode }) {
           </div>
           <span className="font-bold text-xs md:text-base tracking-tight">RALLY</span>
         </Link>
-        <button
-          type="button"
-          onClick={handleBack}
-          className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold min-h-10 flex items-center bg-transparent border-0 cursor-pointer"
-        >
-          ← Volver
-        </button>
+        <div className="flex items-center gap-2">
+          {typeof canScout !== 'undefined' && !canScout && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] md:text-xs font-bold text-amber-500">
+              <Lock className="size-3" />
+              LECTURA
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-[10px] md:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold min-h-10 flex items-center bg-transparent border-0 cursor-pointer"
+          >
+            ← Volver
+          </button>
+        </div>
       </header>
       <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
     </div>
