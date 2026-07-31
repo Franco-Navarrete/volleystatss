@@ -612,7 +612,7 @@ function LiveMatch() {
 
   if (analysisMode && !isMobile) {
     return (
-      <CompactShell>
+      <CompactShell isReadOnly={!canScout}>
         <WorkspaceLayout
           video={
             <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
@@ -640,7 +640,7 @@ function LiveMatch() {
   }
 
   return (
-    <CompactShell>
+    <CompactShell isReadOnly={!canScout}>
       <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />
@@ -1740,7 +1740,7 @@ function LiveMatch() {
   );
 }
 
-function CompactShell({ children }: { children: React.ReactNode }) {
+function CompactShell({ children, isReadOnly }: { children: React.ReactNode; isReadOnly?: boolean }) {
   const navigate = useNavigate();
   const handleBack = () => {
     // Prefer real browser history so we return to whichever page (perfil de jugador,
@@ -1761,7 +1761,7 @@ function CompactShell({ children }: { children: React.ReactNode }) {
           <span className="font-bold text-xs md:text-base tracking-tight">RALLY</span>
         </Link>
         <div className="flex items-center gap-2">
-          {typeof canScout !== 'undefined' && !canScout && (
+          {isReadOnly && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] md:text-xs font-bold text-amber-500">
               <Lock className="size-3" />
               LECTURA
