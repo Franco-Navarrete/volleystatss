@@ -1,6 +1,31 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Volleyball, Edit3, Target, UserCheck, X } from "lucide-react";
+import {
+  Volleyball,
+  Edit3,
+  Target,
+  UserCheck,
+  X,
+  ArrowLeftRight,
+  ChartBarBig,
+  Check,
+  Crosshair,
+  Film,
+  Flag,
+  Hourglass,
+  Keyboard,
+  Minus,
+  MoreVertical,
+  Play,
+  Plus,
+  RotateCcw,
+  RotateCw,
+  Search,
+  Settings2,
+  Shirt,
+  Undo2,
+  Users,
+} from "lucide-react";
 import {
   useVolley,
   setsWon,
@@ -25,6 +50,7 @@ import {
   type AttackDirection,
   ATTACK_ZONE_LABEL,
   PLAYER_POSITION_LABEL,
+  type PlayerPosition,
 } from "@/lib/volley-store";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
@@ -67,9 +93,6 @@ import { WorkspaceLayout } from "@/components/video/analysis/WorkspaceLayout";
 import { useWorkspaceStore } from "@/lib/video/workspace-store";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-
-
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -86,32 +109,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  ArrowLeftRight,
-  ChartBarBig,
-  Check,
-  Crosshair,
-  Edit3,
-  Film,
-  Flag,
-  Hourglass,
-  Keyboard,
-  Minus,
-  MoreVertical,
-  Play,
-  Plus,
-  RotateCcw,
-  RotateCw,
-  Search,
-  Settings2,
-  Shirt,
-  Target,
-  Undo2,
-  Users,
-  X,
-  UserCheck,
-} from "lucide-react";
-import { PLAYER_POSITION_LABEL, type PlayerPosition } from "@/lib/volley-store";
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
