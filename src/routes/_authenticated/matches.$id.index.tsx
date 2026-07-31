@@ -2057,7 +2057,7 @@ function CourtView({
                                           onBlur={(e) => {
                                             const val = parseInt(e.target.value);
                                             if (!isNaN(val) && val !== p.number) {
-                                              useVolley.getState().updatePlayer(col.team.id, p.id, { number: val });
+                                              updatePlayer(col.team.id, p.id, { number: val });
                                               toast.success("Dorsal actualizado");
                                             }
                                           }}
@@ -2070,7 +2070,7 @@ function CourtView({
                                         className="w-full h-7 rounded-md border border-input bg-background px-1 py-0 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                                         value={p.position ?? "universal"}
                                         onChange={(e) => {
-                                          useVolley.getState().updatePlayer(col.team.id, p.id, { position: e.target.value as any });
+                                          updatePlayer(col.team.id, p.id, { position: e.target.value as any });
                                           toast.success("Posición actualizada");
                                         }}
                                       >
@@ -2318,7 +2318,7 @@ function FormationSide({
                         onBlur={(e) => {
                           const val = parseInt(e.target.value);
                           if (!isNaN(val) && val !== p.number) {
-                            useVolley.getState().updatePlayer(team.id, p.id, { number: val });
+                            updatePlayer(team.id, p.id, { number: val });
                             toast.success("Dorsal actualizado");
                           }
                         }}
@@ -2331,7 +2331,7 @@ function FormationSide({
                       className="w-full h-7 rounded-md border border-input bg-background px-1 py-0 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                       value={p.position ?? "universal"}
                       onChange={(e) => {
-                        useVolley.getState().updatePlayer(team.id, p.id, { position: e.target.value as any });
+                        updatePlayer(team.id, p.id, { position: e.target.value as any });
                         toast.success("Posición actualizada");
                       }}
                     >
@@ -2350,18 +2350,7 @@ function FormationSide({
                       className="h-7 text-[10px] justify-start gap-2"
                       onClick={() => {
                         const newSetterId = isOpponentSetter ? null : p.id;
-                        useVolley.setState((state) => ({
-                          matches: state.matches.map((m) => {
-                            if (m.id !== match.id) return m;
-                            return {
-                              ...m,
-                              metadata: {
-                                ...(m.metadata || {}),
-                                opponentSetterId: newSetterId
-                              }
-                            };
-                          })
-                        }));
+                        setOpponentSetter(newSetterId);
                         toast.success(isOpponentSetter ? "Armador removido" : "Armador rival asignado");
                       }}
                     >
@@ -2376,13 +2365,8 @@ function FormationSide({
                         className="h-7 text-[10px] gap-1 px-1"
                         onClick={() => {
                           const isCurrent = (side === "A" ? match.liberoA1Id : match.liberoB1Id) === p.id;
-                          useVolley.setState((state) => ({
-                            matches: state.matches.map((m) => {
-                              if (m.id !== match.id) return m;
-                              if (side === "A") return { ...m, liberoA1Id: isCurrent ? null : p.id };
-                              return { ...m, liberoB1Id: isCurrent ? null : p.id };
-                            })
-                          }));
+                          if (side === "A") setLiberoA1(isCurrent ? null : p.id);
+                          else setLiberoB1(isCurrent ? null : p.id);
                           toast.success(isCurrent ? "Líbero 1 removido" : "Designado Líbero 1");
                         }}
                       >
@@ -2395,13 +2379,8 @@ function FormationSide({
                         className="h-7 text-[10px] gap-1 px-1"
                         onClick={() => {
                           const isCurrent = (side === "A" ? match.liberoA2Id : match.liberoB2Id) === p.id;
-                          useVolley.setState((state) => ({
-                            matches: state.matches.map((m) => {
-                              if (m.id !== match.id) return m;
-                              if (side === "A") return { ...m, liberoA2Id: isCurrent ? null : p.id };
-                              return { ...m, liberoB2Id: isCurrent ? null : p.id };
-                            })
-                          }));
+                          if (side === "A") setLiberoA2(isCurrent ? null : p.id);
+                          else setLiberoB2(isCurrent ? null : p.id);
                           toast.success(isCurrent ? "Líbero 2 removido" : "Designado Líbero 2");
                         }}
                       >
