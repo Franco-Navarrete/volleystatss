@@ -104,16 +104,16 @@ export function CourtFormation({ team, formation, compact, showSetterTarget = tr
               style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
             >
               <div
-                className="w-11 h-11 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-black text-base shadow-lg border-2 border-white"
+                className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg border-2 border-white"
                 style={{ background: color }}
               >
                 {player ? `#${player.number}` : "?"}
               </div>
-              <div className="mt-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-bold uppercase tracking-wide whitespace-nowrap">
+              <div className="mt-1 px-1 py-0.5 rounded bg-black/60 text-white text-[8px] font-bold uppercase tracking-wide whitespace-nowrap">
                 {ROLE_LABEL[slot.role]}
               </div>
               {player && (
-                <div className="text-[10px] font-semibold text-white drop-shadow-md max-w-[80px] truncate text-center">
+                <div className="text-[9px] font-semibold text-white drop-shadow-md max-w-[70px] truncate text-center">
                   {player.name}
                 </div>
               )}
