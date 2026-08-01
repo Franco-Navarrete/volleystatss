@@ -118,9 +118,10 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "middle_front", x: 50, y: 12 },
       // Punta delantera en Z4 pegada a la red.
       { role: "outside_front", x: 12, y: 12 },
-      // Receptores (líbero centro-atrás, punta zaguera y P1) en W.
+      // Receptores (líbero centro-atrás, punta zaguera y opuesta) en W.
       { role: "outside_back", x: 25, y: 65 },
       { role: "libero", x: 78, y: 65 },
+      { role: "opposite", x: 50, y: 75 },
     ],
   },
 
@@ -142,6 +143,7 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       // Receptores en W:
       { role: "outside_back", x: 20, y: 60 },
       { role: "libero", x: 55, y: 72 },
+      { role: "opposite", x: 80, y: 60 },
     ],
   },
 };
