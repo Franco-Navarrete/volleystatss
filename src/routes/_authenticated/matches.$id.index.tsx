@@ -2928,7 +2928,7 @@ function StepChip({ n, label, active, done, onClick, color, disabled }: {
   );
 }
 
-function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }: {
+function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear, onSetArmador }: {
   label: string;
   sub?: string;
   role?: string | null;
@@ -2936,6 +2936,7 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }
   player: Team["players"][number] | undefined;
   onOpen: () => void;
   onClear: () => void;
+  onSetArmador: () => void;
 }) {
   const roleColor = role
     ? (role === "A"
