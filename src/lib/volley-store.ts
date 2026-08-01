@@ -689,20 +689,20 @@ const BACK_ROW_REPLACE_PRIORITY = [0, 5, 4] as const;
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
   if (arr.length < 6) return [...arr];
-  // FIVB rotation: P1 -> P6 -> P5 -> P4 -> P3 -> P2 -> P1
-  // Internal array onCourt is [P1, P2, P3, P4, P5, P6]
-  // Shift positions clockwise:
-  // new[5] (P6) = old[0] (P1)
-  // new[4] (P5) = old[5] (P6)
-  // ...
-  // new[0] (P1) = old[1] (P2)
+  // FIVB clockwise rotation:
+  // new P1 (idx 0) gets old P2 (idx 1)
+  // new P2 (idx 1) gets old P3 (idx 2)
+  // new P3 (idx 2) gets old P4 (idx 3)
+  // new P4 (idx 3) gets old P5 (idx 4)
+  // new P5 (idx 4) gets old P6 (idx 5)
+  // new P6 (idx 5) gets old P1 (idx 0)
   return [
-    arr[1], // new P1 (idx 0) gets old P2 (idx 1)
-    arr[2], // new P2 (idx 1) gets old P3 (idx 2)
-    arr[3], // new P3 (idx 2) gets old P4 (idx 3)
-    arr[4], // new P4 (idx 3) gets old P5 (idx 4)
-    arr[5], // new P5 (idx 4) gets old P6 (idx 5)
-    arr[0], // new P6 (idx 5) gets old P1 (idx 0)
+    arr[1], // new P1 (idx 0)
+    arr[2], // new P2 (idx 1)
+    arr[3], // new P3 (idx 2)
+    arr[4], // new P4 (idx 3)
+    arr[5], // new P5 (idx 4)
+    arr[0], // new P6 (idx 5)
   ];
 }
 

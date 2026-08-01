@@ -195,29 +195,22 @@ export function resolveFormation(opts: {
   const formation = getFormation(system, rotation, phase);
   const override = customs?.[rotation] ?? {};
 
-  // Mapeo rol → playerId. Los pares (middle1/middle2, outside1/outside2) están
-  // separados por 3 posiciones en rotación, por lo que uno siempre es delantero
-  // y el otro zaguero. Asignamos dinámicamente según la posición real en cancha
-  // para que la plantilla (middle_front / outside_front / outside_back) siempre
-  // reciba a la jugadora correcta y no se pierda ninguna en el dibujo.
-  const isFront = (id?: string): boolean => {
-    if (!id) return false;
-    const pos = getRotationPosition(onCourt, id);
-    return pos ? isFrontRowPosition(pos) : false;
-  };
+  // Mapeo rol -> playerId.
+  // En un sistema 5-1, los pares (C1/C2, P1/P2) siempre están en diagonales (separados por 3 posiciones).
+  // Para que el dibujo táctico sea coherente con la rotación real, identificamos cuál es el
+  // delantero (Z2, Z3, Z4) y cuál el zaguero (Z1, Z6, Z5).
   
-  // Find which of the middle/outside players are in front row vs back row positions.
-  // This ensures that even as they rotate through all 6 positions, the engine
-  // maps the correct player to the "front" or "back" slot in the tactical diagram.
   const middle1Info = getPlayerRotationInfo(onCourt, lineup.middle1 || "");
   const middle2Info = getPlayerRotationInfo(onCourt, lineup.middle2 || "");
   const outside1Info = getPlayerRotationInfo(onCourt, lineup.outside1 || "");
   const outside2Info = getPlayerRotationInfo(onCourt, lineup.outside2 || "");
 
-  const middleFrontId = middle1Info?.isFrontRow ? lineup.middle1 : (middle2Info?.isFrontRow ? lineup.middle2 : (middle1Info ? lineup.middle2 : lineup.middle1));
-  const middleBackId = middle1Info?.isBackRow ? lineup.middle1 : (middle2Info?.isBackRow ? lineup.middle2 : (middle1Info ? lineup.middle2 : lineup.middle1));
-  const outsideFrontId = outside1Info?.isFrontRow ? lineup.outside1 : (outside2Info?.isFrontRow ? lineup.outside2 : (outside1Info ? lineup.outside2 : lineup.outside1));
-  const outsideBackId = outside1Info?.isBackRow ? lineup.outside1 : (outside2Info?.isBackRow ? lineup.outside2 : (outside1Info ? lineup.outside2 : lineup.outside1));
+  // Si middle1 es delantero, middle2 es zaguero (y viceversa). 
+  // Si no hay info (jugadora fuera de cancha), usamos el orden del lineup como fallback.
+  const middleFrontId = middle1Info?.isFrontRow ? lineup.middle1 : (middle2Info?.isFrontRow ? lineup.middle2 : lineup.middle1);
+  const middleBackId = middle1Info?.isBackRow ? lineup.middle1 : (middle2Info?.isBackRow ? lineup.middle2 : lineup.middle2);
+  const outsideFrontId = outside1Info?.isFrontRow ? lineup.outside1 : (outside2Info?.isFrontRow ? lineup.outside2 : lineup.outside1);
+  const outsideBackId = outside1Info?.isBackRow ? lineup.outside1 : (outside2Info?.isBackRow ? lineup.outside2 : lineup.outside2);
 
   const roleToPlayer: Partial<Record<TacticalRole, string | undefined>> = {
     setter: lineup.setter,
