@@ -46,9 +46,11 @@ function LeaguesPage() {
 
   const leagues = useMemo(() => {
     if (isAdmin || !user) return rawLeagues;
-    const myTeams = teams.filter((t) => t.ownerId === user.id);
-    const myLeagueIds = new Set(myTeams.map((t) => t.leagueId).filter(Boolean));
-    return rawLeagues.filter((l) => myLeagueIds.has(l.id));
+    // Un entrenador solo ve ligas donde tiene equipos de su propiedad inscritos
+    const myOwnedTeamLeagueIds = new Set(
+      teams.filter((t) => t.ownerId === user.id && t.leagueId).map((t) => t.leagueId)
+    );
+    return rawLeagues.filter((l) => myOwnedTeamLeagueIds.has(l.id));
   }, [rawLeagues, teams, isAdmin, user]);
   const mutations = useTeamMutations();
   const currentUserId = user?.id;
@@ -78,8 +80,8 @@ function LeaguesPage() {
     (selected && filteredLeagues.find((l) => l.id === selected)) || filteredLeagues[0] || (isAdmin ? leagues[0] : null);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const standings = useMemo(
-    () => (active ? computeStandings(teams, matches, active.id) : []),
-    [teams, matches, active]
+    () => (active ? computeStandings(teams.filter(t => isAdmin || (user?.id && t.ownerId === user.id)), matches, active.id) : []),
+    [teams, matches, active, isAdmin, user?.id]
   );
   const teamsInLeague = teams.filter((t) => t.leagueId === active?.id);
   const teamsAvailable = teams.filter((t) => {

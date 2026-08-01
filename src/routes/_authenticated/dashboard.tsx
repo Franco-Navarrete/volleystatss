@@ -43,13 +43,18 @@ function LeaguePage() {
     if (teams.length >= 2 && matches.length === 0) seedMatch();
   }, [teams.length, matches.length, seedMatch]);
 
+  const { isAdmin, user } = useIsAdmin();
+  const { hasAccess: isCoach } = useCoachAccess();
+
   const filteredTeams = useMemo(() => {
     return teams.filter((t) => {
+      // Si es entrenador (no admin), filtrar por propiedad de sus equipos en el dashboard
+      if (!isAdmin && isCoach && user?.id && t.ownerId !== user.id) return false;
       if (genderFilter !== "all" && t.gender !== genderFilter) return false;
       if (leagueFilter !== "all" && t.leagueId !== leagueFilter) return false;
       return true;
     });
-  }, [teams, genderFilter, leagueFilter]);
+  }, [teams, genderFilter, leagueFilter, isAdmin, isCoach, user?.id]);
 
   const standings = useMemo(() => computeStandings(filteredTeams, matches), [filteredTeams, matches]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
