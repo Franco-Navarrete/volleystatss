@@ -750,42 +750,45 @@ function TeamsPage() {
                 <div className="flex items-center rounded-lg border border-border/60 bg-card p-0.5">
                   <button
                     type="button"
-                    onClick={() => setViewMode("grid")}
-                    className={`size-8 rounded-md flex items-center justify-center transition-colors ${
-                      viewMode === "grid"
-                        ? "bg-primary text-primary-foreground"
+                    onClick={() => setViewMode("clubs")}
+                    className={`h-8 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                      viewMode === "clubs"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
-                    title="Vista en grilla"
-                    aria-label="Vista en grilla"
+                    title="Mi Club"
+                    aria-label="Mi Club"
+                  >
+                    <Building2 className="size-4" />
+                    <span className="text-xs font-semibold">Mi Club</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    className={`h-8 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
+                      viewMode === "grid"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title="Equipos"
+                    aria-label="Equipos"
                   >
                     <LayoutGrid className="size-4" />
+                    <span className="text-xs font-semibold">Equipos</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewMode("list")}
-                    className={`size-8 rounded-md flex items-center justify-center transition-colors ${
+                    className={`h-8 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors ${
                       viewMode === "list"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
-                    title="Vista en lista"
-                    aria-label="Vista en lista"
+                    title="Categorías y Planteles"
+                    aria-label="Categorías y Planteles"
                   >
                     <List className="size-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("clubs")}
-                    className={`size-8 rounded-md flex items-center justify-center transition-colors ${
-                      viewMode === "clubs"
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    title="Vista por club"
-                    aria-label="Vista por club"
-                  >
-                    <Building2 className="size-4" />
+                    <span className="text-xs font-semibold">Categorías y Planteles</span>
                   </button>
                 </div>
               </div>
