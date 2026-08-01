@@ -1014,8 +1014,20 @@ function LiveMatch() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/settings">
-                      <Settings2 className="size-4" /> Configuración
+                    <Settings2 className="size-4" /> Configuración
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => {
+                    const next = !match.metadata?.skipDefenseScouting;
+                    updateMatchMetadata(match.id, { skipDefenseScouting: next });
+                    toast.success(next ? "Scouting de defensa desactivado" : "Scouting de defensa activado");
+                  }}>
+                    {match.metadata?.skipDefenseScouting ? (
+                      <Check className="size-4" />
+                    ) : (
+                      <ShieldOff className="size-4" />
+                    )}
+                    {match.metadata?.skipDefenseScouting ? "Habilitar defensa" : "Deshabilitar defensa"}
                   </DropdownMenuItem>
                 </>
               )}

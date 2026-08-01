@@ -414,6 +414,7 @@ export const DEFENSE_RATING_LABEL: Record<DefenseRating, string> = {
   controlled: "Neutro",
   weak: "Débil",
   error: "Doble negativo",
+  neutral: "Omitida",
 };
 
 /**
