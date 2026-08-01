@@ -413,10 +413,12 @@ export function CourtPlayerBadge({
           <span
             className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
             style={{
-              background: isLibero ? "#ffffff" : team.color,
-              border: `${isLibero ? 3 : 2}px solid ${isLibero ? team.color : "rgba(255,255,255,0.9)"}`,
+              background: isLibero ? "#ffffff" : player.position === "armador" ? "#f59e0b" : team.color,
+              border: `${(isLibero || player.position === "armador") ? 3 : 2}px solid ${isLibero ? team.color : player.position === "armador" ? "#ffffff" : "rgba(255,255,255,0.9)"}`,
               boxShadow: isLibero
                 ? `0 0 0 1px #ffffff, 0 0 0 4px ${borderColor}`
+                : player.position === "armador"
+                ? `0 0 0 1px #f59e0b, 0 0 0 3px rgba(245, 158, 11, 0.4)`
                 : `0 0 0 1px ${borderColor}`,
             }}
           >
@@ -433,7 +435,7 @@ export function CourtPlayerBadge({
               <span
                 className="scoreboard-digit font-black leading-none text-[clamp(0.75rem,2.8vw,1.4rem)]"
                 style={{
-                  color: isLibero ? team.color : "#ffffff",
+                  color: isLibero ? team.color : (player.position === "armador" ? "#ffffff" : "#ffffff"),
                   textShadow: isLibero
                     ? undefined
                     : "-1px -1px 0 rgba(0,0,0,.55),1px -1px 0 rgba(0,0,0,.55),-1px 1px 0 rgba(0,0,0,.55),1px 1px 0 rgba(0,0,0,.55)",
@@ -469,6 +471,16 @@ export function CourtPlayerBadge({
               aria-label="Líbero"
             >
               L
+            </span>
+          )}
+
+          {player.position === "armador" && (
+            <span
+              className="absolute -top-1.5 -left-1.5 z-10 grid place-items-center size-5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-md ring-2 ring-white"
+              style={{ background: "#f59e0b" }}
+              aria-label="Armador"
+            >
+              A
             </span>
           )}
 
