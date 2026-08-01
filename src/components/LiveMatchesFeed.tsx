@@ -32,10 +32,16 @@ export function LiveMatchesFeed() {
     // Los admins ven todo el feed global
     if (isAdmin) return rawItems;
     
-    // Si es coach, filtramos el feed global para mostrar solo partidos de sus equipos propiedad
+    // Si es coach, filtramos el feed global para mostrar partidos de las ligas donde tiene equipos
     if (isCoach && user) {
-      const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
+      const myOwnedLeagueIds = new Set(myTeams.filter(t => t.ownerId === user.id && t.leagueId).map(t => t.leagueId));
+      
       return rawItems.filter(m => {
+        // @ts-ignore - leagueId ha sido añadido en listLivePublicMatches
+        const leagueId = m.leagueId;
+        if (leagueId && myOwnedLeagueIds.has(leagueId)) return true;
+        
+        const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
         const idA = m.teamA?.id;
         const idB = m.teamB?.id;
         return (idA && myOwnedTeamIds.has(idA)) || (idB && myOwnedTeamIds.has(idB));
