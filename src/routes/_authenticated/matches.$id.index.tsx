@@ -1937,7 +1937,7 @@ function CourtView({
     if (unique.length < 6) {
       for (const id of lineup) {
         if (unique.length >= 6) break;
-        if (id && !seen.has(id) && (!active || id !== active.replacedId)) {
+        if (id && !seen.has(id) && (!active || id !== active.replacedPlayerId)) {
           seen.add(id);
           unique.push(id);
         }
