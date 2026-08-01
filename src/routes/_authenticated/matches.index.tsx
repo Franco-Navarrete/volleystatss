@@ -67,25 +67,13 @@ function MatchesIndex() {
     if (isAdmin) return baseMatches;
 
     // 3. Si es Coach (como franco@gmail.com) u otro rol, filtramos:
-    //    Debe ver partidos donde al menos uno de sus equipos participe.
-    //    Y además, los partidos finalizados de la liga en la que están sus equipos.
+    //    Solo debe ver sus partidos (donde al menos uno de sus equipos participe).
     const myTeams = localTeams;
     const myTeamIds = new Set(myTeams.map(t => t.id));
-    const myLeagueIds = new Set(myTeams.filter(t => t.leagueId).map(t => t.leagueId));
 
     return baseMatches.filter(m => {
       // Participa mi equipo
-      if (myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId)) return true;
-      
-      // Es un partido finalizado de mi liga
-      if (m.status === "finished") {
-        const teamA = teamById.get(m.teamAId);
-        const teamB = teamById.get(m.teamBId);
-        if (teamA?.leagueId && myLeagueIds.has(teamA.leagueId)) return true;
-        if (teamB?.leagueId && myLeagueIds.has(teamB.leagueId)) return true;
-      }
-
-      return false;
+      return myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId);
     });
   }, [isAdmin, adminAll.data, localMatches, localTeams, teamById]);
 
