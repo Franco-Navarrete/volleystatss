@@ -500,6 +500,13 @@ function LiveMatch() {
       rallyCtx.currentPhaseSide === side &&
       !rallyCtx.finished
     ) {
+      if (match.metadata?.skipDefenseScouting) {
+        // Si el scouting de defensa está desactivado, registramos una defensa neutra
+        // automáticamente y abrimos el diálogo directamente en el paso de Armado.
+        recordDefense(match.id, side, playerId, "neutral");
+        setIntegratedRally({ side });
+        return;
+      }
       setIntegratedRally({ side, defenderId: playerId });
       return;
     }
