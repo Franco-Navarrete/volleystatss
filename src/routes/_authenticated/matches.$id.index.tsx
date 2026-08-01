@@ -26,6 +26,7 @@ import {
   Shirt,
   Undo2,
   Users,
+  Star,
 } from "lucide-react";
 import {
   useVolley,
@@ -2551,6 +2552,9 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const [lineupA, setLineupA] = useState<string[]>([...match.onCourtA]);
   const [lineupB, setLineupB] = useState<string[]>([...match.onCourtB]);
   const [step, setStep] = useState<1 | 2>(1);
+  const [manualArmadorA, setManualArmadorA] = useState<number | null>(null);
+  const [manualArmadorB, setManualArmadorB] = useState<number | null>(null);
+
   const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l.filter(Boolean)).size === 6;
   const validA = validSide(lineupA);
   const validB = validSide(lineupB);
@@ -2558,6 +2562,9 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const team = step === 1 ? teamA : teamB;
   const lineup = step === 1 ? lineupA : lineupB;
   const setLineup = step === 1 ? setLineupA : setLineupB;
+  const manualArmador = step === 1 ? manualArmadorA : manualArmadorB;
+  const setManualArmador = step === 1 ? setManualArmadorA : setManualArmadorB;
+
   const stepValid = step === 1 ? validA : validB;
   const filled = lineup.filter(Boolean).length;
   const [pickingSlot, setPickingSlot] = useState<number | null>(null);
@@ -2685,8 +2692,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           // slotIdx 0..5 ↔ pos 1..6; secuencia CCW: 1→6→5→4→3→2.
           const ccwIndexByPos: Record<number, number> = { 1: 0, 6: 1, 5: 2, 4: 3, 3: 4, 2: 5 };
           // Diagonales: A↔O (P1/P4), P1↔P2 (P2/P5), C2↔C1/L (P3/P6).
-          const roleOrder = ["A", "C1/L", "P2", "O", "C2", "P1"];
-          const armadorSlot = lineup.findIndex((pid) => {
+          const roleOrder = ["A", "C1", "P2", "O", "C2", "P1"];
+          const armadorSlot = manualArmador !== null ? manualArmador : lineup.findIndex((pid) => {
             const pl = team.players.find((x) => x.id === pid);
             return pl?.position === "armador";
           });
@@ -2711,7 +2718,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                     teamColor={team.color}
                     player={p}
                     onOpen={() => setPickingSlot(idx)}
-                    onClear={() => setSlot(idx, null)}
+                    onClear={() => {
+                      setSlot(idx, null);
+                      if (manualArmador === idx) setManualArmador(null);
+                    }}
+                    onSetArmador={() => setManualArmador(idx)}
                   />
                 );
               })}
@@ -2918,7 +2929,7 @@ function StepChip({ n, label, active, done, onClick, color, disabled }: {
   );
 }
 
-function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }: {
+function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear, onSetArmador }: {
   label: string;
   sub?: string;
   role?: string | null;
@@ -2926,6 +2937,7 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }
   player: Team["players"][number] | undefined;
   onOpen: () => void;
   onClear: () => void;
+  onSetArmador: () => void;
 }) {
   const roleColor = role
     ? (role === "A"
@@ -2944,21 +2956,32 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }
       {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold z-10">{sub}</div>}
       {role && (
         <div
-          className="absolute bottom-1 left-1 text-[9px] font-black uppercase tracking-widest px-1.5 rounded text-black z-10"
+          className="absolute bottom-1 left-1 text-[9px] font-black uppercase tracking-widest px-1.5 rounded text-black z-10 flex items-center gap-0.5"
           style={{ background: roleColor ?? "#cbd5e1" }}
         >
           {role}
+          {role === "A" && <Star className="size-2 fill-current" />}
         </div>
       )}
       {player && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onClear(); }}
-          title="Quitar"
-          className="absolute bottom-1 right-1 text-muted-foreground hover:text-destructive z-10"
-        >
-          <X className="size-3.5" />
-        </button>
+        <div className="absolute bottom-1 right-1 flex items-center gap-1 z-10">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onSetArmador(); }}
+            title="Marcar como Armador"
+            className={`transition-colors ${role === "A" ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}`}
+          >
+            <Star className={role === "A" ? "fill-current size-3" : "size-3"} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onClear(); }}
+            title="Quitar"
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
       )}
       <button type="button" onClick={onOpen} className="flex-1 flex flex-col items-center justify-center gap-1 w-full rounded hover:bg-background/30 transition-colors pt-3">
         {player ? (
