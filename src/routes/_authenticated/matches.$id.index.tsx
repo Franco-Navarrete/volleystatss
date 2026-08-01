@@ -1098,7 +1098,7 @@ function LiveMatch() {
             const isServer = server.side === pendingPlayer.side && server.playerId === pendingPlayer.playerId;
             const activeLibero = pendingPlayer.side === "A" ? match.liberoActiveA : match.liberoActiveB;
             const isActiveLibero = !!activeLibero && activeLibero.liberoId === pendingPlayer.playerId;
-            const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedId) : null;
+            const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedPlayerId) : null;
             const allActions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger"; positive: boolean }[] = [
               { type: "ace", label: isCoach ? "Saque (Ace)" : "Saque", tone: "primary", positive: true },
               { type: "serve_error", label: "Error de saque", tone: "danger", positive: false },
@@ -1495,7 +1495,7 @@ function LiveMatch() {
             // Si ya hay un líbero activo en esta cancha: ofrecer cerrar el cambio.
             if (active) {
               const liberoPlayer = t.players.find((p) => p.id === active.liberoId);
-              const replacedPlayer = t.players.find((p) => p.id === active.replacedId);
+              const replacedPlayer = t.players.find((p) => p.id === active.replacedPlayerId);
               return (
                 <>
                   <DialogHeader>
@@ -1952,7 +1952,7 @@ function CourtView({
     }
     if (import.meta.env.DEV && (raw.length !== 6 || raw.length !== effective.length)) {
       // eslint-disable-next-line no-console
-      console.debug(`[cancha][libero] lado=${side} onCourt=${raw.length} efectivo=${effective.length} libero=${active?.liberoId ?? "—"} reemplaza=${active?.replacedId ?? "—"}`);
+      console.debug(`[cancha][libero] lado=${side} onCourt=${raw.length} efectivo=${effective.length} libero=${active?.liberoId ?? "—"} reemplaza=${active?.replacedPlayerId ?? "—"}`);
     }
     return effective;
   };
@@ -2062,7 +2062,7 @@ function CourtView({
                       if (isLibero && pid) {
                         const active = col.side === "A" ? match.liberoActiveA : match.liberoActiveB;
                         if (active && active.liberoId === pid) {
-                          const rp = col.team.players.find((x) => x.id === active.replacedId);
+                          const rp = col.team.players.find((x) => x.id === active.replacedPlayerId);
                           replacedName = rp ? `#${rp.number} ${rp.name}` : null;
                         }
                       }

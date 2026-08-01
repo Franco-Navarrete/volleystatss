@@ -885,6 +885,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
   let r = replayMatch(next);
   next = { ...next, ...r };
   if (r.status === "finished") return next;
+  
   let changed = true;
   let safety = 6;
   while (changed && safety-- > 0) {
@@ -892,27 +893,35 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
     for (const side of ["A", "B"] as const) {
       const team = teams.find((t) => t.id === (side === "A" ? next.teamAId : next.teamBId));
       if (!team) continue;
+      
       const libIds = (
         side === "A"
           ? [next.liberoA1Id, next.liberoA2Id]
           : [next.liberoB1Id, next.liberoB2Id]
       ).filter(Boolean) as string[];
       if (libIds.length === 0) continue;
+      
       const libActive = side === "A" ? r.liberoActiveA : r.liberoActiveB;
       if (libActive) continue;
+      
       const onCourt = side === "A" ? r.onCourtA : r.onCourtB;
       const liberoId = libIds.find((id) => !onCourt.includes(id));
       if (!liberoId) continue;
+      
       const backIdxs = BACK_ROW_REPLACE_PRIORITY.filter((idx) => idx !== 0 || r.servingSide !== side);
       let replacedId: string | null = null;
       for (const i of backIdxs) {
-        const p = team.players.find((pp) => pp.id === onCourt[i]);
+        const playerId = onCourt[i];
+        const p = team.players.find((pp) => pp.id === playerId);
+        // REGLA: Solo reemplaza a centrales (CENTRAL)
         if (p?.position === "central") {
-          replacedId = onCourt[i];
+          replacedId = playerId;
           break;
         }
       }
+      
       if (!replacedId) continue;
+      
       const libEv: LiberoEvent = {
         id: uid(),
         kind: "libero",
@@ -1249,7 +1258,7 @@ export const useVolley = create<VolleyState>()(
               side,
               action: "out",
               liberoId: active.liberoId,
-              replacedId: active.replacedId,
+              replacedId: active.replacedPlayerId,
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
