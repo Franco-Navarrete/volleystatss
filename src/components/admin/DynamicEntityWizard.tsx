@@ -252,27 +252,29 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
           
           if (newRoleId === "admin") {
             await setRole({ data: { userId: targetEntity.id, isAdmin: true } });
-          } else if (newRoleId === "user") {
-            await setRole({ data: { userId: targetEntity.id, isAdmin: false } });
           } else {
-            // Es un rol extra (scorekeeper/analyst/coach)
-            // Primero nos aseguramos de que no sea admin global si estamos bajando de rango
+            // Primero nos aseguramos de que no sea admin global si estamos cambiando a otro rol
             if (targetEntity.isAdmin) {
               await setRole({ data: { userId: targetEntity.id, isAdmin: false } });
             }
             
-            // Mapeo de roles internos a lo que espera adminSetExtraRole
-            const roleMapping: Record<string, ExtraRole> = {
-              "scorekeeper": "planillero",
-              "coach": "entrenador",
-              "analyst": "analyst",
-              "scout": "planillero", // Mapeos temporales hasta expandir DB
-              "referee": "planillero",
-              "video_operator": "planillero"
-            };
-            
-            const extraRole = roleMapping[newRoleId] || (newRoleId as ExtraRole);
-            await setExtraRole({ data: { userId: targetEntity.id, roles: [extraRole] } });
+            if (newRoleId !== "user") {
+              // Mapeo de roles internos a lo que espera adminSetExtraRole
+              const roleMapping: Record<string, ExtraRole> = {
+                "scorekeeper": "planillero",
+                "coach": "entrenador",
+                "analyst": "analyst",
+                "scout": "planillero",
+                "referee": "planillero",
+                "video_operator": "planillero"
+              };
+              
+              const extraRole = roleMapping[newRoleId] || (newRoleId as ExtraRole);
+              await setExtraRole({ data: { userId: targetEntity.id, roles: [extraRole] } });
+            } else {
+              // Si es "user", ya quitamos el admin arriba, y adminSetExtraRole con [] limpia los extras
+              await setExtraRole({ data: { userId: targetEntity.id, roles: [] } });
+            }
           }
           
           toast.success("Rol actualizado correctamente");
