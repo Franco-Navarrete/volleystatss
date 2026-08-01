@@ -2956,10 +2956,11 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear, 
       {sub && <div className="absolute top-1 right-1 text-[8px] uppercase tracking-widest text-accent font-bold z-10">{sub}</div>}
       {role && (
         <div
-          className="absolute bottom-1 left-1 text-[9px] font-black uppercase tracking-widest px-1.5 rounded text-black z-10"
+          className="absolute bottom-1 left-1 text-[9px] font-black uppercase tracking-widest px-1.5 rounded text-black z-10 flex items-center gap-0.5"
           style={{ background: roleColor ?? "#cbd5e1" }}
         >
           {role}
+          {role === "A" && <Star className="size-2 fill-current" />}
         </div>
       )}
       {player && (
