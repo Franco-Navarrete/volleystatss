@@ -418,7 +418,7 @@ export function CourtPlayerBadge({
               boxShadow: isLibero
                 ? `0 0 0 1px #ffffff, 0 0 0 4px ${borderColor}`
                 : player.position === "armador"
-                ? `0 0 0 1px #f59e0b, 0 0 0 3px rgba(245, 158, 11, 0.4)`
+                ? `0 0 0 1px #f59e0b, 0 0 0 6px rgba(245, 158, 11, 0.5)`
                 : `0 0 0 1px ${borderColor}`,
             }}
           >
