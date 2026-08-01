@@ -458,13 +458,11 @@ function TeamsPage() {
     const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
 
     for (const t of filteredTeams) {
-      // Regla SaaS:
-      // En la pestaña "Mi Club" (viewMode === "clubs"), SOLO mostramos equipos donde el entrenador es el propietario (sus categorías/planteles).
-      // Los equipos rivales (sin ownerId o de otro owner) SOLO aparecen en la pestaña "Equipos" (grid/list).
-      if (viewMode === "clubs" && !isAdmin && currentUserId && !myOwnedTeamIds.has(t.id)) {
+      // Regla SaaS: En "Mi Club" solo van los propios. Los rivales de liga van a la pestaña "Equipos".
+      const isMine = myOwnedTeamIds.has(t.id);
+      if (viewMode === "clubs" && !isAdmin && currentUserId && !isMine) {
         continue;
       }
-      // La lógica de filteredTeams ya permite ver rivales si están en la misma liga.
       
       const key = t.clubId ?? `name:${(t.clubName ?? t.club ?? "").trim().toLowerCase() || `team:${t.id}`}`;
       const name = t.clubName ?? t.club ?? (t.clubId ? "Club" : "Sin club");
