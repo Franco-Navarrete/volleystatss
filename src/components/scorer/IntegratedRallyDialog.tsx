@@ -478,7 +478,7 @@ export function IntegratedRallyDialog({
                       title={`${o.desc} · ${o.hotkey}`}
                     >
                       <span className="text-[10px] opacity-60 font-bold uppercase tracking-tighter">
-                        {o.key === "neutral" ? "Saltar" : o.desc}
+                        {o.key === "neutral" ? "Omitir" : o.desc}
                       </span>
                       <span className="text-lg">{o.label}</span>
                       <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-70">{o.hotkey}</span>

@@ -406,7 +406,7 @@ export interface AttackAttemptEvent {
 
 // ============= Defensa =============
 
-export type DefenseRating = "excellent" | "positive" | "controlled" | "weak" | "error";
+export type DefenseRating = "excellent" | "positive" | "controlled" | "weak" | "error" | "neutral";
 
 export const DEFENSE_RATING_LABEL: Record<DefenseRating, string> = {
   excellent: "Doble positivo",
