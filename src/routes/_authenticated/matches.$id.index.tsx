@@ -22,6 +22,7 @@ import {
   RotateCw,
   Search,
   Settings2,
+  ShieldOff,
   Shirt,
   Undo2,
   Users,
@@ -198,6 +199,7 @@ function LiveMatch() {
   const recordDefense = useVolley((s) => s.recordDefense);
   const recordSetting = useVolley((s) => s.recordSetting);
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
+  const updateMatchMetadata = useVolley((s) => s.updateMatchMetadata);
   const overrideScore = useVolley((s) => s.overrideScore);
   const undo = useVolley((s) => s.undoLastEvent);
   const finishMatch = useVolley((s) => s.finishMatch);
@@ -498,6 +500,13 @@ function LiveMatch() {
       rallyCtx.currentPhaseSide === side &&
       !rallyCtx.finished
     ) {
+      if (match.metadata?.skipDefenseScouting) {
+        // Si el scouting de defensa está desactivado, registramos una defensa neutra
+        // automáticamente y abrimos el diálogo directamente en el paso de Armado.
+        recordDefense(match.id, side, playerId, "neutral");
+        setIntegratedRally({ side });
+        return;
+      }
       setIntegratedRally({ side, defenderId: playerId });
       return;
     }
@@ -1014,8 +1023,20 @@ function LiveMatch() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/settings">
-                      <Settings2 className="size-4" /> Configuración
+                    <Settings2 className="size-4" /> Configuración
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => {
+                    const next = !match.metadata?.skipDefenseScouting;
+                    updateMatchMetadata(match.id, { skipDefenseScouting: next });
+                    toast.success(next ? "Scouting de defensa desactivado" : "Scouting de defensa activado");
+                  }}>
+                    {match.metadata?.skipDefenseScouting ? (
+                      <Check className="size-4" />
+                    ) : (
+                      <ShieldOff className="size-4" />
+                    )}
+                    {match.metadata?.skipDefenseScouting ? "Habilitar defensa" : "Deshabilitar defensa"}
                   </DropdownMenuItem>
                 </>
               )}

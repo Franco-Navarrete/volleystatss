@@ -406,7 +406,7 @@ export interface AttackAttemptEvent {
 
 // ============= Defensa =============
 
-export type DefenseRating = "excellent" | "positive" | "controlled" | "weak" | "error";
+export type DefenseRating = "excellent" | "positive" | "controlled" | "weak" | "error" | "neutral";
 
 export const DEFENSE_RATING_LABEL: Record<DefenseRating, string> = {
   excellent: "Doble positivo",
@@ -414,6 +414,7 @@ export const DEFENSE_RATING_LABEL: Record<DefenseRating, string> = {
   controlled: "Neutro",
   weak: "Débil",
   error: "Doble negativo",
+  neutral: "Omitida",
 };
 
 /**
@@ -658,6 +659,7 @@ interface VolleyState {
   ) => void;
 
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
+  updateMatchMetadata: (matchId: string, metadata: Record<string, any>) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
   reclassifyPointEvent: (
@@ -1430,6 +1432,14 @@ export const useVolley = create<VolleyState>()(
             const r = replayMatch(next);
             return { ...next, ...r };
           }),
+        }));
+      },
+      updateMatchMetadata: (matchId, metadata) => {
+        set((s) => ({
+          matches: s.matches.map((m) =>
+            m.id === matchId ? { ...m, metadata: { ...m.metadata, ...metadata } } : m
+          ),
+          lastLocalChange: Date.now(),
         }));
       },
 

@@ -105,6 +105,7 @@ interface DefenseOption {
 const DEFENSE_OPTIONS: DefenseOption[] = [
   { key: "excellent", label: "Doble positivo", hotkey: "1", className: "bg-success text-success-foreground", quality: "++", desc: "Doble positivo" },
   { key: "controlled", label: "Neutro", hotkey: "2", className: "bg-yellow-400 text-black", quality: "!", desc: "Neutro" },
+  { key: "neutral", label: "Omitir", hotkey: "0", className: "bg-secondary text-secondary-foreground border border-border/50", quality: "!", desc: "Saltar scouting de defensa" },
   { key: "error", label: "Doble negativo", hotkey: "3", className: "bg-destructive text-destructive-foreground", desc: "Doble negativo" },
 ];
 
@@ -467,22 +468,25 @@ export function IntegratedRallyDialog({
                   <div className="scoreboard-digit text-2xl font-black">#{defensePlayer.number}</div>
                   <div className="text-xs text-muted-foreground truncate">{defensePlayer.name}</div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {DEFENSE_OPTIONS.map((o) => (
                     <button
                       key={o.key}
                       type="button"
                       onClick={() => pickDefense(o.key)}
-                      className={`relative min-h-16 rounded-lg px-2 font-black text-sm active:scale-95 transition ${o.className}`}
+                      className={`relative min-h-16 rounded-lg px-2 font-black text-sm active:scale-95 transition flex flex-col items-center justify-center gap-0.5 ${o.className}`}
                       title={`${o.desc} · ${o.hotkey}`}
                     >
-                      {o.label}
+                      <span className="text-[10px] opacity-60 font-bold uppercase tracking-tighter">
+                        {o.key === "neutral" ? "Omitir" : o.desc}
+                      </span>
+                      <span className="text-lg">{o.label}</span>
                       <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-70">{o.hotkey}</span>
                     </button>
                   ))}
                 </div>
                 <p className="text-[10px] text-center text-muted-foreground">
-                  1 doble positivo · 2 neutro · 3 doble negativo
+                  1: Doble (+) · 2: Neutro · 3: Doble (-) · 0: Omitir
                 </p>
               </div>
             )}
