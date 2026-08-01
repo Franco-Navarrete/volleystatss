@@ -1597,15 +1597,15 @@ function LiveMatch() {
               match={match}
               teamA={teamA}
               teamB={teamB}
-              onSave={(lineupA, lineupB) => {
+              onSave={(lineupA, lineupB, armadorA, armadorB) => {
                 if (setNotStarted) {
                   setSetLineup(match.id, "A", lineupA);
                   setSetLineup(match.id, "B", lineupB);
-                  if (manualArmadorA !== null) {
-                    updateMatchMetadata(match.id, { [`manualArmadorA_set${match.currentSet}`]: manualArmadorA });
+                  if (armadorA !== null) {
+                    updateMatchMetadata(match.id, { [`manualArmadorA_set${match.currentSet}`]: armadorA });
                   }
-                  if (manualArmadorB !== null) {
-                    updateMatchMetadata(match.id, { [`manualArmadorB_set${match.currentSet}`]: manualArmadorB });
+                  if (armadorB !== null) {
+                    updateMatchMetadata(match.id, { [`manualArmadorB_set${match.currentSet}`]: armadorB });
                   }
                   confirmSetLineup(match.id);
                 } else {
@@ -2552,7 +2552,7 @@ function PositionBadge({ position }: { position?: PlayerPosition }) {
 
 function LineupEditor({ match, teamA, teamB, onSave }: {
   match: Match; teamA: Team; teamB: Team;
-  onSave: (lineupA: string[], lineupB: string[]) => void;
+  onSave: (lineupA: string[], lineupB: string[], armadorA: number | null, armadorB: number | null) => void;
 }) {
   const currentSetLineup = match.lineupsBySet?.[match.currentSet];
   const [lineupA, setLineupA] = useState<string[]>(currentSetLineup?.A ? [...currentSetLineup.A] : [...match.onCourtA]);
@@ -2914,7 +2914,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         ) : (
           <Button
             disabled={!validA || !validB}
-            onClick={() => onSave(lineupA, lineupB)}
+            onClick={() => onSave(lineupA, lineupB, manualArmadorA, manualArmadorB)}
             className="flex-1 bg-gradient-primary text-primary-foreground"
           >
             Confirmar formación
