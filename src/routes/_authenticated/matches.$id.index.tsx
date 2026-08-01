@@ -2928,12 +2928,14 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }
   onClear: () => void;
 }) {
   const roleColor = role
-    ? (role === "A" || role === "O"
-        ? "#22d3ee"
+    ? (role === "A"
+        ? "#f59e0b" // Armador: Naranja
+        : role === "O"
+        ? "#facc15" // Opuesto: Amarillo
         : role.startsWith("P")
-        ? "#a3e635"
+        ? "#3b82f6" // Puntas: Azul
         : role.startsWith("C")
-        ? "#f472b6"
+        ? "#22c55e" // Centrales: Verde
         : null)
     : null;
   return (
