@@ -66,15 +66,15 @@ function MatchesIndex() {
     // 2. Si es admin, ve todo.
     if (isAdmin) return baseMatches;
 
-    // 3. Si es Coach (como franco@gmail.com) u otro rol, filtramos:
-    //    Solo debe ver sus partidos (donde al menos uno de sus equipos participe).
-    const myTeamIds = new Set(localTeams.map(t => t.id));
+    // 3. Si es Coach u otro rol, filtramos estrictamente por propiedad.
+    //    Solo debe ver sus partidos (donde al menos uno de sus equipos propiedad participe).
+    const myOwnedTeamIds = new Set(localTeams.filter(t => t.ownerId === user?.id).map(t => t.id));
 
     return baseMatches.filter(m => {
-      // Participa mi equipo
-      return myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId);
+      // Participa un equipo que YO poseo (evita ver partidos donde solo participan rivales que agregué)
+      return myOwnedTeamIds.has(m.teamAId) || myOwnedTeamIds.has(m.teamBId);
     });
-  }, [isAdmin, adminAll.data, localMatches, localTeams, teamById]);
+  }, [isAdmin, adminAll.data, localMatches, localTeams, user?.id]);
 
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
