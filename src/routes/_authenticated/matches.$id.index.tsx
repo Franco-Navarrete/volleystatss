@@ -22,6 +22,7 @@ import {
   RotateCw,
   Search,
   Settings2,
+  ShieldOff,
   Shirt,
   Undo2,
   Users,
