@@ -23,6 +23,7 @@ import {
   Search,
   Settings2,
   ShieldOff,
+  ShieldOff,
   Shirt,
   Undo2,
   Users,
