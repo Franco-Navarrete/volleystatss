@@ -196,7 +196,8 @@ export function resolveFormation(opts: {
   const override = customs?.[rotation] ?? {};
 
   // Mapeo rol -> playerId.
-  // Identificamos quién es delantero y quién zaguero basándonos en la posición real (onCourt).
+  // Asignamos dinámicamente C1/C2 y P1/P2 basándonos en quién está en red (Front) vs zaga (Back)
+  // Esto asegura que los roles tácticos del dibujo (CF, CZ, PF, PZ) roten sincronizados con la posición real.
   const middle1Info = getPlayerRotationInfo(onCourt, lineup.middle1 || "");
   const middle2Info = getPlayerRotationInfo(onCourt, lineup.middle2 || "");
   const outside1Info = getPlayerRotationInfo(onCourt, lineup.outside1 || "");
