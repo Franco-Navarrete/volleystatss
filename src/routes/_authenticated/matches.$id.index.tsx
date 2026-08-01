@@ -1922,14 +1922,14 @@ function CourtView({
     side: "A" | "B",
     raw: string[],
     lineup: string[],
-    active: { liberoId: string; replacedId: string } | null | undefined,
+    active: { liberoId: string; replacedPlayerId: string } | null | undefined,
   ): string[] => {
     let arr = raw.slice(0, 8);
     if (active) {
       // Garantiza swap: si la central sigue en cancha y el líbero también,
       // sacamos la central del render (regla: nunca ambos a la vez).
       const libIdx = arr.indexOf(active.liberoId);
-      arr = arr.filter((id, i) => id !== active.replacedId || i === libIdx);
+      arr = arr.filter((id, i) => id !== active.replacedPlayerId || i === libIdx);
     }
     const seen = new Set<string>();
     const unique = arr.filter((id) => id && !seen.has(id) && seen.add(id));
