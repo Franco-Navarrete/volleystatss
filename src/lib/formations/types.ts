@@ -13,13 +13,13 @@ export type TacticalRole =
   | "libero";
 
 export const ROLE_LABEL: Record<TacticalRole, string> = {
-  setter: "Armadora",
-  opposite: "Opuesta",
-  middle_front: "Central frente",
-  middle_back: "Central zaguero",
-  outside_front: "Punta frente",
-  outside_back: "Punta zaguero",
-  libero: "Líbero",
+  setter: "A",
+  opposite: "O",
+  middle_front: "CF",
+  middle_back: "CZ",
+  outside_front: "PF",
+  outside_back: "PZ",
+  libero: "L",
 };
 
 /** Colores por rol (oklch tokens del proyecto / fallbacks). */
