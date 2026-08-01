@@ -1091,7 +1091,7 @@ export const useVolley = create<VolleyState>()(
             const next = { ...m, lineupsBySet };
             const withAuto = applyAutoLibero(next, s.teams);
             const r = replayMatch(next);
-            return { ...next, ...r, status: m.status };
+            return { ...next, ...r, status: m.status, lastLocalChange: Date.now() };
           }),
         })),
 
@@ -1100,7 +1100,11 @@ export const useVolley = create<VolleyState>()(
         set((s) => ({
           matches: s.matches.map((m) =>
             m.id === matchId
-              ? { ...m, confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), m.currentSet])] }
+              ? {
+                  ...m,
+                  confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), m.currentSet])],
+                  lastLocalChange: Date.now()
+                }
               : m
           ),
         })),
@@ -1113,6 +1117,7 @@ export const useVolley = create<VolleyState>()(
             return {
               ...m,
               setStartTimes: { ...(m.setStartTimes ?? {}), [m.currentSet]: Date.now() },
+              lastLocalChange: Date.now(),
             };
           }),
         })),
