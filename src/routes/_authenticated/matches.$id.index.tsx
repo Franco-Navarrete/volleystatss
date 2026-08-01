@@ -2717,7 +2717,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                     teamColor={team.color}
                     player={p}
                     onOpen={() => setPickingSlot(idx)}
-                    onClear={() => setSlot(idx, null)}
+                    onClear={() => {
+                      setSlot(idx, null);
+                      if (manualArmador === idx) setManualArmador(null);
+                    }}
+                    onSetArmador={() => setManualArmador(idx)}
                   />
                 );
               })}
