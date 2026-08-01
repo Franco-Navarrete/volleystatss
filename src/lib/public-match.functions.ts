@@ -78,8 +78,8 @@ export const listLivePublicMatches = createServerFn({ method: "GET" })
         slug: row.id,
         updatedAt: row.updated_at,
         matchId: snap?.match?.id ?? null,
-        teamA: { name: snap?.teamA?.name ?? "—", shortName: snap?.teamA?.shortName ?? "", color: snap?.teamA?.color ?? null, logoUrl: snap?.teamA?.logoUrl ?? null },
-        teamB: { name: snap?.teamB?.name ?? "—", shortName: snap?.teamB?.shortName ?? "", color: snap?.teamB?.color ?? null, logoUrl: snap?.teamB?.logoUrl ?? null },
+        teamA: { id: snap?.match?.teamAId ?? null, name: snap?.teamA?.name ?? "—", shortName: snap?.teamA?.shortName ?? "", color: snap?.teamA?.color ?? null, logoUrl: snap?.teamA?.logoUrl ?? null },
+        teamB: { id: snap?.match?.teamBId ?? null, name: snap?.teamB?.name ?? "—", shortName: snap?.teamB?.shortName ?? "", color: snap?.teamB?.color ?? null, logoUrl: snap?.teamB?.logoUrl ?? null },
         leagueName: snap?.league?.name ?? null,
         sets: snap?.match?.sets ?? [],
       };
