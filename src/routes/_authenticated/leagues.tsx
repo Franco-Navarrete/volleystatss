@@ -46,9 +46,9 @@ function LeaguesPage() {
 
   const leagues = useMemo(() => {
     if (isAdmin || !user) return rawLeagues;
-    // Un entrenador solo ve ligas donde tiene equipos de su propiedad inscritos
+    const myOwnedTeamIds = new Set(teams.filter((t) => t.ownerId === user.id).map(t => t.id));
     const myOwnedTeamLeagueIds = new Set(
-      teams.filter((t) => t.ownerId === user.id && t.leagueId).map((t) => t.leagueId)
+      teams.filter((t) => myOwnedTeamIds.has(t.id) && t.leagueId).map((t) => t.leagueId)
     );
     return rawLeagues.filter((l) => myOwnedTeamLeagueIds.has(l.id));
   }, [rawLeagues, teams, isAdmin, user]);
