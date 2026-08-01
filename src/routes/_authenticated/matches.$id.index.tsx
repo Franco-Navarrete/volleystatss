@@ -2964,9 +2964,9 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }
         {player ? (
           <>
             {player.photoUrl ? (
-              <img src={player.photoUrl} alt="" className="size-9 rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: teamColor }} />
+              <img src={player.photoUrl} alt="" className="size-9 rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: player.position === "armador" ? "#f59e0b" : teamColor }} />
             ) : (
-              <div className="size-9 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-xs" style={{ background: teamColor }}>
+              <div className="size-9 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-xs border-2" style={{ background: player.position === "armador" ? "#f59e0b" : teamColor, borderColor: player.position === "armador" ? "#ffffff" : "transparent" }}>
                 {player.number}
               </div>
             )}
