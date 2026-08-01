@@ -199,6 +199,7 @@ function LiveMatch() {
   const recordDefense = useVolley((s) => s.recordDefense);
   const recordSetting = useVolley((s) => s.recordSetting);
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
+  const updateMatchMetadata = useVolley((s) => s.updateMatchMetadata);
   const overrideScore = useVolley((s) => s.overrideScore);
   const undo = useVolley((s) => s.undoLastEvent);
   const finishMatch = useVolley((s) => s.finishMatch);
