@@ -1091,7 +1091,7 @@ export const useVolley = create<VolleyState>()(
             const next = { ...m, lineupsBySet };
             const withAuto = applyAutoLibero(next, s.teams);
             const r = replayMatch(next);
-            return { ...next, ...r, status: m.status };
+            return { ...next, ...r, status: m.status, lastLocalChange: Date.now() };
           }),
         })),
 
