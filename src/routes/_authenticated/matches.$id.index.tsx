@@ -2688,7 +2688,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           const roleOrder = ["A", "C1/L", "P2", "O", "C2", "P1"];
           const armadorSlot = lineup.findIndex((pid) => {
             const pl = team.players.find((x) => x.id === pid);
-            return pl?.position?.startsWith("armador");
+            return pl?.position === "armador";
           });
           const armadorPos = armadorSlot >= 0 ? armadorSlot + 1 : -1;
           const roleFor = (slotIdx: number): string | null => {
@@ -2928,12 +2928,14 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }
   onClear: () => void;
 }) {
   const roleColor = role
-    ? (role === "A" || role === "O"
-        ? "#22d3ee"
+    ? (role === "A"
+        ? "#f59e0b" // Armador: Naranja
+        : role === "O"
+        ? "#facc15" // Opuesto: Amarillo
         : role.startsWith("P")
-        ? "#a3e635"
+        ? "#3b82f6" // Puntas: Azul
         : role.startsWith("C")
-        ? "#f472b6"
+        ? "#22c55e" // Centrales: Verde
         : null)
     : null;
   return (
@@ -2962,9 +2964,9 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear }
         {player ? (
           <>
             {player.photoUrl ? (
-              <img src={player.photoUrl} alt="" className="size-9 rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: teamColor }} />
+              <img src={player.photoUrl} alt="" className="size-9 rounded-full object-cover ring-2" style={{ ['--tw-ring-color' as any]: player.position === "armador" ? "#f59e0b" : teamColor }} />
             ) : (
-              <div className="size-9 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-xs" style={{ background: teamColor }}>
+              <div className="size-9 rounded-full flex items-center justify-center scoreboard-digit font-black text-white text-xs border-2" style={{ background: player.position === "armador" ? "#f59e0b" : teamColor, borderColor: player.position === "armador" ? "#ffffff" : "transparent" }}>
                 {player.number}
               </div>
             )}
