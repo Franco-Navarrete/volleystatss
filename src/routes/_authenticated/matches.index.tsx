@@ -68,8 +68,7 @@ function MatchesIndex() {
 
     // 3. Si es Coach (como franco@gmail.com) u otro rol, filtramos:
     //    Solo debe ver sus partidos (donde al menos uno de sus equipos participe).
-    const myTeams = localTeams;
-    const myTeamIds = new Set(myTeams.map(t => t.id));
+    const myTeamIds = new Set(localTeams.map(t => t.id));
 
     return baseMatches.filter(m => {
       // Participa mi equipo
