@@ -32,10 +32,34 @@ export function LiveMatchesFeed() {
     // Los admins ven todo el feed global
     if (isAdmin) return rawItems;
     
-    // Si es coach, filtramos el feed global para mostrar solo partidos de sus equipos propiedad
+    // Si es coach, filtramos el feed global para mostrar partidos de las ligas donde tiene equipos
     if (isCoach && user) {
-      const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
+      const myOwnedLeagueIds = new Set(myTeams.filter(t => t.ownerId === user.id && t.leagueId).map(t => t.leagueId));
+      
+      // Si no tiene ligas, solo mostramos sus propios partidos (fallback)
+      if (myOwnedLeagueIds.size === 0) {
+        const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
+        return rawItems.filter(m => {
+          const idA = m.teamA?.id;
+          const idB = m.teamB?.id;
+          return (idA && myOwnedTeamIds.has(idA)) || (idB && myOwnedTeamIds.has(idB));
+        });
+      }
+
       return rawItems.filter(m => {
+        // En el feed público de Supabase, m.leagueId está disponible si lo incluimos en el fetch
+        // Pero si no está, usamos el leagueName o el ownerId de los equipos si estuvieran disponibles.
+        // Dado que listLivePublicMatches devuelve un objeto enriquecido, comprobamos si alguno de los equipos
+        // pertenece a una de las ligas del coach.
+        
+        // El store local tiene la relación equipo -> liga para los equipos conocidos.
+        // Pero para el feed global, dependemos de que el objeto 'm' traiga la liga o que podamos inferirla.
+        
+        // Si el objeto 'm' tiene leagueId (asumiendo que listLivePublicMatches lo devuelve)
+        if (m.leagueId && myOwnedLeagueIds.has(m.leagueId)) return true;
+        
+        // Si no, verificamos si es uno de sus propios equipos
+        const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
         const idA = m.teamA?.id;
         const idB = m.teamB?.id;
         return (idA && myOwnedTeamIds.has(idA)) || (idB && myOwnedTeamIds.has(idB));
