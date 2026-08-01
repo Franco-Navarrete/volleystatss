@@ -2551,6 +2551,9 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const [lineupA, setLineupA] = useState<string[]>([...match.onCourtA]);
   const [lineupB, setLineupB] = useState<string[]>([...match.onCourtB]);
   const [step, setStep] = useState<1 | 2>(1);
+  const [manualArmadorA, setManualArmadorA] = useState<number | null>(null);
+  const [manualArmadorB, setManualArmadorB] = useState<number | null>(null);
+
   const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l.filter(Boolean)).size === 6;
   const validA = validSide(lineupA);
   const validB = validSide(lineupB);
@@ -2558,6 +2561,9 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const team = step === 1 ? teamA : teamB;
   const lineup = step === 1 ? lineupA : lineupB;
   const setLineup = step === 1 ? setLineupA : setLineupB;
+  const manualArmador = step === 1 ? manualArmadorA : manualArmadorB;
+  const setManualArmador = step === 1 ? setManualArmadorA : setManualArmadorB;
+
   const stepValid = step === 1 ? validA : validB;
   const filled = lineup.filter(Boolean).length;
   const [pickingSlot, setPickingSlot] = useState<number | null>(null);
