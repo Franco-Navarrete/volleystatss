@@ -2688,7 +2688,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           const roleOrder = ["A", "C1/L", "P2", "O", "C2", "P1"];
           const armadorSlot = lineup.findIndex((pid) => {
             const pl = team.players.find((x) => x.id === pid);
-            return pl?.position?.startsWith("armador");
+            return pl?.position === "armador";
           });
           const armadorPos = armadorSlot >= 0 ? armadorSlot + 1 : -1;
           const roleFor = (slotIdx: number): string | null => {
