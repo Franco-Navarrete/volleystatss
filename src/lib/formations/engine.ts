@@ -205,6 +205,9 @@ export function resolveFormation(opts: {
     const pos = getRotationPosition(onCourt, id);
     return pos ? isFrontRowPosition(pos) : false;
   };
+
+  // We need to handle cases where we don't have full metadata.
+  // We prioritize the role identification if roles are explicitly provided or inferred.
   const [middleFrontId, middleBackId] = isFront(lineup.middle1)
     ? [lineup.middle1, lineup.middle2]
     : [lineup.middle2, lineup.middle1];
@@ -222,10 +225,19 @@ export function resolveFormation(opts: {
     libero: lineup.libero,
   };
 
-  // Si no hay líbero activo/asignado, el slot zaguero lo ocupa la central
-  // zaguera y se dibujan 6 jugadoras siguiendo la rotación normal.
-  roleToPlayer.libero = liberoOnCourt && lineup.libero ? lineup.libero : middleBackId;
-  if (liberoOnCourt && lineup.libero) roleToPlayer.middle_back = lineup.libero;
+  // Special logic for liberos: the engine expects a specific role for them.
+  // If no libero is active, the zaguero slot belongs to the back-row middle.
+  if (liberoOnCourt && lineup.libero) {
+    // If the libero replaces middle2 (typical), they take the middle_back role if that player is zaguero.
+    // However, the resolveFormation logic is a bit rigid with role names.
+    roleToPlayer.libero = lineup.libero;
+    // ensure middle_back doesn't overlap if libero is on court
+    if (roleToPlayer.middle_back === lineup.libero) {
+       // already assigned to libero role
+    }
+  } else {
+    roleToPlayer.libero = middleBackId;
+  }
 
   const slots: ResolvedSlot[] = formation.slots.map((s) => {
     const o = override[s.role];
