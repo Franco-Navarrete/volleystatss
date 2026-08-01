@@ -811,6 +811,17 @@ function replayMatch(m: Match): {
   }
   onCourtA = repairOnCourt(m.id, "A", onCourtA, lineupFor(currentSet, "A"));
   onCourtB = repairOnCourt(m.id, "B", onCourtB, lineupFor(currentSet, "B"));
+  
+  // Si estamos en un set cuya formación fue confirmada pero no hay eventos de marcador ni cambio,
+  // la formación actual DEBE ser la que se configuró en lineupsBySet.
+  const hasEventsInSet = m.events.some(e => ("setNumber" in e) && e.setNumber === currentSet);
+  if (!hasEventsInSet && m.confirmedLineupSets?.includes(currentSet)) {
+    const lA = m.lineupsBySet?.[currentSet]?.A;
+    if (lA) onCourtA = [...lA];
+    const lB = m.lineupsBySet?.[currentSet]?.B;
+    if (lB) onCourtB = [...lB];
+  }
+
   return { sets, currentSet, status, onCourtA, onCourtB, servingSide, liberoActiveA: liberoA, liberoActiveB: liberoB };
 }
 
@@ -1079,7 +1090,8 @@ export const useVolley = create<VolleyState>()(
             lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: lineup };
             const next = { ...m, lineupsBySet };
             const withAuto = applyAutoLibero(next, s.teams);
-            return { ...withAuto, status: m.status };
+            const r = replayMatch(next);
+            return { ...next, ...r, status: m.status };
           }),
         })),
 
