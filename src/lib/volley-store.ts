@@ -1079,7 +1079,8 @@ export const useVolley = create<VolleyState>()(
             lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: lineup };
             const next = { ...m, lineupsBySet };
             const withAuto = applyAutoLibero(next, s.teams);
-            return { ...withAuto, status: m.status };
+            const r = replayMatch(next);
+            return { ...next, ...r, status: m.status };
           }),
         })),
 
