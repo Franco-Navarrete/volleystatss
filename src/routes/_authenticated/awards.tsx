@@ -59,13 +59,9 @@ function AwardsPage() {
   // Filter teams first to scope which players count.
   const scopedTeams = useMemo(() => {
     return teams.filter((t) => {
-      // Coach restriction: only same league as their club(s) if not admin
+      // Restricción Coach: solo ver premios relacionados a su club (sus equipos propiedad)
       if (!isAdmin && user) {
-        const myTeams = teams.filter((team) => team.ownerId === user.id);
-        const myLeagueIds = new Set(myTeams.map((team) => team.leagueId).filter(Boolean));
-        if (myLeagueIds.size > 0 && (!t.leagueId || !myLeagueIds.has(t.leagueId))) {
-          return false;
-        }
+        if (t.ownerId !== user.id) return false;
       }
 
       if (leagueFilter !== "all" && t.leagueId !== leagueFilter) return false;
