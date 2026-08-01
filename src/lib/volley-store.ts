@@ -1100,7 +1100,11 @@ export const useVolley = create<VolleyState>()(
         set((s) => ({
           matches: s.matches.map((m) =>
             m.id === matchId
-              ? { ...m, confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), m.currentSet])] }
+              ? {
+                  ...m,
+                  confirmedLineupSets: [...new Set([...(m.confirmedLineupSets ?? []), m.currentSet])],
+                  lastLocalChange: Date.now()
+                }
               : m
           ),
         })),
