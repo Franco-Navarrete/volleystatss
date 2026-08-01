@@ -23,6 +23,35 @@
  */
 
 /**
+ * Corregir la lógica de rotación del sistema 5-1.
+ *
+ * Actualmente solo rota el armador y el resto de los jugadores permanece fijo en sus posiciones. Esto es incorrecto.
+ *
+ * Implementar la rotación oficial del voleibol:
+ *
+ *  Al recuperar el saque, los seis jugadores deben rotar una posición en sentido horario.
+ *
+ *  Cada jugador mantiene su rol original (Armador, Central 1, Central 2, Punta 1, Punta 2 u Opuesto).
+ *
+ *  Lo único que cambia es la posición (P1–P6).
+ *
+ *  La visualización debe reconstruirse utilizando la nueva posición de cada jugador.
+ *
+ * La rotación debe seguir esta secuencia:
+ *
+ * P1 → P6
+ * P6 → P5
+ * P5 → P4
+ * P4 → P3
+ * P3 → P2
+ * P2 → P1
+ *
+ * Después de cada rotación, todos los indicadores (P1, P2, C1, C2, O y Armador) deben desplazarse junto con el jugador correspondiente.
+ *
+ * No debe existir ninguna lógica especial que deje fijos al C1, C2, Punta 1, Punta 2 u Opuesto. Todos los jugadores rotan exactamente igual que en un partido oficial de voleibol. Solo la posición cambia; el rol del jugador permanece constante.
+ */
+
+/**
  * 1. Rol Entrenador (Espacio "Mi Club")
  * Cada usuario con el rol Coach / Entrenador contará con un espacio centralizado llamado "Mi Club" para gestionar su información deportiva.
  * Podrá administrar únicamente la información de los clubes a los que fue asignado.
