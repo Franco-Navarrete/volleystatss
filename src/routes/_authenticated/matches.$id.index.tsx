@@ -2962,14 +2962,24 @@ function LineupSlotCell({ label, sub, role, teamColor, player, onOpen, onClear, 
         </div>
       )}
       {player && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onClear(); }}
-          title="Quitar"
-          className="absolute bottom-1 right-1 text-muted-foreground hover:text-destructive z-10"
-        >
-          <X className="size-3.5" />
-        </button>
+        <div className="absolute bottom-1 right-1 flex items-center gap-1 z-10">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onSetArmador(); }}
+            title="Marcar como Armador"
+            className={`transition-colors ${role === "A" ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}`}
+          >
+            <Star className={role === "A" ? "fill-current size-3" : "size-3"} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onClear(); }}
+            title="Quitar"
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
       )}
       <button type="button" onClick={onOpen} className="flex-1 flex flex-col items-center justify-center gap-1 w-full rounded hover:bg-background/30 transition-colors pt-3">
         {player ? (
