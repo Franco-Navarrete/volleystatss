@@ -50,8 +50,15 @@ function LeaguePage() {
 
   const filteredTeams = useMemo(() => {
     return teams.filter((t) => {
-      // Si es entrenador (no admin), filtrar por propiedad de sus equipos en el dashboard
-      if (!isAdmin && isCoach && user?.id && t.ownerId !== user.id) return false;
+      // Si es entrenador (no admin), filtrar por los equipos que pertenecen a las mismas ligas que sus equipos propios
+      if (!isAdmin && isCoach && user?.id) {
+        const myOwnedLeagueIds = new Set(
+          teams.filter((team) => team.ownerId === user.id && team.leagueId).map((team) => team.leagueId)
+        );
+        // Si no tiene ligas, solo ve los suyos (fallback)
+        if (myOwnedLeagueIds.size > 0 && (!t.leagueId || !myOwnedLeagueIds.has(t.leagueId))) return false;
+        if (myOwnedLeagueIds.size === 0 && t.ownerId !== user.id) return false;
+      }
       if (genderFilter !== "all" && t.gender !== genderFilter) return false;
       if (leagueFilter !== "all" && t.leagueId !== leagueFilter) return false;
       return true;
@@ -61,8 +68,27 @@ function LeaguePage() {
   const standings = useMemo(() => computeStandings(filteredTeams, matches), [filteredTeams, matches]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
-  const finished = matches.filter((m) => m.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
-  const upcoming = matches.filter((m) => m.status !== "finished").sort((a, b) => a.scheduledAt - b.scheduledAt);
+  const filteredMatches = useMemo(() => {
+    if (isAdmin || !user || !isCoach) return matches;
+    
+    const myOwnedLeagueIds = new Set(
+      teams.filter((t) => t.ownerId === user.id && t.leagueId).map((t) => t.leagueId)
+    );
+    
+    return matches.filter(m => {
+      const teamA = teamById.get(m.teamAId);
+      const teamB = teamById.get(m.teamBId);
+      
+      // Si alguno de los equipos pertenece a una de las ligas del entrenador, el partido es visible
+      const leagueA = teamA?.leagueId;
+      const leagueB = teamB?.leagueId;
+      
+      return (leagueA && myOwnedLeagueIds.has(leagueA)) || (leagueB && myOwnedLeagueIds.has(leagueB));
+    });
+  }, [matches, teams, isAdmin, isCoach, user, teamById]);
+
+  const finished = filteredMatches.filter((m) => m.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
+  const upcoming = filteredMatches.filter((m) => m.status !== "finished").sort((a, b) => a.scheduledAt - b.scheduledAt);
 
   return (
     <AppShell>
