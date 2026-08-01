@@ -45,14 +45,15 @@ function NewMatch() {
     
     // Si es Coach, filtramos según la visión Saas
     if (!isAdmin && isCoach) {
-      // Mis ligas (basadas en mis equipos)
-      const myTeams = teams.filter(t => t.ownerId === user?.id);
-      const myLeagueIds = new Set(myTeams.filter(t => t.leagueId).map(t => t.leagueId));
+      // Mis equipos propiedad
+      const myOwnedTeams = teams.filter(t => t.ownerId === user?.id);
+      const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
+      const myLeagueIds = new Set(myOwnedTeams.filter(t => t.leagueId).map(t => t.leagueId));
       
       list = list.filter(t => {
-        // Mi equipo
-        if (t.ownerId === user?.id) return true;
-        // Equipo de mi misma liga
+        // Mi equipo propiedad
+        if (myOwnedTeamIds.has(t.id)) return true;
+        // Equipo de mi misma liga (para permitir elegir rivales)
         if (t.leagueId && myLeagueIds.has(t.leagueId)) return true;
         return false;
       });

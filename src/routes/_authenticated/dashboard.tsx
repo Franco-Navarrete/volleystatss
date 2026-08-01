@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Plus, Trophy } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
+import { useIsAdmin } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -43,13 +45,18 @@ function LeaguePage() {
     if (teams.length >= 2 && matches.length === 0) seedMatch();
   }, [teams.length, matches.length, seedMatch]);
 
+  const { isAdmin, user } = useIsAdmin();
+  const { hasAccess: isCoach } = useCoachAccess();
+
   const filteredTeams = useMemo(() => {
     return teams.filter((t) => {
+      // Si es entrenador (no admin), filtrar por propiedad de sus equipos en el dashboard
+      if (!isAdmin && isCoach && user?.id && t.ownerId !== user.id) return false;
       if (genderFilter !== "all" && t.gender !== genderFilter) return false;
       if (leagueFilter !== "all" && t.leagueId !== leagueFilter) return false;
       return true;
     });
-  }, [teams, genderFilter, leagueFilter]);
+  }, [teams, genderFilter, leagueFilter, isAdmin, isCoach, user?.id]);
 
   const standings = useMemo(() => computeStandings(filteredTeams, matches), [filteredTeams, matches]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);

@@ -32,13 +32,13 @@ export function LiveMatchesFeed() {
     // Los admins ven todo el feed global
     if (isAdmin) return rawItems;
     
-    // Si es coach, filtramos el feed global para mostrar solo partidos de sus equipos
+    // Si es coach, filtramos el feed global para mostrar solo partidos de sus equipos propiedad
     if (isCoach && user) {
-      const myTeamIds = new Set(myTeams.map(t => t.id));
+      const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
       return rawItems.filter(m => {
         const idA = m.teamA?.id;
         const idB = m.teamB?.id;
-        return (idA && myTeamIds.has(idA)) || (idB && myTeamIds.has(idB));
+        return (idA && myOwnedTeamIds.has(idA)) || (idB && myOwnedTeamIds.has(idB));
       });
     }
     

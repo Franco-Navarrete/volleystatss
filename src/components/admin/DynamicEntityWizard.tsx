@@ -251,16 +251,14 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
           const newRoleId = changeRoleData.roleId;
           
           if (newRoleId === "admin") {
+            // Asignar Admin y limpiar roles extra (un admin no necesita roles extra en este modelo)
             await setRole({ data: { userId: targetEntity.id, isAdmin: true } });
+            await setExtraRole({ data: { userId: targetEntity.id, roles: [] } });
           } else {
-            // Primero nos aseguramos de que no sea admin global si estamos cambiando a otro rol
-            const wasAdmin = !!targetEntity.isAdmin;
-            if (wasAdmin) {
-              await setRole({ data: { userId: targetEntity.id, isAdmin: false } });
-            }
+            // Asegurar que NO sea admin global
+            await setRole({ data: { userId: targetEntity.id, isAdmin: false } });
             
             if (newRoleId !== "user") {
-              // Mapeo de roles internos a lo que espera adminSetExtraRole
               const roleMapping: Record<string, ExtraRole> = {
                 "scorekeeper": "planillero",
                 "coach": "entrenador",
@@ -272,12 +270,8 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
               
               const extraRole = roleMapping[newRoleId] || (newRoleId as ExtraRole);
               await setExtraRole({ data: { userId: targetEntity.id, roles: [extraRole] } });
-            } else if (wasAdmin) {
-              // Si era admin y pasó a "user", ya quitamos el admin arriba, 
-              // solo nos aseguramos de limpiar extras si los tuviera
-              await setExtraRole({ data: { userId: targetEntity.id, roles: [] } });
             } else {
-              // Si no era admin y pasa a "user", simplemente limpiamos extras
+              // Si es Usuario Estándar, limpiar todo
               await setExtraRole({ data: { userId: targetEntity.id, roles: [] } });
             }
           }
