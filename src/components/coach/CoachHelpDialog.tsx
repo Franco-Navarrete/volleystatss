@@ -100,6 +100,11 @@ export function CoachHelpDialog() {
           campo. Presioná <kbd className="font-mono">F1</kbd> para abrir/cerrar
           este panel.
         </p>
+        <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+          <p className="text-[11px] leading-relaxed text-muted-foreground italic">
+            <strong>Tip defensivo:</strong> Tengamos en cuenta que el Líbero y/o Central siempre en la defensa luego de la recepción se va a posición cinco. El punta zaguero a P6 y el armador/opuesto a P1.
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );
