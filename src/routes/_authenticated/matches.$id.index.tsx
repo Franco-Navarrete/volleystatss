@@ -2345,10 +2345,10 @@ function FormationSide({
                 isReceiverHighlight={isReceiverHighlight}
                 active={!!activePlayerId && activePlayerId === p.id}
                 dimmed={!onCourtActive}
-                className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""}`}
+                className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""} ${isOpponentSetter ? "ring-4 ring-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.8)] rounded-full" : ""}`}
               />
               {isOpponentSetter && (
-                <div className="absolute -top-1 -right-1 z-20 bg-primary rounded-full p-0.5 border border-white shadow-sm">
+                <div className="absolute -top-1 -right-1 z-20 bg-orange-500 rounded-full p-0.5 border border-white shadow-sm ring-2 ring-orange-500/50">
                   <Target className="size-2.5 text-white" />
                 </div>
               )}
