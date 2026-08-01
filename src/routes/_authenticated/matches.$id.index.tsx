@@ -2550,11 +2550,24 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   match: Match; teamA: Team; teamB: Team;
   onSave: (lineupA: string[], lineupB: string[]) => void;
 }) {
-  const [lineupA, setLineupA] = useState<string[]>([...match.onCourtA]);
-  const [lineupB, setLineupB] = useState<string[]>([...match.onCourtB]);
+  const currentSetLineup = match.lineupsBySet?.[match.currentSet];
+  const [lineupA, setLineupA] = useState<string[]>(currentSetLineup?.A ? [...currentSetLineup.A] : [...match.onCourtA]);
+  const [lineupB, setLineupB] = useState<string[]>(currentSetLineup?.B ? [...currentSetLineup.B] : [...match.onCourtB]);
   const [step, setStep] = useState<1 | 2>(1);
-  const [manualArmadorA, setManualArmadorA] = useState<number | null>(null);
-  const [manualArmadorB, setManualArmadorB] = useState<number | null>(null);
+  const [manualArmadorA, setManualArmadorA] = useState<number | null>(() => {
+    if (currentSetLineup?.A) {
+      const idx = currentSetLineup.A.findIndex(pid => teamA.players.find(p => p.id === pid)?.position === 'armador');
+      return idx >= 0 ? idx : null;
+    }
+    return null;
+  });
+  const [manualArmadorB, setManualArmadorB] = useState<number | null>(() => {
+    if (currentSetLineup?.B) {
+      const idx = currentSetLineup.B.findIndex(pid => teamB.players.find(p => p.id === pid)?.position === 'armador');
+      return idx >= 0 ? idx : null;
+    }
+    return null;
+  });
 
   const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l.filter(Boolean)).size === 6;
   const validA = validSide(lineupA);
