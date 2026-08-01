@@ -65,8 +65,6 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "outside_back", x: 80, y: 60 },
       { role: "libero", x: 48, y: 68 },
       { role: "opposite", x: 18, y: 62 },
-      { role: "libero", x: 48, y: 68 },
-      { role: "opposite", x: 18, y: 62 },
     ],
   },
 
