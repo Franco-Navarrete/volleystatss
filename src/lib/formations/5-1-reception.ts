@@ -24,17 +24,12 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     setterTarget: { x: 70, y: 15 },
     attackers: ["outside_back", "middle_front", "opposite", "outside_front"],
     slots: [
-      // Armadora penetrando desde P1 hacia Z2 (pegada a la red).
       { role: "setter", x: 72, y: 30 },
-      // Opuesto ataca por zona 4 (frente izquierda).
       { role: "opposite", x: 15, y: 12 },
-      // Central delantera cubre zona 3.
       { role: "middle_front", x: 45, y: 12 },
-      // P1 (punta zaguera) sube a atacar por zona 2 (frente derecha).
+      { role: "middle_back", x: 55, y: 70 },
       { role: "outside_back", x: 90, y: 12 },
-      // P2 (punta delantera) recibe abierto por izquierda.
       { role: "outside_front", x: 20, y: 60 },
-      // Líbero recibe al centro-atrás.
       { role: "libero", x: 55, y: 70 },
     ],
   },
@@ -46,17 +41,12 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     setterTarget: { x: 80, y: 15 },
     attackers: ["middle_front", "outside_front", "outside_back", "opposite"],
     slots: [
-      // Armadora pegada a la red en Z2.
       { role: "setter", x: 88, y: 12 },
-      // Central delantera en Z3.
       { role: "middle_front", x: 50, y: 12 },
-      // Punta delantera (P3→ataca por Z4) pegada a la red-izquierda.
+      { role: "middle_back", x: 45, y: 65 },
       { role: "outside_front", x: 15, y: 12 },
-      // Punta zaguera (P1) recibe abierto por la derecha.
       { role: "outside_back", x: 78, y: 55 },
-      // Líbero recibe al centro.
       { role: "libero", x: 45, y: 65 },
-      // Opuesto (zaguero P6/P5) recibe por izquierda.
       { role: "opposite", x: 18, y: 60 },
     ],
   },
@@ -68,17 +58,12 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     setterTarget: { x: 65, y: 15 },
     attackers: ["outside_front", "middle_front", "outside_back", "opposite"],
     slots: [
-      // Armadora pegada a la red, sale levemente a la derecha para armar.
       { role: "setter", x: 65, y: 12 },
-      // Central delantera al lado, cubre Z3-izquierda.
       { role: "middle_front", x: 35, y: 12 },
-      // Punta delantera pegada a la red por Z4.
+      { role: "middle_back", x: 48, y: 68 },
       { role: "outside_front", x: 12, y: 12 },
-      // Punta zaguera recibe por la derecha.
       { role: "outside_back", x: 80, y: 60 },
-      // Líbero recibe al centro.
       { role: "libero", x: 48, y: 68 },
-      // Opuesto (zaguero) recibe por izquierda.
       { role: "opposite", x: 18, y: 62 },
     ],
   },
@@ -90,13 +75,10 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     setterTarget: { x: 55, y: 15 },
     attackers: ["middle_front", "outside_back", "opposite", "outside_front"],
     slots: [
-      // Armadora pegada a la red por Z4.
       { role: "setter", x: 15, y: 12 },
-      // Central delantera al lado, cubre Z3.
       { role: "middle_front", x: 45, y: 12 },
-      // Punta delantera pegada a la red por Z2 (única atacante de red derecha).
+      { role: "middle_back", x: 55, y: 70 },
       { role: "outside_front", x: 85, y: 12 },
-      // Receptores en W:
       { role: "outside_back", x: 25, y: 60 },
       { role: "libero", x: 55, y: 70 },
       { role: "opposite", x: 82, y: 60 },
@@ -110,18 +92,13 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     setterTarget: { x: 60, y: 15 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      // Armadora penetra hacia el centro pegada a la red.
       { role: "setter", x: 55, y: 30 },
-      // Opuesto pegado a la red en Z2 (delantero derecha).
       { role: "opposite", x: 88, y: 12 },
-      // Central delantera en Z3.
       { role: "middle_front", x: 50, y: 12 },
-      // Punta delantera en Z4 pegada a la red.
       { role: "outside_front", x: 12, y: 12 },
-      // Receptores (líbero centro-atrás, punta zaguera y opuesta) en W.
+      { role: "middle_back", x: 50, y: 75 },
       { role: "outside_back", x: 25, y: 65 },
       { role: "libero", x: 78, y: 65 },
-      { role: "opposite", x: 50, y: 75 },
     ],
   },
 
@@ -132,18 +109,13 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     setterTarget: { x: 65, y: 15 },
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
-      // Armadora penetra desde P6 y se ubica pegada a la red, centro-derecha.
       { role: "setter", x: 62, y: 25 },
-      // Opuesto pegado a la red en Z2.
       { role: "opposite", x: 88, y: 12 },
-      // Central delantera en Z3.
       { role: "middle_front", x: 40, y: 12 },
-      // Punta delantera en Z4.
       { role: "outside_front", x: 12, y: 12 },
-      // Receptores en W:
+      { role: "middle_back", x: 80, y: 60 },
       { role: "outside_back", x: 20, y: 60 },
       { role: "libero", x: 55, y: 72 },
-      { role: "opposite", x: 80, y: 60 },
     ],
   },
 };

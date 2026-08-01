@@ -205,15 +205,19 @@ export function resolveFormation(opts: {
     const pos = getRotationPosition(onCourt, id);
     return pos ? isFrontRowPosition(pos) : false;
   };
+  
+  // Find which of the middle/outside players are in front row vs back row positions.
+  // This ensures that even as they rotate through all 6 positions, the engine
+  // maps the correct player to the "front" or "back" slot in the tactical diagram.
+  const middle1Info = getPlayerRotationInfo(onCourt, lineup.middle1 || "");
+  const middle2Info = getPlayerRotationInfo(onCourt, lineup.middle2 || "");
+  const outside1Info = getPlayerRotationInfo(onCourt, lineup.outside1 || "");
+  const outside2Info = getPlayerRotationInfo(onCourt, lineup.outside2 || "");
 
-  // We need to handle cases where we don't have full metadata.
-  // We prioritize the role identification if roles are explicitly provided or inferred.
-  const [middleFrontId, middleBackId] = isFront(lineup.middle1)
-    ? [lineup.middle1, lineup.middle2]
-    : [lineup.middle2, lineup.middle1];
-  const [outsideFrontId, outsideBackId] = isFront(lineup.outside1)
-    ? [lineup.outside1, lineup.outside2]
-    : [lineup.outside2, lineup.outside1];
+  const middleFrontId = middle1Info?.isFrontRow ? lineup.middle1 : (middle2Info?.isFrontRow ? lineup.middle2 : (middle1Info ? lineup.middle2 : lineup.middle1));
+  const middleBackId = middle1Info?.isBackRow ? lineup.middle1 : (middle2Info?.isBackRow ? lineup.middle2 : (middle1Info ? lineup.middle2 : lineup.middle1));
+  const outsideFrontId = outside1Info?.isFrontRow ? lineup.outside1 : (outside2Info?.isFrontRow ? lineup.outside2 : (outside1Info ? lineup.outside2 : lineup.outside1));
+  const outsideBackId = outside1Info?.isBackRow ? lineup.outside1 : (outside2Info?.isBackRow ? lineup.outside2 : (outside1Info ? lineup.outside2 : lineup.outside1));
 
   const roleToPlayer: Partial<Record<TacticalRole, string | undefined>> = {
     setter: lineup.setter,
@@ -225,17 +229,12 @@ export function resolveFormation(opts: {
     libero: lineup.libero,
   };
 
-  // Special logic for liberos: the engine expects a specific role for them.
-  // If no libero is active, the zaguero slot belongs to the back-row middle.
+  // Special logic for liberos: if active, they take the place of the middle who is in the back row.
   if (liberoOnCourt && lineup.libero) {
-    // If the libero replaces middle2 (typical), they take the middle_back role if that player is zaguero.
-    // However, the resolveFormation logic is a bit rigid with role names.
     roleToPlayer.libero = lineup.libero;
-    // ensure middle_back doesn't overlap if libero is on court
-    if (roleToPlayer.middle_back === lineup.libero) {
-       // already assigned to libero role
-    }
+    // The middle_back slot in the formation is usually where the libero sits.
   } else {
+    // If no libero, middle_back is just the middle player who is in the back row.
     roleToPlayer.libero = middleBackId;
   }
 

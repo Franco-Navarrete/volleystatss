@@ -45,6 +45,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
       { role: "setter", ...P.p1 },
       { role: "opposite", ...P.z2 },
       { role: "middle_front", ...P.z3 },
+      { role: "middle_back", ...P.p5 },
       { role: "outside_front", ...P.z4 },
       { role: "outside_back", ...P.p6 },
       { role: "libero", ...P.p5 },
@@ -60,6 +61,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
     slots: [
       { role: "setter", ...P.z2 },
       { role: "middle_front", ...P.z3 },
+      { role: "middle_back", ...P.p5 },
       { role: "outside_front", ...P.z4 },
       { role: "opposite", ...P.p1 },
       { role: "outside_back", ...P.p6 },
@@ -77,6 +79,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
     slots: [
       { role: "setter", ...P.z2 },
       { role: "middle_front", ...P.z3 },
+      { role: "middle_back", ...P.p5 },
       { role: "outside_front", ...P.z4 },
       { role: "opposite", ...P.p1 },
       { role: "outside_back", ...P.p6 },
@@ -94,6 +97,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
     slots: [
       { role: "setter", ...P.z2 },
       { role: "middle_front", ...P.z3 },
+      { role: "middle_back", ...P.p5 },
       { role: "outside_front", ...P.z4 },
       { role: "opposite", ...P.p1 },
       { role: "outside_back", ...P.p6 },
@@ -111,6 +115,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
       { role: "setter", ...P.p1 },
       { role: "opposite", ...P.z2 },
       { role: "middle_front", ...P.z3 },
+      { role: "middle_back", ...P.p5 },
       { role: "outside_front", ...P.z4 },
       { role: "outside_back", ...P.p6 },
       { role: "libero", ...P.p5 },
@@ -127,6 +132,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
       { role: "setter", ...P.p1 },
       { role: "opposite", ...P.z2 },
       { role: "middle_front", ...P.z3 },
+      { role: "middle_back", ...P.p5 },
       { role: "outside_front", ...P.z4 },
       { role: "outside_back", ...P.p6 },
       { role: "libero", ...P.p5 },
