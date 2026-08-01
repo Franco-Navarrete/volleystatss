@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Radio } from "lucide-react";
 import { listLivePublicMatches } from "@/lib/public-match.functions";
-import type { MatchSet } from "@/lib/volley-store";
+import { useVolley, type MatchSet } from "@/lib/volley-store";
+import { useIsAdmin, useAuthUser } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useMemo } from "react";
 
 /**
  * Feed de partidos EN VIVO compartidos públicamente.
@@ -12,6 +15,11 @@ import type { MatchSet } from "@/lib/volley-store";
  */
 export function LiveMatchesFeed() {
   const fetchLive = useServerFn(listLivePublicMatches);
+  const { isAdmin } = useIsAdmin();
+  const { hasAccess: isCoach } = useCoachAccess();
+  const { user } = useAuthUser();
+  const myTeams = useVolley((s) => s.teams);
+  
   const { data, isLoading } = useQuery({
     queryKey: ["live-public-matches"],
     queryFn: () => fetchLive(),
@@ -19,7 +27,22 @@ export function LiveMatchesFeed() {
     refetchIntervalInBackground: false,
   });
 
-  const items = data ?? [];
+  const items = useMemo(() => {
+    const rawItems = data ?? [];
+    // Los admins ven todo el feed global
+    if (isAdmin) return rawItems;
+    
+    // Si es coach, filtramos el feed global para mostrar solo partidos de sus equipos
+    if (isCoach && user) {
+      const myTeamIds = new Set(myTeams.map(t => t.id));
+      return rawItems.filter(m => 
+        myTeamIds.has(m.teamA?.id) || myTeamIds.has(m.teamB?.id)
+      );
+    }
+    
+    return rawItems;
+  }, [data, isAdmin, isCoach, user, myTeams]);
+
   if (isLoading && items.length === 0) return null;
   if (items.length === 0) return null;
 
