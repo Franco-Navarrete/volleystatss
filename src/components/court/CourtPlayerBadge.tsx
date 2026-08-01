@@ -474,6 +474,16 @@ export function CourtPlayerBadge({
             </span>
           )}
 
+          {player.position === "armador" && (
+            <span
+              className="absolute -top-1.5 -left-1.5 z-10 grid place-items-center size-5 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-md ring-2 ring-white"
+              style={{ background: "#f59e0b" }}
+              aria-label="Armador"
+            >
+              A
+            </span>
+          )}
+
           {isReceiverHighlight && (
             <span className="absolute -inset-1 rounded-full ring-2 ring-yellow-300 animate-pulse pointer-events-none" />
           )}
