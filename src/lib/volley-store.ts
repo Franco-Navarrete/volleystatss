@@ -659,6 +659,7 @@ interface VolleyState {
   ) => void;
 
   updateMatchFormat: (matchId: string, setsToWin: number, pointsPerSet: number) => void;
+  updateMatchMetadata: (matchId: string, metadata: Record<string, any>) => void;
   overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
   reclassifyPointEvent: (
@@ -1431,6 +1432,14 @@ export const useVolley = create<VolleyState>()(
             const r = replayMatch(next);
             return { ...next, ...r };
           }),
+        }));
+      },
+      updateMatchMetadata: (matchId, metadata) => {
+        set((s) => ({
+          matches: s.matches.map((m) =>
+            m.id === matchId ? { ...m, metadata: { ...m.metadata, ...metadata } } : m
+          ),
+          lastLocalChange: Date.now(),
         }));
       },
 
