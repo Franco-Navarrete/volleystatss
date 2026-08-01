@@ -480,8 +480,8 @@ export interface Match {
   /** Timestamp (ms) when each set was started by the scorer. */
   setStartTimes?: Record<number, number>;
   /** Líbero actualmente en cancha (computado por replayMatch). */
-  liberoActiveA?: { liberoId: string; replacedId: string } | null;
-  liberoActiveB?: { liberoId: string; replacedId: string } | null;
+  liberoActiveA?: { liberoId: string; replacedPlayerId: string } | null;
+  liberoActiveB?: { liberoId: string; replacedPlayerId: string } | null;
   /** Información oficial del encuentro. */
   category?: string;
   mainRefereeName?: string;
@@ -712,8 +712,8 @@ function replayMatch(m: Match): {
   onCourtA: string[];
   onCourtB: string[];
   servingSide: "A" | "B";
-  liberoActiveA: { liberoId: string; replacedId: string } | null;
-  liberoActiveB: { liberoId: string; replacedId: string } | null;
+  liberoActiveA: { liberoId: string; replacedPlayerId: string } | null;
+  liberoActiveB: { liberoId: string; replacedPlayerId: string } | null;
 } {
   const lineupFor = (setNum: number, side: "A" | "B"): string[] =>
     m.lineupsBySet?.[setNum]?.[side] ?? (side === "A" ? m.startingLineupA : m.startingLineupB);
@@ -723,8 +723,8 @@ function replayMatch(m: Match): {
   let onCourtA = [...lineupFor(1, "A")];
   let onCourtB = [...lineupFor(1, "B")];
   let servingSide: "A" | "B" = m.initialServingSide;
-  let liberoA: { liberoId: string; replacedId: string } | null = null;
-  let liberoB: { liberoId: string; replacedId: string } | null = null;
+  let liberoA: { liberoId: string; replacedPlayerId: string } | null = null;
+  let liberoB: { liberoId: string; replacedPlayerId: string } | null = null;
   const targetFor = (setNum: number) => {
     // Set decisivo (tie-break) siempre a 15 con diferencia de 2
     const decidingSet = m.setsToWin * 2 - 1;
@@ -735,15 +735,19 @@ function replayMatch(m: Match): {
   // sale automáticamente y vuelve la jugadora reemplazada al mismo slot.
   // El líbero cubre a la central en toda la zaga (Z1, Z6, Z5) y sólo sale al
   // subir a Z4 para atacar/bloquear.
-  const autoOutIfExit = (side: "A" | "B") => {
+  const syncLiberoAfterRotation = (side: "A" | "B") => {
     const lib = side === "A" ? liberoA : liberoB;
-    if (!lib) return;
     const arr = side === "A" ? onCourtA : onCourtB;
-    const idx = arr.indexOf(lib.liberoId);
-    if (LIBERO_EXIT_INDEXES.has(idx)) {
-      const next = arr.map((p, i) => (i === idx ? lib.replacedId : p));
-      if (side === "A") { onCourtA = next; liberoA = null; }
-      else { onCourtB = next; liberoB = null; }
+    
+    if (lib) {
+      const idx = arr.indexOf(lib.liberoId);
+      // REGLA: Si el líbero pasa a delantera (Z4, Z3 o Z2), sale automáticamente.
+      // Índices: 1=Z2, 2=Z3, 3=Z4.
+      if (idx !== -1 && LIBERO_EXIT_INDEXES.has(idx)) {
+        const next = arr.map((p, i) => (i === idx ? lib.replacedPlayerId : p));
+        if (side === "A") { onCourtA = next; liberoA = null; }
+        else { onCourtB = next; liberoB = null; }
+      }
     }
   };
 
@@ -756,10 +760,10 @@ function replayMatch(m: Match): {
         if (ev.action === "in") {
           if (ev.side === "A") {
             onCourtA = onCourtA.map((p) => (p === ev.replacedId ? ev.liberoId : p));
-            liberoA = { liberoId: ev.liberoId, replacedId: ev.replacedId };
+            liberoA = { liberoId: ev.liberoId, replacedPlayerId: ev.replacedId };
           } else {
             onCourtB = onCourtB.map((p) => (p === ev.replacedId ? ev.liberoId : p));
-            liberoB = { liberoId: ev.liberoId, replacedId: ev.replacedId };
+            liberoB = { liberoId: ev.liberoId, replacedPlayerId: ev.replacedId };
           }
         } else {
           // out / auto_out: vuelve el reemplazado al slot del líbero
@@ -775,7 +779,7 @@ function replayMatch(m: Match): {
         if (ev.side === "A") { onCourtA = [...ev.lineup]; liberoA = null; }
         else { onCourtB = [...ev.lineup]; liberoB = null; }
       }
-      autoOutIfExit(ev.side);
+      syncLiberoAfterRotation(ev.side);
       continue;
     }
     const cur = sets[sets.length - 1];
@@ -787,8 +791,8 @@ function replayMatch(m: Match): {
       else onCourtB = rotateClockwise(onCourtB);
       servingSide = ev.scoringSide;
     }
-    autoOutIfExit("A");
-    autoOutIfExit("B");
+    syncLiberoAfterRotation("A");
+    syncLiberoAfterRotation("B");
     const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
@@ -881,6 +885,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
   let r = replayMatch(next);
   next = { ...next, ...r };
   if (r.status === "finished") return next;
+  
   let changed = true;
   let safety = 6;
   while (changed && safety-- > 0) {
@@ -888,27 +893,35 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
     for (const side of ["A", "B"] as const) {
       const team = teams.find((t) => t.id === (side === "A" ? next.teamAId : next.teamBId));
       if (!team) continue;
+      
       const libIds = (
         side === "A"
           ? [next.liberoA1Id, next.liberoA2Id]
           : [next.liberoB1Id, next.liberoB2Id]
       ).filter(Boolean) as string[];
       if (libIds.length === 0) continue;
+      
       const libActive = side === "A" ? r.liberoActiveA : r.liberoActiveB;
       if (libActive) continue;
+      
       const onCourt = side === "A" ? r.onCourtA : r.onCourtB;
       const liberoId = libIds.find((id) => !onCourt.includes(id));
       if (!liberoId) continue;
+      
       const backIdxs = BACK_ROW_REPLACE_PRIORITY.filter((idx) => idx !== 0 || r.servingSide !== side);
       let replacedId: string | null = null;
       for (const i of backIdxs) {
-        const p = team.players.find((pp) => pp.id === onCourt[i]);
+        const playerId = onCourt[i];
+        const p = team.players.find((pp) => pp.id === playerId);
+        // REGLA: Solo reemplaza a centrales (CENTRAL)
         if (p?.position === "central") {
-          replacedId = onCourt[i];
+          replacedId = playerId;
           break;
         }
       }
+      
       if (!replacedId) continue;
+      
       const libEv: LiberoEvent = {
         id: uid(),
         kind: "libero",
@@ -1245,7 +1258,7 @@ export const useVolley = create<VolleyState>()(
               side,
               action: "out",
               liberoId: active.liberoId,
-              replacedId: active.replacedId,
+              replacedId: active.replacedPlayerId,
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
