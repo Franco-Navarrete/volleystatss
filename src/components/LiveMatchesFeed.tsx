@@ -36,8 +36,8 @@ export function LiveMatchesFeed() {
     if (isCoach && user) {
       const myTeamIds = new Set(myTeams.map(t => t.id));
       return rawItems.filter(m => {
-        const idA = m.teamA?.id;
-        const idB = m.teamB?.id;
+        const idA = m.teamAId || m.teamA?.id;
+        const idB = m.teamBId || m.teamB?.id;
         return (idA && myTeamIds.has(idA)) || (idB && myTeamIds.has(idB));
       });
     }
