@@ -1601,9 +1601,13 @@ function LiveMatch() {
                 if (setNotStarted) {
                   setSetLineup(match.id, "A", lineupA);
                   setSetLineup(match.id, "B", lineupB);
+                  if (manualArmadorA !== null) {
+                    updateMatchMetadata(match.id, { [`manualArmadorA_set${match.currentSet}`]: manualArmadorA });
+                  }
+                  if (manualArmadorB !== null) {
+                    updateMatchMetadata(match.id, { [`manualArmadorB_set${match.currentSet}`]: manualArmadorB });
+                  }
                   confirmSetLineup(match.id);
-                  // Ensure local state is updated to reflect persistent store
-                  // after confirmation so the UI doesn't look empty on reopen
                 } else {
                   overrideLineup(match.id, "A", lineupA);
                   overrideLineup(match.id, "B", lineupB);
@@ -2555,6 +2559,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const [lineupB, setLineupB] = useState<string[]>(currentSetLineup?.B ? [...currentSetLineup.B] : [...match.onCourtB]);
   const [step, setStep] = useState<1 | 2>(1);
   const [manualArmadorA, setManualArmadorA] = useState<number | null>(() => {
+    const fromMeta = match.metadata?.[`manualArmadorA_set${match.currentSet}`];
+    if (typeof fromMeta === 'number') return fromMeta;
     if (currentSetLineup?.A) {
       const idx = currentSetLineup.A.findIndex(pid => teamA.players.find(p => p.id === pid)?.position === 'armador');
       return idx >= 0 ? idx : null;
@@ -2562,6 +2568,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     return null;
   });
   const [manualArmadorB, setManualArmadorB] = useState<number | null>(() => {
+    const fromMeta = match.metadata?.[`manualArmadorB_set${match.currentSet}`];
+    if (typeof fromMeta === 'number') return fromMeta;
     if (currentSetLineup?.B) {
       const idx = currentSetLineup.B.findIndex(pid => teamB.players.find(p => p.id === pid)?.position === 'armador');
       return idx >= 0 ? idx : null;
