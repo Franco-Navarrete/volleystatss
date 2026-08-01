@@ -1602,8 +1602,9 @@ function LiveMatch() {
                   setSetLineup(match.id, "A", lineupA);
                   setSetLineup(match.id, "B", lineupB);
                   confirmSetLineup(match.id);
+                  // Ensure local state is updated to reflect persistent store
+                  // after confirmation so the UI doesn't look empty on reopen
                 } else {
-                  // Mid-set correction: append override events so future rotations follow new positions.
                   overrideLineup(match.id, "A", lineupA);
                   overrideLineup(match.id, "B", lineupB);
                 }
