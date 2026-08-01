@@ -108,7 +108,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
     attackers: ["outside_front", "middle_front", "opposite", "outside_back"],
     slots: [
       { role: "setter", ...P.p6 },
-      { role: "opposite", ...P.z1 },
+      { role: "opposite", ...P.p1 },
       { role: "middle_front", ...P.z3 },
       { role: "middle_back", ...P.p1 },
       { role: "outside_front", ...P.z4 },
