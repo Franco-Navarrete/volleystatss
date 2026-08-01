@@ -393,11 +393,13 @@ function TeamsPage() {
       // Regla SaaS:
       // 1. Si es admin, ve todo.
       // 2. Si es entrenador:
-      //    - Si no es su equipo Y no está en una de sus ligas, se oculta.
-      // Esto permite ver rivales en "Equipos" pero mantiene el aislamiento global.
+      //    - Si no es su equipo Y no está en una de sus ligas, se oculta (aislamiento global).
+      //    - Si es un rival de su liga, se permite ver en el listado general ("Equipos").
       if (!isAdmin && currentUserId) {
         const isMine = myOwnedTeamIds.has(t.id);
         const isLeagueRival = t.leagueId && myLeagueIds.has(t.leagueId);
+        
+        // Si no es mío y no es rival de mi liga, lo filtramos del sistema para este usuario.
         if (!isMine && !isLeagueRival) return false;
       }
 
