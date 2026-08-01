@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarDays, Plus, Trophy } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
+import { useIsAdmin } from "@/hooks/use-auth";
+import { useCoachAccess } from "@/hooks/use-coach-access";
 import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
