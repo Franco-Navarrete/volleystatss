@@ -1597,13 +1597,19 @@ function LiveMatch() {
               match={match}
               teamA={teamA}
               teamB={teamB}
-              onSave={(lineupA, lineupB) => {
+              onSave={(lineupA, lineupB, armadorA, armadorB) => {
+                const metadataUpdate: Record<string, any> = {};
+                if (armadorA !== null) metadataUpdate[`manualArmadorA_set${match.currentSet}`] = armadorA;
+                if (armadorB !== null) metadataUpdate[`manualArmadorB_set${match.currentSet}`] = armadorB;
+                
+                if (Object.keys(metadataUpdate).length > 0) {
+                  updateMatchMetadata(match.id, metadataUpdate);
+                }
+
                 if (setNotStarted) {
                   setSetLineup(match.id, "A", lineupA);
                   setSetLineup(match.id, "B", lineupB);
                   confirmSetLineup(match.id);
-                  // Ensure local state is updated to reflect persistent store
-                  // after confirmation so the UI doesn't look empty on reopen
                 } else {
                   overrideLineup(match.id, "A", lineupA);
                   overrideLineup(match.id, "B", lineupB);
@@ -2548,13 +2554,15 @@ function PositionBadge({ position }: { position?: PlayerPosition }) {
 
 function LineupEditor({ match, teamA, teamB, onSave }: {
   match: Match; teamA: Team; teamB: Team;
-  onSave: (lineupA: string[], lineupB: string[]) => void;
+  onSave: (lineupA: string[], lineupB: string[], armadorA: number | null, armadorB: number | null) => void;
 }) {
   const currentSetLineup = match.lineupsBySet?.[match.currentSet];
   const [lineupA, setLineupA] = useState<string[]>(currentSetLineup?.A ? [...currentSetLineup.A] : [...match.onCourtA]);
   const [lineupB, setLineupB] = useState<string[]>(currentSetLineup?.B ? [...currentSetLineup.B] : [...match.onCourtB]);
   const [step, setStep] = useState<1 | 2>(1);
   const [manualArmadorA, setManualArmadorA] = useState<number | null>(() => {
+    const fromMeta = match.metadata?.[`manualArmadorA_set${match.currentSet}`];
+    if (typeof fromMeta === 'number') return fromMeta;
     if (currentSetLineup?.A) {
       const idx = currentSetLineup.A.findIndex(pid => teamA.players.find(p => p.id === pid)?.position === 'armador');
       return idx >= 0 ? idx : null;
@@ -2562,6 +2570,8 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     return null;
   });
   const [manualArmadorB, setManualArmadorB] = useState<number | null>(() => {
+    const fromMeta = match.metadata?.[`manualArmadorB_set${match.currentSet}`];
+    if (typeof fromMeta === 'number') return fromMeta;
     if (currentSetLineup?.B) {
       const idx = currentSetLineup.B.findIndex(pid => teamB.players.find(p => p.id === pid)?.position === 'armador');
       return idx >= 0 ? idx : null;
@@ -2906,7 +2916,7 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         ) : (
           <Button
             disabled={!validA || !validB}
-            onClick={() => onSave(lineupA, lineupB)}
+            onClick={() => onSave(lineupA, lineupB, manualArmadorA, manualArmadorB)}
             className="flex-1 bg-gradient-primary text-primary-foreground"
           >
             Confirmar formación
