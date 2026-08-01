@@ -1598,15 +1598,17 @@ function LiveMatch() {
               teamA={teamA}
               teamB={teamB}
               onSave={(lineupA, lineupB, armadorA, armadorB) => {
+                const metadataUpdate: Record<string, any> = {};
+                if (armadorA !== null) metadataUpdate[`manualArmadorA_set${match.currentSet}`] = armadorA;
+                if (armadorB !== null) metadataUpdate[`manualArmadorB_set${match.currentSet}`] = armadorB;
+                
+                if (Object.keys(metadataUpdate).length > 0) {
+                  updateMatchMetadata(match.id, metadataUpdate);
+                }
+
                 if (setNotStarted) {
                   setSetLineup(match.id, "A", lineupA);
                   setSetLineup(match.id, "B", lineupB);
-                  if (armadorA !== null) {
-                    updateMatchMetadata(match.id, { [`manualArmadorA_set${match.currentSet}`]: armadorA });
-                  }
-                  if (armadorB !== null) {
-                    updateMatchMetadata(match.id, { [`manualArmadorB_set${match.currentSet}`]: armadorB });
-                  }
                   confirmSetLineup(match.id);
                 } else {
                   overrideLineup(match.id, "A", lineupA);
