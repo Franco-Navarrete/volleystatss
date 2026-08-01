@@ -77,13 +77,10 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
     setterTarget: { x: 55, y: 15 },
     attackers: ["middle_front", "outside_back", "opposite", "outside_front"],
     slots: [
-      // Armadora pegada a la red por Z4.
       { role: "setter", x: 15, y: 12 },
-      // Central delantera al lado, cubre Z3.
       { role: "middle_front", x: 45, y: 12 },
-      // Punta delantera pegada a la red por Z2 (única atacante de red derecha).
+      { role: "middle_back", x: 55, y: 70 },
       { role: "outside_front", x: 85, y: 12 },
-      // Receptores en W:
       { role: "outside_back", x: 25, y: 60 },
       { role: "libero", x: 55, y: 70 },
       { role: "opposite", x: 82, y: 60 },
