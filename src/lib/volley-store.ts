@@ -731,18 +731,19 @@ function replayMatch(m: Match): {
     return setNum === decidingSet ? 15 : m.pointsPerSet;
   };
 
-  // Tras cualquier recálculo: si el líbero quedó en primera línea (Z4/Z3/Z2),
-  // sale automáticamente y vuelve la jugadora reemplazada al mismo slot.
-  // El líbero cubre a la central en toda la zaga (Z1, Z6, Z5) y sólo sale al
-  // subir a Z4 para atacar/bloquear.
+  // Sincroniza el líbero basándose únicamente en los titulares actuales.
+  // El líbero entra por un central en zaga (1, 6, 5) y sale al rotar a delantera (4, 3, 2).
   const syncLiberoAfterRotation = (side: "A" | "B") => {
     const lib = side === "A" ? liberoA : liberoB;
     const arr = side === "A" ? onCourtA : onCourtB;
     
+    // Validamos que siempre haya 6 jugadores lógicos en los arreglos internos de replay.
+    if (arr.length !== 6) return;
+
     if (lib) {
       const idx = arr.indexOf(lib.liberoId);
-      // REGLA: Si el líbero pasa a delantera (Z4, Z3 o Z2), sale automáticamente.
-      // Índices: 1=Z2, 2=Z3, 3=Z4.
+      // REGLA FIVB: El líbero debe salir si su posición lógica pasa a ser delantera (4, 3 o 2).
+      // Índices en onCourt: 1=Z2, 2=Z3, 3=Z4.
       if (idx !== -1 && LIBERO_EXIT_INDEXES.has(idx)) {
         const next = arr.map((p, i) => (i === idx ? lib.replacedPlayerId : p));
         if (side === "A") { onCourtA = next; liberoA = null; }
@@ -785,14 +786,19 @@ function replayMatch(m: Match): {
     const cur = sets[sets.length - 1];
     if (ev.scoringSide === "A") cur.scoreA++;
     else cur.scoreB++;
-    // Rotation: scoring side rotates only if they were NOT serving.
+
+    // La rotación se aplica sobre los jugadores actuales (titulares + líbero si está).
+    // syncLiberoAfterRotation se encarga de devolver al central si el líbero rotó a delantera.
     if (ev.scoringSide !== servingSide) {
-      if (ev.scoringSide === "A") onCourtA = rotateClockwise(onCourtA);
-      else onCourtB = rotateClockwise(onCourtB);
+      if (ev.scoringSide === "A") {
+        onCourtA = rotateClockwise(onCourtA);
+        syncLiberoAfterRotation("A");
+      } else {
+        onCourtB = rotateClockwise(onCourtB);
+        syncLiberoAfterRotation("B");
+      }
       servingSide = ev.scoringSide;
     }
-    syncLiberoAfterRotation("A");
-    syncLiberoAfterRotation("B");
     const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
