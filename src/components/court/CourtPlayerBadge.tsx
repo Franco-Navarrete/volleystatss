@@ -413,7 +413,7 @@ export function CourtPlayerBadge({
           <span
             className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
             style={{
-              background: isLibero ? "#ffffff" : player.position === "armador" ? "#f59e0b" : team.color,
+              background: isLibero ? "#ffffff" : player.position === "armador" ? "#f59e0b" : (style?.background || team.color),
               border: `${(isLibero || player.position === "armador") ? 3 : 2}px solid ${isLibero ? team.color : player.position === "armador" ? "#ffffff" : "rgba(255,255,255,0.9)"}`,
               boxShadow: isLibero
                 ? `0 0 0 1px #ffffff, 0 0 0 4px ${borderColor}`
