@@ -383,9 +383,23 @@ function TeamsPage() {
   const filteredTeams = useMemo(() => {
     const q = query.trim().toLowerCase();
     const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
+    
+    // Identificar mis equipos y mis ligas si soy entrenador
+    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId) : [];
+    const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
+    const myLeagueIds = new Set(myOwnedTeams.filter(t => t.leagueId).map(t => t.leagueId));
+
     let list = teams.filter((t) => {
-      // Si el usuario es entrenador (no admin), filtrar estrictamente sus equipos propiedad
-      if (!isAdmin && currentUserId && t.ownerId !== currentUserId) return false;
+      // Regla SaaS:
+      // 1. Si es admin, ve todo.
+      // 2. Si es entrenador:
+      //    - Si no es su equipo Y no está en una de sus ligas, se oculta.
+      // Esto permite ver rivales en "Equipos" pero mantiene el aislamiento global.
+      if (!isAdmin && currentUserId) {
+        const isMine = myOwnedTeamIds.has(t.id);
+        const isLeagueRival = t.leagueId && myLeagueIds.has(t.leagueId);
+        if (!isMine && !isLeagueRival) return false;
+      }
 
       if (filterLeague === "none" && t.leagueId) return false;
       if (filterLeague !== "all" && filterLeague !== "none" && t.leagueId !== filterLeague) return false;
@@ -438,7 +452,15 @@ function TeamsPage() {
   };
   const clubGroups = useMemo<ClubGroup[]>(() => {
     const map = new Map<string, ClubGroup>();
+    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId) : [];
+    const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
+
     for (const t of filteredTeams) {
+      // En la pestaña "Mi Club", solo mostramos los equipos propiedad del entrenador
+      if (viewMode === "clubs" && !isAdmin && currentUserId && !myOwnedTeamIds.has(t.id)) {
+        continue;
+      }
+      
       const key = t.clubId ?? `name:${(t.clubName ?? t.club ?? "").trim().toLowerCase() || `team:${t.id}`}`;
       const name = t.clubName ?? t.club ?? (t.clubId ? "Club" : "Sin club");
       const g = map.get(key);
@@ -450,7 +472,7 @@ function TeamsPage() {
       }
     }
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredTeams]);
+  }, [filteredTeams, viewMode, isAdmin, currentUserId, teams]);
 
   const openClub = openClubKey ? clubGroups.find((c) => c.key === openClubKey) ?? null : null;
   const openClubCategories = useMemo(() => {
