@@ -1457,10 +1457,14 @@ export const useVolley = create<VolleyState>()(
       },
       updateMatchMetadata: (matchId, metadata) => {
         set((s) => ({
-          matches: s.matches.map((m) =>
-            m.id === matchId ? { ...m, metadata: { ...m.metadata, ...metadata } } : m
-          ),
-          lastLocalChange: Date.now(),
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            return {
+              ...m,
+              metadata: { ...(m.metadata || {}), ...metadata },
+              lastLocalChange: Date.now(),
+            };
+          }),
         }));
       },
 
