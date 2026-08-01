@@ -1117,6 +1117,7 @@ export const useVolley = create<VolleyState>()(
             return {
               ...m,
               setStartTimes: { ...(m.setStartTimes ?? {}), [m.currentSet]: Date.now() },
+              lastLocalChange: Date.now(),
             };
           }),
         })),
