@@ -35,9 +35,11 @@ export function LiveMatchesFeed() {
     // Si es coach, filtramos el feed global para mostrar solo partidos de sus equipos
     if (isCoach && user) {
       const myTeamIds = new Set(myTeams.map(t => t.id));
-      return rawItems.filter(m => 
-        myTeamIds.has(m.teamA?.id) || myTeamIds.has(m.teamB?.id)
-      );
+      return rawItems.filter(m => {
+        const idA = m.teamA?.id;
+        const idB = m.teamB?.id;
+        return (idA && myTeamIds.has(idA)) || (idB && myTeamIds.has(idB));
+      });
     }
     
     return rawItems;
