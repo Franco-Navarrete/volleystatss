@@ -107,8 +107,7 @@ function RankingsPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black tracking-tight">Rankings históricos</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Acumulado de todos los partidos finalizados
-              {finishedCount > 0 && ` · ${finishedCount} ${finishedCount === 1 ? "partido" : "partidos"}`}
+              Rankings históricos se va a formar en base a las estadísticas de los jugadores de la misma liga
             </p>
           </div>
         </header>
