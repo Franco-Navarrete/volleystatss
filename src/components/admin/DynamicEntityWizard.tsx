@@ -199,7 +199,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     slug: "",
     country: "",
     city: "",
-    address: ""
+    address: "",
+    plan: "Free",
+    modules: ["Live Scoring", "Advanced Scouting"]
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -635,16 +637,23 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                   {["Free", "Coach", "Club", "League", "Enterprise"].map((plan) => (
                     <div 
                       key={plan}
-                      className="flex items-center justify-between p-4 rounded-xl border border-border/60 hover:border-primary/40 cursor-pointer transition-all"
+                      onClick={() => setOrgWizardData({ ...orgWizardData, plan })}
+                      className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                        orgWizardData.plan === plan 
+                          ? "border-primary bg-primary/10 shadow-glow" 
+                          : "border-border/60 hover:border-primary/40"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <CreditCard className="size-5 text-primary" />
+                        <CreditCard className={`size-5 ${orgWizardData.plan === plan ? "text-primary" : "text-muted-foreground"}`} />
                         <div>
-                          <p className="font-bold">{plan}</p>
+                          <p className={`font-bold ${orgWizardData.plan === plan ? "text-primary" : ""}`}>{plan}</p>
                           <p className="text-[10px] text-muted-foreground">Detalles del plan {plan.toLowerCase()}</p>
                         </div>
                       </div>
-                      <Badge variant="outline">Seleccionar</Badge>
+                      <Badge variant={orgWizardData.plan === plan ? "default" : "outline"}>
+                        {orgWizardData.plan === plan ? "Seleccionado" : "Seleccionar"}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -654,13 +663,30 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground mb-4">Módulos que estarán disponibles para esta organización.</p>
                   {["Live Scoring", "Advanced Scouting", "Video Analysis", "Performance Intelligence"].map((mod) => (
-                    <div key={mod} className="flex items-center justify-between p-3 rounded-xl border border-border/40 bg-muted/5">
+                    <div 
+                      key={mod} 
+                      onClick={() => {
+                        const newModules = orgWizardData.modules.includes(mod)
+                          ? orgWizardData.modules.filter(m => m !== mod)
+                          : [...orgWizardData.modules, mod];
+                        setOrgWizardData({ ...orgWizardData, modules: newModules });
+                      }}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                        orgWizardData.modules.includes(mod)
+                          ? "border-primary/40 bg-primary/5" 
+                          : "border-border/40 bg-muted/5 opacity-60"
+                      }`}
+                    >
                       <div className="flex items-center gap-3">
-                        <Package className="size-4 text-primary/60" />
-                        <span className="text-sm font-medium">{mod}</span>
+                        <Package className={`size-4 ${orgWizardData.modules.includes(mod) ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className={`text-sm font-medium ${orgWizardData.modules.includes(mod) ? "text-primary" : ""}`}>{mod}</span>
                       </div>
-                      <div className="size-5 rounded-md border border-primary/40 bg-primary/10 flex items-center justify-center">
-                        <Check className="size-3 text-primary" />
+                      <div className={`size-5 rounded-md border flex items-center justify-center transition-all ${
+                        orgWizardData.modules.includes(mod) 
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm" 
+                          : "border-border bg-background"
+                      }`}>
+                        {orgWizardData.modules.includes(mod) && <Check className="size-3" />}
                       </div>
                     </div>
                   ))}
@@ -689,7 +715,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground uppercase font-black tracking-tighter">Plan:</span>
-                      <span className="font-bold">Club (Demo)</span>
+                      <span className="font-bold">{orgWizardData.plan}</span>
                     </div>
                   </div>
                 </div>
