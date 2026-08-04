@@ -412,8 +412,7 @@ export const adminCreateClub = createServerFn({ method: "POST" })
       .from("clubs")
       .insert({
         name: data.name,
-        league_id: targetLeagueId,
-        color: data.color || "#3b82f6",
+        primary_color: data.color || "#3b82f6",
         owner_id: context.userId,
       })
       .select("id")
