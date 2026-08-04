@@ -417,6 +417,12 @@ function AdminPage() {
           setWizardTargetEntity(parent);
           setWizardOpen(true);
         }}
+        onSelectChild={(parent) => {
+          // Por ahora abrimos el wizard de organización, pero podríamos tener una lógica de selección
+          setActiveEntityType("org");
+          setWizardTargetEntity(parent);
+          setWizardOpen(true);
+        }}
       />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
