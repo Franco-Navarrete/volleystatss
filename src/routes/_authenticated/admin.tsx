@@ -954,9 +954,41 @@ function OrgDetailDrawer({
                     </Button>
                  </div>
               </div>
+            <TabsContent value="usuarios" className="m-0 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Usuarios en esta organización</h3>
+                <Badge variant="secondary">{org.users?.length || 0}</Badge>
+              </div>
+              
+              {org.users && org.users.length > 0 ? (
+                <div className="divide-y divide-border/40 border border-border/40 rounded-xl overflow-hidden bg-card/40">
+                  {org.users.map((email: string) => (
+                    <div key={email} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
+                      <Avatar className="size-8">
+                        <AvatarFallback className="text-[10px]">{email.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{email}</p>
+                        <p className="text-[10px] text-muted-foreground">Acceso verificado</p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="size-8">
+                        <MoreVertical className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center space-y-2 border-2 border-dashed border-border/40 rounded-xl bg-muted/5">
+                  <Users className="size-8 mx-auto text-muted-foreground/20" />
+                  <p className="text-sm text-muted-foreground">No hay usuarios asignados directamente.</p>
+                  <Button variant="outline" size="sm" className="mt-2 text-xs">
+                    <UserPlus className="size-3 mr-2" /> Invitar Usuario
+                  </Button>
+                </div>
+              )}
             </TabsContent>
 
-            <TabsContent value="config" className="m-0 space-y-6">
+            <TabsContent value="modulos" className="m-0 space-y-6">
                <div className="space-y-4">
                   <div className="p-4 rounded-xl border border-border/60 space-y-3">
                      <p className="text-xs font-bold">Identidad Visual</p>
