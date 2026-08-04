@@ -26,34 +26,54 @@ export const adminListWorkspaces = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Obtenemos datos base
-    const [{ data: clubs }, { data: leagues }, { data: users }, { data: userRoles }] = await Promise.all([
+    const [
+      { data: clubs }, 
+      { data: leagues }, 
+      { data: teams },
+      { data: profiles },
+      { data: leagueAccess }
+    ] = await Promise.all([
       supabaseAdmin.from("clubs").select("*"),
       supabaseAdmin.from("leagues").select("*"),
+      supabaseAdmin.from("teams").select("id, club_id, owner_id"),
       supabaseAdmin.from("profiles").select("id, email"),
-      supabaseAdmin.from("user_roles").select("user_id, role"),
+      supabaseAdmin.from("user_league_access").select("user_id, league_id")
     ]);
 
-    // Relación usuarios por club (Owner + miembros si hubiera tabla intermedia)
-    // Por ahora usamos owner_id como proxy de "usuario del club"
-    const usersByClub = new Map<string, string[]>();
+    // Mapeo de perfiles para búsqueda rápida
+    const profileMap = new Map(profiles?.map(p => [p.id, p.email]));
+
+    // Relación usuarios por club
+    // 1. Dueño del club (owner_id en clubs)
+    // 2. Dueños de equipos del club (owner_id en teams)
+    const usersByClub = new Map<string, Set<string>>();
+    
     clubs?.forEach(c => {
-      const clubUsers: string[] = [];
-      if (c.owner_id) {
-        const ownerEmail = users?.find(u => u.id === c.owner_id)?.email;
-        if (ownerEmail) clubUsers.push(ownerEmail);
+      const set = new Set<string>();
+      const ownerEmail = profileMap.get(c.owner_id);
+      if (ownerEmail) set.add(ownerEmail);
+      usersByClub.set(c.id, set);
+    });
+
+    teams?.forEach(t => {
+      if (t.club_id && t.owner_id) {
+        const ownerEmail = profileMap.get(t.owner_id);
+        if (ownerEmail) {
+          const set = usersByClub.get(t.club_id) || new Set<string>();
+          set.add(ownerEmail);
+          usersByClub.set(t.club_id, set);
+        }
       }
-      usersByClub.set(c.id, clubUsers);
     });
 
     // Mapeo de usuarios por liga (basado en acceso directo)
-    const { data: leagueAccess } = await supabaseAdmin.from("user_league_access").select("user_id, league_id");
-    const usersByLeague = new Map<string, string[]>();
+    const usersByLeague = new Map<string, Set<string>>();
     leagueAccess?.forEach(la => {
-      const email = users?.find(u => u.id === la.user_id)?.email;
+      const email = profileMap.get(la.user_id);
       if (email) {
-        const arr = usersByLeague.get(la.league_id) ?? [];
-        arr.push(email);
-        usersByLeague.set(la.league_id, arr);
+        const set = usersByLeague.get(la.league_id) ?? new Set<string>();
+        set.add(email);
+        usersByLeague.set(la.league_id, set);
       }
     });
 
@@ -65,22 +85,22 @@ export const adminListWorkspaces = createServerFn({ method: "GET" })
           name: "Federación del Voleibol Argentino",
           type: "federacion",
           status: "active",
-          userCount: users?.length || 0,
-          users: users?.map(u => u.email),
+          userCount: profiles?.length || 0,
+          users: profiles?.map(p => p.email),
           children: (leagues ?? []).map(l => ({
             id: l.id,
             name: l.name,
             type: "liga",
             status: "active",
-            userCount: usersByLeague.get(l.id)?.length || 0,
-            users: usersByLeague.get(l.id) || [],
+            userCount: usersByLeague.get(l.id)?.size || 0,
+            users: Array.from(usersByLeague.get(l.id) || []),
             children: (clubs ?? []).map(c => ({
               id: c.id,
               name: c.name,
               type: "club",
               status: "active",
-              userCount: usersByClub.get(c.id)?.length || 0,
-              users: usersByClub.get(c.id) || []
+              userCount: usersByClub.get(c.id)?.size || 0,
+              users: Array.from(usersByClub.get(c.id) || [])
             }))
           }))
         }
