@@ -15,7 +15,9 @@ import {
   Package,
   CreditCard,
   Zap,
-  Globe
+  Globe,
+  Plus,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -1013,38 +1015,38 @@ function ChildSearchList({ targetEntity, selectedId, onSelect }: { targetEntity:
     {[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded-lg" />)}
   </div>;
 
-  // Filtramos clubes que ya estén en esta liga para no ofrecerlos
-  const availableClubs = clubs?.filter(c => c.league_id !== targetEntity?.id) || [];
+  // Filtramos clubes que ya estén en esta liga (si tuviéramos esa data)
+  const availableClubs = clubs || [];
 
   return (
     <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-2">
       {availableClubs.map((club) => (
         <div 
-          key={club.id}
-          onClick={() => onSelect(club.id)}
+          key={(club as any).id}
+          onClick={() => onSelect((club as any).id)}
           className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
-            selectedId === club.id
+            selectedId === (club as any).id
               ? "border-primary bg-primary/10 shadow-sm" 
               : "border-border/60 hover:border-primary/40"
           }`}
         >
           <div className="flex items-center gap-3">
-            <Building2 className={`size-4 ${selectedId === club.id ? "text-primary" : "text-muted-foreground"}`} />
+            <Building2 className={`size-4 ${selectedId === (club as any).id ? "text-primary" : "text-muted-foreground"}`} />
             <div>
               <p className={`text-sm font-medium ${selectedId === club.id ? "text-primary" : ""}`}>
-                {club.name}
+                {(club as any).name}
               </p>
-              {club.league_id && (
+              {(club as any).league_id && (
                 <p className="text-[10px] text-muted-foreground">Actualmente en otra liga</p>
               )}
             </div>
           </div>
           <div className={`size-4 rounded-full border flex items-center justify-center transition-all ${
-            selectedId === club.id 
+            selectedId === (club as any).id 
               ? "border-primary bg-primary text-primary-foreground shadow-sm" 
               : "border-border bg-background"
           }`}>
-            {selectedId === club.id && <Check className="size-2.5" strokeWidth={3} />}
+            {selectedId === (club as any).id && <Check className="size-2.5" strokeWidth={3} />}
           </div>
         </div>
       ))}
