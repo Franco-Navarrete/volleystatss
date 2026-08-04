@@ -963,8 +963,18 @@ function OrgDetailDrawer({
             </TabsContent>
             <TabsContent value="usuarios" className="m-0 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Usuarios en esta organización</h3>
-                <Badge variant="secondary">{org.users?.length || 0}</Badge>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Usuarios en esta organización</h3>
+                  <Badge variant="secondary">{org.users?.length || 0}</Badge>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 text-[10px] font-bold shadow-sm"
+                  onClick={onAddUser}
+                >
+                  <UserPlus className="size-3 mr-2 text-primary" /> AGREGAR USUARIO
+                </Button>
               </div>
               
               {org.users && org.users.length > 0 ? (
