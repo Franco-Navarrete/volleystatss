@@ -666,9 +666,11 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                       <span className="font-bold">{userData.extraRoles.join(', ') || 'Usuario Estándar'}</span>
                     </div>
                   </div>
-
+                </div>
+              )}
 
               {entityType === "org" && currentStep === 0 && (
+
                 <div className="grid gap-4">
                   <Label>Tipo de Organización</Label>
                   {["Federación", "Asociación", "Liga", "Club", "Academia", "Otro"].map((type) => (
