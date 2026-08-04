@@ -408,6 +408,10 @@ function AdminPage() {
         org={selectedOrg} 
         onClose={() => setSelectedOrg(null)} 
         requestConfirmation={requestConfirmation}
+        onAddUser={() => {
+          setActiveEntityType("user");
+          setWizardOpen(true);
+        }}
       />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
@@ -852,11 +856,13 @@ function UserDetailDrawer({
 function OrgDetailDrawer({ 
   org, 
   onClose,
-  requestConfirmation
+  requestConfirmation,
+  onAddUser
 }: { 
   org: any, 
   onClose: () => void,
-  requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void
+  requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void,
+  onAddUser: () => void
 }) {
   if (!org) return null;
   return (
@@ -986,10 +992,7 @@ function OrgDetailDrawer({
                     variant="outline" 
                     size="sm" 
                     className="mt-2 text-xs"
-                    onClick={() => {
-                      setActiveEntityType("user");
-                      setWizardOpen(true);
-                    }}
+                    onClick={onAddUser}
                   >
                     <UserPlus className="size-3 mr-2" /> Agregar Usuario
                   </Button>
