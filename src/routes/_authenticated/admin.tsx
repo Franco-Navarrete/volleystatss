@@ -836,7 +836,7 @@ function UserDetailDrawer({
           </div>
 
           <div className="p-6 border-t border-border/40 bg-muted/10 grid grid-cols-2 gap-3">
-            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => alert('Usuario suspendido')}>
+            <Button variant="outline" size="sm" className="text-xs h-9" onClick={() => {}}>
               <Ban className="size-3 mr-2" /> Suspender
             </Button>
             <Button 
@@ -947,10 +947,10 @@ function OrgDetailDrawer({
                     <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => onAddChild(org)}>
                        <Plus className="size-3 mr-2" /> Crear hijo
                     </Button>
-                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Mover en jerarquía')}>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => {}}>
                        <ArrowRight className="size-3 mr-2" /> Mover
                     </Button>
-                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Duplicar configuración')}>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => {}}>
                        <Copy className="size-3 mr-2" /> Duplicar
                     </Button>
                     <Button 
@@ -1030,18 +1030,18 @@ function OrgDetailDrawer({
                      <p className="text-xs font-bold">Configuración de Dominio</p>
                      <Input placeholder="subdomain.rally.com" className="h-9 text-xs" />
                   </div>
-                  <Button className="w-full shadow-glow font-black text-xs h-10" onClick={() => alert('Configuración guardada')}>GUARDAR CONFIGURACIÓN</Button>
+                  <Button className="w-full shadow-glow font-black text-xs h-10" onClick={() => {}}>GUARDAR CONFIGURACIÓN</Button>
                </div>
             </TabsContent>
           </div>
 
           <div className="p-4 border-t border-border/40 bg-muted/5 flex justify-between gap-3">
-             <Button variant="outline" size="sm" className="text-xs font-bold px-6" onClick={() => alert('Abriendo editor global')}>Editar Organización</Button>
+             <Button variant="outline" size="sm" className="text-xs font-bold px-6" onClick={() => {}}>Editar Organización</Button>
              <div className="flex gap-2">
                <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => confirm('¿Eliminar?')}>
                   <Trash2 className="size-4" />
                </Button>
-               <Button size="sm" className="text-xs font-black shadow-glow" onClick={() => alert('Cambios guardados')}>Guardar</Button>
+               <Button size="sm" className="text-xs font-black shadow-glow" onClick={() => {}}>Guardar</Button>
              </div>
           </div>
         </Tabs>
@@ -1070,7 +1070,7 @@ function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => v
                   <p className="text-[10px] text-muted-foreground">Desactivar para toda la plataforma</p>
                 </div>
                 <div className="flex gap-2">
-                  <Badge className="bg-green-500 hover:bg-green-600 cursor-pointer" onClick={() => alert('Esta funcionalidad aún no está disponible')}>Activo</Badge>
+                  <Badge className="bg-green-500 hover:bg-green-600 cursor-pointer" onClick={() => {}}>Activo</Badge>
                 </div>
               </div>
               <div className="flex items-center justify-between p-3 rounded-xl border border-border/60">
@@ -1085,7 +1085,7 @@ function ModuleDetailDrawer({ module, onClose }: { module: any, onClose: () => v
           
           <Button 
             className="w-full shadow-glow py-6 font-black uppercase tracking-widest text-xs"
-            onClick={() => alert('Abriendo pantalla de Capacidades & Dependencias')}
+            onClick={() => {}}
           >
             <Settings className="size-4 mr-2" /> Editar Capacidades & Dependencias
           </Button>
