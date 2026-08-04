@@ -982,8 +982,16 @@ function OrgDetailDrawer({
                 <div className="py-12 text-center space-y-2 border-2 border-dashed border-border/40 rounded-xl bg-muted/5">
                   <Users className="size-8 mx-auto text-muted-foreground/20" />
                   <p className="text-sm text-muted-foreground">No hay usuarios asignados directamente.</p>
-                  <Button variant="outline" size="sm" className="mt-2 text-xs">
-                    <UserPlus className="size-3 mr-2" /> Invitar Usuario
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2 text-xs"
+                    onClick={() => {
+                      setActiveEntityType("user");
+                      setWizardOpen(true);
+                    }}
+                  >
+                    <UserPlus className="size-3 mr-2" /> Agregar Usuario
                   </Button>
                 </div>
               )}
