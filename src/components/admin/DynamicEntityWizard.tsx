@@ -598,15 +598,33 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                 <div className="space-y-4">
                   <div className="grid gap-2">
                     <Label htmlFor="org-country">País</Label>
-                    <Input id="org-country" placeholder="Ej: Argentina" className="h-11" />
+                    <Input 
+                      id="org-country" 
+                      placeholder="Ej: Argentina" 
+                      className="h-11"
+                      value={orgWizardData.country}
+                      onChange={(e) => setOrgWizardData({ ...orgWizardData, country: e.target.value })}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="org-city">Ciudad / Región</Label>
-                    <Input id="org-city" placeholder="Ej: Córdoba" className="h-11" />
+                    <Input 
+                      id="org-city" 
+                      placeholder="Ej: Córdoba" 
+                      className="h-11"
+                      value={orgWizardData.city}
+                      onChange={(e) => setOrgWizardData({ ...orgWizardData, city: e.target.value })}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="org-address">Dirección (Opcional)</Label>
-                    <Input id="org-address" placeholder="Ej: Av. Colón 1234" className="h-11" />
+                    <Input 
+                      id="org-address" 
+                      placeholder="Ej: Av. Colón 1234" 
+                      className="h-11"
+                      value={orgWizardData.address}
+                      onChange={(e) => setOrgWizardData({ ...orgWizardData, address: e.target.value })}
+                    />
                   </div>
                 </div>
               )}
