@@ -893,7 +893,7 @@ function OrgDetailDrawer({
           </TabsList>
 
           <div className="flex-1 overflow-y-auto p-6">
-            <TabsContent value="resumen" className="m-0 space-y-6">
+            <TabsContent value="overview" className="m-0 space-y-6">
               <div className="grid grid-cols-3 gap-4">
                 <Card className="bg-muted/30 border-none shadow-none">
                   <CardContent className="p-3 text-center">
