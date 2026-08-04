@@ -1126,7 +1126,13 @@ function OrgDetailDrawer({
                     <p className="text-sm font-bold flex items-center gap-1"><CreditCard className="size-3" /> •••• 4242</p>
                   </div>
                 </div>
-                <Button className="w-full bg-primary shadow-glow h-10 text-xs font-black">GESTIONAR EN STRIPE</Button>
+                <Button 
+                  className="w-full bg-primary shadow-glow h-10 text-xs font-black"
+                  onClick={() => window.open('https://billing.stripe.com/p/login/test_fsq7uV7tG3PZ7hS288', '_blank')}
+                >
+                  GESTIONAR EN STRIPE
+                </Button>
+
               </div>
             </TabsContent>
 
