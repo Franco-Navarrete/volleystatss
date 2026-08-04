@@ -955,6 +955,9 @@ function OrgDetailDrawer({
                     <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => onAddChild(org)}>
                        <Plus className="size-3 mr-2" /> Crear hijo
                     </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => onSelectChild(org)}>
+                       <Search className="size-3 mr-2" /> Seleccionar hijo
+                    </Button>
                     <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => {}}>
                        <ArrowRight className="size-3 mr-2" /> Mover
                     </Button>
