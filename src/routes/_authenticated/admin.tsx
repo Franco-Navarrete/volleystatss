@@ -884,7 +884,7 @@ function OrgDetailDrawer({
             {['Resumen', 'Jerarquía', 'Usuarios', 'Módulos', 'Suscripción', 'Config'].map((tab) => (
               <TabsTrigger 
                 key={tab} 
-                value={tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")} 
+                value={tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "")} 
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none shadow-none text-xs px-4"
               >
                 {tab}
