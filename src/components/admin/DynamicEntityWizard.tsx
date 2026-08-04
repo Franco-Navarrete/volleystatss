@@ -575,7 +575,13 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                     <Label htmlFor="org-slug">Slug / Identificador</Label>
                     <div className="flex gap-2">
                       <div className="bg-muted px-3 flex items-center rounded-lg text-xs font-mono border border-border/60">rally.app/</div>
-                      <Input id="org-slug" placeholder="club-rally" className="h-11" />
+                      <Input 
+                        id="org-slug" 
+                        placeholder="club-rally" 
+                        className="h-11"
+                        value={orgWizardData.slug}
+                        onChange={(e) => setOrgWizardData({ ...orgWizardData, slug: e.target.value })}
+                      />
                     </div>
                   </div>
                   <div className="grid gap-2">
