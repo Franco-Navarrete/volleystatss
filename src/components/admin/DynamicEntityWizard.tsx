@@ -684,6 +684,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                       <span className="font-bold">{orgWizardData.type}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-muted-foreground uppercase font-black tracking-tighter">Nombre:</span>
+                      <span className="font-bold">{orgWizardData.name}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-muted-foreground uppercase font-black tracking-tighter">Plan:</span>
                       <span className="font-bold">Club (Demo)</span>
                     </div>
