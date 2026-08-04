@@ -418,8 +418,7 @@ function AdminPage() {
           setWizardOpen(true);
         }}
         onSelectChild={(parent) => {
-          // Por ahora abrimos el wizard de organización, pero podríamos tener una lógica de selección
-          setActiveEntityType("org");
+          setActiveEntityType("select_child" as any);
           setWizardTargetEntity(parent);
           setWizardOpen(true);
         }}
