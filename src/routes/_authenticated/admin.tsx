@@ -879,6 +879,13 @@ function OrgDetailDrawer({
   onSelectChild: (parent: any) => void
 }) {
   if (!org) return null;
+
+  const summaryData = [
+    { label: "Usuarios", value: org.userCount || 0, icon: Users },
+    { label: "Plan", value: org.plan || 'Free', icon: CreditCard },
+    { label: "Sub-Entidades", value: org.children?.length || 0, icon: LayoutGrid },
+  ];
+
   return (
     <Sheet open={!!org} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-[640px] p-0 border-l border-border/60">
@@ -887,7 +894,7 @@ function OrgDetailDrawer({
             <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
               <Building2 className="size-6 text-primary" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 text-left">
               <SheetTitle className="text-xl font-black">{org.name}</SheetTitle>
               <div className="flex items-center gap-2 mt-1">
                 <Badge className="text-[9px] font-black uppercase tracking-tighter">{org.type}</Badge>
@@ -900,8 +907,8 @@ function OrgDetailDrawer({
         </SheetHeader>
 
         <Tabs defaultValue="overview" className="flex flex-col h-[calc(100vh-100px)]">
-          <TabsList className="w-full justify-start rounded-none border-b border-border/40 bg-transparent px-6 overflow-x-auto">
-            {['Resumen', 'Jerarquía', 'Usuarios', 'Módulos', 'Suscripción', 'Config'].map((tab) => (
+          <TabsList className="w-full justify-start rounded-none border-b border-border/40 bg-transparent px-6 overflow-x-auto h-12">
+            {['Resumen', 'Jerarquia', 'Usuarios', 'Modulos', 'Suscripcion', 'Config'].map((tab) => (
               <TabsTrigger 
                 key={tab} 
                 value={tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "")} 
@@ -913,36 +920,42 @@ function OrgDetailDrawer({
           </TabsList>
 
           <div className="flex-1 overflow-y-auto p-6">
-            <TabsContent value="overview" className="m-0 space-y-6">
+            <TabsContent value="overview" className="m-0 space-y-6 pt-6">
               <div className="grid grid-cols-3 gap-4">
-                <Card className="bg-muted/30 border-none shadow-none">
+                <Card className="bg-muted/30 border border-border/40 shadow-none">
                   <CardContent className="p-3 text-center">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase">Usuarios</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-center gap-1.5">
+                      <Users className="size-3" /> Usuarios
+                    </p>
                     <p className="text-xl font-black mt-1">{org.userCount || 0}</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-muted/30 border-none shadow-none">
+                <Card className="bg-muted/30 border border-border/40 shadow-none">
                   <CardContent className="p-3 text-center">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase">Plan</p>
-                    <p className="text-sm font-black mt-1 text-primary">{org.plan || 'Free'}</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-center gap-1.5">
+                      <CreditCard className="size-3" /> Plan
+                    </p>
+                    <p className="text-sm font-black mt-1 text-primary">{org.plan || 'League'}</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-muted/30 border-none shadow-none">
+                <Card className="bg-muted/30 border border-border/40 shadow-none">
                   <CardContent className="p-3 text-center">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase">Estado</p>
-                    <Badge className="mt-1 bg-green-500/20 text-green-600 border-none text-[9px]">ACTIVO</Badge>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-center gap-1.5">
+                      <Building2 className="size-3" /> Estado
+                    </p>
+                    <Badge className="mt-1 bg-green-500/10 text-green-600 border-none text-[9px]">ACTIVO</Badge>
                   </CardContent>
                 </Card>
               </div>
 
               <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary/60 flex items-center gap-2">
-                  <Zap className="size-3" /> Módulos Activos
+                  <Zap className="size-3" /> Módulos Habilitados
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {org.modules?.map((m: string) => (
-                    <div key={m} className="flex items-center gap-2 p-2 rounded-lg border border-border/40 bg-card/50">
-                      <div className="size-2 rounded-full bg-primary" />
+                  {(org.modules?.length > 0 ? org.modules : ["Live Scoring", "Advanced Scouting"]).map((m: string) => (
+                    <div key={m} className="flex items-center gap-2 p-3 rounded-lg border border-border/40 bg-card/50">
+                      <div className="size-1.5 rounded-full bg-primary" />
                       <span className="text-xs font-medium">{m}</span>
                     </div>
                   ))}
@@ -978,7 +991,46 @@ function OrgDetailDrawer({
                  </div>
               </div>
             </TabsContent>
-            <TabsContent value="usuarios" className="m-0 space-y-4">
+            <TabsContent value="jerarquia" className="m-0 space-y-6 pt-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Estructura Organizacional</h3>
+                  <Badge variant="outline" className="text-[10px]">{org.children?.length || 0} Sub-entidades</Badge>
+                </div>
+                
+                {org.children && org.children.length > 0 ? (
+                  <div className="grid gap-3">
+                    {org.children.map((child: any) => (
+                      <div 
+                        key={child.id} 
+                        className="flex items-center justify-between p-4 rounded-xl border border-border/40 bg-card/40 hover:bg-muted/20 transition-colors cursor-pointer"
+                        onClick={() => {}}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="size-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
+                            <Building2 className="size-4 text-primary/60" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold">{child.name}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-tighter">{child.type}</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="size-4 text-muted-foreground/40" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center space-y-2 border-2 border-dashed border-border/40 rounded-xl bg-muted/5">
+                    <LayoutGrid className="size-8 mx-auto text-muted-foreground/20" />
+                    <p className="text-sm text-muted-foreground">Esta organización no tiene entidades hijas.</p>
+                    <Button variant="outline" size="sm" className="mt-2 text-xs" onClick={() => onAddChild(org)}>
+                      <Plus className="size-3 mr-2" /> Crear Primera Sub-entidad
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="usuarios" className="m-0 space-y-4 pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Usuarios en esta organización</h3>
@@ -1027,20 +1079,107 @@ function OrgDetailDrawer({
               )}
             </TabsContent>
 
-            <TabsContent value="modulos" className="m-0 space-y-6">
+            <TabsContent value="modulos" className="m-0 space-y-6 pt-6">
                <div className="space-y-4">
-                  <div className="p-4 rounded-xl border border-border/60 space-y-3">
-                     <p className="text-xs font-bold">Identidad Visual</p>
-                     <div className="flex gap-4 items-center">
-                        <div className="size-12 rounded-lg bg-muted border flex items-center justify-center text-[10px] text-muted-foreground">Logo</div>
-                        <Button variant="outline" size="sm" className="text-[10px]">SUBIR IMAGEN</Button>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Gestión de Funcionalidades</h3>
+                    <Badge variant="outline" className="text-[10px]">Plan {org.plan || 'League'}</Badge>
+                  </div>
+                  <div className="grid gap-3">
+                    {["Live Scoring", "Advanced Scouting", "Video Analysis", "Performance Intelligence"].map((m) => (
+                      <div key={m} className="flex items-center justify-between p-4 rounded-xl border border-border/40 bg-card/40">
+                        <div className="flex items-center gap-3">
+                          <div className={`size-2 rounded-full ${(org.modules?.includes(m) || ["Live Scoring", "Advanced Scouting"].includes(m)) ? 'bg-green-500' : 'bg-muted'}`} />
+                          <span className="text-sm font-medium">{m}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold">CONFIGURAR</Button>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+            </TabsContent>
+
+            <TabsContent value="suscripcion" className="m-0 space-y-6 pt-6">
+              <div className="p-6 rounded-2xl border border-primary/20 bg-primary/5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center">
+                      <Zap className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black tracking-tight">{org.plan || 'League'} Plan</p>
+                      <p className="text-[10px] text-muted-foreground">Renovación automática: 12 Oct 2026</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-primary shadow-glow border-none uppercase font-black tracking-tighter">ACTIVA</Badge>
+                </div>
+                <Separator className="bg-primary/10" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase">Precio Mensual</p>
+                    <p className="text-lg font-black">$149.00</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-muted-foreground uppercase">Método de Pago</p>
+                    <p className="text-sm font-bold flex items-center gap-1"><CreditCard className="size-3" /> •••• 4242</p>
+                  </div>
+                </div>
+                <Button className="w-full bg-primary shadow-glow h-10 text-xs font-black">GESTIONAR EN STRIPE</Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="config" className="m-0 space-y-6 pt-6">
+               <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Configuración General</h3>
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground/60">Nombre Público</Label>
+                        <Input defaultValue={org.name} className="h-10 text-sm bg-muted/20" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground/60">Identidad Visual</Label>
+                        <div className="flex gap-4 items-center p-4 rounded-xl border border-border/40 bg-card/40">
+                           <div className="size-14 rounded-xl bg-muted border flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
+                             {org.logo_url ? <img src={org.logo_url} alt="Logo" className="size-full object-cover" /> : <Building2 className="size-6 opacity-20" />}
+                           </div>
+                           <div className="space-y-1">
+                             <Button variant="outline" size="sm" className="text-[10px] h-8">CAMBIAR LOGO</Button>
+                             <p className="text-[9px] text-muted-foreground italic">Recomendado: 512x512px (PNG)</p>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                     <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Dominio Personalizado</h3>
+                     <div className="p-4 rounded-xl border border-border/40 bg-card/40 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Input placeholder="liga.rally.com" className="h-9 text-xs bg-muted/20" />
+                          <Button variant="secondary" size="sm" className="h-9 text-[10px] font-black">VALIDAR</Button>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground">Configure su CNAME para apuntar a <code>cname.rally.app</code></p>
                      </div>
                   </div>
-                  <div className="p-4 rounded-xl border border-border/60 space-y-3">
-                     <p className="text-xs font-bold">Configuración de Dominio</p>
-                     <Input placeholder="subdomain.rally.com" className="h-9 text-xs" />
+
+                  <div className="p-4 rounded-xl border border-destructive/20 bg-destructive/5 space-y-3">
+                     <h4 className="text-[10px] font-black uppercase text-destructive tracking-widest">Zona de Peligro</h4>
+                     <p className="text-[10px] text-muted-foreground">Una vez eliminada una organización, no se pueden recuperar sus datos.</p>
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       className="w-full h-9 border-destructive/30 text-destructive hover:bg-destructive text-[10px] font-black transition-all"
+                       onClick={() => requestConfirmation({
+                         title: "¿Eliminar Organización?",
+                         description: `¿Estás seguro de que deseas eliminar permanentemente "${org.name}"?`,
+                         variant: "destructive",
+                         onConfirm: () => {}
+                       })}
+                     >
+                       SOLICITAR ELIMINACIÓN DE DATOS
+                     </Button>
                   </div>
-                  <Button className="w-full shadow-glow font-black text-xs h-10" onClick={() => {}}>GUARDAR CONFIGURACIÓN</Button>
                </div>
             </TabsContent>
           </div>
