@@ -420,3 +420,32 @@ export const adminCreateClub = createServerFn({ method: "POST" })
     if (error) throw error;
     return { id: row.id };
   });
+
+export const adminListClubs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("clubs")
+      .select("id, name, league_id")
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  });
+
+export const adminUpdateClubLeague = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { clubId: string; leagueId: string }) =>
+    z.object({ clubId: uuidSchema, leagueId: uuidSchema }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("clubs")
+      .update({ league_id: data.leagueId })
+      .eq("id", data.clubId);
+    if (error) throw error;
+    return { ok: true };
+  });

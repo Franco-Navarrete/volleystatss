@@ -92,7 +92,7 @@ function LeagueSelector({ selectedIds, onChange }: { selectedIds: string[], onCh
   );
 }
 
-export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription" | "change_role";
+export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription" | "change_role" | "select_child";
 
 interface Step {
   title: string;
@@ -172,6 +172,14 @@ const ENTITY_CONFIG: Record<EntityType, { title: string; steps: Step[]; icon: an
       { title: "Impacto de Permisos", description: "Revisar cambios en capacidades" },
       { title: "Confirmación", description: "Aplicar cambios al usuario" }
     ]
+  },
+  select_child: {
+    title: "Seleccionar Existente",
+    icon: Plus,
+    steps: [
+      { title: "Buscador", description: "Encontrar entidad en el sistema" },
+      { title: "Confirmar Relación", description: "Vincular a la organización actual" }
+    ]
   }
 };
 
@@ -182,7 +190,7 @@ interface DynamicEntityWizardProps {
   targetEntity?: any;
 }
 
-import { adminSetRole, adminSetExtraRole, adminCreateLeague, adminCreateClub, adminCreateUser, type ExtraRole } from "@/lib/admin.functions";
+import { adminSetRole, adminSetExtraRole, adminCreateLeague, adminCreateClub, adminCreateUser, adminListClubs, adminUpdateClubLeague, type ExtraRole } from "@/lib/admin.functions";
 
 export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity }: DynamicEntityWizardProps) {
   const queryClient = useQueryClient();
@@ -191,6 +199,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
   const createLeague = useServerFn(adminCreateLeague);
   const createClub = useServerFn(adminCreateClub);
   const createUser = useServerFn(adminCreateUser);
+  const updateClubLeague = useServerFn(adminUpdateClubLeague);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [roleData, setRoleData] = useState<RoleInfoData>({
@@ -263,6 +272,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     extraRoles: [] as ExtraRole[],
     leagueIds: [] as string[]
   });
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const config = ENTITY_CONFIG[entityType];
@@ -397,6 +407,19 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
         } finally {
           setIsSubmitting(false);
         }
+      } else if (entityType === "select_child" && selectedChildId && targetEntity) {
+        setIsSubmitting(true);
+        try {
+          await updateClubLeague({ data: { clubId: selectedChildId, leagueId: targetEntity.id } });
+          toast.success("Relación actualizada correctamente");
+          await queryClient.invalidateQueries({ queryKey: ["admin", "workspaces"] });
+          onClose();
+        } catch (error: any) {
+          console.error("Error updating relation:", error);
+          toast.error(error.message || "Error al vincular la entidad");
+        } finally {
+          setIsSubmitting(false);
+        }
       } else {
         console.log(`[Wizard] Finalizing creation of: ${entityType}`);
         onClose();
@@ -417,6 +440,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
       setErrors({});
       if (entityType === "change_role" && targetEntity) {
         setChangeRoleData({ roleId: targetEntity.isAdmin ? "admin" : "user" });
+      }
+      if (entityType === "select_child") {
+        setSelectedChildId(null);
       }
     }
   }, [isOpen, entityType, targetEntity]);
@@ -447,7 +473,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     if (entityType === "change_role" && currentStep === 0) {
       return !changeRoleData.roleId;
     }
-    return currentStep === totalSteps - 1 && entityType !== "user" && entityType !== "change_role" && entityType !== "org";
+    if (entityType === "select_child" && currentStep === 0) {
+      return !selectedChildId;
+    }
+    return currentStep === totalSteps - 1 && entityType !== "user" && entityType !== "change_role" && entityType !== "org" && entityType !== "select_child";
   };
 
   return (
@@ -907,6 +936,40 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                   </div>
                 </div>
               )}
+
+              {entityType === "select_child" && currentStep === 0 && (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Buscar club o equipo..." 
+                      className="pl-9 h-11"
+                      onChange={(e) => {
+                        // Aquí se podría implementar filtrado local si quisiéramos
+                      }}
+                    />
+                  </div>
+                  <ChildSearchList 
+                    targetEntity={targetEntity} 
+                    selectedId={selectedChildId} 
+                    onSelect={setSelectedChildId} 
+                  />
+                </div>
+              )}
+
+              {entityType === "select_child" && currentStep === 1 && (
+                <div className="text-center py-8 space-y-4">
+                  <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto border border-primary/20 shadow-glow">
+                    <Plus className="size-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold">Confirmar Relación</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Se vinculará la entidad seleccionada a <strong>{targetEntity?.name}</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -936,5 +999,58 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ChildSearchList({ targetEntity, selectedId, onSelect }: { targetEntity: any, selectedId: string | null, onSelect: (id: string) => void }) {
+  const listClubs = useServerFn(adminListClubs);
+  const { data: clubs, isLoading } = useQuery({
+    queryKey: ["admin", "clubs-selector-all"],
+    queryFn: () => listClubs()
+  });
+
+  if (isLoading) return <div className="space-y-2 animate-pulse">
+    {[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded-lg" />)}
+  </div>;
+
+  // Filtramos clubes que ya estén en esta liga para no ofrecerlos
+  const availableClubs = clubs?.filter(c => c.league_id !== targetEntity?.id) || [];
+
+  return (
+    <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-2">
+      {availableClubs.map((club) => (
+        <div 
+          key={club.id}
+          onClick={() => onSelect(club.id)}
+          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+            selectedId === club.id
+              ? "border-primary bg-primary/10 shadow-sm" 
+              : "border-border/60 hover:border-primary/40"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Building2 className={`size-4 ${selectedId === club.id ? "text-primary" : "text-muted-foreground"}`} />
+            <div>
+              <p className={`text-sm font-medium ${selectedId === club.id ? "text-primary" : ""}`}>
+                {club.name}
+              </p>
+              {club.league_id && (
+                <p className="text-[10px] text-muted-foreground">Actualmente en otra liga</p>
+              )}
+            </div>
+          </div>
+          <div className={`size-4 rounded-full border flex items-center justify-center transition-all ${
+            selectedId === club.id 
+              ? "border-primary bg-primary text-primary-foreground shadow-sm" 
+              : "border-border bg-background"
+          }`}>
+            {selectedId === club.id && <Check className="size-2.5" strokeWidth={3} />}
+          </div>
+        </div>
+      ))}
+      {availableClubs.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-8">No hay entidades disponibles para asignar.</p>
+      )}
+    </div>
   );
 }
