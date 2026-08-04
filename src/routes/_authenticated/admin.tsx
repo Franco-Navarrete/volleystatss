@@ -417,6 +417,12 @@ function AdminPage() {
           setWizardTargetEntity(parent);
           setWizardOpen(true);
         }}
+        onSelectChild={(parent) => {
+          // Por ahora abrimos el wizard de organización, pero podríamos tener una lógica de selección
+          setActiveEntityType("org");
+          setWizardTargetEntity(parent);
+          setWizardOpen(true);
+        }}
       />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
@@ -863,13 +869,15 @@ function OrgDetailDrawer({
   onClose,
   requestConfirmation,
   onAddUser,
-  onAddChild
+  onAddChild,
+  onSelectChild
 }: { 
   org: any, 
   onClose: () => void,
   requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void,
   onAddUser: () => void,
-  onAddChild: (parent: any) => void
+  onAddChild: (parent: any) => void,
+  onSelectChild: (parent: any) => void
 }) {
   if (!org) return null;
   return (
@@ -946,6 +954,9 @@ function OrgDetailDrawer({
                  <div className="grid grid-cols-2 gap-2">
                     <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => onAddChild(org)}>
                        <Plus className="size-3 mr-2" /> Crear hijo
+                    </Button>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => onSelectChild(org)}>
+                       <Search className="size-3 mr-2" /> Seleccionar hijo
                     </Button>
                     <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => {}}>
                        <ArrowRight className="size-3 mr-2" /> Mover
