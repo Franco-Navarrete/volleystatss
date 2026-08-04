@@ -412,8 +412,9 @@ function AdminPage() {
           setActiveEntityType("user");
           setWizardOpen(true);
         }}
-        onAddChild={() => {
+        onAddChild={(parent) => {
           setActiveEntityType("org");
+          setWizardTargetEntity(parent);
           setWizardOpen(true);
         }}
       />
@@ -868,7 +869,7 @@ function OrgDetailDrawer({
   onClose: () => void,
   requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void,
   onAddUser: () => void,
-  onAddChild: () => void
+  onAddChild: (parent: any) => void
 }) {
   if (!org) return null;
   return (
@@ -943,7 +944,7 @@ function OrgDetailDrawer({
               <div className="space-y-4">
                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acciones Rápidas</h4>
                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={onAddChild}>
+                    <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => onAddChild(org)}>
                        <Plus className="size-3 mr-2" /> Crear hijo
                     </Button>
                     <Button variant="outline" className="text-xs h-9 justify-start" onClick={() => alert('Wizard: Mover en jerarquía')}>
