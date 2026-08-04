@@ -199,7 +199,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     slug: "",
     country: "",
     city: "",
-    address: ""
+    address: "",
+    plan: "Free",
+    modules: ["Live Scoring", "Advanced Scouting"]
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
