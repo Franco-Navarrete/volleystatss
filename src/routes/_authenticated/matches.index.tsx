@@ -69,10 +69,19 @@ function MatchesIndex() {
     // 3. Si es Coach u otro rol, filtramos estrictamente por propiedad.
     //    Solo debe ver sus partidos (donde al menos uno de sus equipos propiedad participe).
     const myOwnedTeamIds = new Set(localTeams.filter(t => t.ownerId === user?.id).map(t => t.id));
+    const myLeagueIds = new Set(localTeams.filter(t => t.ownerId === user?.id && t.leagueId).map(t => t.leagueId));
 
     return baseMatches.filter(m => {
-      // Participa un equipo que YO poseo (evita ver partidos donde solo participan rivales que agregué)
-      return myOwnedTeamIds.has(m.teamAId) || myOwnedTeamIds.has(m.teamBId);
+      // Participa un equipo que YO poseo
+      if (myOwnedTeamIds.has(m.teamAId) || myOwnedTeamIds.has(m.teamBId)) return true;
+      
+      // O participa un equipo que está en una liga que YO gestiono/participo
+      const teamA = teamById.get(m.teamAId);
+      const teamB = teamById.get(m.teamBId);
+      if (teamA?.leagueId && myLeagueIds.has(teamA.leagueId)) return true;
+      if (teamB?.leagueId && myLeagueIds.has(teamB.leagueId)) return true;
+      
+      return false;
     });
   }, [isAdmin, adminAll.data, localMatches, localTeams, user?.id]);
 

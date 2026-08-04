@@ -365,11 +365,28 @@ function LiveMatch() {
 
 
   if (!match || !teamA || !teamB) {
+    const isAdmin = useIsAdmin().isAdmin;
+    const { hasAccess: isCoach } = useCoachAccess();
+    
     return (
       <CompactShell>
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">Partido no encontrado.</p>
-          <Button asChild className="mt-4"><Link to="/matches">Volver</Link></Button>
+        <div className="text-center py-20 px-6">
+          <p className="text-xl font-bold mb-2">Partido no encontrado</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
+            {!match 
+              ? "El identificador del partido es inválido o el partido fue eliminado."
+              : "No se pudieron cargar los equipos asociados a este partido."}
+          </p>
+          <div className="flex flex-col gap-2 max-w-xs mx-auto">
+            <Button asChild variant="default" className="bg-gradient-primary">
+              <Link to="/matches">Volver a mis partidos</Link>
+            </Button>
+            {(!isAdmin && isCoach) && (
+              <p className="text-[10px] text-muted-foreground mt-4">
+                Tip: Si el partido fue creado por otro usuario, asegúrate de que pertenezca a una liga que compartes.
+              </p>
+            )}
+          </div>
         </div>
       </CompactShell>
     );
