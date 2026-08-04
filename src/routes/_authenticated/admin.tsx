@@ -904,7 +904,7 @@ function OrgDetailDrawer({
                 <Card className="bg-muted/30 border-none shadow-none">
                   <CardContent className="p-3 text-center">
                     <p className="text-[10px] font-black text-muted-foreground uppercase">Plan</p>
-                    <p className="text-sm font-black mt-1 text-primary">{org.plan || 'N/A'}</p>
+                    <p className="text-sm font-black mt-1 text-primary">{org.plan || 'Free'}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-muted/30 border-none shadow-none">

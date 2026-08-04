@@ -27,11 +27,23 @@ export const adminListWorkspaces = createServerFn({ method: "GET" })
 
     // Por ahora, simulamos la respuesta basada en clubes y ligas existentes
     // hasta que la migración de la tabla 'workspaces' esté ejecutada.
-    const [{ data: clubs }, { data: leagues }] = await Promise.all([
+    const [{ data: clubs }, { data: leagues }, { data: users }, { data: userRoles }] = await Promise.all([
       supabaseAdmin.from("clubs").select("*"),
       supabaseAdmin.from("leagues").select("*"),
+      supabaseAdmin.from("profiles").select("id, email"),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
     ]);
 
+    // Relación usuarios por club (owner)
+    const usersByClub = new Map<string, string[]>();
+    clubs?.forEach(c => {
+      if (c.owner_id) {
+        const email = users?.find(u => u.id === c.owner_id)?.email || "Usuario Desconocido";
+        usersByClub.set(c.id, [email]);
+      }
+    });
+
+    // Simulamos jerarquía con conteos reales
     return {
       workspaces: [
         {
@@ -39,16 +51,22 @@ export const adminListWorkspaces = createServerFn({ method: "GET" })
           name: "Federación del Voleibol Argentino",
           type: "federacion",
           status: "active",
+          userCount: users?.length || 0,
+          users: users?.map(u => u.email),
           children: (leagues ?? []).map(l => ({
             id: l.id,
             name: l.name,
             type: "liga",
             status: "active",
+            userCount: 0, // En el futuro se calcularía por membresía
+            users: [],
             children: (clubs ?? []).map(c => ({
               id: c.id,
               name: c.name,
               type: "club",
-              status: "active"
+              status: "active",
+              userCount: usersByClub.get(c.id)?.length || 0,
+              users: usersByClub.get(c.id) || []
             }))
           }))
         }
