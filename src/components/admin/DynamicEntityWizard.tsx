@@ -637,16 +637,23 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                   {["Free", "Coach", "Club", "League", "Enterprise"].map((plan) => (
                     <div 
                       key={plan}
-                      className="flex items-center justify-between p-4 rounded-xl border border-border/60 hover:border-primary/40 cursor-pointer transition-all"
+                      onClick={() => setOrgWizardData({ ...orgWizardData, plan })}
+                      className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                        orgWizardData.plan === plan 
+                          ? "border-primary bg-primary/10 shadow-glow" 
+                          : "border-border/60 hover:border-primary/40"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <CreditCard className="size-5 text-primary" />
+                        <CreditCard className={`size-5 ${orgWizardData.plan === plan ? "text-primary" : "text-muted-foreground"}`} />
                         <div>
-                          <p className="font-bold">{plan}</p>
+                          <p className={`font-bold ${orgWizardData.plan === plan ? "text-primary" : ""}`}>{plan}</p>
                           <p className="text-[10px] text-muted-foreground">Detalles del plan {plan.toLowerCase()}</p>
                         </div>
                       </div>
-                      <Badge variant="outline">Seleccionar</Badge>
+                      <Badge variant={orgWizardData.plan === plan ? "default" : "outline"}>
+                        {orgWizardData.plan === plan ? "Seleccionado" : "Seleccionar"}
+                      </Badge>
                     </div>
                   ))}
                 </div>
