@@ -364,6 +364,8 @@ function LiveMatch() {
 
 
 
+  const matchId = (Route.useParams() as { id: string }).id;
+
   if (!match || !teamA || !teamB) {
     const isAdmin = useIsAdmin().isAdmin;
     const { hasAccess: isCoach } = useCoachAccess();
@@ -390,7 +392,7 @@ function LiveMatch() {
                 <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchId}</span></p>
                 {match && (
                   <>
-                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.ownerId || "Global"}</span></p>
+                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.metadata?.ownerId || "Global"}</span></p>
                     <p className="text-[10px] text-muted-foreground">Fecha: <span className="text-foreground font-mono">{new Date(match.createdAt).toLocaleDateString()}</span></p>
                   </>
                 )}
@@ -451,10 +453,10 @@ function LiveMatch() {
   const isMyMatch = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
-    if (match.ownerId === user.id) return true;
+    if (match.metadata?.ownerId === user.id) return true;
     const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
     return myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId);
-  }, [isAdmin, user, match.teamAId, match.teamBId, match.ownerId]);
+  }, [isAdmin, user, match.teamAId, match.teamBId, match.metadata?.ownerId]);
 
   const canScout = isAdmin || (isCoach && isMyMatch);
 

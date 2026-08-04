@@ -76,7 +76,7 @@ function MatchesIndex() {
       if (myOwnedTeamIds.has(m.teamAId) || myOwnedTeamIds.has(m.teamBId)) return true;
       
       // 2. O el partido me pertenece directamente (soy el creador)
-      if (m.ownerId === user?.id) return true;
+      if (m.metadata?.ownerId === user?.id) return true;
 
       // 3. O participa un equipo que está en una liga que YO gestiono/participo
       const teamA = teamById.get(m.teamAId);
