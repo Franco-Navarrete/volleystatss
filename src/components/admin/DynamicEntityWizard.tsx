@@ -91,6 +91,56 @@ function LeagueSelector({ selectedIds, onChange }: { selectedIds: string[], onCh
     </div>
   );
 }
+import { useQuery } from "@tanstack/react-query";
+import { adminListLeagues } from "@/lib/admin.functions";
+
+function LeagueSelector({ selectedIds, onChange }: { selectedIds: string[], onChange: (ids: string[]) => void }) {
+  const listLeagues = useServerFn(adminListLeagues);
+  const { data: leagues, isLoading } = useQuery({ 
+    queryKey: ["admin", "leagues-selector"], 
+    queryFn: () => listLeagues() 
+  });
+
+  if (isLoading) return <div className="space-y-2 animate-pulse">
+    {[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded-lg" />)}
+  </div>;
+
+  return (
+    <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-2">
+      {leagues?.map((league) => (
+        <div 
+          key={league.id}
+          onClick={() => {
+            const next = selectedIds.includes(league.id)
+              ? selectedIds.filter(id => id !== league.id)
+              : [...selectedIds, league.id];
+            onChange(next);
+          }}
+          className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+            selectedIds.includes(league.id)
+              ? "border-primary bg-primary/10" 
+              : "border-border/60 hover:border-primary/40"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-2 rounded-full" style={{ backgroundColor: league.color || '#3b82f6' }} />
+            <span className={`text-sm font-medium ${selectedIds.includes(league.id) ? "text-primary" : ""}`}>
+              {league.name}
+            </span>
+          </div>
+          <div className={`size-4 rounded border flex items-center justify-center transition-all ${
+            selectedIds.includes(league.id) 
+              ? "border-primary bg-primary text-primary-foreground" 
+              : "border-border bg-background"
+          }`}>
+            {selectedIds.includes(league.id) && <Check className="size-2.5" strokeWidth={3} />}
+          </div>
+        </div>
+      ))}
+      {leagues?.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No hay ligas disponibles.</p>}
+    </div>
+  );
+}
 
 export type EntityType = "org" | "user" | "role" | "permission" | "module" | "plan" | "subscription" | "change_role";
 
