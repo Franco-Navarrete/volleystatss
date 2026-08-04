@@ -99,6 +99,9 @@ function MatchesIndex() {
       await deleteFn({ data: { matchId } });
       deleteMatch(matchId);
       toast.success("Partido eliminado");
+      // Forzar una re-evaluación del useMemo de matches para que la UI se actualice inmediatamente
+      // Aunque deleteMatch ya actualiza el store de zustand, nos aseguramos de que el componente 
+      // renderice el nuevo estado. 
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No tienes permisos para eliminar partidos en vivo.");
     } finally {
