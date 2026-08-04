@@ -291,6 +291,27 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
         } finally {
           setIsSubmitting(false);
         }
+      } else if (entityType === "org") {
+        setIsSubmitting(true);
+        try {
+          // Lógica para crear Organización (Liga o Club)
+          if (orgWizardData.type === "Liga") {
+            await createLeague({ data: { name: orgWizardData.name } });
+            toast.success("Liga creada correctamente");
+          } else {
+            // TODO: Implementar adminCreateClub en admin.functions.ts cuando sea necesario
+            console.log("[Wizard] Creando Club:", orgWizardData.name);
+            toast.info(`Funcionalidad para crear ${orgWizardData.type} estará disponible pronto. Solo Ligas por ahora.`);
+          }
+          
+          await queryClient.invalidateQueries({ queryKey: ["admin", "workspaces"] });
+          onClose();
+        } catch (error: any) {
+          console.error("Error creating organization:", error);
+          toast.error(error.message || "Error al crear la organización");
+        } finally {
+          setIsSubmitting(false);
+        }
       } else {
         console.log(`[Wizard] Finalizing creation of: ${entityType}`);
         onClose();
