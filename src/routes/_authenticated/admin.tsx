@@ -1109,7 +1109,7 @@ function OrgDetailDrawer({
                       <Zap className="size-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-black tracking-tight">{org.plan || 'League'} Plan</p>
+                      <p className="text-sm font-black tracking-tight">Plan {org.plan || 'League'}</p>
                       <p className="text-[10px] text-muted-foreground">Renovación automática: 12 Oct 2026</p>
                     </div>
                   </div>
