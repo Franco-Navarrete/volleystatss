@@ -954,6 +954,7 @@ function OrgDetailDrawer({
                     </Button>
                  </div>
               </div>
+            </TabsContent>
             <TabsContent value="usuarios" className="m-0 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Usuarios en esta organización</h3>
