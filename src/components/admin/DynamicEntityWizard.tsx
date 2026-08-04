@@ -132,7 +132,7 @@ interface DynamicEntityWizardProps {
   targetEntity?: any;
 }
 
-import { adminSetRole, adminSetExtraRole, adminCreateLeague, adminCreateClub, type ExtraRole } from "@/lib/admin.functions";
+import { adminSetRole, adminSetExtraRole, adminCreateLeague, adminCreateClub, adminCreateUser, type ExtraRole } from "@/lib/admin.functions";
 
 export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity }: DynamicEntityWizardProps) {
   const queryClient = useQueryClient();
@@ -140,6 +140,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
   const setExtraRole = useServerFn(adminSetExtraRole);
   const createLeague = useServerFn(adminCreateLeague);
   const createClub = useServerFn(adminCreateClub);
+  const createUser = useServerFn(adminCreateUser);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [roleData, setRoleData] = useState<RoleInfoData>({
@@ -202,6 +203,15 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     address: "",
     plan: "Free",
     modules: ["Live Scoring", "Advanced Scouting"]
+  });
+  const [userData, setUserData] = useState({
+    name: "",
+    surname: "",
+    email: "",
+    password: "",
+    canCreateMatches: true,
+    extraRoles: [] as ExtraRole[],
+    leagueIds: [] as string[]
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -314,6 +324,27 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
         } finally {
           setIsSubmitting(false);
         }
+      } else if (entityType === "user") {
+        setIsSubmitting(true);
+        try {
+          await createUser({
+            data: {
+              email: userData.email,
+              password: userData.password,
+              leagueIds: userData.leagueIds,
+              canCreateMatches: userData.canCreateMatches,
+              extraRoles: userData.extraRoles
+            }
+          });
+          toast.success("Usuario creado correctamente");
+          await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+          onClose();
+        } catch (error: any) {
+          console.error("Error creating user:", error);
+          toast.error(error.message || "Error al crear el usuario");
+        } finally {
+          setIsSubmitting(false);
+        }
       } else {
         console.log(`[Wizard] Finalizing creation of: ${entityType}`);
         onClose();
@@ -357,6 +388,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     }
     if (entityType === "org" && currentStep === 1) {
       return !orgWizardData.name;
+    }
+    if (entityType === "user" && currentStep === 0) {
+      return !userData.email || !userData.password;
     }
     if (entityType === "change_role" && currentStep === 0) {
       return !changeRoleData.roleId;
@@ -517,25 +551,126 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
               {entityType === "user" && currentStep === 0 && (
                 <>
                   <div className="grid gap-2">
-                    <Label htmlFor="name">Nombre</Label>
-                    <Input id="name" placeholder="Ej: Juan Francisco" className="h-11" />
+                    <Label htmlFor="name">Nombre (Opcional)</Label>
+                    <Input 
+                      id="name" 
+                      placeholder="Ej: Juan Francisco" 
+                      className="h-11" 
+                      value={userData.name}
+                      onChange={(e) => setUserData({...userData, name: e.target.value})}
+                    />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="surname">Apellido</Label>
-                    <Input id="surname" placeholder="Ej: Castro" className="h-11" />
+                    <Label htmlFor="surname">Apellido (Opcional)</Label>
+                    <Input 
+                      id="surname" 
+                      placeholder="Ej: Castro" 
+                      className="h-11" 
+                      value={userData.surname}
+                      onChange={(e) => setUserData({...userData, surname: e.target.value})}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="email">Correo</Label>
-                    <Input id="email" type="email" placeholder="usuario@rally.com" className="h-11" />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="usuario@rally.com" 
+                      className="h-11" 
+                      value={userData.email}
+                      onChange={(e) => setUserData({...userData, email: e.target.value})}
+                    />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="pass">Contraseña temporal</Label>
-                    <Input id="pass" type="password" placeholder="••••••••" className="h-11" />
+                    <Label htmlFor="pass">Contraseña</Label>
+                    <Input 
+                      id="pass" 
+                      type="password" 
+                      placeholder="••••••••" 
+                      className="h-11" 
+                      value={userData.password}
+                      onChange={(e) => setUserData({...userData, password: e.target.value})}
+                    />
                   </div>
                 </>
               )}
 
+              {entityType === "user" && currentStep === 1 && (
+                <div className="space-y-4">
+                  <Label>Asignar Roles</Label>
+                  {[
+                    { id: 'coach', label: 'Entrenador', icon: Users, role: 'entrenador' },
+                    { id: 'scorekeeper', label: 'Planillero', icon: Shield, role: 'planillero' },
+                    { id: 'analyst', label: 'Analista', icon: Key, role: 'analyst' },
+                  ].map((role) => (
+                    <div 
+                      key={role.id}
+                      onClick={() => {
+                        const currentRoles = userData.extraRoles;
+                        const newRoles = currentRoles.includes(role.role as ExtraRole)
+                          ? currentRoles.filter(r => r !== role.role)
+                          : [...currentRoles, role.role as ExtraRole];
+                        setUserData({ ...userData, extraRoles: newRoles });
+                      }}
+                      className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                        userData.extraRoles.includes(role.role as ExtraRole)
+                          ? "border-primary bg-primary/10 shadow-glow" 
+                          : "border-border/60 hover:border-primary/40"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <role.icon className={`size-5 ${userData.extraRoles.includes(role.role as ExtraRole) ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className={`font-medium ${userData.extraRoles.includes(role.role as ExtraRole) ? "text-primary" : ""}`}>{role.label}</span>
+                      </div>
+                      <div className={`size-5 rounded-md border flex items-center justify-center transition-all ${
+                        userData.extraRoles.includes(role.role as ExtraRole) 
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm" 
+                          : "border-border bg-background"
+                      }`}>
+                        {userData.extraRoles.includes(role.role as ExtraRole) && <Check className="size-3" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {entityType === "user" && currentStep === 2 && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">El usuario será creado con acceso directo a estas ligas (opcional).</p>
+                  <div className="p-4 rounded-xl border border-dashed border-border/60 bg-muted/5 flex flex-col items-center justify-center gap-2">
+                    <Globe className="size-8 text-muted-foreground/20" />
+                    <p className="text-xs text-muted-foreground">Configuración avanzada de acceso</p>
+                    <p className="text-[10px] text-muted-foreground/60 italic">Se podrá configurar más tarde desde el panel de permisos.</p>
+                  </div>
+                </div>
+              )}
+
+              {entityType === "user" && currentStep === 3 && (
+                <div className="text-center py-8 space-y-4">
+                  <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto border border-primary/20 shadow-glow">
+                    <Users className="size-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold">Resumen de Usuario</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Se creará la cuenta para <strong>{userData.email}</strong>.
+                    </p>
+                  </div>
+                  <div className="bg-muted/30 p-4 rounded-xl text-left text-xs space-y-2 border border-border/40">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground uppercase font-black tracking-tighter">Email:</span>
+                      <span className="font-bold">{userData.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground uppercase font-black tracking-tighter">Roles:</span>
+                      <span className="font-bold">{userData.extraRoles.join(', ') || 'Usuario Estándar'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {entityType === "org" && currentStep === 0 && (
+
                 <div className="grid gap-4">
                   <Label>Tipo de Organización</Label>
                   {["Federación", "Asociación", "Liga", "Club", "Academia", "Otro"].map((type) => (

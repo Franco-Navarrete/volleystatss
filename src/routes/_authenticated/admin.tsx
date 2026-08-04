@@ -408,6 +408,10 @@ function AdminPage() {
         org={selectedOrg} 
         onClose={() => setSelectedOrg(null)} 
         requestConfirmation={requestConfirmation}
+        onAddUser={() => {
+          setActiveEntityType("user");
+          setWizardOpen(true);
+        }}
       />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
@@ -852,11 +856,13 @@ function UserDetailDrawer({
 function OrgDetailDrawer({ 
   org, 
   onClose,
-  requestConfirmation
+  requestConfirmation,
+  onAddUser
 }: { 
   org: any, 
   onClose: () => void,
-  requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void
+  requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void,
+  onAddUser: () => void
 }) {
   if (!org) return null;
   return (
@@ -982,8 +988,13 @@ function OrgDetailDrawer({
                 <div className="py-12 text-center space-y-2 border-2 border-dashed border-border/40 rounded-xl bg-muted/5">
                   <Users className="size-8 mx-auto text-muted-foreground/20" />
                   <p className="text-sm text-muted-foreground">No hay usuarios asignados directamente.</p>
-                  <Button variant="outline" size="sm" className="mt-2 text-xs">
-                    <UserPlus className="size-3 mr-2" /> Invitar Usuario
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2 text-xs"
+                    onClick={onAddUser}
+                  >
+                    <UserPlus className="size-3 mr-2" /> Agregar Usuario
                   </Button>
                 </div>
               )}
