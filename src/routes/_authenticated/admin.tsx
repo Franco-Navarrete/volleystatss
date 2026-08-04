@@ -869,13 +869,15 @@ function OrgDetailDrawer({
   onClose,
   requestConfirmation,
   onAddUser,
-  onAddChild
+  onAddChild,
+  onSelectChild
 }: { 
   org: any, 
   onClose: () => void,
   requestConfirmation: (config: { title: string; description: string; onConfirm: () => void; variant?: "destructive" | "default" }) => void,
   onAddUser: () => void,
-  onAddChild: (parent: any) => void
+  onAddChild: (parent: any) => void,
+  onSelectChild: (parent: any) => void
 }) {
   if (!org) return null;
   return (
