@@ -139,6 +139,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
   const setRole = useServerFn(adminSetRole);
   const setExtraRole = useServerFn(adminSetExtraRole);
   const createLeague = useServerFn(adminCreateLeague);
+  const createClub = useServerFn(adminCreateClub);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [roleData, setRoleData] = useState<RoleInfoData>({
