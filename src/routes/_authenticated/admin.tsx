@@ -412,6 +412,10 @@ function AdminPage() {
           setActiveEntityType("user");
           setWizardOpen(true);
         }}
+        onAddChild={() => {
+          setActiveEntityType("org");
+          setWizardOpen(true);
+        }}
       />
       <ModuleDetailDrawer module={selectedModule} onClose={() => setSelectedModule(null)} />
       <SubscriptionDetailDrawer sub={selectedSubscription} onClose={() => setSelectedSubscription(null)} />
