@@ -9,50 +9,49 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LigasRouteImport } from './routes/ligas'
-import { Route as EquiposRouteImport } from './routes/equipos'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LigasIndexRouteImport } from './routes/ligas.index'
-import { Route as EquiposIndexRouteImport } from './routes/equipos.index'
-import { Route as PartidosIdRouteImport } from './routes/partidos.$id'
-import { Route as MSlugRouteImport } from './routes/m.$slug'
-import { Route as LigasIdRouteImport } from './routes/ligas.$id'
-import { Route as JugadoraIdRouteImport } from './routes/jugadora.$id'
-import { Route as EquiposIdRouteImport } from './routes/equipos.$id'
-import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
-import { Route as AuthenticatedStatsCombinadasRouteImport } from './routes/_authenticated/stats-combinadas'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedRankingsRouteImport } from './routes/_authenticated/rankings'
-import { Route as AuthenticatedMyClubRouteImport } from './routes/_authenticated/my-club'
-import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
-import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedAwardsRouteImport } from './routes/_authenticated/awards'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as EquiposRouteImport } from './routes/equipos'
+import { Route as LigasRouteImport } from './routes/ligas'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedVideoIndexRouteImport } from './routes/_authenticated/video.index'
+import { Route as AuthenticatedAwardsRouteImport } from './routes/_authenticated/awards'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
+import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
+import { Route as AuthenticatedMyClubRouteImport } from './routes/_authenticated/my-club'
+import { Route as AuthenticatedRankingsRouteImport } from './routes/_authenticated/rankings'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedStatsCombinadasRouteImport } from './routes/_authenticated/stats-combinadas'
+import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
+import { Route as EquiposIndexRouteImport } from './routes/equipos.index'
+import { Route as EquiposIdRouteImport } from './routes/equipos.$id'
+import { Route as JugadoraIdRouteImport } from './routes/jugadora.$id'
+import { Route as LigasIndexRouteImport } from './routes/ligas.index'
+import { Route as LigasIdRouteImport } from './routes/ligas.$id'
+import { Route as MSlugRouteImport } from './routes/m.$slug'
+import { Route as PartidosIdRouteImport } from './routes/partidos.$id'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
-import { Route as AuthenticatedVideoMatchIdRouteImport } from './routes/_authenticated/video.$matchId'
-import { Route as AuthenticatedSessionNewRouteImport } from './routes/_authenticated/session.new'
-import { Route as AuthenticatedSessionIdRouteImport } from './routes/_authenticated/session.$id'
-import { Route as AuthenticatedMatchesNewRouteImport } from './routes/_authenticated/matches.new'
 import { Route as AuthenticatedMatchesIdRouteImport } from './routes/_authenticated/matches.$id'
-import { Route as AuthenticatedVideoMatchIdIndexRouteImport } from './routes/_authenticated/video.$matchId.index'
+import { Route as AuthenticatedMatchesNewRouteImport } from './routes/_authenticated/matches.new'
+import { Route as AuthenticatedSessionIdRouteImport } from './routes/_authenticated/session.$id'
+import { Route as AuthenticatedSessionNewRouteImport } from './routes/_authenticated/session.new'
+import { Route as AuthenticatedVideoIndexRouteImport } from './routes/_authenticated/video.index'
+import { Route as AuthenticatedVideoMatchIdRouteImport } from './routes/_authenticated/video.$matchId'
 import { Route as AuthenticatedMatchesIdIndexRouteImport } from './routes/_authenticated/matches.$id.index'
-import { Route as AuthenticatedVideoMatchIdScoutRouteImport } from './routes/_authenticated/video.$matchId.scout'
-import { Route as AuthenticatedVideoMatchIdLiveRouteImport } from './routes/_authenticated/video.$matchId.live'
-import { Route as AuthenticatedVideoMatchIdAnalysisRouteImport } from './routes/_authenticated/video.$matchId.analysis'
 import { Route as AuthenticatedMatchesIdStatsRouteImport } from './routes/_authenticated/matches.$id.stats'
+import { Route as AuthenticatedVideoMatchIdIndexRouteImport } from './routes/_authenticated/video.$matchId.index'
+import { Route as AuthenticatedVideoMatchIdAnalysisRouteImport } from './routes/_authenticated/video.$matchId.analysis'
+import { Route as AuthenticatedVideoMatchIdLiveRouteImport } from './routes/_authenticated/video.$matchId.live'
+import { Route as AuthenticatedVideoMatchIdScoutRouteImport } from './routes/_authenticated/video.$matchId.scout'
 
-const LigasRoute = LigasRouteImport.update({
-  id: '/ligas',
-  path: '/ligas',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EquiposRoute = EquiposRouteImport.update({
-  id: '/equipos',
-  path: '/equipos',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -60,79 +59,29 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const EquiposRoute = EquiposRouteImport.update({
+  id: '/equipos',
+  path: '/equipos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LigasRoute = LigasRouteImport.update({
+  id: '/ligas',
+  path: '/ligas',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LigasIndexRoute = LigasIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LigasRoute,
-} as any)
-const EquiposIndexRoute = EquiposIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => EquiposRoute,
-} as any)
-const PartidosIdRoute = PartidosIdRouteImport.update({
-  id: '/partidos/$id',
-  path: '/partidos/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MSlugRoute = MSlugRouteImport.update({
-  id: '/m/$slug',
-  path: '/m/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LigasIdRoute = LigasIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LigasRoute,
-} as any)
-const JugadoraIdRoute = JugadoraIdRouteImport.update({
-  id: '/jugadora/$id',
-  path: '/jugadora/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EquiposIdRoute = EquiposIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => EquiposRoute,
-} as any)
-const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
-  id: '/teams',
-  path: '/teams',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedStatsCombinadasRoute =
-  AuthenticatedStatsCombinadasRouteImport.update({
-    id: '/stats-combinadas',
-    path: '/stats-combinadas',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const AuthenticatedAwardsRoute = AuthenticatedAwardsRouteImport.update({
+  id: '/awards',
+  path: '/awards',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedRankingsRoute = AuthenticatedRankingsRouteImport.update({
-  id: '/rankings',
-  path: '/rankings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMyClubRoute = AuthenticatedMyClubRouteImport.update({
-  id: '/my-club',
-  path: '/my-club',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedLeaguesRoute = AuthenticatedLeaguesRouteImport.update({
-  id: '/leagues',
-  path: '/leagues',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedIntelligenceRoute =
@@ -141,25 +90,71 @@ const AuthenticatedIntelligenceRoute =
     path: '/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedLeaguesRoute = AuthenticatedLeaguesRouteImport.update({
+  id: '/leagues',
+  path: '/leagues',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAwardsRoute = AuthenticatedAwardsRouteImport.update({
-  id: '/awards',
-  path: '/awards',
+const AuthenticatedMyClubRoute = AuthenticatedMyClubRouteImport.update({
+  id: '/my-club',
+  path: '/my-club',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedRankingsRoute = AuthenticatedRankingsRouteImport.update({
+  id: '/rankings',
+  path: '/rankings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedVideoIndexRoute = AuthenticatedVideoIndexRouteImport.update({
-  id: '/video/',
-  path: '/video/',
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStatsCombinadasRoute =
+  AuthenticatedStatsCombinadasRouteImport.update({
+    id: '/stats-combinadas',
+    path: '/stats-combinadas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const EquiposIndexRoute = EquiposIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EquiposRoute,
+} as any)
+const EquiposIdRoute = EquiposIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EquiposRoute,
+} as any)
+const JugadoraIdRoute = JugadoraIdRouteImport.update({
+  id: '/jugadora/$id',
+  path: '/jugadora/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LigasIndexRoute = LigasIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LigasRoute,
+} as any)
+const LigasIdRoute = LigasIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LigasRoute,
+} as any)
+const MSlugRoute = MSlugRouteImport.update({
+  id: '/m/$slug',
+  path: '/m/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartidosIdRoute = PartidosIdRouteImport.update({
+  id: '/partidos/$id',
+  path: '/partidos/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMatchesIndexRoute =
   AuthenticatedMatchesIndexRouteImport.update({
@@ -167,20 +162,9 @@ const AuthenticatedMatchesIndexRoute =
     path: '/matches/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedVideoMatchIdRoute =
-  AuthenticatedVideoMatchIdRouteImport.update({
-    id: '/video/$matchId',
-    path: '/video/$matchId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSessionNewRoute = AuthenticatedSessionNewRouteImport.update({
-  id: '/session/new',
-  path: '/session/new',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSessionIdRoute = AuthenticatedSessionIdRouteImport.update({
-  id: '/session/$id',
-  path: '/session/$id',
+const AuthenticatedMatchesIdRoute = AuthenticatedMatchesIdRouteImport.update({
+  id: '/matches/$id',
+  path: '/matches/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMatchesNewRoute = AuthenticatedMatchesNewRouteImport.update({
@@ -188,16 +172,26 @@ const AuthenticatedMatchesNewRoute = AuthenticatedMatchesNewRouteImport.update({
   path: '/matches/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMatchesIdRoute = AuthenticatedMatchesIdRouteImport.update({
-  id: '/matches/$id',
-  path: '/matches/$id',
+const AuthenticatedSessionIdRoute = AuthenticatedSessionIdRouteImport.update({
+  id: '/session/$id',
+  path: '/session/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedVideoMatchIdIndexRoute =
-  AuthenticatedVideoMatchIdIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedVideoMatchIdRoute,
+const AuthenticatedSessionNewRoute = AuthenticatedSessionNewRouteImport.update({
+  id: '/session/new',
+  path: '/session/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVideoIndexRoute = AuthenticatedVideoIndexRouteImport.update({
+  id: '/video/',
+  path: '/video/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVideoMatchIdRoute =
+  AuthenticatedVideoMatchIdRouteImport.update({
+    id: '/video/$matchId',
+    path: '/video/$matchId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMatchesIdIndexRoute =
   AuthenticatedMatchesIdIndexRouteImport.update({
@@ -205,16 +199,16 @@ const AuthenticatedMatchesIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMatchesIdRoute,
   } as any)
-const AuthenticatedVideoMatchIdScoutRoute =
-  AuthenticatedVideoMatchIdScoutRouteImport.update({
-    id: '/scout',
-    path: '/scout',
-    getParentRoute: () => AuthenticatedVideoMatchIdRoute,
+const AuthenticatedMatchesIdStatsRoute =
+  AuthenticatedMatchesIdStatsRouteImport.update({
+    id: '/stats',
+    path: '/stats',
+    getParentRoute: () => AuthenticatedMatchesIdRoute,
   } as any)
-const AuthenticatedVideoMatchIdLiveRoute =
-  AuthenticatedVideoMatchIdLiveRouteImport.update({
-    id: '/live',
-    path: '/live',
+const AuthenticatedVideoMatchIdIndexRoute =
+  AuthenticatedVideoMatchIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedVideoMatchIdRoute,
   } as any)
 const AuthenticatedVideoMatchIdAnalysisRoute =
@@ -223,11 +217,17 @@ const AuthenticatedVideoMatchIdAnalysisRoute =
     path: '/analysis',
     getParentRoute: () => AuthenticatedVideoMatchIdRoute,
   } as any)
-const AuthenticatedMatchesIdStatsRoute =
-  AuthenticatedMatchesIdStatsRouteImport.update({
-    id: '/stats',
-    path: '/stats',
-    getParentRoute: () => AuthenticatedMatchesIdRoute,
+const AuthenticatedVideoMatchIdLiveRoute =
+  AuthenticatedVideoMatchIdLiveRouteImport.update({
+    id: '/live',
+    path: '/live',
+    getParentRoute: () => AuthenticatedVideoMatchIdRoute,
+  } as any)
+const AuthenticatedVideoMatchIdScoutRoute =
+  AuthenticatedVideoMatchIdScoutRouteImport.update({
+    id: '/scout',
+    path: '/scout',
+    getParentRoute: () => AuthenticatedVideoMatchIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -457,25 +457,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/ligas': {
-      id: '/ligas'
-      path: '/ligas'
-      fullPath: '/ligas'
-      preLoaderRoute: typeof LigasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/equipos': {
-      id: '/equipos'
-      path: '/equipos'
-      fullPath: '/equipos'
-      preLoaderRoute: typeof EquiposRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -485,116 +471,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ligas/': {
-      id: '/ligas/'
-      path: '/'
-      fullPath: '/ligas/'
-      preLoaderRoute: typeof LigasIndexRouteImport
-      parentRoute: typeof LigasRoute
-    }
-    '/equipos/': {
-      id: '/equipos/'
-      path: '/'
-      fullPath: '/equipos/'
-      preLoaderRoute: typeof EquiposIndexRouteImport
-      parentRoute: typeof EquiposRoute
-    }
-    '/partidos/$id': {
-      id: '/partidos/$id'
-      path: '/partidos/$id'
-      fullPath: '/partidos/$id'
-      preLoaderRoute: typeof PartidosIdRouteImport
+    '/equipos': {
+      id: '/equipos'
+      path: '/equipos'
+      fullPath: '/equipos'
+      preLoaderRoute: typeof EquiposRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/m/$slug': {
-      id: '/m/$slug'
-      path: '/m/$slug'
-      fullPath: '/m/$slug'
-      preLoaderRoute: typeof MSlugRouteImport
+    '/ligas': {
+      id: '/ligas'
+      path: '/ligas'
+      fullPath: '/ligas'
+      preLoaderRoute: typeof LigasRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ligas/$id': {
-      id: '/ligas/$id'
-      path: '/$id'
-      fullPath: '/ligas/$id'
-      preLoaderRoute: typeof LigasIdRouteImport
-      parentRoute: typeof LigasRoute
-    }
-    '/jugadora/$id': {
-      id: '/jugadora/$id'
-      path: '/jugadora/$id'
-      fullPath: '/jugadora/$id'
-      preLoaderRoute: typeof JugadoraIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/equipos/$id': {
-      id: '/equipos/$id'
-      path: '/$id'
-      fullPath: '/equipos/$id'
-      preLoaderRoute: typeof EquiposIdRouteImport
-      parentRoute: typeof EquiposRoute
-    }
-    '/_authenticated/teams': {
-      id: '/_authenticated/teams'
-      path: '/teams'
-      fullPath: '/teams'
-      preLoaderRoute: typeof AuthenticatedTeamsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/stats-combinadas': {
-      id: '/_authenticated/stats-combinadas'
-      path: '/stats-combinadas'
-      fullPath: '/stats-combinadas'
-      preLoaderRoute: typeof AuthenticatedStatsCombinadasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rankings': {
-      id: '/_authenticated/rankings'
-      path: '/rankings'
-      fullPath: '/rankings'
-      preLoaderRoute: typeof AuthenticatedRankingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/my-club': {
-      id: '/_authenticated/my-club'
-      path: '/my-club'
-      fullPath: '/my-club'
-      preLoaderRoute: typeof AuthenticatedMyClubRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/leagues': {
-      id: '/_authenticated/leagues'
-      path: '/leagues'
-      fullPath: '/leagues'
-      preLoaderRoute: typeof AuthenticatedLeaguesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/intelligence': {
-      id: '/_authenticated/intelligence'
-      path: '/intelligence'
-      fullPath: '/intelligence'
-      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/awards': {
@@ -604,53 +506,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAwardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/video/': {
-      id: '/_authenticated/video/'
-      path: '/video'
-      fullPath: '/video/'
-      preLoaderRoute: typeof AuthenticatedVideoIndexRouteImport
+    '/_authenticated/intelligence': {
+      id: '/_authenticated/intelligence'
+      path: '/intelligence'
+      fullPath: '/intelligence'
+      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/leagues': {
+      id: '/_authenticated/leagues'
+      path: '/leagues'
+      fullPath: '/leagues'
+      preLoaderRoute: typeof AuthenticatedLeaguesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-club': {
+      id: '/_authenticated/my-club'
+      path: '/my-club'
+      fullPath: '/my-club'
+      preLoaderRoute: typeof AuthenticatedMyClubRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rankings': {
+      id: '/_authenticated/rankings'
+      path: '/rankings'
+      fullPath: '/rankings'
+      preLoaderRoute: typeof AuthenticatedRankingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stats-combinadas': {
+      id: '/_authenticated/stats-combinadas'
+      path: '/stats-combinadas'
+      fullPath: '/stats-combinadas'
+      preLoaderRoute: typeof AuthenticatedStatsCombinadasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/teams': {
+      id: '/_authenticated/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof AuthenticatedTeamsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/equipos/': {
+      id: '/equipos/'
+      path: '/'
+      fullPath: '/equipos/'
+      preLoaderRoute: typeof EquiposIndexRouteImport
+      parentRoute: typeof EquiposRoute
+    }
+    '/equipos/$id': {
+      id: '/equipos/$id'
+      path: '/$id'
+      fullPath: '/equipos/$id'
+      preLoaderRoute: typeof EquiposIdRouteImport
+      parentRoute: typeof EquiposRoute
+    }
+    '/jugadora/$id': {
+      id: '/jugadora/$id'
+      path: '/jugadora/$id'
+      fullPath: '/jugadora/$id'
+      preLoaderRoute: typeof JugadoraIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ligas/': {
+      id: '/ligas/'
+      path: '/'
+      fullPath: '/ligas/'
+      preLoaderRoute: typeof LigasIndexRouteImport
+      parentRoute: typeof LigasRoute
+    }
+    '/ligas/$id': {
+      id: '/ligas/$id'
+      path: '/$id'
+      fullPath: '/ligas/$id'
+      preLoaderRoute: typeof LigasIdRouteImport
+      parentRoute: typeof LigasRoute
+    }
+    '/m/$slug': {
+      id: '/m/$slug'
+      path: '/m/$slug'
+      fullPath: '/m/$slug'
+      preLoaderRoute: typeof MSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partidos/$id': {
+      id: '/partidos/$id'
+      path: '/partidos/$id'
+      fullPath: '/partidos/$id'
+      preLoaderRoute: typeof PartidosIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/matches/': {
       id: '/_authenticated/matches/'
       path: '/matches'
       fullPath: '/matches/'
       preLoaderRoute: typeof AuthenticatedMatchesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/video/$matchId': {
-      id: '/_authenticated/video/$matchId'
-      path: '/video/$matchId'
-      fullPath: '/video/$matchId'
-      preLoaderRoute: typeof AuthenticatedVideoMatchIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/session/new': {
-      id: '/_authenticated/session/new'
-      path: '/session/new'
-      fullPath: '/session/new'
-      preLoaderRoute: typeof AuthenticatedSessionNewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/session/$id': {
-      id: '/_authenticated/session/$id'
-      path: '/session/$id'
-      fullPath: '/session/$id'
-      preLoaderRoute: typeof AuthenticatedSessionIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/matches/new': {
-      id: '/_authenticated/matches/new'
-      path: '/matches/new'
-      fullPath: '/matches/new'
-      preLoaderRoute: typeof AuthenticatedMatchesNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/matches/$id': {
@@ -660,12 +625,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMatchesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/video/$matchId/': {
-      id: '/_authenticated/video/$matchId/'
-      path: '/'
-      fullPath: '/video/$matchId/'
-      preLoaderRoute: typeof AuthenticatedVideoMatchIdIndexRouteImport
-      parentRoute: typeof AuthenticatedVideoMatchIdRoute
+    '/_authenticated/matches/new': {
+      id: '/_authenticated/matches/new'
+      path: '/matches/new'
+      fullPath: '/matches/new'
+      preLoaderRoute: typeof AuthenticatedMatchesNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/session/$id': {
+      id: '/_authenticated/session/$id'
+      path: '/session/$id'
+      fullPath: '/session/$id'
+      preLoaderRoute: typeof AuthenticatedSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/session/new': {
+      id: '/_authenticated/session/new'
+      path: '/session/new'
+      fullPath: '/session/new'
+      preLoaderRoute: typeof AuthenticatedSessionNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/video/': {
+      id: '/_authenticated/video/'
+      path: '/video'
+      fullPath: '/video/'
+      preLoaderRoute: typeof AuthenticatedVideoIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/video/$matchId': {
+      id: '/_authenticated/video/$matchId'
+      path: '/video/$matchId'
+      fullPath: '/video/$matchId'
+      preLoaderRoute: typeof AuthenticatedVideoMatchIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/matches/$id/': {
       id: '/_authenticated/matches/$id/'
@@ -674,18 +667,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMatchesIdIndexRouteImport
       parentRoute: typeof AuthenticatedMatchesIdRoute
     }
-    '/_authenticated/video/$matchId/scout': {
-      id: '/_authenticated/video/$matchId/scout'
-      path: '/scout'
-      fullPath: '/video/$matchId/scout'
-      preLoaderRoute: typeof AuthenticatedVideoMatchIdScoutRouteImport
-      parentRoute: typeof AuthenticatedVideoMatchIdRoute
+    '/_authenticated/matches/$id/stats': {
+      id: '/_authenticated/matches/$id/stats'
+      path: '/stats'
+      fullPath: '/matches/$id/stats'
+      preLoaderRoute: typeof AuthenticatedMatchesIdStatsRouteImport
+      parentRoute: typeof AuthenticatedMatchesIdRoute
     }
-    '/_authenticated/video/$matchId/live': {
-      id: '/_authenticated/video/$matchId/live'
-      path: '/live'
-      fullPath: '/video/$matchId/live'
-      preLoaderRoute: typeof AuthenticatedVideoMatchIdLiveRouteImport
+    '/_authenticated/video/$matchId/': {
+      id: '/_authenticated/video/$matchId/'
+      path: '/'
+      fullPath: '/video/$matchId/'
+      preLoaderRoute: typeof AuthenticatedVideoMatchIdIndexRouteImport
       parentRoute: typeof AuthenticatedVideoMatchIdRoute
     }
     '/_authenticated/video/$matchId/analysis': {
@@ -695,12 +688,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVideoMatchIdAnalysisRouteImport
       parentRoute: typeof AuthenticatedVideoMatchIdRoute
     }
-    '/_authenticated/matches/$id/stats': {
-      id: '/_authenticated/matches/$id/stats'
-      path: '/stats'
-      fullPath: '/matches/$id/stats'
-      preLoaderRoute: typeof AuthenticatedMatchesIdStatsRouteImport
-      parentRoute: typeof AuthenticatedMatchesIdRoute
+    '/_authenticated/video/$matchId/live': {
+      id: '/_authenticated/video/$matchId/live'
+      path: '/live'
+      fullPath: '/video/$matchId/live'
+      preLoaderRoute: typeof AuthenticatedVideoMatchIdLiveRouteImport
+      parentRoute: typeof AuthenticatedVideoMatchIdRoute
+    }
+    '/_authenticated/video/$matchId/scout': {
+      id: '/_authenticated/video/$matchId/scout'
+      path: '/scout'
+      fullPath: '/video/$matchId/scout'
+      preLoaderRoute: typeof AuthenticatedVideoMatchIdScoutRouteImport
+      parentRoute: typeof AuthenticatedVideoMatchIdRoute
     }
   }
 }

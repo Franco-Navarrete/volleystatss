@@ -142,10 +142,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       .upsert({ id: newUserId, email: data.email });
     if (profileErr) throw profileErr;
 
-    const { error: pwStoreErr } = await supabaseAdmin
-      .from("admin_user_passwords")
-      .upsert({ user_id: newUserId, password: data.password, updated_by: context.userId, updated_at: new Date().toISOString() });
-    if (pwStoreErr) throw pwStoreErr;
+    // Se eliminó la tabla admin_user_passwords por motivos de seguridad.
+    // No guardamos contraseñas en texto plano.
 
     const { error: permErr } = await supabaseAdmin
       .from("user_permissions")
@@ -228,15 +226,7 @@ export const adminSetPassword = createServerFn({ method: "POST" })
       }
       throw error;
     }
-    const { error: storeErr } = await supabaseAdmin
-      .from("admin_user_passwords")
-      .upsert({
-        user_id: data.userId,
-        password: data.password,
-        updated_by: context.userId,
-        updated_at: new Date().toISOString(),
-      });
-    if (storeErr) throw storeErr;
+    // No guardamos la contraseña en la base de datos pública.
     return { ok: true };
   });
 
@@ -245,16 +235,9 @@ export const adminSetPassword = createServerFn({ method: "POST" })
 export const adminGetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { userId: string }) => z.object({ userId: uuidSchema }).parse(input))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("admin_user_passwords")
-      .select("password, updated_at")
-      .eq("user_id", data.userId)
-      .maybeSingle();
-    if (error) throw error;
-    return row ? { password: row.password as string, updatedAt: row.updated_at as string } : null;
+  .handler(async () => {
+    // Ya no se permite recuperar contraseñas por seguridad.
+    return null;
   });
 
 // ---------- Eliminar usuario ----------

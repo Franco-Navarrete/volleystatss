@@ -14,27 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_user_passwords: {
-        Row: {
-          password: string
-          updated_at: string
-          updated_by: string | null
-          user_id: string
-        }
-        Insert: {
-          password: string
-          updated_at?: string
-          updated_by?: string | null
-          user_id: string
-        }
-        Update: {
-          password?: string
-          updated_at?: string
-          updated_by?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       app_state: {
         Row: {
           data: Json
