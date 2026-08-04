@@ -1583,7 +1583,10 @@ export const useVolley = create<VolleyState>()(
         })),
 
       deleteMatch: (id) =>
-        set((s) => ({ matches: s.matches.filter((m) => m.id !== id) })),
+        set((s) => ({ 
+          matches: s.matches.filter((m) => m.id !== id),
+          lastLocalChange: Date.now()
+        })),
 
       seedDemo: () => {
         if (get().teams.length > 0) return;
