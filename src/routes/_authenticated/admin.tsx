@@ -1128,7 +1128,11 @@ function OrgDetailDrawer({
                 </div>
                 <Button 
                   className="w-full bg-primary shadow-glow h-10 text-xs font-black"
-                  onClick={() => window.open('https://billing.stripe.com/p/login/test_fsq7uV7tG3PZ7hS288', '_blank')}
+                  onClick={() => {
+                    const stripeUrl = 'https://billing.stripe.com/p/login/test_fsq7uV7tG3PZ7hS288';
+                    console.log(`[StripeBridge] Redireccionando a portal: ${stripeUrl}`);
+                    window.open(stripeUrl, '_blank');
+                  }}
                 >
                   GESTIONAR EN STRIPE
                 </Button>
