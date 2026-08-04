@@ -782,10 +782,10 @@ function UserDetailDrawer({
                </div>
             </TabsContent>
             <TabsContent value="security" className="m-0 space-y-6">
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex gap-3">
-                <Shield className="size-5 text-primary shrink-0" />
-                <p className="text-xs leading-relaxed">
-                  El administrador puede ver y cambiar las contraseñas en el apartado "seguridad" de cada usuario.
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4 flex gap-3">
+                <ShieldCheck className="size-5 text-muted-foreground shrink-0" />
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  La seguridad de las cuentas está protegida. Los administradores pueden forzar el restablecimiento de contraseñas pero no visualizar las actuales.
                 </p>
               </div>
 
