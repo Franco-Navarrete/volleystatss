@@ -132,12 +132,14 @@ interface DynamicEntityWizardProps {
   targetEntity?: any;
 }
 
-import { adminSetRole, adminSetExtraRole, type ExtraRole } from "@/lib/admin.functions";
+import { adminSetRole, adminSetExtraRole, adminCreateLeague, adminCreateClub, type ExtraRole } from "@/lib/admin.functions";
 
 export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity }: DynamicEntityWizardProps) {
   const queryClient = useQueryClient();
   const setRole = useServerFn(adminSetRole);
   const setExtraRole = useServerFn(adminSetExtraRole);
+  const createLeague = useServerFn(adminCreateLeague);
+  const createClub = useServerFn(adminCreateClub);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [roleData, setRoleData] = useState<RoleInfoData>({
@@ -192,7 +194,12 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     roleId: targetEntity?.isAdmin ? "admin" : "user"
   });
   const [orgWizardData, setOrgWizardData] = useState({
-    type: ""
+    type: "",
+    name: "",
+    slug: "",
+    country: "",
+    city: "",
+    address: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -285,6 +292,26 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
         } finally {
           setIsSubmitting(false);
         }
+      } else if (entityType === "org") {
+        setIsSubmitting(true);
+        try {
+          // Lógica para crear Organización (Liga o Club)
+          if (orgWizardData.type === "Liga") {
+            await createLeague({ data: { name: orgWizardData.name } });
+            toast.success("Liga creada correctamente");
+          } else {
+            await createClub({ data: { name: orgWizardData.name } });
+            toast.success(`${orgWizardData.type} creado correctamente`);
+          }
+          
+          await queryClient.invalidateQueries({ queryKey: ["admin", "workspaces"] });
+          onClose();
+        } catch (error: any) {
+          console.error("Error creating organization:", error);
+          toast.error(error.message || "Error al crear la organización");
+        } finally {
+          setIsSubmitting(false);
+        }
       } else {
         console.log(`[Wizard] Finalizing creation of: ${entityType}`);
         onClose();
@@ -325,6 +352,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     }
     if (entityType === "org" && currentStep === 0) {
       return !orgWizardData.type;
+    }
+    if (entityType === "org" && currentStep === 1) {
+      return !orgWizardData.name;
     }
     if (entityType === "change_role" && currentStep === 0) {
       return !changeRoleData.roleId;
@@ -533,13 +563,25 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                 <div className="space-y-4">
                   <div className="grid gap-2">
                     <Label htmlFor="org-name">Nombre de la Organización</Label>
-                    <Input id="org-name" placeholder="Ej: Club Atlético Rally" className="h-11" />
+                    <Input 
+                      id="org-name" 
+                      placeholder="Ej: Club Atlético Rally" 
+                      className="h-11"
+                      value={orgWizardData.name}
+                      onChange={(e) => setOrgWizardData({ ...orgWizardData, name: e.target.value })}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="org-slug">Slug / Identificador</Label>
                     <div className="flex gap-2">
                       <div className="bg-muted px-3 flex items-center rounded-lg text-xs font-mono border border-border/60">rally.app/</div>
-                      <Input id="org-slug" placeholder="club-rally" className="h-11" />
+                      <Input 
+                        id="org-slug" 
+                        placeholder="club-rally" 
+                        className="h-11"
+                        value={orgWizardData.slug}
+                        onChange={(e) => setOrgWizardData({ ...orgWizardData, slug: e.target.value })}
+                      />
                     </div>
                   </div>
                   <div className="grid gap-2">
@@ -556,15 +598,33 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                 <div className="space-y-4">
                   <div className="grid gap-2">
                     <Label htmlFor="org-country">País</Label>
-                    <Input id="org-country" placeholder="Ej: Argentina" className="h-11" />
+                    <Input 
+                      id="org-country" 
+                      placeholder="Ej: Argentina" 
+                      className="h-11"
+                      value={orgWizardData.country}
+                      onChange={(e) => setOrgWizardData({ ...orgWizardData, country: e.target.value })}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="org-city">Ciudad / Región</Label>
-                    <Input id="org-city" placeholder="Ej: Córdoba" className="h-11" />
+                    <Input 
+                      id="org-city" 
+                      placeholder="Ej: Córdoba" 
+                      className="h-11"
+                      value={orgWizardData.city}
+                      onChange={(e) => setOrgWizardData({ ...orgWizardData, city: e.target.value })}
+                    />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="org-address">Dirección (Opcional)</Label>
-                    <Input id="org-address" placeholder="Ej: Av. Colón 1234" className="h-11" />
+                    <Input 
+                      id="org-address" 
+                      placeholder="Ej: Av. Colón 1234" 
+                      className="h-11"
+                      value={orgWizardData.address}
+                      onChange={(e) => setOrgWizardData({ ...orgWizardData, address: e.target.value })}
+                    />
                   </div>
                 </div>
               )}
@@ -622,6 +682,10 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                     <div className="flex justify-between">
                       <span className="text-muted-foreground uppercase font-black tracking-tighter">Tipo:</span>
                       <span className="font-bold">{orgWizardData.type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground uppercase font-black tracking-tighter">Nombre:</span>
+                      <span className="font-bold">{orgWizardData.name}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground uppercase font-black tracking-tighter">Plan:</span>

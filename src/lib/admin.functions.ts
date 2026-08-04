@@ -384,3 +384,39 @@ export const adminDeleteLeague = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+export const adminCreateClub = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { name: string; leagueId?: string; color?: string }) =>
+    z
+      .object({
+        name: z.string().trim().min(1).max(80),
+        leagueId: z.string().uuid().optional(),
+        color: z.string().trim().max(20).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    let targetLeagueId = data.leagueId;
+    if (!targetLeagueId) {
+      const { data: generalLeague } = await supabaseAdmin.from("leagues").select("id").limit(1).single();
+      targetLeagueId = generalLeague?.id;
+    }
+
+    if (!targetLeagueId) throw new Error("Se requiere al menos una liga en el sistema para crear un club.");
+
+    const { data: row, error } = await supabaseAdmin
+      .from("clubs")
+      .insert({
+        name: data.name,
+        primary_color: data.color || "#3b82f6",
+        owner_id: context.userId,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { id: row.id };
+  });
