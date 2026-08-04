@@ -193,7 +193,12 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     roleId: targetEntity?.isAdmin ? "admin" : "user"
   });
   const [orgWizardData, setOrgWizardData] = useState({
-    type: ""
+    type: "",
+    name: "",
+    slug: "",
+    country: "",
+    city: "",
+    address: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
