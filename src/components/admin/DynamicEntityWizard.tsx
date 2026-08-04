@@ -300,9 +300,8 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
             await createLeague({ data: { name: orgWizardData.name } });
             toast.success("Liga creada correctamente");
           } else {
-            // TODO: Implementar adminCreateClub en admin.functions.ts cuando sea necesario
-            console.log("[Wizard] Creando Club:", orgWizardData.name);
-            toast.info(`Funcionalidad para crear ${orgWizardData.type} estará disponible pronto. Solo Ligas por ahora.`);
+            await createClub({ data: { name: orgWizardData.name } });
+            toast.success(`${orgWizardData.type} creado correctamente`);
           }
           
           await queryClient.invalidateQueries({ queryKey: ["admin", "workspaces"] });
