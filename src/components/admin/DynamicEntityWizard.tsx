@@ -353,6 +353,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
     if (entityType === "org" && currentStep === 0) {
       return !orgWizardData.type;
     }
+    if (entityType === "org" && currentStep === 1) {
+      return !orgWizardData.name;
+    }
     if (entityType === "change_role" && currentStep === 0) {
       return !changeRoleData.roleId;
     }
