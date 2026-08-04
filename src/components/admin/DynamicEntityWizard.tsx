@@ -362,7 +362,9 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
             await createLeague({ data: { name: orgWizardData.name } });
             toast.success("Liga creada correctamente");
           } else {
-            await createClub({ data: { name: orgWizardData.name } });
+            // Si hay un targetEntity de tipo liga, pasamos su ID
+            const targetLeagueId = (targetEntity?.type === 'liga' || targetEntity?.type === 'asociacion') ? targetEntity.id : undefined;
+            await createClub({ data: { name: orgWizardData.name, leagueId: targetLeagueId } });
             toast.success(`${orgWizardData.type} creado correctamente`);
           }
           
