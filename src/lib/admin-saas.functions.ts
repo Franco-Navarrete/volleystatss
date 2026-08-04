@@ -25,8 +25,7 @@ export const adminListWorkspaces = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Por ahora, simulamos la respuesta basada en clubes y ligas existentes
-    // hasta que la migración de la tabla 'workspaces' esté ejecutada.
+    // Obtenemos datos base
     const [{ data: clubs }, { data: leagues }, { data: users }, { data: userRoles }] = await Promise.all([
       supabaseAdmin.from("clubs").select("*"),
       supabaseAdmin.from("leagues").select("*"),
@@ -34,12 +33,27 @@ export const adminListWorkspaces = createServerFn({ method: "GET" })
       supabaseAdmin.from("user_roles").select("user_id, role"),
     ]);
 
-    // Relación usuarios por club (owner)
+    // Relación usuarios por club (Owner + miembros si hubiera tabla intermedia)
+    // Por ahora usamos owner_id como proxy de "usuario del club"
     const usersByClub = new Map<string, string[]>();
     clubs?.forEach(c => {
+      const clubUsers: string[] = [];
       if (c.owner_id) {
-        const email = users?.find(u => u.id === c.owner_id)?.email || "Usuario Desconocido";
-        usersByClub.set(c.id, [email]);
+        const ownerEmail = users?.find(u => u.id === c.owner_id)?.email;
+        if (ownerEmail) clubUsers.push(ownerEmail);
+      }
+      usersByClub.set(c.id, clubUsers);
+    });
+
+    // Mapeo de usuarios por liga (basado en acceso directo)
+    const { data: leagueAccess } = await supabaseAdmin.from("user_league_access").select("user_id, league_id");
+    const usersByLeague = new Map<string, string[]>();
+    leagueAccess?.forEach(la => {
+      const email = users?.find(u => u.id === la.user_id)?.email;
+      if (email) {
+        const arr = usersByLeague.get(la.league_id) ?? [];
+        arr.push(email);
+        usersByLeague.set(la.league_id, arr);
       }
     });
 
@@ -58,8 +72,8 @@ export const adminListWorkspaces = createServerFn({ method: "GET" })
             name: l.name,
             type: "liga",
             status: "active",
-            userCount: 0, // En el futuro se calcularía por membresía
-            users: [],
+            userCount: usersByLeague.get(l.id)?.length || 0,
+            users: usersByLeague.get(l.id) || [],
             children: (clubs ?? []).map(c => ({
               id: c.id,
               name: c.name,
