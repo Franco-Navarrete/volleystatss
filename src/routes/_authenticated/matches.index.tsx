@@ -72,10 +72,13 @@ function MatchesIndex() {
     const myLeagueIds = new Set(localTeams.filter(t => t.ownerId === user?.id && t.leagueId).map(t => t.leagueId));
 
     return baseMatches.filter(m => {
-      // Participa un equipo que YO poseo
+      // 1. Participa un equipo que YO poseo
       if (myOwnedTeamIds.has(m.teamAId) || myOwnedTeamIds.has(m.teamBId)) return true;
       
-      // O participa un equipo que está en una liga que YO gestiono/participo
+      // 2. O el partido me pertenece directamente (soy el creador)
+      if (m.ownerId === user?.id) return true;
+
+      // 3. O participa un equipo que está en una liga que YO gestiono/participo
       const teamA = teamById.get(m.teamAId);
       const teamB = teamById.get(m.teamBId);
       if (teamA?.leagueId && myLeagueIds.has(teamA.leagueId)) return true;

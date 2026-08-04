@@ -367,6 +367,7 @@ function LiveMatch() {
   if (!match || !teamA || !teamB) {
     const isAdmin = useIsAdmin().isAdmin;
     const { hasAccess: isCoach } = useCoachAccess();
+    const { user } = useAuthUser();
     
     return (
       <CompactShell>
@@ -374,16 +375,48 @@ function LiveMatch() {
           <p className="text-xl font-bold mb-2">Partido no encontrado</p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
             {!match 
-              ? "El identificador del partido es inválido o el partido fue eliminado."
-              : "No se pudieron cargar los equipos asociados a este partido."}
+              ? `No pudimos encontrar el partido con ID "${matchId.slice(0, 8)}...". Asegúrate de que el partido exista y esté sincronizado.`
+              : `No se pudieron cargar los equipos asociados ("${match.teamAId.slice(0, 4)}" vs "${match.teamBId.slice(0, 4)}").`}
           </p>
-          <div className="flex flex-col gap-2 max-w-xs mx-auto">
-            <Button asChild variant="default" className="bg-gradient-primary">
+          <div className="flex flex-col gap-3 max-w-xs mx-auto">
+            <Button asChild variant="default" className="bg-gradient-primary shadow-glow">
               <Link to="/matches">Volver a mis partidos</Link>
             </Button>
+            
+            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
+              <div className="space-y-1">
+                <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
+                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchId}</span></p>
+                {match && (
+                  <>
+                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.ownerId || "Global"}</span></p>
+                    <p className="text-[10px] text-muted-foreground">Fecha: <span className="text-foreground font-mono">{new Date(match.createdAt).toLocaleDateString()}</span></p>
+                  </>
+                )}
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full text-[10px] h-7"
+                onClick={async () => {
+                  if (!user) return;
+                  const { forceReloadFromCloud } = await import("@/lib/cloud-sync");
+                  toast.promise(forceReloadFromCloud(user.id), {
+                    loading: 'Sincronizando con la nube...',
+                    success: (data) => `Sincronización completa: ${data.matches} partidos recuperados.`,
+                    error: 'Error al sincronizar. Revisa tu conexión.'
+                  });
+                }}
+              >
+                Forzar sincronización desde la nube
+              </Button>
+            </div>
+
             {(!isAdmin && isCoach) && (
-              <p className="text-[10px] text-muted-foreground mt-4">
-                Tip: Si el partido fue creado por otro usuario, asegúrate de que pertenezca a una liga que compartes.
+              <p className="text-[10px] text-muted-foreground mt-2 italic">
+                Nota: Los entrenadores solo pueden ver partidos donde participan equipos de su club o liga compartida.
               </p>
             )}
           </div>
@@ -414,13 +447,14 @@ function LiveMatch() {
   const { user } = useAuthUser();
   const { isAdmin } = useIsAdmin();
 
-  // Restriction for Coach franco@gmail.com: only stats for their team
+  // Restriction for Coach: only stats for their team or if they own the match
   const isMyMatch = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
+    if (match.ownerId === user.id) return true;
     const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
     return myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId);
-  }, [isAdmin, user, match.teamAId, match.teamBId]);
+  }, [isAdmin, user, match.teamAId, match.teamBId, match.ownerId]);
 
   const canScout = isAdmin || (isCoach && isMyMatch);
 
