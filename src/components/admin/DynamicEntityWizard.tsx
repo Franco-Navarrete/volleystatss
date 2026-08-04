@@ -663,13 +663,30 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground mb-4">Módulos que estarán disponibles para esta organización.</p>
                   {["Live Scoring", "Advanced Scouting", "Video Analysis", "Performance Intelligence"].map((mod) => (
-                    <div key={mod} className="flex items-center justify-between p-3 rounded-xl border border-border/40 bg-muted/5">
+                    <div 
+                      key={mod} 
+                      onClick={() => {
+                        const newModules = orgWizardData.modules.includes(mod)
+                          ? orgWizardData.modules.filter(m => m !== mod)
+                          : [...orgWizardData.modules, mod];
+                        setOrgWizardData({ ...orgWizardData, modules: newModules });
+                      }}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                        orgWizardData.modules.includes(mod)
+                          ? "border-primary/40 bg-primary/5" 
+                          : "border-border/40 bg-muted/5 opacity-60"
+                      }`}
+                    >
                       <div className="flex items-center gap-3">
-                        <Package className="size-4 text-primary/60" />
-                        <span className="text-sm font-medium">{mod}</span>
+                        <Package className={`size-4 ${orgWizardData.modules.includes(mod) ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className={`text-sm font-medium ${orgWizardData.modules.includes(mod) ? "text-primary" : ""}`}>{mod}</span>
                       </div>
-                      <div className="size-5 rounded-md border border-primary/40 bg-primary/10 flex items-center justify-center">
-                        <Check className="size-3 text-primary" />
+                      <div className={`size-5 rounded-md border flex items-center justify-center transition-all ${
+                        orgWizardData.modules.includes(mod) 
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm" 
+                          : "border-border bg-background"
+                      }`}>
+                        {orgWizardData.modules.includes(mod) && <Check className="size-3" />}
                       </div>
                     </div>
                   ))}
