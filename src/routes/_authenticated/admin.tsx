@@ -79,46 +79,16 @@ import { OrganizationTree } from "@/components/admin/OrganizationTree";
 import { DynamicEntityWizard, type EntityType } from "@/components/admin/DynamicEntityWizard";
 
 function PasswordViewer({ userId }: { userId: string }) {
-  const getPassword = useServerFn(adminGetPassword);
-  const [show, setShow] = useState(false);
-  const { data, isLoading } = useQuery({
-    queryKey: ["user-password", userId],
-    queryFn: () => getPassword({ data: { userId } }),
-    enabled: show,
-  });
-
+  // Ya no se permite recuperar contraseñas por seguridad.
   return (
     <div className="p-4 rounded-xl border border-border/60 bg-card/50 space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-bold">Contraseña Actual</h4>
-        <Key className="size-4 text-muted-foreground/40" />
+        <h4 className="text-sm font-bold">Contraseña</h4>
+        <Lock className="size-4 text-muted-foreground/40" />
       </div>
-      
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-9 px-3 flex items-center bg-background/50 border border-border/40 rounded-lg font-mono text-xs overflow-hidden">
-          {isLoading ? (
-            <span className="text-muted-foreground/40">Cargando...</span>
-          ) : show ? (
-            data?.password || <span className="text-muted-foreground/40">No registrada</span>
-          ) : (
-            "••••••••••••"
-          )}
-        </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-9 shrink-0"
-          onClick={() => setShow(!show)}
-        >
-          {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </Button>
+      <div className="bg-background/50 border border-border/40 rounded-lg p-3 text-xs text-muted-foreground">
+        Por motivos de seguridad, las contraseñas ya no se almacenan en texto plano y no pueden ser visualizadas.
       </div>
-      
-      {data?.updatedAt && (
-        <p className="text-[10px] text-muted-foreground">
-          Última actualización: {new Date(data.updatedAt).toLocaleDateString()}
-        </p>
-      )}
     </div>
   );
 }
