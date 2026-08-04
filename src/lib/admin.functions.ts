@@ -142,10 +142,8 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       .upsert({ id: newUserId, email: data.email });
     if (profileErr) throw profileErr;
 
-    const { error: pwStoreErr } = await supabaseAdmin
-      .from("admin_user_passwords")
-      .upsert({ user_id: newUserId, password: data.password, updated_by: context.userId, updated_at: new Date().toISOString() });
-    if (pwStoreErr) throw pwStoreErr;
+    // Se eliminó la tabla admin_user_passwords por motivos de seguridad.
+    // No guardamos contraseñas en texto plano.
 
     const { error: permErr } = await supabaseAdmin
       .from("user_permissions")
