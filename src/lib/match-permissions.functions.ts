@@ -30,7 +30,24 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
       ? "entrenador"
       : "user";
 
-    const allowed = role === "admin" || role === "planillero";
+    // El super admin y los administradores pueden eliminar cualquier partido.
+    // Los planilleros pueden eliminar partidos.
+    // Los entrenadores pueden eliminar SUS partidos (donde son dueños).
+    let allowed = role === "admin" || role === "planillero";
+
+    if (!allowed && role === "entrenador") {
+      const { data: row } = await supabase
+        .from("app_state")
+        .select("data")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      const matches = (row?.data as any)?.matches ?? [];
+      const hasMatchLocally = matches.some((m: any) => m.id === data.matchId);
+      if (hasMatchLocally) {
+        allowed = true;
+      }
+    }
 
     await supabase.from("match_deletion_audit").insert({
       user_id: userId,
@@ -45,12 +62,30 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
       throw new Error("No tienes permisos para eliminar partidos en vivo.");
     }
 
-    // Limpiar la copia pública del partido si existía (owner-scoped).
+    // 1. Limpiar la copia pública del partido si existía.
     await supabase
       .from("public_matches")
       .delete()
-      .eq("owner_id", userId)
       .eq("match_id", data.matchId);
+
+    // 2. Eliminar de la nube (app_state) de TODOS los usuarios que puedan tenerlo.
+    // Esto es necesario porque varios usuarios pueden "ver" el mismo partido si comparten liga.
+    const { data: allStates } = await supabase
+      .from("app_state")
+      .select("user_id, data");
+
+    if (allStates) {
+      for (const row of allStates) {
+        const d = row.data as any;
+        if (d?.matches?.some((m: any) => m.id === data.matchId)) {
+          const newMatches = d.matches.filter((m: any) => m.id !== data.matchId);
+          await supabase
+            .from("app_state")
+            .update({ data: { ...d, matches: newMatches } })
+            .eq("user_id", row.user_id);
+        }
+      }
+    }
 
     return { ok: true };
   });
