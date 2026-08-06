@@ -101,12 +101,22 @@ export function getRotationFromCourt(onCourt: string[], setterId: string | undef
   if (!setterId) return null;
   const idx = onCourt.indexOf(setterId);
   if (idx < 0) return null;
-  // onCourt: idx 0 = P1, idx 1 = P2, ... idx 5 = P6.
-  // Convención: armador en P2 → Rot 1, P1 → Rot 2, P6 → Rot 3, P5 → Rot 4,
-  // P4 → Rot 5, P3 → Rot 6.
-  const setterPos = idx + 1;
-  const rotation = ((2 - setterPos + 6) % 6) + 1;
-  return rotation as Rotation;
+  // Convención Vstats:
+  // idx 1 (P2) -> Rotación 1
+  // idx 0 (P1) -> Rotación 2
+  // idx 5 (P6) -> Rotación 3
+  // idx 4 (P5) -> Rotación 4
+  // idx 3 (P4) -> Rotación 5
+  // idx 2 (P3) -> Rotación 6
+  const map: Record<number, Rotation> = {
+    1: 1, // P2
+    0: 2, // P1
+    5: 3, // P6
+    4: 4, // P5
+    3: 5, // P4
+    2: 6, // P3
+  };
+  return map[idx] ?? null;
 }
 
 /**
