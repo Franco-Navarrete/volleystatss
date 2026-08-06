@@ -2367,18 +2367,19 @@ function FormationSide({
         const p = pid ? team.players.find((x) => x.id === pid) : null;
         // Si la jugadora del slot no está en cancha (sustituida) seguimos mostrándola
         // pero atenuada para que el entrenador la corrija. Si no hay player skip.
-        if (!p) return null;
-        const onCourtActive = onCourt.includes(p.id);
-        const isServer = !!serverPlayerId && p.id === serverPlayerId;
-        const isLibero = designated.length > 0 ? designated.includes(p.id) : p.position === "libero";
+        if (!p && (!pid || (!pid.startsWith("fallback-") && !pid.startsWith("empty-")))) return null;
+        
+        const onCourtActive = p ? onCourt.includes(p.id) : false;
+        const isServer = !!p && !!serverPlayerId && p.id === serverPlayerId;
+        const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
         const isReceptionTarget = needsReception && side === receivingSide;
-        const isReceiverHighlight = isReceptionTarget && receiverIds.has(p.id);
-        const bpEligible = !!blockPickInfo && side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(p.id);
-        const bpPicked = !!blockPickInfo && blockPickInfo.picks.has(p.id);
+        const isReceiverHighlight = !!p && isReceptionTarget && receiverIds.has(p.id);
+        const bpEligible = !!p && !!blockPickInfo && side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(p.id);
+        const bpPicked = !!p && !!blockPickInfo && blockPickInfo.picks.has(p.id);
         const bpDim = !!blockPickInfo && !bpEligible;
         const dx = projectX(slot.x, slot.y);
         const dy = projectY(slot.x, slot.y);
-        const isOpponentSetter = (match as Match).metadata?.opponentSetterId === p.id;
+        const isOpponentSetter = !!p && (match as Match).metadata?.opponentSetterId === p.id;
         
         return (
           <div
@@ -2387,22 +2388,24 @@ function FormationSide({
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
             <div className="w-full h-full relative group/badge">
-              <div 
-                className="absolute inset-0 z-[10] cursor-pointer" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onPlayerClick(side, p.id);
-                }} 
-              />
+              {p && (
+                <div 
+                  className="absolute inset-0 z-[10] cursor-pointer" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onPlayerClick(side, p.id);
+                  }} 
+                />
+              )}
               <CourtPlayerBadge
-                player={p}
+                player={p || { id: pid || "empty", name: "Falta jugadora", number: 0 } as any}
                 team={team}
                 match={match}
                 isServer={isServer}
                 isLibero={isLibero}
                 isReceiverHighlight={isReceiverHighlight}
-                active={!!activePlayerId && activePlayerId === p.id}
+                active={!!p && !!activePlayerId && activePlayerId === p.id}
                 dimmed={!onCourtActive}
                 className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""} ${isOpponentSetter ? "ring-[3px] ring-white shadow-[0_0_15px_rgba(249,115,22,0.8)] rounded-full" : ""}`}
                 style={isOpponentSetter ? { 
@@ -2416,20 +2419,21 @@ function FormationSide({
                 </div>
               )}
               
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button 
-                    className="absolute -top-1 -left-1 z-[50] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Edit3 className="size-2.5 text-foreground" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
-                  <div className="flex items-center gap-2 border-b border-border/60 pb-1">
-                    <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
-                      {p.number}
-                    </div>
+              {p && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button 
+                      className="absolute -top-1 -left-1 z-[50] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Edit3 className="size-2.5 text-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
+                    <div className="flex items-center gap-2 border-b border-border/60 pb-1">
+                      <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
+                        {p.number}
+                      </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold truncate">{p.name}</div>
                     </div>
@@ -2527,8 +2531,9 @@ function FormationSide({
                     </Button>
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
         );
