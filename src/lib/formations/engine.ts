@@ -18,8 +18,11 @@ export type FormationPhase = "reception" | "attack";
  * usuario sigue otra convención: armador en P2 → Rot 1, P1 → Rot 2,
  * P6 → Rot 3, P5 → Rot 4, P4 → Rot 5, P3 → Rot 6.
  */
+/**
+ * Las plantillas de recepción/ataque están indexadas por rotación (1..6).
+ */
 function rotationToSetterPos(rotation: Rotation): Rotation {
-  return (((8 - rotation) % 6) + 1) as Rotation;
+  return rotation;
 }
 
 export function getFormation(
