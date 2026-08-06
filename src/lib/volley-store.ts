@@ -919,7 +919,7 @@ export function repairOnCourt(
     // Si todavía faltan (ej. lineup insuficiente), forzamos placeholders para mantener la cardinalidad 6
     for (let i = 0; i < 6; i++) {
       if (fixed[i] === null) {
-        fixed[i] = `empty-${side}-${i}`;
+        fixed[i] = `empty-side-${side}-idx-${i}`;
       }
     }
 
