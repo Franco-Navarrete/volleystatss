@@ -28,10 +28,26 @@ const P = {
 } as const;
 
 export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
-  // Rotación 1 (Armadora en P1)
+  // Rotación 1 (Armadora en P2)
   1: {
     system: "5-1",
     rotation: 1,
+    setterTarget: P.net_setter,
+    attackers: ["outside_front", "middle_front"],
+    slots: [
+      { role: "setter", ...P.hide_right },
+      { role: "outside_front", ...P.z4 },
+      { role: "middle_front", ...P.z3 },
+      { role: "opposite", ...P.z1 },
+      { role: "outside_back", ...P.z5 },
+      { role: "middle_back", ...P.z6 },
+      { role: "libero", ...P.z6 },
+    ],
+  },
+  // Rotación 2 (Armadora en P1)
+  2: {
+    system: "5-1",
+    rotation: 2,
     setterTarget: P.net_setter,
     attackers: ["outside_front", "middle_front", "opposite"],
     slots: [
@@ -41,13 +57,13 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "opposite", ...P.z2 },
       { role: "outside_back", ...P.z6 },
       { role: "middle_back", ...P.z5 },
-      { role: "libero", ...P.z5 }, // Slot reservado para el líbero o central zaguero
+      { role: "libero", ...P.z5 },
     ],
   },
-  // Rotación 6 (Armadora en P6)
-  6: {
+  // Rotación 3 (Armadora en P6)
+  3: {
     system: "5-1",
-    rotation: 6,
+    rotation: 3,
     setterTarget: P.net_setter,
     attackers: ["outside_front", "middle_front", "opposite"],
     slots: [
@@ -60,10 +76,10 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "libero", ...P.z1 },
     ],
   },
-  // Rotación 5 (Armadora en P5)
-  5: {
+  // Rotación 4 (Armadora en P5)
+  4: {
     system: "5-1",
-    rotation: 5,
+    rotation: 4,
     setterTarget: P.net_setter,
     attackers: ["outside_front", "middle_front", "opposite"],
     slots: [
@@ -76,10 +92,10 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "libero", ...P.z6 },
     ],
   },
-  // Rotación 4 (Armadora en P4)
-  4: {
+  // Rotación 5 (Armadora en P4)
+  5: {
     system: "5-1",
-    rotation: 4,
+    rotation: 5,
     setterTarget: P.net_setter,
     attackers: ["middle_front", "opposite"],
     slots: [
@@ -92,10 +108,10 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "libero", ...P.z1 },
     ],
   },
-  // Rotación 3 (Armadora en P3)
-  3: {
+  // Rotación 6 (Armadora en P3)
+  6: {
     system: "5-1",
-    rotation: 3,
+    rotation: 6,
     setterTarget: P.net_setter,
     attackers: ["outside_front", "opposite"],
     slots: [
@@ -106,22 +122,6 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "outside_back", ...P.z6 },
       { role: "middle_back", ...P.z1 },
       { role: "libero", ...P.z1 },
-    ],
-  },
-  // Rotación 2 (Armadora en P2)
-  2: {
-    system: "5-1",
-    rotation: 2,
-    setterTarget: P.net_setter,
-    attackers: ["outside_front", "middle_front"],
-    slots: [
-      { role: "setter", ...P.hide_right },
-      { role: "outside_front", ...P.z4 },
-      { role: "middle_front", ...P.z3 },
-      { role: "opposite", ...P.z1 },
-      { role: "outside_back", ...P.z5 },
-      { role: "middle_back", ...P.z6 },
-      { role: "libero", ...P.z6 },
     ],
   },
 };
