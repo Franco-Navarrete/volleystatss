@@ -1,6 +1,9 @@
 /**
+ * tengo este error en partidos que me aparecen en "en vivo" y no me deja eliminarlos. tengo que poder eliminarlos si quiero
  * tiene que poder eliminar partidos en vivo sin problema
  * el usuario "franco.e.navarrete@gmail.com" tiene que ser super admin y poder eliminar, agregar todo lo que quiera sobre cualquier otro usuario registrado
+
+
 
  *
  * en cancha tiene que estar j1,j2,j3,j4,j5,j6

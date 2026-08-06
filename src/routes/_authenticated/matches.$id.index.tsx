@@ -1,5 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"; // me sigue faltando el J4 (nota técnica: forzando rebuild para asegurar consistencia de formación)
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"; 
+import { useServerFn } from "@tanstack/react-start";
+import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import {
   Volleyball,
   Edit3,
@@ -370,6 +373,11 @@ function LiveMatch() {
     const isAdmin = useIsAdmin().isAdmin;
     const { hasAccess: isCoach } = useCoachAccess();
     const { user } = useAuthUser();
+    const deleteMatch = useVolley((s) => s.deleteMatch);
+    const deleteFn = useServerFn(authorizeAndDeleteMatch);
+    const navigate = useNavigate();
+
+    const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
     
     return (
       <CompactShell>
@@ -384,6 +392,27 @@ function LiveMatch() {
             <Button asChild variant="default" className="bg-gradient-primary shadow-glow">
               <Link to="/matches">Volver a mis partidos</Link>
             </Button>
+
+            {isSuperAdmin && (
+              <Button 
+                variant="destructive" 
+                className="mt-2"
+                onClick={async () => {
+                  if (window.confirm("¿Estás seguro de que deseas eliminar este partido fantasma? Esta acción no se puede deshacer.")) {
+                    try {
+                      await deleteFn({ data: { matchId } });
+                      deleteMatch(matchId);
+                      toast.success("Partido eliminado correctamente");
+                      navigate({ to: "/matches" });
+                    } catch (e) {
+                      toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
+                    }
+                  }
+                }}
+              >
+                Eliminar partido (Admin)
+              </Button>
+            )}
             
             <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
