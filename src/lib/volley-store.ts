@@ -1122,14 +1122,20 @@ export const useVolley = create<VolleyState>()(
       createMatch: (m) => {
         const id = uid();
         const initialServingSide = m.initialServingSide ?? "A";
+        // Aseguramos cardinalidad 6 desde el origen
+        const repair = (l: string[], side: "A" | "B") => {
+          const arr = [...l];
+          while (arr.length < 6) arr.push(`emergency-slot-${side}-${arr.length}`);
+          return arr.slice(0, 6);
+        };
         const match: Match = {
           ...m,
           id,
           status: "scheduled",
           currentSet: 1,
           sets: [{ number: 1, scoreA: 0, scoreB: 0, finished: false }],
-          onCourtA: [...m.startingLineupA],
-          onCourtB: [...m.startingLineupB],
+          onCourtA: repair(m.startingLineupA, "A"),
+          onCourtB: repair(m.startingLineupB, "B"),
           events: [],
           servingSide: initialServingSide,
           initialServingSide,
