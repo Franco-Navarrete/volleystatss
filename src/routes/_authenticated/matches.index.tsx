@@ -201,12 +201,16 @@ function MatchesIndex() {
                             <button
                               type="button"
                               aria-label="Eliminar partido"
-                              className="absolute top-2 right-2 z-10 size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors"
+                              className="absolute top-2 right-2 z-20 size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors pointer-events-auto"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                              }}
                             >
                               <Trash2 className="size-4" />
                             </button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent className="rounded-2xl border-border/60">
+                          <AlertDialogContent className="rounded-2xl border-border/60" onClick={(e) => e.stopPropagation()}>
                             <AlertDialogHeader>
                               <AlertDialogTitle className="text-xl font-bold">¿Eliminar este partido?</AlertDialogTitle>
                               <AlertDialogDescription className="text-sm">
@@ -217,9 +221,10 @@ function MatchesIndex() {
                               <AlertDialogCancel className="rounded-xl flex-1 mt-0">Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl flex-1"
-                                onClick={(e) => {
+                                onClick={async (e) => {
+                                  e.stopPropagation();
                                   e.preventDefault();
-                                  handleDelete(m.id);
+                                  await handleDelete(m.id);
                                 }}
                               >
                                 Eliminar
