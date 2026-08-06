@@ -1990,13 +1990,13 @@ function CourtView({
     const seen = new Set<string>();
     const unique = arr.filter((id) => id && id.trim() !== "" && !seen.has(id) && seen.add(id));
 
-    // Completar hasta 6 con lineup si algo faltara (fallback de seguridad).
+    // Completar hasta 6 con placeholders si algo faltara (garantía visual absoluta).
     if (unique.length < 6) {
-      for (const id of lineup) {
-        if (unique.length >= 6) break;
-        if (id && id.trim() !== "" && !seen.has(id) && (!active || id !== active.replacedPlayerId)) {
-          seen.add(id);
-          unique.push(id);
+      for (let i = unique.length; i < 6; i++) {
+        const placeholderId = `empty-${side}-${i}`;
+        if (!seen.has(placeholderId)) {
+          seen.add(placeholderId);
+          unique.push(placeholderId);
         }
       }
     }
