@@ -1,5 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"; // me sigue faltando el J4 (nota técnica: forzando rebuild para asegurar consistencia de formación)
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"; 
+import { useServerFn } from "@tanstack/react-start";
+import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import {
   Volleyball,
   Edit3,
