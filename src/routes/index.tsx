@@ -1,4 +1,6 @@
 /**
+ * en cancha tiene que estar j1,j2,j3,j4,j5,j6
+ */
  * Corregir error de rotación: equipo con menos de 6 jugadores en cancha
  *
  * Existe un error en el módulo de rotaciones.
