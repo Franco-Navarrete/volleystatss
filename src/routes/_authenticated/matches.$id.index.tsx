@@ -2092,7 +2092,9 @@ function CourtView({
                   >
                     {col.idxs.map((idx) => {
                       const pid = onCourt[idx];
-                      const p = col.team.players.find((x) => x.id === pid);
+                      const p = pid && !pid.startsWith("fallback-") && !pid.startsWith("empty-") 
+                        ? col.team.players.find((x) => x.id === pid) 
+                        : null;
                       const isServer = pid && pid === serverPid;
                       const designated = (col.side === "A"
                         ? [match.liberoA1Id, match.liberoA2Id]

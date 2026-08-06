@@ -195,7 +195,10 @@ export function resolveFormation(opts: {
   
   if (onCourt.length !== 6) {
     // eslint-disable-next-line no-console
-    console.error(`[resolveFormation] onCourt has ${onCourt.length} players instead of 6`, onCourt);
+    console.error(`[resolveFormation] onCourt tiene ${onCourt.length} jugadores en lugar de 6. Forzando repair...`, onCourt);
+    // Nota: Aunque el store repara, si llegamos aquí con != 6 algo falló en la cadena.
+    // Creamos un array de 6 para evitar errores de índice out-of-bounds en los slots.
+    while (onCourt.length < 6) onCourt.push(`fallback-${onCourt.length}`);
   }
 
   const formation = getFormation(system, rotation, phase);
