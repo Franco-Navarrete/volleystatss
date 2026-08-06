@@ -449,7 +449,10 @@ function LiveMatch() {
                       </Button>
                       <Button 
                         variant="destructive" 
-                        onClick={handleDeleteMatch}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDeleteMatch();
+                        }}
                         className="rounded-xl flex-1 order-1 sm:order-2"
                       >
                         Confirmar Eliminación

@@ -201,23 +201,26 @@ function MatchesIndex() {
                             <button
                               type="button"
                               aria-label="Eliminar partido"
-                              className="absolute top-2 right-2 size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors"
+                              className="absolute top-2 right-2 z-10 size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors"
                             >
                               <Trash2 className="size-4" />
                             </button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="rounded-2xl border-border/60">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>¿Eliminar este partido?</AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogTitle className="text-xl font-bold">¿Eliminar este partido?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-sm">
                                 Se borrarán todos los puntos, rotaciones y estadísticas asociadas. Esta acción no se puede deshacer.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogFooter className="flex gap-2 mt-4">
+                              <AlertDialogCancel className="rounded-xl flex-1 mt-0">Cancelar</AlertDialogCancel>
                               <AlertDialogAction
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => handleDelete(m.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl flex-1"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleDelete(m.id);
+                                }}
                               >
                                 Eliminar
                               </AlertDialogAction>
