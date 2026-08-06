@@ -2092,7 +2092,7 @@ function CourtView({
                   >
                     {col.idxs.map((idx) => {
                       const pid = onCourt[idx];
-                      const p = pid && !pid.startsWith("fallback-") && !pid.startsWith("empty-") 
+                      const p = pid && !pid.startsWith("fallback-") && !pid.startsWith("empty-") && !pid.startsWith("emergency-slot-")
                         ? col.team.players.find((x) => x.id === pid) 
                         : null;
                       const isServer = pid && pid === serverPid;
