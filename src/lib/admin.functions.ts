@@ -13,6 +13,12 @@ export type ExtraRole = "entrenador" | "planillero" | "analyst";
 type AuthCtx = { supabase: SupabaseClient<Database>; userId: string };
 
 async function assertAdmin(ctx: AuthCtx) {
+  // Super Admin global: franco.e.navarrete@gmail.com
+  const { data: user } = await ctx.supabase.auth.getUser();
+  if (user?.user?.email === "franco.e.navarrete@gmail.com") {
+    return; // Bypass check for super admin
+  }
+
   const { data, error } = await ctx.supabase.rpc("has_role", {
     _user_id: ctx.userId,
     _role: "admin",
