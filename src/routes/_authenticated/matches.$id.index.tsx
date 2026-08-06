@@ -2318,34 +2318,42 @@ function FormationSide({
     { x: 50, y: 82 }, // idx 5 → P6
   ];
   const usedSlotIdx = new Set<number>();
-  renderSlots = onCourt
-    .map((pid, idx) => {
-      if (!pid) return null;
-      // Buscar el primer slot no usado que apunte a esta jugadora.
-      let slotIdx = -1;
-      for (let i = 0; i < renderSlots.length; i++) {
-        if (!usedSlotIdx.has(i) && renderSlots[i].playerId === pid) {
-          slotIdx = i;
-          break;
-        }
+  const finalSlots: typeof renderSlots = [];
+  
+  // Paso 1: Mapear jugadores de onCourt a slots de formación existentes
+  onCourt.forEach((pid, idx) => {
+    if (!pid) return;
+    
+    let slotIdx = -1;
+    // Buscar si hay un slot que ya tenga asignada a esta jugadora
+    for (let i = 0; i < renderSlots.length; i++) {
+      if (!usedSlotIdx.has(i) && renderSlots[i].playerId === pid) {
+        slotIdx = i;
+        break;
       }
-      if (slotIdx >= 0) {
-        usedSlotIdx.add(slotIdx);
-        return renderSlots[slotIdx];
-      }
+    }
+    
+    if (slotIdx >= 0) {
+      usedSlotIdx.add(slotIdx);
+      finalSlots.push(renderSlots[slotIdx]);
+    } else {
+      // Si la jugadora no tiene slot asignado en la plantilla (ej: CZ vs Libero),
+      // le asignamos un slot de emergencia en su posición teórica de rotación
       const coords = POS_COORDS[idx] ?? { x: 50, y: 50 };
-      return {
+      finalSlots.push({
         ...(renderSlots[0] ?? ({} as (typeof renderSlots)[number])),
-        role: `fallback_${pid}` as unknown as (typeof renderSlots)[number]["role"],
+        role: `emergency_${pid}` as unknown as (typeof renderSlots)[number]["role"],
         x: coords.x,
         y: coords.y,
         playerId: pid,
-        rotationPosition: null,
-        isFrontRow: false,
-        isBackRow: false,
-      };
-    })
-    .filter(Boolean) as typeof renderSlots;
+        rotationPosition: (idx + 1) as any,
+        isFrontRow: idx + 1 >= 2 && idx + 1 <= 4,
+        isBackRow: !(idx + 1 >= 2 && idx + 1 <= 4),
+      });
+    }
+  });
+
+  renderSlots = finalSlots;
 
   // Validación final: la cancha SIEMPRE debe mostrar 6 jugadoras.
   // Si algo se coló hasta acá con menos, el store ya intentó auto-corregir;

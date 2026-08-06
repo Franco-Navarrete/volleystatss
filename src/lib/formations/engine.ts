@@ -194,11 +194,15 @@ export function resolveFormation(opts: {
   const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack", onCourt = [] } = opts;
   
   if (onCourt.length !== 6) {
-    // eslint-disable-next-line no-console
-    console.error(`[resolveFormation] onCourt tiene ${onCourt.length} jugadores en lugar de 6. Forzando repair...`, onCourt);
-    // Nota: Aunque el store repara, si llegamos aquí con != 6 algo falló en la cadena.
-    // Creamos un array de 6 para evitar errores de índice out-of-bounds en los slots.
-    while (onCourt.length < 6) onCourt.push(`fallback-${onCourt.length}`);
+    // Si llegamos aquí con != 6, forzamos un array de 6 para evitar errores de renderizado.
+    const validPlayers = onCourt.filter(id => id && id.trim() !== "");
+    const repaired = [...validPlayers];
+    while (repaired.length < 6) {
+      repaired.push(`emergency-slot-${repaired.length}`);
+    }
+    // Modificamos el array original por referencia para que el resto del motor use los 6 slots
+    onCourt.length = 0;
+    onCourt.push(...repaired.slice(0, 6));
   }
 
   const formation = getFormation(system, rotation, phase);
