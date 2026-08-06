@@ -4,12 +4,12 @@ import type { ReceptionFormation, Rotation } from "./types";
  * Coordenadas oficiales 5-1 para RECEPCIÓN (equipo que no saca).
  *
  * Convención de Rotación (TanStack Vstats):
- * - Rotación 1: Armadora en P2 (delantera derecha).
- * - Rotación 2: Armadora en P1 (zaguera derecha).
- * - Rotación 3: Armadora en P6 (zaguera centro).
- * - Rotación 4: Armadora en P5 (zaguera izquierda).
- * - Rotación 5: Armadora en P4 (delantera izquierda).
- * - Rotación 6: Armadora en P3 (delantera centro).
+ * - Rotación 1: Armadora en P1 (zaguera derecha).
+ * - Rotación 2: Armadora en P6 (zaguera centro).
+ * - Rotación 3: Armadora en P5 (zaguera izquierda).
+ * - Rotación 4: Armadora en P4 (delantera izquierda).
+ * - Rotación 5: Armadora en P3 (delantera centro).
+ * - Rotación 6: Armadora en P2 (delantera derecha).
  */
 
 const P = {
