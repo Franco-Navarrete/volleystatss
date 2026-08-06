@@ -61,7 +61,7 @@ export function inferLineupFromPlayers(
     outside1: outsides[0]?.id,
     outside2: outsides[1]?.id,
     libero: libero?.id,
-    liberoReplaces: "middle2",
+    liberoReplaces: designated.size > 0 || inCourt.some(p => p.position === "libero") ? "middle2" : "none",
   };
 
   // Fallback: si el equipo no tiene todas las posiciones tácticas asignadas
