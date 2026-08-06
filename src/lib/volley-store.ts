@@ -690,12 +690,12 @@ const BACK_ROW_REPLACE_PRIORITY = [0, 5, 4] as const;
 function rotateClockwise(arr: string[]): string[] {
   if (arr.length !== 6) return [...arr];
   // FIVB clockwise rotation:
-  // new P1 (idx 0) gets old P2 (idx 1)
-  // new P2 (idx 1) gets old P3 (idx 2)
-  // new P3 (idx 2) gets old P4 (idx 3)
-  // new P4 (idx 3) gets old P5 (idx 4)
-  // new P5 (idx 4) gets old P6 (idx 5)
-  // new P6 (idx 5) gets old P1 (idx 0)
+  // p1 -> p6 (idx 0 -> idx 5)
+  // p6 -> p5 (idx 5 -> idx 4)
+  // p5 -> p4 (idx 4 -> idx 3)
+  // p4 -> p3 (idx 3 -> idx 2)
+  // p3 -> p2 (idx 2 -> idx 1)
+  // p2 -> p1 (idx 1 -> idx 0)
   return [
     arr[1], // new P1 (idx 0) <- old P2
     arr[2], // new P2 (idx 1) <- old P3

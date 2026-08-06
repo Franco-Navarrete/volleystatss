@@ -18,8 +18,11 @@ export type FormationPhase = "reception" | "attack";
  * usuario sigue otra convención: armador en P2 → Rot 1, P1 → Rot 2,
  * P6 → Rot 3, P5 → Rot 4, P4 → Rot 5, P3 → Rot 6.
  */
+/**
+ * Las plantillas de recepción/ataque están indexadas por rotación (1..6).
+ */
 function rotationToSetterPos(rotation: Rotation): Rotation {
-  return (((8 - rotation) % 6) + 1) as Rotation;
+  return rotation;
 }
 
 export function getFormation(
@@ -101,12 +104,22 @@ export function getRotationFromCourt(onCourt: string[], setterId: string | undef
   if (!setterId) return null;
   const idx = onCourt.indexOf(setterId);
   if (idx < 0) return null;
-  // onCourt: idx 0 = P1, idx 1 = P2, ... idx 5 = P6.
-  // Convención: armador en P2 → Rot 1, P1 → Rot 2, P6 → Rot 3, P5 → Rot 4,
-  // P4 → Rot 5, P3 → Rot 6.
-  const setterPos = idx + 1;
-  const rotation = ((2 - setterPos + 6) % 6) + 1;
-  return rotation as Rotation;
+  // Convención Vstats:
+  // idx 0 (P1) -> Rotación 1
+  // idx 5 (P6) -> Rotación 2
+  // idx 4 (P5) -> Rotación 3
+  // idx 3 (P4) -> Rotación 4
+  // idx 2 (P3) -> Rotación 5
+  // idx 1 (P2) -> Rotación 6
+  const map: Record<number, Rotation> = {
+    0: 1, // P1
+    5: 2, // P6
+    4: 3, // P5
+    3: 4, // P4
+    2: 5, // P3
+    1: 6, // P2
+  };
+  return map[idx] ?? null;
 }
 
 /**
