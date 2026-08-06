@@ -688,7 +688,7 @@ const BACK_ROW_REPLACE_PRIORITY = [0, 5, 4] as const;
 
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
-  if (arr.length < 6) return [...arr];
+  if (arr.length !== 6) return [...arr];
   // FIVB clockwise rotation:
   // new P1 (idx 0) gets old P2 (idx 1)
   // new P2 (idx 1) gets old P3 (idx 2)
@@ -697,12 +697,12 @@ function rotateClockwise(arr: string[]): string[] {
   // new P5 (idx 4) gets old P6 (idx 5)
   // new P6 (idx 5) gets old P1 (idx 0)
   return [
-    arr[1], // new P1 (idx 0)
-    arr[2], // new P2 (idx 1)
-    arr[3], // new P3 (idx 2)
-    arr[4], // new P4 (idx 3)
-    arr[5], // new P5 (idx 4)
-    arr[0], // new P6 (idx 5)
+    arr[1], // new P1 (idx 0) <- old P2
+    arr[2], // new P2 (idx 1) <- old P3
+    arr[3], // new P3 (idx 2) <- old P4
+    arr[4], // new P4 (idx 3) <- old P5
+    arr[5], // new P5 (idx 4) <- old P6
+    arr[0], // new P6 (idx 5) <- old P1
   ];
 }
 
@@ -833,10 +833,12 @@ function replayMatch(m: Match): {
 
     if (ev.scoringSide !== servingSide) {
       if (ev.scoringSide === "A") {
-        onCourtA = rotateClockwise(onCourtA);
+        const nextRot = rotateClockwise(onCourtA);
+        onCourtA = nextRot;
         syncLiberoAfterRotation("A");
       } else {
-        onCourtB = rotateClockwise(onCourtB);
+        const nextRot = rotateClockwise(onCourtB);
+        onCourtB = nextRot;
         syncLiberoAfterRotation("B");
       }
       servingSide = ev.scoringSide;
@@ -1120,14 +1122,20 @@ export const useVolley = create<VolleyState>()(
       createMatch: (m) => {
         const id = uid();
         const initialServingSide = m.initialServingSide ?? "A";
+        // Aseguramos cardinalidad 6 desde el origen
+        const repair = (l: string[], side: "A" | "B") => {
+          const arr = [...l];
+          while (arr.length < 6) arr.push(`emergency-slot-${side}-${arr.length}`);
+          return arr.slice(0, 6);
+        };
         const match: Match = {
           ...m,
           id,
           status: "scheduled",
           currentSet: 1,
           sets: [{ number: 1, scoreA: 0, scoreB: 0, finished: false }],
-          onCourtA: [...m.startingLineupA],
-          onCourtB: [...m.startingLineupB],
+          onCourtA: repair(m.startingLineupA, "A"),
+          onCourtB: repair(m.startingLineupB, "B"),
           events: [],
           servingSide: initialServingSide,
           initialServingSide,

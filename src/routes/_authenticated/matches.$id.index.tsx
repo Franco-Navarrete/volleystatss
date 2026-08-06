@@ -2092,7 +2092,7 @@ function CourtView({
                   >
                     {col.idxs.map((idx) => {
                       const pid = onCourt[idx];
-                      const p = pid && !pid.startsWith("fallback-") && !pid.startsWith("empty-") 
+                      const p = pid && !pid.startsWith("fallback-") && !pid.startsWith("empty-") && !pid.startsWith("emergency-slot-")
                         ? col.team.players.find((x) => x.id === pid) 
                         : null;
                       const isServer = pid && pid === serverPid;
@@ -2375,7 +2375,7 @@ function FormationSide({
         const p = pid ? team.players.find((x) => x.id === pid) : null;
         // Si la jugadora del slot no está en cancha (sustituida) seguimos mostrándola
         // pero atenuada para que el entrenador la corrija. Si no hay player skip.
-        if (!p && (!pid || (!pid.startsWith("fallback-") && !pid.startsWith("empty-")))) return null;
+        if (!p && (!pid || (!pid.startsWith("fallback-") && !pid.startsWith("empty-") && !pid.startsWith("emergency-slot-")))) return null;
         
         const onCourtActive = p ? onCourt.includes(p.id) : false;
         const isServer = !!p && !!serverPlayerId && p.id === serverPlayerId;

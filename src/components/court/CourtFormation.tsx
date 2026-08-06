@@ -95,7 +95,10 @@ export function CourtFormation({ team, formation, compact, showSetterTarget = tr
 
         {/* Jugadoras */}
         {formation.slots.map((slot) => {
-          const player = slot.playerId && !slot.playerId.startsWith("fallback-") && !slot.playerId.startsWith("empty-")
+          const player = slot.playerId && 
+            !slot.playerId.startsWith("fallback-") && 
+            !slot.playerId.startsWith("empty-") &&
+            !slot.playerId.startsWith("emergency-slot-")
             ? playerById.get(slot.playerId) 
             : null;
           const color = ROLE_COLOR[slot.role];
