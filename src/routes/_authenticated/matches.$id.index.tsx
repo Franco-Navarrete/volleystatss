@@ -1977,20 +1977,24 @@ function CourtView({
     lineup: string[],
     active: { liberoId: string; replacedPlayerId: string } | null | undefined,
   ): string[] => {
-    let arr = raw.slice(0, 8);
+    let arr = [...raw];
     if (active) {
-      // Garantiza swap: si la central sigue en cancha y el líbero también,
-      // sacamos la central del render (regla: nunca ambos a la vez).
-      const libIdx = arr.indexOf(active.liberoId);
-      arr = arr.filter((id, i) => id !== active.replacedPlayerId || i === libIdx);
+      // Garantiza swap: si la central reemplazada está en el array de render, la quitamos.
+      // El líbero ya debería estar en raw gracias a replayMatch, pero nos aseguramos.
+      arr = arr.filter((id) => id !== active.replacedPlayerId);
+      if (!arr.includes(active.liberoId)) {
+        arr.push(active.liberoId);
+      }
     }
+    
     const seen = new Set<string>();
-    const unique = arr.filter((id) => id && !seen.has(id) && seen.add(id));
-    // Completar hasta 6 con lineup si algo faltara.
+    const unique = arr.filter((id) => id && id.trim() !== "" && !seen.has(id) && seen.add(id));
+
+    // Completar hasta 6 con lineup si algo faltara (fallback de seguridad).
     if (unique.length < 6) {
       for (const id of lineup) {
         if (unique.length >= 6) break;
-        if (id && !seen.has(id) && (!active || id !== active.replacedPlayerId)) {
+        if (id && id.trim() !== "" && !seen.has(id) && (!active || id !== active.replacedPlayerId)) {
           seen.add(id);
           unique.push(id);
         }
