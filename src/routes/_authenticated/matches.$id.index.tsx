@@ -2419,20 +2419,21 @@ function FormationSide({
                 </div>
               )}
               
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button 
-                    className="absolute -top-1 -left-1 z-[50] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Edit3 className="size-2.5 text-foreground" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
-                  <div className="flex items-center gap-2 border-b border-border/60 pb-1">
-                    <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
-                      {p.number}
-                    </div>
+              {p && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button 
+                      className="absolute -top-1 -left-1 z-[50] bg-background/90 hover:bg-background rounded-full p-1 border border-border shadow-sm opacity-60 group-hover/badge:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Edit3 className="size-2.5 text-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2 flex flex-col gap-2" side="top" align="center">
+                    <div className="flex items-center gap-2 border-b border-border/60 pb-1">
+                      <div className="size-6 rounded-full bg-primary flex items-center justify-center text-white font-black text-[10px]">
+                        {p.number}
+                      </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold truncate">{p.name}</div>
                     </div>
