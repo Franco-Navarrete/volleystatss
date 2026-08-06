@@ -4,6 +4,7 @@
  * el usuario "franco.e.navarrete@gmail.com" tiene que ser super admin y poder eliminar, agregar todo lo que quiera sobre cualquier otro usuario registrado
 
 
+
  *
  * en cancha tiene que estar j1,j2,j3,j4,j5,j6
  * 
