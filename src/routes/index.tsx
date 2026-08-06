@@ -1,112 +1,17 @@
 /**
- * tengo este error en partidos que me aparecen en "en vivo" y no me deja eliminarlos. tengo que poder eliminarlos si quiero
- * tiene que poder eliminar partidos en vivo sin problema
- * el usuario "franco.e.navarrete@gmail.com" tiene que ser super admin y poder eliminar, agregar todo lo que quiera sobre cualquier otro usuario registrado
-
-
-
- *
- * en cancha tiene que estar j1,j2,j3,j4,j5,j6
+ * El sistema implementa una visualización dinámica de la cancha de vóley (similar a Data Volley).
  * 
- * Corregir error de rotación: equipo con menos de 6 jugadores en cancha
- *
- * Existe un error en el módulo de rotaciones.
- *
- * Problema detectado
- * En la captura adjunta, el equipo de la derecha solamente muestra 5 jugadores en cancha, cuando reglamentariamente siempre deben existir 6 jugadores activos.
- * Esto indica que durante el cálculo de la rotación, una sustitución o el cambio de posiciones está eliminando un jugador del renderizado o dejando una posición vacía.
- *
- * Comportamiento esperado
- * El sistema debe garantizar que:
- *  Siempre existan exactamente 6 jugadores visibles en cancha.
- *  Ninguna posición de rotación (1, 2, 3, 4, 5 y 6) quede vacía.
- *  Ningún jugador desaparezca durante una rotación.
- *  Ningún jugador pueda ocupar dos posiciones simultáneamente.
- *  Cada jugador tenga una única posición de rotación y una única posición táctica.
- *
- * Revisar especialmente
- * Analizar toda la lógica de:
- *  Rotación automática.
- *  Cambio de saque.
- *  Aplicación del sistema 5-1.
- *  Sustituciones del líbero.
- *  Renderizado del equipo rival.
- *  Cálculo de posiciones tácticas después del saque.
- *
- * Verificar si en algún punto del flujo:
- *  Se elimina un jugador del array.
- *  Se reemplaza un jugador por null o undefined.
- *  Se filtran jugadores por error.
- *  Existe un conflicto de IDs.
- *  Algún jugador queda oculto por la lógica del render.
- *
- * Validaciones obligatorias
- * Antes de renderizar la cancha, validar:
- * playersOnCourt.length === 6
- *
- * Además:
- *  Todos los IDs deben ser únicos.
- *  Deben existir exactamente las posiciones: 1, 2, 3, 4, 5, 6
- *  No puede haber dos jugadores con la misma posición.
- *  No puede faltar ninguna posición.
- *
- * Si hay un error
- * Si el sistema detecta menos de seis jugadores:
- *  Mostrar un error en consola indicando cuál jugador falta.
- *  Mostrar el estado del array antes y después de la rotación.
- *  Registrar: id del jugador, rol, posición de rotación, posición táctica, estado (titular, líbero o banco)
- *
- * Auditoría de la rotación
- * Agregar un log temporal como el siguiente:
- * ===== ROTACIÓN =====
- * Jugadores en cancha: 5 ❌
- * Posición 1 -> J1
- * Posición 2 -> J2
- * Posición 3 -> J3
- * Posición 4 -> J4
- * Posición 5 -> VACÍA ❌
- * Posición 6 -> J6
- * Jugador perdido: ID: / Nombre: / Rol:
- * ====================
- *
- * Objetivo
- * Refactorizar la lógica de rotaciones para que:
- *  Siempre haya 6 jugadores en cancha.
- *  Nunca desaparezca un jugador al rotar.
- *  Nunca se pierda una posición reglamentaria.
- *  El sistema sea robusto tanto para el equipo local como para el rival, con y sin líbero.
- *  Antes de cada renderizado se valide la integridad de la formación para evitar inconsistencias visuales o de datos.
- *
- * Importante: No aplicar soluciones temporales (por ejemplo, crear un jugador ficticio para completar la formación). El objetivo es encontrar y corregir la causa raíz por la que un jugador deja de formar parte del estado de la cancha.
- */
-
-/**
- * Corregir la lógica de rotación del sistema 5-1.
- *
- * Actualmente solo rota el armador y el resto de los jugadores permanece fijo en sus posiciones. Esto es incorrecto.
- *
- * Implementar la rotación oficial del voleibol:
- *
- *  Al recuperar el saque, los seis jugadores deben rotar una posición en sentido horario.
- *
- *  Cada jugador mantiene su rol original (Armador, Central 1, Central 2, Punta 1, Punta 2 u Opuesto).
- *
- *  Lo único que cambia es la posición (P1–P6).
- *
- *  La visualización debe reconstruirse utilizando la nueva posición de cada jugador.
- *
- * La rotación debe seguir esta secuencia:
- *
- * P1 → P6
- * P6 → P5
- * P5 → P4
- * P4 → P3
- * P3 → P2
- * P2 → P1
- *
- * Después de cada rotación, todos los indicadores (P1, P2, C1, C2, O y Armador) deben desplazarse junto con el jugador correspondiente.
- *
- * No debe existir ninguna lógica especial que deje fijos al C1, C2, Punta 1, Punta 2 u Opuesto. Todos los jugadores rotan exactamente igual que en un partido oficial de voleibol. Solo la posición cambia; el rol del jugador permanece constante.
+ * Invariantes del Motor de Rotación:
+ * 1. Siempre hay exactamente 6 jugadores por equipo en cancha.
+ * 2. Los jugadores rotan en sentido horario (P1 -> P6 -> P5 -> P4 -> P3 -> P2 -> P1).
+ * 3. Al recuperar el saque, el equipo rota automáticamente una posición.
+ * 4. El sistema 5-1 mueve a los jugadores a sus posiciones tácticas después del saque.
+ * 5. Se visualizan roles específicos: Armador (A), Líbero (L) y Capitán (C).
+ * 
+ * Gestión Multi-tenant:
+ * - Federación -> Liga -> Club -> Entrenador.
+ * - Los entrenadores gestionan sus propios clubes y categorías.
+ * - Seguridad basada en RLS y roles (Super Admin, Coach, etc.).
  */
 
 /**
