@@ -833,10 +833,12 @@ function replayMatch(m: Match): {
 
     if (ev.scoringSide !== servingSide) {
       if (ev.scoringSide === "A") {
-        onCourtA = rotateClockwise(onCourtA);
+        const nextRot = rotateClockwise(onCourtA);
+        onCourtA = nextRot;
         syncLiberoAfterRotation("A");
       } else {
-        onCourtB = rotateClockwise(onCourtB);
+        const nextRot = rotateClockwise(onCourtB);
+        onCourtB = nextRot;
         syncLiberoAfterRotation("B");
       }
       servingSide = ev.scoringSide;
