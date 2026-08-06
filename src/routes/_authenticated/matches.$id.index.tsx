@@ -115,6 +115,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
@@ -376,42 +378,86 @@ function LiveMatch() {
     const deleteMatch = useVolley((s) => s.deleteMatch);
     const deleteFn = useServerFn(authorizeAndDeleteMatch);
     const navigate = useNavigate();
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
     
+    const handleDeleteMatch = async () => {
+      try {
+        await deleteFn({ data: { matchId } });
+        deleteMatch(matchId);
+        toast.success("Partido eliminado correctamente");
+        navigate({ to: "/matches" });
+      } catch (e) {
+        toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
+      }
+    };
+
     return (
       <CompactShell>
         <div className="text-center py-20 px-6">
-          <p className="text-xl font-bold mb-2">Partido no encontrado</p>
-          <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
+          <div className="mb-6 flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
+            </div>
+          </div>
+          <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {!match 
-              ? `No pudimos encontrar el partido con ID "${matchId.slice(0, 8)}...". Asegúrate de que el partido exista y esté sincronizado.`
+              ? `No pudimos encontrar el partido con ID "${matchId.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
               : `No se pudieron cargar los equipos asociados ("${match.teamAId.slice(0, 4)}" vs "${match.teamBId.slice(0, 4)}").`}
           </p>
+          
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
-            <Button asChild variant="default" className="bg-gradient-primary shadow-glow">
-              <Link to="/matches">Volver a mis partidos</Link>
+            <Button asChild variant="default" size="lg" className="bg-gradient-primary shadow-glow rounded-xl font-semibold">
+              <Link to="/matches">
+                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                Volver a mis partidos
+              </Link>
             </Button>
 
             {isSuperAdmin && (
-              <Button 
-                variant="destructive" 
-                className="mt-2"
-                onClick={async () => {
-                  if (window.confirm("¿Estás seguro de que deseas eliminar este partido fantasma? Esta acción no se puede deshacer.")) {
-                    try {
-                      await deleteFn({ data: { matchId } });
-                      deleteMatch(matchId);
-                      toast.success("Partido eliminado correctamente");
-                      navigate({ to: "/matches" });
-                    } catch (e) {
-                      toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
-                    }
-                  }
-                }}
-              >
-                Eliminar partido (Admin)
-              </Button>
+              <>
+                <Button 
+                  variant="destructive" 
+                  size="lg"
+                  className="mt-2 rounded-xl border border-destructive/20 hover:bg-destructive/90 transition-all duration-300"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Eliminar partido (Admin)
+                </Button>
+
+                <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                  <DialogContent className="max-w-md rounded-2xl border-destructive/20">
+                    <DialogHeader className="pt-4">
+                      <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                        <X className="w-6 h-6 text-destructive" />
+                      </div>
+                      <DialogTitle className="text-center text-xl">¿Eliminar partido fantasma?</DialogTitle>
+                      <DialogDescription className="text-center text-balance pt-2">
+                        Esta acción es irreversible y eliminará permanentemente el registro de este partido de la base de datos.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4 pb-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="rounded-xl flex-1 order-2 sm:order-1"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleDeleteMatch}
+                        className="rounded-xl flex-1 order-1 sm:order-2"
+                      >
+                        Confirmar Eliminación
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
             
             <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
