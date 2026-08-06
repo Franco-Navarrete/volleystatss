@@ -1,25 +1,74 @@
 /**
+ * Corregir error de rotación: equipo con menos de 6 jugadores en cancha
+ *
+ * Existe un error en el módulo de rotaciones.
+ *
+ * Problema detectado
+ * En la captura adjunta, el equipo de la derecha solamente muestra 5 jugadores en cancha, cuando reglamentariamente siempre deben existir 6 jugadores activos.
+ * Esto indica que durante el cálculo de la rotación, una sustitución o el cambio de posiciones está eliminando un jugador del renderizado o dejando una posición vacía.
+ *
+ * Comportamiento esperado
+ * El sistema debe garantizar que:
+ *  Siempre existan exactamente 6 jugadores visibles en cancha.
+ *  Ninguna posición de rotación (1, 2, 3, 4, 5 y 6) quede vacía.
+ *  Ningún jugador desaparezca durante una rotación.
+ *  Ningún jugador pueda ocupar dos posiciones simultáneamente.
+ *  Cada jugador tenga una única posición de rotación y una única posición táctica.
+ *
+ * Revisar especialmente
+ * Analizar toda la lógica de:
+ *  Rotación automática.
+ *  Cambio de saque.
+ *  Aplicación del sistema 5-1.
+ *  Sustituciones del líbero.
+ *  Renderizado del equipo rival.
+ *  Cálculo de posiciones tácticas después del saque.
+ *
+ * Verificar si en algún punto del flujo:
+ *  Se elimina un jugador del array.
+ *  Se reemplaza un jugador por null o undefined.
+ *  Se filtran jugadores por error.
+ *  Existe un conflicto de IDs.
+ *  Algún jugador queda oculto por la lógica del render.
+ *
+ * Validaciones obligatorias
+ * Antes de renderizar la cancha, validar:
+ * playersOnCourt.length === 6
+ *
+ * Además:
+ *  Todos los IDs deben ser únicos.
+ *  Deben existir exactamente las posiciones: 1, 2, 3, 4, 5, 6
+ *  No puede haber dos jugadores con la misma posición.
+ *  No puede faltar ninguna posición.
+ *
+ * Si hay un error
+ * Si el sistema detecta menos de seis jugadores:
+ *  Mostrar un error en consola indicando cuál jugador falta.
+ *  Mostrar el estado del array antes y después de la rotación.
+ *  Registrar: id del jugador, rol, posición de rotación, posición táctica, estado (titular, líbero o banco)
+ *
+ * Auditoría de la rotación
+ * Agregar un log temporal como el siguiente:
+ * ===== ROTACIÓN =====
+ * Jugadores en cancha: 5 ❌
+ * Posición 1 -> J1
+ * Posición 2 -> J2
+ * Posición 3 -> J3
+ * Posición 4 -> J4
+ * Posición 5 -> VACÍA ❌
+ * Posición 6 -> J6
+ * Jugador perdido: ID: / Nombre: / Rol:
+ * ====================
+ *
  * Objetivo
- * El entrenador debe poder administrar sus clubes, categorías, jugadores, equipos rivales y partidos de forma simple.
- * en "partidos" tengo que ver los partidos programados para mi equipo y los partidos que mis equipos jugaron.
- * en combinadas tiene que ser mi equipo vs los equipos contra los que jugue.
- * y en "liga" la liga que tiene que aparecer es la que esta disputando mi equipo.
- * quiero ver la tabla de posiciones de la liga en la que estoy jugando
- * los ultimos resultados de partidos de mi liga y los proximos partidos de mi liga es decir, la liga que estoy jugando
- * en "premios" el equipo ideal tiene que estar formado por jugadores que estan en la misma liga que mi club. sin importar el genero
- * intelligence solo funciona para los partidos que disputa mi equipo
- * el modo "video" tambien solo funciona para mi equipo, y el historial de partidos tiene que ser de mi equipo
- * en la tabla de posiciones tienes que mostrar la tabla de la liga en la que esta jugando mi equipo
- * y en partido finalizados, tienen que verse los partidos finalizados de la liga en la que esta jugando mi equipo
- * al crear un nuevo partido, me tienen que salir mis equipos y algun equipo que este cargado en la misma liga, si no la opcion de crear un partido de 0 con un equipo rival de 0
- * en caso de que no haya otro equipo, tengo que poder crearlo para poder tomar las estadisticas. solo con el numero de camiseta, sin necesidad de poner mas informacion de ellos como las que tengo que poner cuando creo un jugador de mi equipo
- * necesito poder crear mas de 6 jugadores por si tienen cambios, libero, etc
- * tengo que poder seleccionar a cualquier jugador que este fuera de la cancha como libero 1 y libero 2
- * Implementar validaciones para asegurar que Líbero 1 y Líbero 2 no puedan quedar simultáneamente “en cancha” si el sistema considera que no están habilitados según la formación y los cambios registrados. tampoco me sale la opcion para poder seleccionar los judaores. tengo que encontrar la forma de poder elegir el numero de camiseta de los jugadores que estan en cancha
- * quiero cargar la posicion de los jugadores una vez que este adentro de la cancha y sus numeros de camiseta tambien
- * aca tengo que seleccionar cual es el armador rival y poder cambiar el numero de las camisetas de los jugadores
- * al principio no puedo seleccionar al jugador que es armador ni poner su numero de camisetas
- * en este punto tengo que poder seleccionar al armador rival y los numeros de camiseta. luego de confirmar se comienza a tomar estadisticas
+ * Refactorizar la lógica de rotaciones para que:
+ *  Siempre haya 6 jugadores en cancha.
+ *  Nunca desaparezca un jugador al rotar.
+ *  Nunca se pierda una posición reglamentaria.
+ *  El sistema sea robusto tanto para el equipo local como para el rival, con y sin líbero.
+ *  Antes de cada renderizado se valide la integridad de la formación para evitar inconsistencias visuales o de datos.
+ *
+ * Importante: No aplicar soluciones temporales (por ejemplo, crear un jugador ficticio para completar la formación). El objetivo es encontrar y corregir la causa raíz por la que un jugador deja de formar parte del estado de la cancha.
  */
 
 /**
