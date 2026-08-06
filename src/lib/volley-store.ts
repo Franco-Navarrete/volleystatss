@@ -891,16 +891,23 @@ export function repairOnCourt(
   onCourt: (string | null | undefined)[],
   lineup: string[],
 ): string[] {
-  const fixed: (string | null)[] = Array.from({ length: 6 }, (_, i) => onCourt[i] ?? null);
+  const fixed: (string | null)[] = Array.from({ length: 6 }, (_, i) => {
+    const v = onCourt[i];
+    return v && typeof v === "string" && v.trim() !== "" ? v : null;
+  });
   const seen = new Set<string>();
   for (let i = 0; i < 6; i++) {
     const v = fixed[i];
-    if (v && !seen.has(v)) seen.add(v);
-    else fixed[i] = null; // duplicado o vacío
+    if (v && !seen.has(v)) {
+      seen.add(v);
+    } else {
+      fixed[i] = null; // duplicado o vacío
+    }
   }
+
   const needsFix = fixed.some((x) => x === null);
   if (needsFix) {
-    const pool = lineup.filter((pid) => pid && !seen.has(pid));
+    const pool = lineup.filter((pid) => pid && pid.trim() !== "" && !seen.has(pid));
     for (let i = 0; i < 6 && pool.length > 0; i++) {
       if (fixed[i] === null) {
         const pid = pool.shift()!;
@@ -908,19 +915,27 @@ export function repairOnCourt(
         seen.add(pid);
       }
     }
-    const filledCount = fixed.filter(Boolean).length;
+    
+    // Si todavía faltan (ej. lineup insuficiente), forzamos placeholders para mantener la cardinalidad 6
+    for (let i = 0; i < 6; i++) {
+      if (fixed[i] === null) {
+        fixed[i] = `empty-${side}-${i}`;
+      }
+    }
+
+    const filledCount = fixed.filter(x => x && !x.startsWith("empty-")).length;
     const key = `${matchId}:${side}:${onCourt.join(",")}`;
     if (!_onCourtWarnCache.has(key)) {
       _onCourtWarnCache.add(key);
       if (_onCourtWarnCache.size > 100) _onCourtWarnCache.clear();
       // eslint-disable-next-line no-console
       console.warn(
-        `[volley][auto-fix] onCourt incompleto → corregido automáticamente. match=${matchId} lado=${side} antes=${onCourt.length}(${onCourt.filter(Boolean).length} llenos) después=6(${filledCount} llenos)`,
+        `[volley][auto-fix] onCourt incompleto o con huecos → corregido a cardinalidad 6. match=${matchId} lado=${side} antes=${onCourt.length} después=6(reales=${filledCount})`,
         { antes: onCourt, después: fixed },
       );
     }
   }
-  return fixed.filter((x): x is string => !!x);
+  return fixed as string[];
 }
 
 /**
