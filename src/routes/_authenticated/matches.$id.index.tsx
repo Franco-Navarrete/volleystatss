@@ -449,9 +449,10 @@ function LiveMatch() {
                       </Button>
                       <Button 
                         variant="destructive" 
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
-                          handleDeleteMatch();
+                          e.stopPropagation();
+                          await handleDeleteMatch();
                         }}
                         className="rounded-xl flex-1 order-1 sm:order-2"
                       >
