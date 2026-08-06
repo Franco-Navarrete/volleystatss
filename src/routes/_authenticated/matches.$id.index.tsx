@@ -2531,8 +2531,9 @@ function FormationSide({
                     </Button>
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
         );
