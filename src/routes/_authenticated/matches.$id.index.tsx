@@ -2367,8 +2367,8 @@ function FormationSide({
         const p = pid ? team.players.find((x) => x.id === pid) : null;
         // Si la jugadora del slot no está en cancha (sustituida) seguimos mostrándola
         // pero atenuada para que el entrenador la corrija. Si no hay player skip.
-        if (!p) return null;
-        const onCourtActive = onCourt.includes(p.id);
+        if (!p && (!pid || (!pid.startsWith("fallback-") && !pid.startsWith("empty-")))) return null;
+        const onCourtActive = p ? onCourt.includes(p.id) : false;
         const isServer = !!serverPlayerId && p.id === serverPlayerId;
         const isLibero = designated.length > 0 ? designated.includes(p.id) : p.position === "libero";
         const isReceptionTarget = needsReception && side === receivingSide;
