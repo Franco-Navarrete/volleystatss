@@ -192,21 +192,26 @@ export function resolveFormation(opts: {
   liberoOnCourt?: boolean;
 }): ResolvedFormation {
   const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack", onCourt = [] } = opts;
+  
+  if (onCourt.length !== 6) {
+    // eslint-disable-next-line no-console
+    console.error(`[resolveFormation] onCourt has ${onCourt.length} players instead of 6`, onCourt);
+  }
+
   const formation = getFormation(system, rotation, phase);
   const override = customs?.[rotation] ?? {};
 
   // Mapeo rol -> playerId.
   // Asignamos dinámicamente C1/C2 y P1/P2 basándonos en quién está en red (Front) vs zaga (Back)
-  // Esto asegura que los roles tácticos del dibujo (CF, CZ, PF, PZ) roten sincronizados con la posición real.
   const middle1Info = getPlayerRotationInfo(onCourt, lineup.middle1 || "");
   const middle2Info = getPlayerRotationInfo(onCourt, lineup.middle2 || "");
   const outside1Info = getPlayerRotationInfo(onCourt, lineup.outside1 || "");
   const outside2Info = getPlayerRotationInfo(onCourt, lineup.outside2 || "");
 
-  const middleFrontId = middle1Info?.isFrontRow ? lineup.middle1 : (middle2Info?.isFrontRow ? lineup.middle2 : lineup.middle1);
-  const middleBackId = middle1Info?.isBackRow ? lineup.middle1 : (middle2Info?.isBackRow ? lineup.middle2 : lineup.middle2);
-  const outsideFrontId = outside1Info?.isFrontRow ? lineup.outside1 : (outside2Info?.isFrontRow ? lineup.outside2 : lineup.outside1);
-  const outsideBackId = outside1Info?.isBackRow ? lineup.outside1 : (outside2Info?.isBackRow ? lineup.outside2 : lineup.outside2);
+  const middleFrontId = middle1Info?.isFrontRow ? lineup.middle1 : (middle2Info?.isFrontRow ? lineup.middle2 : (lineup.middle1 || lineup.middle2));
+  const middleBackId = middle1Info?.isBackRow ? lineup.middle1 : (middle2Info?.isBackRow ? lineup.middle2 : (lineup.middle2 || lineup.middle1));
+  const outsideFrontId = outside1Info?.isFrontRow ? lineup.outside1 : (outside2Info?.isFrontRow ? lineup.outside2 : (lineup.outside1 || lineup.outside2));
+  const outsideBackId = outside1Info?.isBackRow ? lineup.outside1 : (outside2Info?.isBackRow ? lineup.outside2 : (lineup.outside2 || lineup.outside1));
 
   const roleToPlayer: Partial<Record<TacticalRole, string | undefined>> = {
     setter: lineup.setter,
