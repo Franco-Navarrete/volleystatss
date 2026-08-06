@@ -14,12 +14,15 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
     const { supabase, userId, claims } = context;
 
     // Rol efectivo: admin > planillero > entrenador > otro.
+    const email = (claims as { email?: string } | undefined)?.email ?? null;
+    const isSuperAdmin = email === "franco.e.navarrete@gmail.com";
+
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
     const roleSet = new Set((roles ?? []).map((r) => r.role as string));
-    const role = roleSet.has("admin")
+    const role = isSuperAdmin || roleSet.has("admin")
       ? "admin"
       : roleSet.has("planillero")
       ? "planillero"
@@ -27,7 +30,6 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
       ? "entrenador"
       : "user";
 
-    const email = (claims as { email?: string } | undefined)?.email ?? null;
     const allowed = role === "admin" || role === "planillero";
 
     await supabase.from("match_deletion_audit").insert({
