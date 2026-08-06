@@ -2368,17 +2368,18 @@ function FormationSide({
         // Si la jugadora del slot no está en cancha (sustituida) seguimos mostrándola
         // pero atenuada para que el entrenador la corrija. Si no hay player skip.
         if (!p && (!pid || (!pid.startsWith("fallback-") && !pid.startsWith("empty-")))) return null;
+        
         const onCourtActive = p ? onCourt.includes(p.id) : false;
-        const isServer = !!serverPlayerId && p.id === serverPlayerId;
-        const isLibero = designated.length > 0 ? designated.includes(p.id) : p.position === "libero";
+        const isServer = !!p && !!serverPlayerId && p.id === serverPlayerId;
+        const isLibero = !!p && (designated.length > 0 ? designated.includes(p.id) : p.position === "libero");
         const isReceptionTarget = needsReception && side === receivingSide;
-        const isReceiverHighlight = isReceptionTarget && receiverIds.has(p.id);
-        const bpEligible = !!blockPickInfo && side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(p.id);
-        const bpPicked = !!blockPickInfo && blockPickInfo.picks.has(p.id);
+        const isReceiverHighlight = !!p && isReceptionTarget && receiverIds.has(p.id);
+        const bpEligible = !!p && !!blockPickInfo && side === blockPickInfo.blockingSide && blockPickInfo.eligible.has(p.id);
+        const bpPicked = !!p && !!blockPickInfo && blockPickInfo.picks.has(p.id);
         const bpDim = !!blockPickInfo && !bpEligible;
         const dx = projectX(slot.x, slot.y);
         const dy = projectY(slot.x, slot.y);
-        const isOpponentSetter = (match as Match).metadata?.opponentSetterId === p.id;
+        const isOpponentSetter = !!p && (match as Match).metadata?.opponentSetterId === p.id;
         
         return (
           <div
@@ -2387,22 +2388,24 @@ function FormationSide({
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
             <div className="w-full h-full relative group/badge">
-              <div 
-                className="absolute inset-0 z-[10] cursor-pointer" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onPlayerClick(side, p.id);
-                }} 
-              />
+              {p && (
+                <div 
+                  className="absolute inset-0 z-[10] cursor-pointer" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onPlayerClick(side, p.id);
+                  }} 
+                />
+              )}
               <CourtPlayerBadge
-                player={p}
+                player={p || { id: pid || "empty", name: "Falta jugadora", number: 0 } as any}
                 team={team}
                 match={match}
                 isServer={isServer}
                 isLibero={isLibero}
                 isReceiverHighlight={isReceiverHighlight}
-                active={!!activePlayerId && activePlayerId === p.id}
+                active={!!p && !!activePlayerId && activePlayerId === p.id}
                 dimmed={!onCourtActive}
                 className={`w-full h-full ${bpEligible ? "ring-4 ring-emerald-400 animate-pulse rounded-full" : ""} ${bpPicked ? "ring-4 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.9)] rounded-full" : ""} ${isOpponentSetter ? "ring-[3px] ring-white shadow-[0_0_15px_rgba(249,115,22,0.8)] rounded-full" : ""}`}
                 style={isOpponentSetter ? { 
