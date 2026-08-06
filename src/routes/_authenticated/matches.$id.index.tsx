@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"; // me sigue faltando el J4 (nota técnica: forzando rebuild para asegurar consistencia de formación)
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Volleyball,
