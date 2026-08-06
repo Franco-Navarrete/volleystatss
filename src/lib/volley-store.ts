@@ -931,6 +931,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
           ? [next.liberoA1Id, next.liberoA2Id]
           : [next.liberoB1Id, next.liberoB2Id]
       ).filter(Boolean) as string[];
+      // Si no hay líberos asignados para este equipo en el partido, abortamos.
       if (libIds.length === 0) continue;
       
       const libActive = side === "A" ? r.liberoActiveA : r.liberoActiveB;
