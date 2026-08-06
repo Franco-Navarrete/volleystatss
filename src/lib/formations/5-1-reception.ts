@@ -41,7 +41,7 @@ export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
       { role: "opposite", ...P.z2 },
       { role: "outside_back", ...P.z6 },
       { role: "middle_back", ...P.z5 },
-      { role: "libero", ...P.z5 },
+      { role: "libero", ...P.z5 }, // Slot reservado para el líbero o central zaguero
     ],
   },
   // Rotación 6 (Armadora en P6)

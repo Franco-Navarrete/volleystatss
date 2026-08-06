@@ -33,7 +33,7 @@ export const FORMATIONS_5_1: Record<Rotation, ReceptionFormation> = {
       { role: "middle_back", ...P.p5 },
       { role: "outside_front", ...P.z4 },
       { role: "outside_back", ...P.p6 },
-      { role: "libero", ...P.p5 },
+      { role: "libero", ...P.p5 }, // Slot reservado para el líbero o central zaguero
     ],
   },
   // Rotación 2 (Armadora en P2)

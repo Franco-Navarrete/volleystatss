@@ -747,7 +747,19 @@ function replayMatch(m: Match): {
 
   // Sincroniza el líbero basándose únicamente en los titulares actuales.
   // El líbero entra por un central en zaga (1, 6, 5) y sale al rotar a delantera (4, 3, 2).
+  /**
+   * Automatización reglamentaria del líbero (FIVB).
+   * REGLA: El líbero entra por centrales en zaga (P1, P6, P5) y sale al rotar a frente (P4).
+   * Si no hay líbero asignado en el partido (liberoA1Id/liberoA2Id), esta lógica se omite.
+   */
   const syncLiberoAfterRotation = (side: "A" | "B") => {
+    const lib1Id = side === "A" ? m.liberoA1Id : m.liberoB1Id;
+    const lib2Id = side === "A" ? m.liberoA2Id : m.liberoB2Id;
+
+    // Si no hay líberos asignados para este equipo en el partido, abortamos.
+    // Esto cumple con el requisito: "Si no hay líbero, los centrales permanecen siempre en cancha."
+    if (!lib1Id && !lib2Id) return;
+
     const lib = side === "A" ? liberoA : liberoB;
     const arr = side === "A" ? onCourtA : onCourtB;
     
@@ -919,6 +931,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
           ? [next.liberoA1Id, next.liberoA2Id]
           : [next.liberoB1Id, next.liberoB2Id]
       ).filter(Boolean) as string[];
+      // Si no hay líberos asignados para este equipo en el partido, abortamos.
       if (libIds.length === 0) continue;
       
       const libActive = side === "A" ? r.liberoActiveA : r.liberoActiveB;

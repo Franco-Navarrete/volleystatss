@@ -61,7 +61,7 @@ export function inferLineupFromPlayers(
     outside1: outsides[0]?.id,
     outside2: outsides[1]?.id,
     libero: libero?.id,
-    liberoReplaces: "middle2",
+    liberoReplaces: designated.size > 0 || inCourt.some(p => p.position === "libero") ? "middle2" : "none",
   };
 
   // Fallback: si el equipo no tiene todas las posiciones tácticas asignadas
@@ -218,12 +218,12 @@ export function resolveFormation(opts: {
     libero: lineup.libero,
   };
 
-  // Special logic for liberos: if active, they take the place of the middle who is in the back row.
+  // Lógica para líbero: si no hay líbero asignado en el lineup, middle_back permanece middle_back.
+  // El slot 'libero' en la formación se usa para dibujar al líbero o al central zaguero si no hay líbero.
   if (liberoOnCourt && lineup.libero) {
     roleToPlayer.libero = lineup.libero;
-    // The middle_back slot in the formation is usually where the libero sits.
   } else {
-    // If no libero, middle_back is just the middle player who is in the back row.
+    // Si no hay líbero, el rol 'libero' en el dibujo táctico lo ocupa el central zaguero.
     roleToPlayer.libero = middleBackId;
   }
 

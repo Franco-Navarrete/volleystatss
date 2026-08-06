@@ -61,6 +61,6 @@ export interface TeamLineup {
   outside1?: string;
   outside2?: string;
   libero?: string;
-  /** A qué central reemplaza el líbero. */
-  liberoReplaces?: "middle1" | "middle2";
+  /** A qué central reemplaza el líbero (si existe). */
+  liberoReplaces?: "middle1" | "middle2" | "none";
 }
