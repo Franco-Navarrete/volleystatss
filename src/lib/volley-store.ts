@@ -745,8 +745,6 @@ function replayMatch(m: Match): {
     return setNum === decidingSet ? 15 : m.pointsPerSet;
   };
 
-  // Sincroniza el líbero basándose únicamente en los titulares actuales.
-  // El líbero entra por un central en zaga (1, 6, 5) y sale al rotar a delantera (4, 3, 2).
   /**
    * Automatización reglamentaria del líbero (FIVB).
    * REGLA: El líbero entra por centrales en zaga (P1, P6, P5) y sale al rotar a frente (P4).
@@ -757,14 +755,19 @@ function replayMatch(m: Match): {
     const lib2Id = side === "A" ? m.liberoA2Id : m.liberoB2Id;
 
     // Si no hay líberos asignados para este equipo en el partido, abortamos.
-    // Esto cumple con el requisito: "Si no hay líbero, los centrales permanecen siempre en cancha."
     if (!lib1Id && !lib2Id) return;
 
     const lib = side === "A" ? liberoA : liberoB;
     const arr = side === "A" ? onCourtA : onCourtB;
     
-    // Validamos que siempre haya 6 jugadores lógicos en los arreglos internos de replay.
-    if (arr.length !== 6) return;
+    // Validamos que siempre haya 6 jugadores lógicos.
+    if (arr.length !== 6) {
+      // Intentamos reparar antes de fallar
+      const repaired = repairOnCourt(m.id, side, arr, lineupFor(currentSet, side));
+      if (side === "A") onCourtA = repaired;
+      else onCourtB = repaired;
+      return;
+    }
 
     if (lib) {
       const idx = arr.indexOf(lib.liberoId);
@@ -775,6 +778,19 @@ function replayMatch(m: Match): {
         if (side === "A") { onCourtA = next; liberoA = null; }
         else { onCourtB = next; liberoB = null; }
       }
+    }
+  };
+
+  const validateIntegrity = (msg: string) => {
+    if (onCourtA.length !== 6) {
+      // eslint-disable-next-line no-console
+      console.error(`[Integrity Check] ${msg} - Team A has ${onCourtA.length} players`, onCourtA);
+      onCourtA = repairOnCourt(m.id, "A", onCourtA, lineupFor(currentSet, "A"));
+    }
+    if (onCourtB.length !== 6) {
+      // eslint-disable-next-line no-console
+      console.error(`[Integrity Check] ${msg} - Team B has ${onCourtB.length} players`, onCourtB);
+      onCourtB = repairOnCourt(m.id, "B", onCourtB, lineupFor(currentSet, "B"));
     }
   };
 
@@ -807,14 +823,14 @@ function replayMatch(m: Match): {
         else { onCourtB = [...ev.lineup]; liberoB = null; }
       }
       syncLiberoAfterRotation(ev.side);
+      validateIntegrity(`After ${ev.kind} event`);
       continue;
     }
+
     const cur = sets[sets.length - 1];
     if (ev.scoringSide === "A") cur.scoreA++;
     else cur.scoreB++;
 
-    // La rotación se aplica sobre los jugadores actuales (titulares + líbero si está).
-    // syncLiberoAfterRotation se encarga de devolver al central si el líbero rotó a delantera.
     if (ev.scoringSide !== servingSide) {
       if (ev.scoringSide === "A") {
         onCourtA = rotateClockwise(onCourtA);
@@ -825,6 +841,9 @@ function replayMatch(m: Match): {
       }
       servingSide = ev.scoringSide;
     }
+    
+    validateIntegrity(`After point event (score ${cur.scoreA}-${cur.scoreB})`);
+
     const target = targetFor(cur.number);
     if ((cur.scoreA >= target || cur.scoreB >= target) && Math.abs(cur.scoreA - cur.scoreB) >= 2) {
       cur.finished = true;
@@ -835,27 +854,26 @@ function replayMatch(m: Match): {
       } else {
         currentSet++;
         sets.push({ number: currentSet, scoreA: 0, scoreB: 0, finished: false });
-        // Reset rotation each set to that set's lineup (or starting lineup)
         onCourtA = [...lineupFor(currentSet, "A")];
         onCourtB = [...lineupFor(currentSet, "B")];
         liberoA = null;
         liberoB = null;
-        // Alternate first server each set
         servingSide = currentSet % 2 === 1 ? m.initialServingSide : (m.initialServingSide === "A" ? "B" : "A");
+        validateIntegrity(`After set ${currentSet-1} end`);
       }
     }
   }
+
+  // Final validation and repairs
   onCourtA = repairOnCourt(m.id, "A", onCourtA, lineupFor(currentSet, "A"));
   onCourtB = repairOnCourt(m.id, "B", onCourtB, lineupFor(currentSet, "B"));
   
-  // Si estamos en un set cuya formación fue confirmada pero no hay eventos de marcador ni cambio,
-  // la formación actual DEBE ser la que se configuró en lineupsBySet.
   const hasEventsInSet = m.events.some(e => ("setNumber" in e) && e.setNumber === currentSet);
   if (!hasEventsInSet && m.confirmedLineupSets?.includes(currentSet)) {
     const lA = m.lineupsBySet?.[currentSet]?.A;
-    if (lA) onCourtA = [...lA];
+    if (lA && lA.length === 6) onCourtA = [...lA];
     const lB = m.lineupsBySet?.[currentSet]?.B;
-    if (lB) onCourtB = [...lB];
+    if (lB && lB.length === 6) onCourtB = [...lB];
   }
 
   return { sets, currentSet, status, onCourtA, onCourtB, servingSide, liberoActiveA: liberoA, liberoActiveB: liberoB };
