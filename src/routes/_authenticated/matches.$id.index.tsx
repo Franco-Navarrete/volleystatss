@@ -3542,11 +3542,12 @@ function FormationDialog({
                 <div className="text-sm font-bold text-foreground">{teamA.name}</div>
                 {match.status === "live" && (
                   <div className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">
-                    {match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A") 
-                      ? "Fase: Recepción" 
+                    {match.servingSide === "B" && (needsReceptionForRally(match, match.currentSet, "A") || true)
+                      ? "Fase: Recepción (Debug)" 
                       : "Fase: K2/Ataque"}
                   </div>
                 )}
+
               </div>
               <CourtFormation 
                 team={teamA} 
