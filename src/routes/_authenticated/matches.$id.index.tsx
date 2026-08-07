@@ -465,7 +465,10 @@ function LiveMatch() {
 
   // Blindaje para Super Admin: Si no hay match/teams localmente, pero estamos sincronizando, esperamos un poco
   // antes de mostrar el error definitivo.
-  if (!match || !teamA || !teamB) {
+  const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
+  const showSyncing = (!match || !teamA || !teamB) && isLoadingGlobal;
+  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal;
+
     if (isSuperAdmin && adminAll.isLoading) {
       console.log("RETURN loading (SuperAdmin syncing)");
       return (
