@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useAuthUser } from "@/hooks/use-auth";
@@ -7,7 +7,7 @@ import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import {
   computeMatchStats, computeSetStats, computeReceptionStats, setsWon, useVolley, getSetDuration, formatDurationMs, formatLocalTime,
   getMatchStatsMode,
-  type PlayerStat, type ReceptionStat, type Team, type MatchEvent,
+  type PlayerStat, type ReceptionStat, type Team, type MatchEvent, type Match,
 } from "@/lib/volley-store";
 
 import { Button } from "@/components/ui/button";
@@ -801,21 +801,29 @@ function SetContent({
 }) {
   const setStats = useMemo(() => computeSetStats(match, set.number), [match, set.number]);
   
-  const enrichTeamPlayers = useCallback((team: Team, statsPlayers: Map<string, PlayerStat>) => {
-    return [...statsPlayers.values()]
-      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+  const setPlayersA = useMemo(() => {
+    return [...setStats.players.values()]
+      .filter((p) => teamA.players.some((tp) => tp.id === p.playerId))
       .map((p) => {
-        const tp = team.players.find((x) => x.id === p.playerId)!;
+        const tp = teamA.players.find((x) => x.id === p.playerId)!;
         return { ...p, name: tp.name, number: tp.number };
       })
       .sort((a, b) => b.total - a.total);
-  }, []);
+  }, [teamA, setStats.players]);
 
-  const setPlayersA = useMemo(() => enrichTeamPlayers(teamA, setStats.players), [teamA, setStats.players, enrichTeamPlayers]);
-  const setPlayersB = useMemo(() => enrichTeamPlayers(teamB, setStats.players), [teamB, setStats.players, enrichTeamPlayers]);
+  const setPlayersB = useMemo(() => {
+    return [...setStats.players.values()]
+      .filter((p) => teamB.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = teamB.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [teamB, setStats.players]);
+
   const setTeamA = setStats.teams.get(teamA.id) ?? null;
   const setTeamB = setStats.teams.get(teamB.id) ?? null;
-  const setEvents = useMemo(() => match.events.filter((e) => "setNumber" in e && e.setNumber === set.number), [match.events, set.number]);
+  const setEvents = useMemo(() => match.events.filter((e: MatchEvent) => "setNumber" in e && e.setNumber === set.number), [match.events, set.number]);
   const setRecA = useMemo(() => computeReceptionStats(setEvents, "A"), [setEvents]);
   const setRecB = useMemo(() => computeReceptionStats(setEvents, "B"), [setEvents]);
 
