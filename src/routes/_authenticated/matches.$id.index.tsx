@@ -299,8 +299,8 @@ function LiveMatch() {
     }));
   }, [match?.id]);
 
-  const teamABase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamAId), [teamsBase, matchBase]);
-  const teamBBase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamBId), [teamsBase, matchBase]);
+  const teamABase = useMemo(() => teamsBase.find((t) => t.id === match?.teamAId), [teamsBase, match?.teamAId]);
+  const teamBBase = useMemo(() => teamsBase.find((t) => t.id === match?.teamBId), [teamsBase, match?.teamBId]);
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
@@ -343,14 +343,14 @@ function LiveMatch() {
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
-    if (matchBase?.status === "finished" && !autoNavigatedRef.current) {
+    if (match?.status === "finished" && !autoNavigatedRef.current) {
       autoNavigatedRef.current = true;
-      navigate({ to: "/matches/$id/stats", params: { id: matchBase.id } });
+      navigate({ to: "/matches/$id/stats", params: { id: match.id } });
     }
-  }, [matchBase?.status, matchBase?.id, navigate]);
+  }, [match?.status, match?.id, navigate]);
 
   // Auto-rotate to landscape on portrait phones during live scoring.
-  useForceLandscape(matchBase?.status === "live");
+  useForceLandscape(match?.status === "live");
 
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
@@ -393,13 +393,13 @@ function LiveMatch() {
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
   useEffect(() => {
-    if (!coachOverride || !matchBase?.id || !coachEnabled) return;
-    const key = `rally.coachHelpShown.${matchBase.id}`;
+    if (!coachOverride || !match?.id || !coachEnabled) return;
+    const key = `rally.coachHelpShown.${match.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, "1");
     window.dispatchEvent(new CustomEvent("coach:help:open"));
-  }, [coachEnabled, coachOverride, matchBase?.id]);
+  }, [coachEnabled, coachOverride, match?.id]);
 
   const toggleCoachMode = () => {
     const next = !coachEnabled;
@@ -413,19 +413,19 @@ function LiveMatch() {
   };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
   useCoachShortcuts({
-    active: coachOverride && !isMobile && matchBase?.status === "live",
-    matchId: matchBase?.id ?? null,
+    active: coachOverride && !isMobile && match?.status === "live",
+    matchId: match?.id ?? null,
   });
 
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
   // los maneja directamente la máquina de estados en CoachRallyPanel).
   useEffect(() => {
-    if (!coachEnabled || !matchBase) return;
+    if (!coachEnabled || !match) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: CoachAction }>).detail;
       const action = detail?.action;
       if (!action) return;
-      const side = matchBase.servingSide as "A" | "B";
+      const side = match.servingSide as "A" | "B";
       switch (action) {
         case "timeout":
           handleTimeout(side);
@@ -445,7 +445,7 @@ function LiveMatch() {
     window.addEventListener("coach:action", handler as EventListener);
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coachEnabled, matchBase?.id, matchBase?.servingSide, matchBase?.status]);
+  }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
 
 
 

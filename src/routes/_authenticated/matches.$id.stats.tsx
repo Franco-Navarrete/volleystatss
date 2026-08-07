@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useAuthUser } from "@/hooks/use-auth";
@@ -7,7 +7,7 @@ import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import {
   computeMatchStats, computeSetStats, computeReceptionStats, setsWon, useVolley, getSetDuration, formatDurationMs, formatLocalTime,
   getMatchStatsMode,
-  type PlayerStat, type ReceptionStat, type Team, type MatchEvent,
+  type PlayerStat, type ReceptionStat, type Team, type MatchEvent, type Match,
 } from "@/lib/volley-store";
 
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,10 @@ function StatsPage() {
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
+  
+  const { hasAccess: coachOverride } = useCoachAccess();
+  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
+
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
@@ -101,8 +105,6 @@ function StatsPage() {
     return getMatchStatsMode(match, teamsBase, leagues);
   }, [match, teamsBase, leagues]);
   
-  const { hasAccess: coachOverride } = useCoachAccess();
-  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
   const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
@@ -163,20 +165,29 @@ function StatsPage() {
     );
   }
 
-  // attach player meta
-  const enrichPlayers = (teamId: string): PlayerStat[] => {
-    const team = teamId === teamA.id ? teamA : teamB;
+  const playersA = useMemo(() => {
+    if (!teamA || !stats) return [];
     return [...stats.players.values()]
-      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+      .filter((p) => teamA.players.some((tp) => tp.id === p.playerId))
       .map((p) => {
-        const tp = team.players.find((x) => x.id === p.playerId)!;
+        const tp = teamA.players.find((x) => x.id === p.playerId)!;
         return { ...p, name: tp.name, number: tp.number };
       })
       .sort((a, b) => b.total - a.total);
-  };
-  const playersA = teamA ? enrichPlayers(teamA.id) : [];
-  const playersB = teamB ? enrichPlayers(teamB.id) : [];
-  const teamStatA = teamA ? (stats.teams.get(teamA.id) ?? null) : null;
+  }, [teamA, stats]);
+
+  const playersB = useMemo(() => {
+    if (!teamB || !stats) return [];
+    return [...stats.players.values()]
+      .filter((p) => teamB.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = teamB.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [teamB, stats]);
+
+  const teamStatA = teamA && stats ? (stats.teams.get(teamA.id) ?? null) : null;
   const teamStatB = teamB ? (stats.teams.get(teamB.id) ?? null) : null;
   const w = setsWon(match);
 
@@ -427,48 +438,12 @@ function StatsPage() {
                 </TabsTrigger>
               );
             })}
-
           </TabsList>
-          {orderedSets.map((s) => {
-            const setStats = computeSetStats(match, s.number);
-            const setPlayersA = enrichTeamPlayers(teamA, setStats.players);
-            const setPlayersB = enrichTeamPlayers(teamB, setStats.players);
-            const setTeamA = setStats.teams.get(teamA.id) ?? null;
-            const setTeamB = setStats.teams.get(teamB.id) ?? null;
-            const setEvents: MatchEvent[] = match.events.filter((e) => "setNumber" in e && e.setNumber === s.number);
-            const setRecA = computeReceptionStats(setEvents, "A");
-            const setRecB = computeReceptionStats(setEvents, "B");
-            return (
-              <TabsContent key={s.number} value={`set-${s.number}`}>
-                <div className="grid sm:grid-cols-2 gap-4 mb-4">
-                  <TeamSummary team={teamA} stat={setTeamA} />
-                  <TeamSummary team={teamB} stat={setTeamB} />
-                </div>
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <PlayerStatsTable team={teamA} rows={setPlayersA} />
-                  <PlayerStatsTable team={teamB} rows={setPlayersB} />
-                </div>
-                {isCoach && (
-                  <div className="grid lg:grid-cols-2 gap-6 mt-6">
-                    <ReceptionTable team={teamA} recMap={setRecA} />
-                    <ReceptionTable team={teamB} recMap={setRecB} />
-                  </div>
-                )}
-                {isCoach && (
-                  <div className="mt-6">
-                    <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
-                    <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
-                  </div>
-                )}
-                {isCoach && (
-                  <div className="mt-6">
-                    <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
-                    <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
-                  </div>
-                )}
-              </TabsContent>
-            );
-          })}
+          {orderedSets.map((s) => (
+            <TabsContent key={s.number} value={`set-${s.number}`}>
+              <SetContent match={match} set={s} teamA={teamA} teamB={teamB} isCoach={isCoach} />
+            </TabsContent>
+          ))}
         </Tabs>
       </section>
 
@@ -484,7 +459,6 @@ function StatsPage() {
             <TabsContent value="ataque" className="space-y-4">
               <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
-
             <TabsContent value="saque">
               <ServeHeatmapPanel match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
@@ -796,5 +770,78 @@ function ReceptionTable({
         </table>
       </div>
     </section>
+  );
+}
+
+function SetContent({
+  match,
+  set,
+  teamA,
+  teamB,
+  isCoach,
+}: {
+  match: Match;
+  set: NonNullable<Match["sets"][number]>;
+  teamA: Team;
+  teamB: Team;
+  isCoach: boolean;
+}) {
+  const setStats = useMemo(() => computeSetStats(match, set.number), [match, set.number]);
+  
+  const setPlayersA = useMemo(() => {
+    return [...setStats.players.values()]
+      .filter((p) => teamA.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = teamA.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [teamA, setStats.players]);
+
+  const setPlayersB = useMemo(() => {
+    return [...setStats.players.values()]
+      .filter((p) => teamB.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = teamB.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [teamB, setStats.players]);
+
+  const setTeamA = setStats.teams.get(teamA.id) ?? null;
+  const setTeamB = setStats.teams.get(teamB.id) ?? null;
+  const setEvents = useMemo(() => match.events.filter((e: MatchEvent) => "setNumber" in e && e.setNumber === set.number), [match.events, set.number]);
+  const setRecA = useMemo(() => computeReceptionStats(setEvents, "A"), [setEvents]);
+  const setRecB = useMemo(() => computeReceptionStats(setEvents, "B"), [setEvents]);
+
+  return (
+    <>
+      <div className="grid sm:grid-cols-2 gap-4 mb-4">
+        <TeamSummary team={teamA} stat={setTeamA} />
+        <TeamSummary team={teamB} stat={setTeamB} />
+      </div>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <PlayerStatsTable team={teamA} rows={setPlayersA} />
+        <PlayerStatsTable team={teamB} rows={setPlayersB} />
+      </div>
+      {isCoach && (
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          <ReceptionTable team={teamA} recMap={setRecA} />
+          <ReceptionTable team={teamB} recMap={setRecB} />
+        </div>
+      )}
+      {isCoach && (
+        <div className="mt-6">
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
+          <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={set.number} />
+        </div>
+      )}
+      {isCoach && (
+        <div className="mt-6">
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
+          <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={set.number} />
+        </div>
+      )}
+    </>
   );
 }
