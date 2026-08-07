@@ -375,28 +375,47 @@ function LiveMatch() {
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
 
-  if (!match || !teamA || !teamB) {
+  const adminAll = useAllUsersAppState();
+  const allMatches = adminAll.data?.matches ?? [];
+  const allTeams = adminAll.data?.teams ?? [];
+
+  const effectiveMatch = useMemo(() => {
+    if (match) return match;
+    if (isSuperAdmin) return allMatches.find(m => m.id === id);
+    return undefined;
+  }, [match, isSuperAdmin, allMatches, id]);
+
+  const effectiveTeamA = useMemo(() => {
+    if (teamA) return teamA;
+    if (isSuperAdmin && effectiveMatch) return allTeams.find(t => t.id === effectiveMatch.teamAId);
+    return undefined;
+  }, [teamA, isSuperAdmin, effectiveMatch, allTeams]);
+
+  const effectiveTeamB = useMemo(() => {
+    if (teamB) return teamB;
+    if (isSuperAdmin && effectiveMatch) return allTeams.find(t => t.id === effectiveMatch.teamBId);
+    return undefined;
+  }, [teamB, isSuperAdmin, effectiveMatch, allTeams]);
+
+  if (!effectiveMatch || !effectiveTeamA || !effectiveTeamB) {
     const isAdminResult = useIsAdmin();
-    const isAdmin = isAdminResult.isAdmin;
     const isSuperAdmin = isAdminResult.user?.email === "franco.e.navarrete@gmail.com";
     const deleteMatch = useVolley.getState().deleteMatch;
-    const { hasAccess: isCoach } = useCoachAccess();
-
     const deleteFn = useServerFn(authorizeAndDeleteMatch);
-    const navigate = useNavigate();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
 
     const handleDeleteMatch = async () => {
       try {
-        await deleteFn({ data: { matchId } });
-        deleteMatch(matchId);
+        await deleteFn({ data: { matchId: id } });
+        deleteMatch(id);
         toast.success("Partido eliminado correctamente");
         navigate({ to: "/matches" });
       } catch (e) {
         toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
       }
     };
+
+    const isSyncing = adminAll.isLoading;
 
     return (
       <CompactShell>
@@ -406,11 +425,15 @@ function LiveMatch() {
               <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
             </div>
           </div>
-          <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
+          <p className="text-2xl font-bold mb-2">
+            {isSyncing ? "Sincronizando partido..." : "Partido no encontrado"}
+          </p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-            {!match 
-              ? `No pudimos encontrar el partido con ID "${matchId.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
-              : `No se pudieron cargar los equipos asociados ("${match?.teamAId?.slice(0, 4) ?? '??'}" vs "${match?.teamBId?.slice(0, 4) ?? '??'}").`}
+            {isSyncing 
+              ? "Buscando datos del partido en la nube para Super Admin..."
+              : !effectiveMatch 
+                ? `No pudimos encontrar el partido con ID "${id.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
+                : `No se pudieron cargar los equipos asociados ("${effectiveMatch?.teamAId?.slice(0, 4) ?? '??'}" vs "${effectiveMatch?.teamBId?.slice(0, 4) ?? '??'}").`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
