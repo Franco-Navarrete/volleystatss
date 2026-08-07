@@ -166,8 +166,8 @@ export function useCanDeleteMatches() {
       .then(({ data, error }) => {
         if (cancelled) return;
         clearTimeout(timeout);
-        if (error) console.warn("[useCanDeleteMatches] error:", error.message);
-        setAllowed((!!data && data.length > 0) || user.email === "franco.e.navarrete@gmail.com");
+        const isSuperAdmin = user.email === "franco.e.navarrete@gmail.com";
+        setAllowed((!!data && data.length > 0) || isSuperAdmin);
         setLoading(false);
       });
     return () => {

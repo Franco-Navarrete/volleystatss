@@ -429,10 +429,10 @@ function LiveMatch() {
           </p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {isSyncing 
-              ? "Buscando datos del partido en la nube para Super Admin..."
+              ? "Sincronizando partido desde la nube..."
               : match && (!teamA || !teamB)
-                ? `No se pudieron cargar los equipos asociados ("${match.teamAId?.slice(0, 4) ?? '??'}" vs "${match.teamBId?.slice(0, 4) ?? '??'}").`
-                : `No pudimos encontrar el partido con ID "${matchIdParam?.slice(0, 8) ?? '...'}"... Es posible que haya sido eliminado o que exista un error de sincronización.`}
+                ? `Error de integridad: Faltan datos de equipos (${match.teamAId?.slice(0, 4)} / ${match.teamBId?.slice(0, 4)}).`
+                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}". Si acabas de recibir el link, esperá unos segundos a que se sincronice.`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
