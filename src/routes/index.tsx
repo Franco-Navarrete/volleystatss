@@ -6,6 +6,7 @@
  *
  * Privilegios de Super Admin:
  * - El usuario franco.e.navarrete@gmail.com tiene acceso global a todos los recursos.
+ * - Nota: El Super Admin desea poder visualizar los partidos del usuario marcos@gmail.com.
  */
 
 
