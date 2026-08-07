@@ -220,9 +220,10 @@ export function resolveFormation(opts: {
   const outside2Info = getPlayerRotationInfo(onCourt, lineup.outside2 || "");
 
   const middleFrontId = middle1Info?.isFrontRow ? lineup.middle1 : (middle2Info?.isFrontRow ? lineup.middle2 : (lineup.middle1 || lineup.middle2));
-  const middleBackId = middle1Info?.isBackRow ? lineup.middle1 : (middle2Info?.isBackRow ? lineup.middle2 : (lineup.middle2 || lineup.middle1));
+  const middleBackId = middle2Info?.isBackRow ? lineup.middle2 : (middle1Info?.isBackRow ? lineup.middle1 : (lineup.middle2 || lineup.middle1));
   const outsideFrontId = outside1Info?.isFrontRow ? lineup.outside1 : (outside2Info?.isFrontRow ? lineup.outside2 : (lineup.outside1 || lineup.outside2));
-  const outsideBackId = outside1Info?.isBackRow ? lineup.outside1 : (outside2Info?.isBackRow ? lineup.outside2 : (lineup.outside2 || lineup.outside1));
+  const outsideBackId = outside2Info?.isBackRow ? lineup.outside2 : (outside1Info?.isBackRow ? lineup.outside1 : (lineup.outside2 || lineup.outside1));
+
 
   const roleToPlayer: Partial<Record<TacticalRole, string | undefined>> = {
     setter: lineup.setter,
@@ -245,7 +246,14 @@ export function resolveFormation(opts: {
 
   const slots: ResolvedSlot[] = formation.slots.map((s) => {
     const o = override[s.role];
-    const playerId = roleToPlayer[s.role] ?? null;
+    let playerId = roleToPlayer[s.role] ?? null;
+
+    // Si es fase de recepción y el rol es líbero, pero el líbero no está asignado o no está en cancha,
+    // usamos al central zaguero (middle_back) para ocupar ese slot visual.
+    if (phase === "reception" && s.role === "libero" && !playerId) {
+      playerId = roleToPlayer.middle_back ?? null;
+    }
+
     const rotationPosition = playerId ? getRotationPosition(onCourt, playerId) : null;
     const isFrontRow = rotationPosition ? isFrontRowPosition(rotationPosition) : false;
     return {
@@ -257,6 +265,7 @@ export function resolveFormation(opts: {
       isFrontRow,
       isBackRow: rotationPosition ? !isFrontRow : false,
     };
+
   });
 
   const frontRow = slots.filter((s) => s.isFrontRow);

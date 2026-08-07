@@ -2001,8 +2001,10 @@ export function needsReceptionForRally(match: Match, setNumber: number, receivin
     const ev = setEvents[i];
     if ("kind" in ev) {
       if (ev.kind === "reception" && ev.side === receivingSide) return false;
+      if (ev.kind === "attackAttempt" && ev.side === receivingSide) return false;
       continue;
     }
+
     // PointEvent → start of new rally; reception needed.
     return true;
   }
@@ -2026,7 +2028,9 @@ export function getCurrentRallyReceptionSide(match: Match, setNumber: number): "
     const ev = setEvents[i];
     if ("kind" in ev) {
       if (ev.kind === "reception") return ev.side;
+      if (ev.kind === "attackAttempt") return ev.side;
       continue;
+
     }
     // PointEvent — fin del rally anterior, no hay recepción para el actual.
     return null;
