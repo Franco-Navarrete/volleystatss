@@ -3543,8 +3543,8 @@ function FormationDialog({
   teamA: Team;
   teamB: Team;
 }) {
-  const formationA = useFormation(match, teamA, "A");
-  const formationB = useFormation(match, teamB, "B");
+  // Hooks removed as we call useFormation inline below to avoid potential issues during initial render
+
   const [editing, setEditing] = useState(false);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
