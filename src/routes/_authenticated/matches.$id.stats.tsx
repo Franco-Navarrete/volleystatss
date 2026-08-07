@@ -136,41 +136,41 @@ function StatsPage() {
   }
 
   if (showSyncing) {
+    console.log("RETURN loading stats (SuperAdmin syncing)");
+    return (
+      <AppShell>
+        <div className="text-center py-20 px-6">
+          <p className="text-2xl font-bold mb-2">Sincronizando estadísticas...</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Buscando datos globales para Super Admin...
+          </p>
+        </div>
+      </AppShell>
+    );
+  }
 
-    if (isSuperAdmin && adminAll.isLoading) {
-      console.log("RETURN loading stats (SuperAdmin syncing)");
-      return (
-        <AppShell>
-          <div className="text-center py-20 px-6">
-            <p className="text-2xl font-bold mb-2">Sincronizando estadísticas...</p>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-              Buscando datos globales para Super Admin...
-            </p>
-          </div>
-        </AppShell>
-      );
-    }
-
+  if (showNotFound) {
     console.log("RETURN no stats/match found");
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
-          <p className="text-2xl font-bold mb-2">
-            {adminAll.isLoading ? "Sincronizando estadísticas..." : "Partido no encontrado"}
-          </p>
+          <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-            {adminAll.isLoading 
-              ? "Buscando datos globales para Super Admin..."
+            {match && (!teamA || !teamB || !stats)
+              ? `Error de carga: Faltan datos necesarios para el partido ${matchIdParam?.slice(0, 8)}.`
               : `No pudimos cargar las estadísticas del partido "${matchIdParam?.slice(0, 8)}".`}
           </p>
           <Button asChild variant="outline">
             <Link to="/matches">Volver a partidos</Link>
           </Button>
+        </div>
+      </AppShell>
     );
   }
 
   // A partir de aquí garantizamos que match, teamA, teamB y stats existen para TypeScript
   if (!match || !teamA || !teamB || !stats) return null;
+
 
 
   const playersA = useMemo(() => {
