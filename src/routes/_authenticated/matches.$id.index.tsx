@@ -217,8 +217,6 @@ function LiveMatch() {
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
-
-
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
