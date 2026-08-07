@@ -430,9 +430,9 @@ function LiveMatch() {
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {isSyncing 
               ? "Buscando datos del partido en la nube para Super Admin..."
-              : !match 
-                ? `No pudimos encontrar el partido con ID "${matchIdParam.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
-                : `No se pudieron cargar los equipos asociados ("${match?.teamAId?.slice(0, 4) ?? '??'}" vs "${match?.teamBId?.slice(0, 4) ?? '??'}").`}
+              : match && (!teamA || !teamB)
+                ? `No se pudieron cargar los equipos asociados ("${match.teamAId?.slice(0, 4) ?? '??'}" vs "${match.teamBId?.slice(0, 4) ?? '??'}").`
+                : `No pudimos encontrar el partido con ID "${matchIdParam.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
@@ -498,8 +498,8 @@ function LiveMatch() {
                 <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchIdParam}</span></p>
                 {match && (
                   <>
-                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.metadata?.ownerId || "Global"}</span></p>
-                    <p className="text-[10px] text-muted-foreground">Fecha: <span className="text-foreground font-mono">{new Date(match.createdAt).toLocaleDateString()}</span></p>
+                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match?.metadata?.ownerId || "Global"}</span></p>
+                    <p className="text-[10px] text-muted-foreground">Fecha: <span className="text-foreground font-mono">{match ? new Date(match.createdAt).toLocaleDateString() : 'N/A'}</span></p>
                   </>
                 )}
               </div>
