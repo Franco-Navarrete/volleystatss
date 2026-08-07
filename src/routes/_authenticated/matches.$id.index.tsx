@@ -295,9 +295,9 @@ function LiveMatch() {
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
-    if (match?.status === "finished" && !autoNavigatedRef.current) {
+    if (matchBase?.status === "finished" && !autoNavigatedRef.current) {
       autoNavigatedRef.current = true;
-      navigate({ to: "/matches/$id/stats", params: { id: match.id } });
+      navigate({ to: "/matches/$id/stats", params: { id: matchBase.id } });
     }
   }, [matchBase?.status, matchBase?.id, navigate]);
 
@@ -340,12 +340,12 @@ function LiveMatch() {
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
   // los maneja directamente la máquina de estados en CoachRallyPanel).
   useEffect(() => {
-    if (!coachEnabled || !match) return;
+    if (!coachEnabled || !matchBase) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: CoachAction }>).detail;
       const action = detail?.action;
       if (!action) return;
-      const side = match.servingSide as "A" | "B";
+      const side = matchBase.servingSide as "A" | "B";
       switch (action) {
         case "timeout":
           handleTimeout(side);
