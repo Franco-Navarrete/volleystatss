@@ -295,9 +295,9 @@ function LiveMatch() {
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
-    if (match?.status === "finished" && !autoNavigatedRef.current) {
+    if (matchBase?.status === "finished" && !autoNavigatedRef.current) {
       autoNavigatedRef.current = true;
-      navigate({ to: "/matches/$id/stats", params: { id: match.id } });
+      navigate({ to: "/matches/$id/stats", params: { id: matchBase.id } });
     }
   }, [matchBase?.status, matchBase?.id, navigate]);
 
@@ -340,12 +340,12 @@ function LiveMatch() {
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
   // los maneja directamente la máquina de estados en CoachRallyPanel).
   useEffect(() => {
-    if (!coachEnabled || !match) return;
+    if (!coachEnabled || !matchBase) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: CoachAction }>).detail;
       const action = detail?.action;
       if (!action) return;
-      const side = match.servingSide as "A" | "B";
+      const side = matchBase.servingSide as "A" | "B";
       switch (action) {
         case "timeout":
           handleTimeout(side);
@@ -430,9 +430,9 @@ function LiveMatch() {
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {isSyncing 
               ? "Buscando datos del partido en la nube para Super Admin..."
-              : !match 
-                ? `No pudimos encontrar el partido con ID "${matchIdParam.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
-                : `No se pudieron cargar los equipos asociados ("${match?.teamAId?.slice(0, 4) ?? '??'}" vs "${match?.teamBId?.slice(0, 4) ?? '??'}").`}
+              : match && (!teamA || !teamB)
+                ? `No se pudieron cargar los equipos asociados ("${match.teamAId?.slice(0, 4) ?? '??'}" vs "${match.teamBId?.slice(0, 4) ?? '??'}").`
+                : `No pudimos encontrar el partido con ID "${matchIdParam?.slice(0, 8) ?? '...'}"... Es posible que haya sido eliminado o que exista un error de sincronización.`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
@@ -498,8 +498,8 @@ function LiveMatch() {
                 <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchIdParam}</span></p>
                 {match && (
                   <>
-                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.metadata?.ownerId || "Global"}</span></p>
-                    <p className="text-[10px] text-muted-foreground">Fecha: <span className="text-foreground font-mono">{new Date(match.createdAt).toLocaleDateString()}</span></p>
+                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match?.metadata?.ownerId || "Global"}</span></p>
+                    <p className="text-[10px] text-muted-foreground">Fecha: <span className="text-foreground font-mono">{match ? new Date(match.createdAt).toLocaleDateString() : 'N/A'}</span></p>
                   </>
                 )}
               </div>
@@ -2482,7 +2482,7 @@ function FormationSide({
         const p = pid ? team.players.find((x) => x.id === pid) : null;
         // Si la jugadora del slot no está en cancha (sustituida) seguimos mostrándola
         // pero atenuada para que el entrenador la corrija. Si no hay player skip.
-        if (!p && (!pid || (!pid.startsWith("fallback-") && !pid.startsWith("empty-") && !pid.startsWith("emergency-slot-")))) return null;
+        if (!p && (!pid || (!pid.startsWith("fallback-") && !pid.startsWith("empty-") && !pid.startsWith("emergency-") && !pid.startsWith("emergency-slot-")))) return null;
         
         const onCourtActive = p ? onCourt.includes(p.id) : false;
         const isServer = !!p && !!serverPlayerId && p.id === serverPlayerId;
@@ -3543,8 +3543,12 @@ function FormationDialog({
   teamA: Team;
   teamB: Team;
 }) {
-  const formationA = useFormation(match, teamA, "A");
-  const formationB = useFormation(match, teamB, "B");
+  const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
+  const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
+  const formationA = useFormation(match, teamA, "A", "5-1", phaseA as any);
+  const formationB = useFormation(match, teamB, "B", "5-1", phaseB as any);
+
+
   const [editing, setEditing] = useState(false);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -3580,13 +3584,7 @@ function FormationDialog({
               </div>
               <CourtFormation 
                 team={teamA} 
-                formation={useFormation(
-                  match, 
-                  teamA, 
-                  "A", 
-                  "5-1", 
-                  (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack"
-                )} 
+                formation={formationA} 
               />
 
             </div>
@@ -3603,13 +3601,7 @@ function FormationDialog({
               </div>
               <CourtFormation 
                 team={teamB} 
-                formation={useFormation(
-                  match, 
-                  teamB, 
-                  "B", 
-                  "5-1", 
-                  (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack"
-                )} 
+                formation={formationB} 
               />
 
             </div>
