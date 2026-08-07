@@ -383,7 +383,6 @@ function LiveMatch() {
     const navigate = useNavigate();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
     
     const handleDeleteMatch = async () => {
       try {
@@ -528,7 +527,6 @@ function LiveMatch() {
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teams, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride;
-  const { user } = useAuthUser();
   const { isAdmin } = useIsAdmin();
 
   // Restriction for Coach: only stats for their team or if they own the match
