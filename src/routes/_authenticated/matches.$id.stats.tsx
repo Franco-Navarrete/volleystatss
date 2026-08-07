@@ -139,7 +139,6 @@ function StatsPage() {
   }
 
   if (showNotFound) {
-    
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
