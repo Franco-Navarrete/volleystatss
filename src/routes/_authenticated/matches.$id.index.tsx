@@ -361,7 +361,7 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(match?.status === "live");
 
-  const { hasAccess: coachOverride } = useCoachAccess();
+  
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
 
