@@ -502,6 +502,7 @@ function LiveMatch() {
 
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
   // los maneja directamente la máquina de estados en CoachRallyPanel).
+  console.log("HOOK [LiveMatch] 73: useEffect(coachActionDispatcher)");
   useEffect(() => {
     if (!coachEnabled || !match) return;
     const handler = (e: Event) => {
