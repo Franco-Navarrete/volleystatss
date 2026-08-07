@@ -129,7 +129,7 @@ function StatsPage() {
   }
 
   if (showSyncing) {
-    console.log("RETURN loading stats (SuperAdmin syncing)");
+    
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
