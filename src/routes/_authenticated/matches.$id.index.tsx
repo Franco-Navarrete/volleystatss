@@ -595,7 +595,7 @@ function LiveMatch() {
   //         posición táctica de ataque (P1=armadora/opuesta, P6=punta zaguero,
   //         P5=líbero/central; opp→z2, mid→z3, out→z4).
   //   - Equipo que SACA → SIEMPRE formación de ataque.
-  const lastReceptionSide = getCurrentRallyReceptionSide(match, match.currentSet);
+  const lastReceptionSide = getCurrentRallyReceptionSide(effectiveMatch, effectiveMatch.currentSet);
   const receptionRegistered = lastReceptionSide === receivingSide;
   const receivingPhase: "reception" | "attack" = receptionRegistered ? "attack" : "reception";
   const servingSide: "A" | "B" = receivingSide === "A" ? "B" : "A";
