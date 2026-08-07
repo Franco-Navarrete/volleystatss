@@ -165,6 +165,17 @@ function StatsPage() {
     );
   }
 
+  // helper to safely enrich set players
+  const enrichTeamPlayers = (team: Team, statsPlayers: Map<string, PlayerStat>) => {
+    return [...statsPlayers.values()]
+      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = team.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  };
+
   // move enrichPlayers out of component or useMemo to be stable, but it's not a hook, so it's fine.
   // however, let's make sure it doesn't cause issues if match/stats change.
   const playersA = useMemo(() => {
@@ -440,48 +451,12 @@ function StatsPage() {
                 </TabsTrigger>
               );
             })}
-
           </TabsList>
-          {orderedSets.map((s) => {
-            const setStats = computeSetStats(match, s.number);
-            const setPlayersA = enrichTeamPlayers(teamA, setStats.players);
-            const setPlayersB = enrichTeamPlayers(teamB, setStats.players);
-            const setTeamA = setStats.teams.get(teamA.id) ?? null;
-            const setTeamB = setStats.teams.get(teamB.id) ?? null;
-            const setEvents: MatchEvent[] = match.events.filter((e) => "setNumber" in e && e.setNumber === s.number);
-            const setRecA = computeReceptionStats(setEvents, "A");
-            const setRecB = computeReceptionStats(setEvents, "B");
-            return (
-              <TabsContent key={s.number} value={`set-${s.number}`}>
-                <div className="grid sm:grid-cols-2 gap-4 mb-4">
-                  <TeamSummary team={teamA} stat={setTeamA} />
-                  <TeamSummary team={teamB} stat={setTeamB} />
-                </div>
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <PlayerStatsTable team={teamA} rows={setPlayersA} />
-                  <PlayerStatsTable team={teamB} rows={setPlayersB} />
-                </div>
-                {isCoach && (
-                  <div className="grid lg:grid-cols-2 gap-6 mt-6">
-                    <ReceptionTable team={teamA} recMap={setRecA} />
-                    <ReceptionTable team={teamB} recMap={setRecB} />
-                  </div>
-                )}
-                {isCoach && (
-                  <div className="mt-6">
-                    <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
-                    <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
-                  </div>
-                )}
-                {isCoach && (
-                  <div className="mt-6">
-                    <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
-                    <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={s.number} />
-                  </div>
-                )}
-              </TabsContent>
-            );
-          })}
+          {orderedSets.map((s) => (
+            <TabsContent key={s.number} value={`set-${s.number}`}>
+              <SetContent match={match} set={s} teamA={teamA} teamB={teamB} isCoach={isCoach} />
+            </TabsContent>
+          ))}
         </Tabs>
       </section>
 
@@ -497,7 +472,6 @@ function StatsPage() {
             <TabsContent value="ataque" className="space-y-4">
               <AttackHeatmap match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
-
             <TabsContent value="saque">
               <ServeHeatmapPanel match={match} teamA={teamA} teamB={teamB} />
             </TabsContent>
