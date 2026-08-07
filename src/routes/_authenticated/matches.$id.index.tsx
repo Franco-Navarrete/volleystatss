@@ -545,7 +545,7 @@ function LiveMatch() {
   }
 
   const w = setsWon(match);
-  const currentSet = match.sets.find((s) => s.number === match.currentSet)!;
+  const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0];
   const server = currentServer(match);
   const isLive = match.status === "live";
   const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
