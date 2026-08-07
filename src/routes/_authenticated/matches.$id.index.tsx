@@ -218,6 +218,8 @@ function LiveMatch() {
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
+  const { isAdmin } = useIsAdmin();
+  const { hasAccess: coachAccess } = useCoachAccess();
   
   // Mover hooks a nivel superior antes de cualquier return condicional
   const deleteMatch = useVolley.getState().deleteMatch;
@@ -226,6 +228,7 @@ function LiveMatch() {
 
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
+
 
   const match = useMemo(() => {
     if (matchBase) return matchBase;
@@ -451,8 +454,6 @@ function LiveMatch() {
 
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
 
-  const { isAdmin } = useIsAdmin();
-  const { hasAccess: coachAccess } = useCoachAccess();
 
   // Blindaje para Super Admin: Si no hay match/teams localmente, pero estamos sincronizando, esperamos un poco
   // antes de mostrar el error definitivo.
@@ -852,34 +853,42 @@ function LiveMatch() {
 
   const { analysisMode } = useWorkspaceStore();
 
-  if (analysisMode && !isMobile) {
+  const workspaceView = useMemo(() => {
+    if (!analysisMode || isMobile) return null;
+    return (
+      <WorkspaceLayout
+        video={
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+            Video Workspace
+          </div>
+        }
+        timeline={
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+            Timeline Workspace
+          </div>
+        }
+        left={
+          <div className="h-full w-full flex flex-col p-4">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
+          </div>
+        }
+        right={
+          <div className="h-full w-full flex flex-col p-4">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
+          </div>
+        }
+      />
+    );
+  }, [analysisMode, isMobile]);
+
+  if (workspaceView) {
     return (
       <CompactShell isReadOnly={!canScout}>
-        <WorkspaceLayout
-          video={
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
-              Video Workspace
-            </div>
-          }
-          timeline={
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
-              Timeline Workspace
-            </div>
-          }
-          left={
-            <div className="h-full w-full flex flex-col p-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
-            </div>
-          }
-          right={
-            <div className="h-full w-full flex flex-col p-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
-            </div>
-          }
-        />
+        {workspaceView}
       </CompactShell>
     );
   }
+
 
   return (
     <CompactShell isReadOnly={!canScout}>
