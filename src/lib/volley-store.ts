@@ -2001,8 +2001,10 @@ export function needsReceptionForRally(match: Match, setNumber: number, receivin
     const ev = setEvents[i];
     if ("kind" in ev) {
       if (ev.kind === "reception" && ev.side === receivingSide) return false;
+      if (ev.kind === "attackAttempt" && ev.side === receivingSide) return false;
       continue;
     }
+
     // PointEvent → start of new rally; reception needed.
     return true;
   }
