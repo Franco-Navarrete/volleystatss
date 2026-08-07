@@ -109,13 +109,6 @@ function StatsPage() {
 
   const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
   const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
-
-  const renderCount = useRef(0);
-  renderCount.current++;
-
-  console.log(`===== StatsPage Render =====\nRender Nº: ${renderCount.current}\n1. useRef(renderCount)\n2. useParams\n3. useVolley(match)\n4. useVolley(teams)\n5. useVolley(leagues)\n6. useAuthUser\n7. useAllUsersAppState\n8. useCoachAccess\n9. useIsPlanilleroOnly\n10. useMemo(allMatches)\n11. useMemo(allTeams)\n12. useMemo(match)\n13. useMemo(teamA)\n14. useMemo(teamB)\n15. useMemo(statsMode)\n16. useMemo(stats)\n17. useState(pdfStatus)\n==========================`);
-
-
   const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
@@ -133,7 +126,6 @@ function StatsPage() {
   }
 
   if (showSyncing) {
-    console.log("RETURN loading stats (SuperAdmin syncing)");
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
@@ -147,7 +139,6 @@ function StatsPage() {
   }
 
   if (showNotFound) {
-    console.log("RETURN no stats/match found");
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
