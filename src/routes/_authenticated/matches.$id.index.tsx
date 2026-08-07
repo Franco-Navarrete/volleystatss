@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"; 
 import { useServerFn } from "@tanstack/react-start";
 import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 
 import {
@@ -122,7 +122,11 @@ import {
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
-  component: LiveMatch,
+  component: () => (
+    <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
+      <LiveMatch />
+    </Suspense>
+  ),
 });
 
 
@@ -411,7 +415,27 @@ function LiveMatch() {
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
 
+  // Blindaje para Super Admin: Si no hay match/teams localmente, pero estamos sincronizando, esperamos un poco
+  // antes de mostrar el error definitivo.
   if (!match || !teamA || !teamB) {
+    if (isSuperAdmin && adminAll.isLoading) {
+      return (
+        <CompactShell>
+          <div className="text-center py-20 px-6">
+            <div className="mb-6 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Volleyball className="w-8 h-8 text-primary animate-bounce" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold mb-2">Sincronizando...</p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              Buscando datos globales para Super Admin...
+            </p>
+          </div>
+        </CompactShell>
+      );
+    }
+
     const deleteMatch = useVolley.getState().deleteMatch;
     const deleteFn = useServerFn(authorizeAndDeleteMatch);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
