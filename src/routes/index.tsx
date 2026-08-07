@@ -1,26 +1,11 @@
 /**
- * Implementar vista "Cancha" en el modo EN VIVO (similar a Data Volley)
- *
- * Objetivo:
- * Mientras se desarrolla el partido, la pestaña Cancha debe mostrar en tiempo real la distribución de ambos equipos sobre la cancha.
- *
- * Implementar formaciones de recepción con reacomodo automático (Sistema 5-1)
- *
- * La cancha debe representar dos momentos distintos del juego:
- *
- * Estado 1 - Recepción
- * Cuando el rival está por sacar, el equipo debe mostrarse exactamente como se ubica para recibir el saque.
- * Esta formación depende de la rotación actual (1 a 6) y el sistema táctico (5-1).
- *
- * Estado 2 - Formación táctica
- * Cuando el equipo recibe correctamente el saque (o cuando comienza el rally), los jugadores se desplazan
- * automáticamente hacia su posición táctica (animación 200–500 ms).
+ * RALLY · El ecosistema digital del voleibol
  *
  * Gestión Multi-tenant:
  * - Federación -> Liga -> Club -> Entrenador.
  *
- * Super Admin:
- * - franco.e.navarrete@gmail.com tiene acceso total a todos los partidos y estadísticas.
+ * Privilegios de Super Admin:
+ * - El usuario franco.e.navarrete@gmail.com tiene acceso global a todos los recursos.
  */
 
 
