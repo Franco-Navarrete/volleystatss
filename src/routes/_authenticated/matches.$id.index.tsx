@@ -344,10 +344,19 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(matchBase?.status === "live");
 
-  // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
+
+  // Logs para diagnóstico solicitado por el usuario
+  console.log("LiveMatch render", {
+    loading: adminAll.isLoading,
+    match: !!match,
+    teamA: !!teamA,
+    teamB: !!teamB,
+    user: user?.email,
+    isSuperAdmin
+  });
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
@@ -440,6 +449,7 @@ function LiveMatch() {
   // antes de mostrar el error definitivo.
   if (!match || !teamA || !teamB) {
     if (isSuperAdmin && adminAll.isLoading) {
+      console.log("RETURN loading (SuperAdmin syncing)");
       return (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
           <div className="mb-6">
@@ -468,6 +478,7 @@ function LiveMatch() {
 
     const isSyncing = adminAll.isLoading;
 
+    console.log("RETURN no match/teams found");
     return (
       <CompactShell>
         <div className="text-center py-20 px-6">
