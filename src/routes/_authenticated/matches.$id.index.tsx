@@ -222,7 +222,9 @@ function LiveMatch() {
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
   const { isAdmin } = useIsAdmin();
-  const { hasAccess: coachAccess } = useCoachAccess();
+  const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
+  const coachOverride = coachAccess;
+
   
   // Mover hooks a nivel superior antes de cualquier return condicional
   const deleteMatch = useVolley.getState().deleteMatch;
