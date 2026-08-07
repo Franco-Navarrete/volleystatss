@@ -39,6 +39,17 @@ const mvpScore = (p: PlayerStat) =>
 
 export const Route = createFileRoute("/_authenticated/matches/$id/stats")({
   head: () => ({ meta: [{ title: "Estadísticas · RALLY" }] }),
+  errorComponent: ({ error }) => (
+    <AppShell>
+      <div className="text-center py-20 px-6">
+        <h1 className="text-xl font-bold mb-2">Error en estadísticas</h1>
+        <p className="text-muted-foreground text-sm max-w-xs mx-auto mb-6">
+          {error instanceof Error ? error.message : "No se pudieron calcular las estadísticas."}
+        </p>
+        <Button onClick={() => window.location.reload()}>Recargar</Button>
+      </div>
+    </AppShell>
+  ),
   component: StatsPage,
 });
 
