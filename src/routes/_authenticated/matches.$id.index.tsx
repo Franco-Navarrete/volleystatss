@@ -383,7 +383,6 @@ function LiveMatch() {
     const navigate = useNavigate();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    
     const handleDeleteMatch = async () => {
       try {
         await deleteFn({ data: { matchId } });
@@ -407,7 +406,7 @@ function LiveMatch() {
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {!match 
               ? `No pudimos encontrar el partido con ID "${matchId.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
-              : `No se pudieron cargar los equipos asociados ("${match.teamAId.slice(0, 4)}" vs "${match.teamBId.slice(0, 4)}").`}
+              : `No se pudieron cargar los equipos asociados ("${match?.teamAId?.slice(0, 4) ?? '??'}" vs "${match?.teamBId?.slice(0, 4) ?? '??'}").`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
