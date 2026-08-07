@@ -126,7 +126,6 @@ function StatsPage() {
   }
 
   if (showSyncing) {
-    
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
