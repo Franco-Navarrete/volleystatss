@@ -348,6 +348,31 @@ function LiveMatch() {
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
 
+  const coachEnabled = useCoachMode((s) => s.enabled);
+  const setCoachEnabled = useCoachMode((s) => s.setEnabled);
+
+  const teamA = useMemo(() => {
+    const targetId = match?.teamAId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === targetId);
+    }
+    return undefined;
+  }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
+
+  const teamB = useMemo(() => {
+    const targetId = match?.teamBId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === targetId);
+    }
+    return undefined;
+  }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
+
   // Logs para diagnóstico solicitado por el usuario
   console.log("LiveMatch render", {
     loading: adminAll.isLoading,
@@ -357,8 +382,6 @@ function LiveMatch() {
     user: user?.email,
     isSuperAdmin
   });
-  const coachEnabled = useCoachMode((s) => s.enabled);
-  const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
   useEffect(() => {
@@ -419,28 +442,6 @@ function LiveMatch() {
 
 
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
-
-  const teamA = useMemo(() => {
-    const targetId = match?.teamAId;
-    if (!targetId) return undefined;
-    const local = teamsBase.find((t) => t.id === targetId);
-    if (local) return local;
-    if (isSuperAdmin && allTeams.length > 0) {
-      return allTeams.find((t: Team) => t.id === targetId);
-    }
-    return undefined;
-  }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
-
-  const teamB = useMemo(() => {
-    const targetId = match?.teamBId;
-    if (!targetId) return undefined;
-    const local = teamsBase.find((t) => t.id === targetId);
-    if (local) return local;
-    if (isSuperAdmin && allTeams.length > 0) {
-      return allTeams.find((t: Team) => t.id === targetId);
-    }
-    return undefined;
-  }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
 
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
