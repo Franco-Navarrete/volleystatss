@@ -224,8 +224,6 @@ function LiveMatch() {
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
   const coachOverride = coachAccess;
 
-
-  
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const deleteMatch = useVolley.getState().deleteMatch;
