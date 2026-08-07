@@ -379,21 +379,32 @@ function LiveMatch() {
 
   const match = useMemo(() => {
     if (matchBase) return matchBase;
-    if (isSuperAdmin && allMatches.length > 0) return allMatches.find((m: Match) => m.id === matchIdParam);
+    if (isSuperAdmin && allMatches.length > 0) {
+      const found = allMatches.find((m: Match) => m.id === matchIdParam);
+      if (found) return found;
+    }
     return undefined;
   }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
-    if (teamABase) return teamABase;
-    if (isSuperAdmin && match && allTeams.length > 0) return allTeams.find((t: Team) => t.id === match.teamAId);
+    if (!match) return undefined;
+    const local = teamsBase.find((t) => t.id === match.teamAId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === match.teamAId);
+    }
     return undefined;
-  }, [teamABase, isSuperAdmin, match, allTeams]);
+  }, [teamsBase, isSuperAdmin, match, allTeams]);
 
   const teamB = useMemo(() => {
-    if (teamBBase) return teamBBase;
-    if (isSuperAdmin && match && allTeams.length > 0) return allTeams.find((t: Team) => t.id === match.teamBId);
+    if (!match) return undefined;
+    const local = teamsBase.find((t) => t.id === match.teamBId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === match.teamBId);
+    }
     return undefined;
-  }, [teamBBase, isSuperAdmin, match, allTeams]);
+  }, [teamsBase, isSuperAdmin, match, allTeams]);
 
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
