@@ -610,8 +610,11 @@ function LiveMatch() {
           </div>
         </div>
       </CompactShell>
-    );
   }
+
+  // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
+  if (!match || !teamA || !teamB) return null;
+
 
   const w = setsWon(match);
   const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
