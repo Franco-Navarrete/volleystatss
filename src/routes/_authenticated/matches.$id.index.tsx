@@ -3601,13 +3601,7 @@ function FormationDialog({
               </div>
               <CourtFormation 
                 team={teamB} 
-                formation={useFormation(
-                  match, 
-                  teamB, 
-                  "B", 
-                  "5-1", 
-                  (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack"
-                )} 
+                formation={formationB} 
               />
 
             </div>
