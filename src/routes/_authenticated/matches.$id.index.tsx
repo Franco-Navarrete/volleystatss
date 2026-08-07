@@ -3543,7 +3543,11 @@ function FormationDialog({
   teamA: Team;
   teamB: Team;
 }) {
-  // Hooks removed as we call useFormation inline below to avoid potential issues during initial render
+  const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
+  const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
+  const formationA = useFormation(match, teamA, "A", "5-1", phaseA as any);
+  const formationB = useFormation(match, teamB, "B", "5-1", phaseB as any);
+
 
   const [editing, setEditing] = useState(false);
   return (
