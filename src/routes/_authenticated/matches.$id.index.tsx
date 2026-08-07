@@ -299,8 +299,8 @@ function LiveMatch() {
     }));
   }, [match?.id]);
 
-  const teamABase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamAId), [teamsBase, matchBase]);
-  const teamBBase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamBId), [teamsBase, matchBase]);
+  const teamABase = useMemo(() => teamsBase.find((t) => t.id === match?.teamAId), [teamsBase, match?.teamAId]);
+  const teamBBase = useMemo(() => teamsBase.find((t) => t.id === match?.teamBId), [teamsBase, match?.teamBId]);
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
