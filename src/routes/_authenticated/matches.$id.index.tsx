@@ -184,9 +184,9 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 }
 
 function LiveMatch() {
-  const { id } = Route.useParams();
-  const match = useVolley((s) => s.matches.find((m) => m.id === id));
-  const teams = useVolley((s) => s.teams);
+  const { id: matchIdParam } = Route.useParams();
+  const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
+  const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
@@ -251,8 +251,8 @@ function LiveMatch() {
     }));
   }, [match?.id]);
 
-  const teamA = useMemo(() => teams.find((t) => t.id === match?.teamAId), [teams, match]);
-  const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);
+  const teamABase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamAId), [teamsBase, matchBase]);
+  const teamBBase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamBId), [teamsBase, matchBase]);
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
@@ -369,9 +369,6 @@ function LiveMatch() {
 
 
 
-
-  const { id } = Route.useParams();
-
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
@@ -381,22 +378,22 @@ function LiveMatch() {
   const allTeams = adminAll.data?.teams ?? [];
 
   const match = useMemo(() => {
-    if (match) return match;
-    if (isSuperAdmin) return allMatches.find((m: Match) => m.id === id);
+    if (matchBase) return matchBase;
+    if (isSuperAdmin) return allMatches.find((m: Match) => m.id === matchIdParam);
     return undefined;
-  }, [match, isSuperAdmin, allMatches, id]);
+  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
-    if (teamA) return teamA;
+    if (teamABase) return teamABase;
     if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamAId);
     return undefined;
-  }, [teamA, isSuperAdmin, match, allTeams]);
+  }, [teamABase, isSuperAdmin, match, allTeams]);
 
   const teamB = useMemo(() => {
-    if (teamB) return teamB;
+    if (teamBBase) return teamBBase;
     if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamBId);
     return undefined;
-  }, [teamB, isSuperAdmin, match, allTeams]);
+  }, [teamBBase, isSuperAdmin, match, allTeams]);
 
   const { isAdmin } = useIsAdmin();
   const { hasAccess: isCoach } = useCoachAccess();
@@ -408,8 +405,8 @@ function LiveMatch() {
 
     const handleDeleteMatch = async () => {
       try {
-        await deleteFn({ data: { matchId: id } });
-        deleteMatch(id);
+        await deleteFn({ data: { matchId: matchIdParam } });
+        deleteMatch(matchIdParam);
         toast.success("Partido eliminado correctamente");
         navigate({ to: "/matches" });
       } catch (e) {
@@ -498,7 +495,7 @@ function LiveMatch() {
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
-                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{id}</span></p>
+                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchIdParam}</span></p>
                 {match && (
                   <>
                     <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.metadata?.ownerId || "Global"}</span></p>
@@ -553,7 +550,7 @@ function LiveMatch() {
   const setStartedAt = match.setStartTimes?.[match.currentSet];
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const statsMode = getMatchStatsMode(match, teams, leagues);
+  const statsMode = getMatchStatsMode(match, teamsBase, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride;
 
   // Restriction for Coach: only stats for their team or if they own the match
