@@ -106,6 +106,19 @@ function StatsPage() {
   const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
 
   if (!match || !teamA || !teamB || !stats) {
+    if (isSuperAdmin && adminAll.isLoading) {
+      return (
+        <AppShell>
+          <div className="text-center py-20 px-6">
+            <p className="text-2xl font-bold mb-2">Sincronizando estadísticas...</p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              Buscando datos globales para Super Admin...
+            </p>
+          </div>
+        </AppShell>
+      );
+    }
+
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
