@@ -241,6 +241,7 @@ export function resolveFormation(opts: {
     libero: lineup.libero,
   };
 
+
   // Lógica para líbero: si no hay líbero asignado en el lineup, middle_back permanece middle_back.
   // El slot 'libero' en la formación se usa para dibujar al líbero o al central zaguero si no hay líbero.
   if (liberoOnCourt && lineup.libero) {
