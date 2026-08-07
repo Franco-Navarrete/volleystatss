@@ -413,19 +413,19 @@ function LiveMatch() {
   };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
   useCoachShortcuts({
-    active: coachOverride && !isMobile && matchBase?.status === "live",
-    matchId: matchBase?.id ?? null,
+    active: coachOverride && !isMobile && match?.status === "live",
+    matchId: match?.id ?? null,
   });
 
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
   // los maneja directamente la máquina de estados en CoachRallyPanel).
   useEffect(() => {
-    if (!coachEnabled || !matchBase) return;
+    if (!coachEnabled || !match) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: CoachAction }>).detail;
       const action = detail?.action;
       if (!action) return;
-      const side = matchBase.servingSide as "A" | "B";
+      const side = match.servingSide as "A" | "B";
       switch (action) {
         case "timeout":
           handleTimeout(side);
@@ -445,7 +445,7 @@ function LiveMatch() {
     window.addEventListener("coach:action", handler as EventListener);
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coachEnabled, matchBase?.id, matchBase?.servingSide, matchBase?.status]);
+  }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
 
 
 
