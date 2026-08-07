@@ -105,6 +105,18 @@ function StatsPage() {
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
+  const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
+  const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
+
+  console.log("StatsPage render", {
+    loading: adminAll.isLoading,
+    match: !!match,
+    teamA: !!teamA,
+    teamB: !!teamB,
+    stats: !!stats,
+    isSuperAdmin
+  });
+
   if (!checkingPlanillero && isPlanilleroOnly && !isSuperAdmin) {
     return (
       <AppShell>
@@ -116,10 +128,9 @@ function StatsPage() {
     );
   }
 
-  const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
-
   if (!match || !teamA || !teamB || !stats) {
     if (isSuperAdmin && adminAll.isLoading) {
+      console.log("RETURN loading stats (SuperAdmin syncing)");
       return (
         <AppShell>
           <div className="text-center py-20 px-6">
@@ -132,6 +143,7 @@ function StatsPage() {
       );
     }
 
+    console.log("RETURN no stats/match found");
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
@@ -192,7 +204,6 @@ function StatsPage() {
     | { kind: "awaiting"; method: "share" | "download" | "opened"; fileName: string; sizeKb: number; url?: string }
     | { kind: "confirmed"; method: "share" | "download" | "opened"; fileName: string }
     | { kind: "failed"; reason: string };
-  const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
   const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const isIOS = /iPad|iPhone|iPod/.test(userAgent) || (/Mac/.test(userAgent) && "ontouchend" in (globalThis as object));
 

@@ -122,20 +122,28 @@ import {
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
-  errorComponent: ({ error, reset }) => (
-    <div className="h-screen w-screen flex flex-col items-center justify-center bg-background px-6 text-center">
-      <h1 className="text-xl font-bold mb-2">Error al cargar el partido</h1>
-      <p className="text-muted-foreground text-sm max-w-xs mb-6">
-        {error instanceof Error ? error.message : "Algo salió mal al sincronizar los datos."}
-      </p>
-      <div className="flex gap-3">
-        <Button onClick={() => window.location.reload()}>Recargar página</Button>
-        <Button variant="outline" asChild>
-          <Link to="/matches">Volver a partidos</Link>
-        </Button>
+  errorComponent: ({ error, reset }) => {
+    console.error("Route ErrorBoundary caught error:", error);
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background px-6 text-center">
+        <h1 className="text-xl font-bold mb-2">Error al cargar el partido</h1>
+        <p className="text-muted-foreground text-sm max-w-xs mb-6 text-balance">
+          {error instanceof Error ? error.message : "Algo salió mal al sincronizar los datos."}
+        </p>
+        <div className="flex gap-3">
+          <Button onClick={() => window.location.reload()}>Recargar página</Button>
+          <Button variant="outline" asChild>
+            <Link to="/matches">Volver a partidos</Link>
+          </Button>
+        </div>
+        {error instanceof Error && error.stack && (
+          <pre className="mt-8 p-4 bg-muted rounded-lg text-[10px] text-left max-w-full overflow-auto max-h-40 opacity-50">
+            {error.stack}
+          </pre>
+        )}
       </div>
-    </div>
-  ),
+    );
+  },
   component: () => (
     <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch />
@@ -207,11 +215,15 @@ function LiveMatch() {
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
 
-  // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
-
   const adminAll = useAllUsersAppState();
+  
+  // Mover hooks a nivel superior antes de cualquier return condicional
+  const deleteMatch = useVolley.getState().deleteMatch;
+  const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
@@ -340,12 +352,44 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(matchBase?.status === "live");
 
-  // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
+
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
+
+  const teamA = useMemo(() => {
+    const targetId = match?.teamAId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === targetId);
+    }
+    return undefined;
+  }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
+
+  const teamB = useMemo(() => {
+    const targetId = match?.teamBId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === targetId);
+    }
+    return undefined;
+  }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
+
+  // Logs para diagnóstico solicitado por el usuario
+  console.log("LiveMatch render", {
+    loading: adminAll.isLoading,
+    match: !!match,
+    teamA: !!teamA,
+    teamB: !!teamB,
+    user: user?.email,
+    isSuperAdmin
+  });
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
   useEffect(() => {
@@ -407,28 +451,6 @@ function LiveMatch() {
 
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
 
-  const teamA = useMemo(() => {
-    const targetId = match?.teamAId;
-    if (!targetId) return undefined;
-    const local = teamsBase.find((t) => t.id === targetId);
-    if (local) return local;
-    if (isSuperAdmin && allTeams.length > 0) {
-      return allTeams.find((t: Team) => t.id === targetId);
-    }
-    return undefined;
-  }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
-
-  const teamB = useMemo(() => {
-    const targetId = match?.teamBId;
-    if (!targetId) return undefined;
-    const local = teamsBase.find((t) => t.id === targetId);
-    if (local) return local;
-    if (isSuperAdmin && allTeams.length > 0) {
-      return allTeams.find((t: Team) => t.id === targetId);
-    }
-    return undefined;
-  }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
-
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
 
@@ -436,6 +458,7 @@ function LiveMatch() {
   // antes de mostrar el error definitivo.
   if (!match || !teamA || !teamB) {
     if (isSuperAdmin && adminAll.isLoading) {
+      console.log("RETURN loading (SuperAdmin syncing)");
       return (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
           <div className="mb-6">
@@ -451,10 +474,6 @@ function LiveMatch() {
       );
     }
 
-    const deleteMatch = useVolley.getState().deleteMatch;
-    const deleteFn = useServerFn(authorizeAndDeleteMatch);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
     const handleDeleteMatch = async () => {
       try {
         await deleteFn({ data: { matchId: matchIdParam } });
@@ -468,6 +487,7 @@ function LiveMatch() {
 
     const isSyncing = adminAll.isLoading;
 
+    console.log("RETURN no match/teams found");
     return (
       <CompactShell>
         <div className="text-center py-20 px-6">
