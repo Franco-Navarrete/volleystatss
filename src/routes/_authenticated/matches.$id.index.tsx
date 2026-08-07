@@ -724,20 +724,16 @@ function LiveMatch() {
 
 
   const w = setsWon(match);
-  const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
   const server = currentServer(match);
-  const isLive = match.status === "live";
   const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
   const toUsedB = timeoutsUsedInSet(match, "B", match.currentSet);
   const leftSide: "A" | "B" = match.sidesFlipped ? "B" : "A";
   const rightSide: "A" | "B" = match.sidesFlipped ? "A" : "B";
   const leftTeam = leftSide === "A" ? teamA : teamB;
   const rightTeam = rightSide === "A" ? teamA : teamB;
-  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
   const lineupConfirmed = (match.confirmedLineupSets ?? []).includes(match.currentSet);
   // The set can't start until the formation for this set is confirmed.
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
-  const setStartedAt = match.setStartTimes?.[match.currentSet];
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teamsBase, leagues);
