@@ -35,12 +35,18 @@ export function inferLineupFromPlayers(
   onCourt: string[],
   designatedLiberoIds: string[] = [],
 ): TeamLineup {
-  const inCourt = onCourt.map((id) => players.find((p) => p.id === id)).filter(Boolean) as Player[];
+  const inCourt = onCourt
+    .map((id) => players.find((p) => p.id === id))
+    .filter(Boolean) as Player[];
   const designated = new Set(designatedLiberoIds);
   const libero =
     inCourt.find((p) => designated.has(p.id)) ??
     (designated.size === 0 ? inCourt.find((p) => p.position === "libero") : undefined);
-  const tacticalPlayers = libero ? inCourt.filter((p) => p.id !== libero.id) : inCourt;
+  
+  // tacticalPlayers son los 6 en cancha. 
+  // No filtramos al líbero porque el motor 5-1 necesita 6 slots físicos.
+  const tacticalPlayers = inCourt;
+
 
   const setter = tacticalPlayers.find((p) => p.position === "armador");
   const opposite = tacticalPlayers.find((p) => p.position === "opuesto");
