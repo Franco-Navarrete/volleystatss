@@ -610,7 +610,9 @@ function LiveMatch() {
           </div>
         </div>
       </CompactShell>
+    );
   }
+
 
   // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
   if (!match || !teamA || !teamB) return null;
