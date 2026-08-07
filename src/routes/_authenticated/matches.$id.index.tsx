@@ -3538,12 +3538,44 @@ function FormationDialog({
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <div className="text-sm font-bold text-foreground">{teamA.name}</div>
-              <CourtFormation team={teamA} formation={formationA} />
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-bold text-foreground">{teamA.name}</div>
+                {match.status === "live" && (
+                  <div className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">
+                    {needsReceptionForRally(match) ? "Fase: Recepción" : "Fase: K2/Ataque"}
+                  </div>
+                )}
+              </div>
+              <CourtFormation 
+                team={teamA} 
+                formation={useFormation(
+                  match, 
+                  teamA, 
+                  "A", 
+                  "5-1", 
+                  needsReceptionForRally(match) && match.servingSide === "B" ? "reception" : "attack"
+                )} 
+              />
             </div>
             <div className="space-y-2">
-              <div className="text-sm font-bold text-foreground">{teamB.name}</div>
-              <CourtFormation team={teamB} formation={formationB} />
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-bold text-foreground">{teamB.name}</div>
+                {match.status === "live" && (
+                  <div className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">
+                    {needsReceptionForRally(match) ? "Fase: Recepción" : "Fase: K2/Ataque"}
+                  </div>
+                )}
+              </div>
+              <CourtFormation 
+                team={teamB} 
+                formation={useFormation(
+                  match, 
+                  teamB, 
+                  "B", 
+                  "5-1", 
+                  needsReceptionForRally(match) && match.servingSide === "A" ? "reception" : "attack"
+                )} 
+              />
             </div>
           </div>
         )}

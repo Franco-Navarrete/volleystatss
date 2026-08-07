@@ -105,11 +105,11 @@ export function CourtFormation({ team, formation, compact, showSetterTarget = tr
           return (
             <div
               key={slot.role}
-              className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
+              className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-all duration-500 ease-in-out"
               style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
             >
               <div
-                className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg border-2 ${slot.role === "setter" ? "border-white ring-2 ring-amber-500/50" : "border-white"}`}
+                className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg border-2 transition-transform duration-300 ${slot.role === "setter" ? "border-white ring-2 ring-amber-500/50" : "border-white"} ${player ? "scale-100" : "scale-75 opacity-50"}`}
                 style={{ background: color }}
               >
                 {player ? `#${player.number}` : "?"}
