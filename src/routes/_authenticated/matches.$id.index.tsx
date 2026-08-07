@@ -212,31 +212,31 @@ function LiveMatch() {
   const finishMatch = useVolley((s) => s.finishMatch);
   const updatePlayer = useVolley((s) => s.updatePlayer);
   const setLiberoA1 = useCallback((lid: string | null) => {
-    if (!matchBase) return;
+    if (!matchBase?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA1Id: lid} : m)
     }));
   }, [matchBase?.id]);
   const setLiberoA2 = useCallback((lid: string | null) => {
-    if (!matchBase) return;
+    if (!matchBase?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA2Id: lid} : m)
     }));
   }, [matchBase?.id]);
   const setLiberoB1 = useCallback((lid: string | null) => {
-    if (!matchBase) return;
+    if (!matchBase?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB1Id: lid} : m)
     }));
   }, [matchBase?.id]);
   const setLiberoB2 = useCallback((lid: string | null) => {
-    if (!matchBase) return;
+    if (!matchBase?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB2Id: lid} : m)
     }));
   }, [matchBase?.id]);
   const setOpponentSetter = useCallback((playerId: string | null) => {
-    if (!matchBase) return;
+    if (!matchBase?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map((m) => {
         if (m.id !== matchBase.id) return m;
@@ -379,21 +379,32 @@ function LiveMatch() {
 
   const match = useMemo(() => {
     if (matchBase) return matchBase;
-    if (isSuperAdmin && allMatches.length > 0) return allMatches.find((m: Match) => m.id === matchIdParam);
+    if (isSuperAdmin && allMatches.length > 0) {
+      const found = allMatches.find((m: Match) => m.id === matchIdParam);
+      if (found) return found;
+    }
     return undefined;
   }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
-    if (teamABase) return teamABase;
-    if (isSuperAdmin && match && allTeams.length > 0) return allTeams.find((t: Team) => t.id === match.teamAId);
+    if (!match) return undefined;
+    const local = teamsBase.find((t) => t.id === match.teamAId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === match.teamAId);
+    }
     return undefined;
-  }, [teamABase, isSuperAdmin, match, allTeams]);
+  }, [teamsBase, isSuperAdmin, match, allTeams]);
 
   const teamB = useMemo(() => {
-    if (teamBBase) return teamBBase;
-    if (isSuperAdmin && match && allTeams.length > 0) return allTeams.find((t: Team) => t.id === match.teamBId);
+    if (!match) return undefined;
+    const local = teamsBase.find((t) => t.id === match.teamBId);
+    if (local) return local;
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: Team) => t.id === match.teamBId);
+    }
     return undefined;
-  }, [teamBBase, isSuperAdmin, match, allTeams]);
+  }, [teamsBase, isSuperAdmin, match, allTeams]);
 
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
@@ -425,14 +436,14 @@ function LiveMatch() {
             </div>
           </div>
           <p className="text-2xl font-bold mb-2">
-            {isSyncing ? "Sincronizando partido..." : "Partido no encontrado"}
+            {isSyncing ? "Sincronizando..." : "Partido no encontrado"}
           </p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {isSyncing 
-              ? "Sincronizando partido desde la nube..."
+              ? "Buscando datos globales para Super Admin..."
               : match && (!teamA || !teamB)
-                ? `Error de integridad: Faltan datos de equipos (${match.teamAId?.slice(0, 4)} / ${match.teamBId?.slice(0, 4)}).`
-                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}". Si acabas de recibir el link, esperá unos segundos a que se sincronice.`}
+                ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
+                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
@@ -534,7 +545,7 @@ function LiveMatch() {
   }
 
   const w = setsWon(match);
-  const currentSet = match.sets.find((s) => s.number === match.currentSet)!;
+  const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
   const server = currentServer(match);
   const isLive = match.status === "live";
   const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
@@ -551,7 +562,7 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teamsBase, leagues);
-  const isCoach = statsMode === "entrenador" || coachOverride;
+  const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
   // Restriction for Coach: only stats for their team or if they own the match
   const isMyMatch = useMemo(() => {

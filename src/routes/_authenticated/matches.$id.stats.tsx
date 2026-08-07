@@ -83,7 +83,11 @@ function StatsPage() {
     return undefined;
   }, [match?.teamBId, teamsBase, isSuperAdmin, adminAll.data?.teams]);
 
-  const statsMode = useMemo(() => getMatchStatsMode(match, teamsBase, leagues), [match, teamsBase, leagues]);
+  const statsMode = useMemo(() => {
+    if (!match) return "liga";
+    return getMatchStatsMode(match, teamsBase, leagues);
+  }, [match, teamsBase, leagues]);
+  
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
@@ -132,10 +136,10 @@ function StatsPage() {
       })
       .sort((a, b) => b.total - a.total);
   };
-  const playersA = enrichPlayers(teamA.id);
-  const playersB = enrichPlayers(teamB.id);
-  const teamStatA = stats.teams.get(teamA.id) ?? null;
-  const teamStatB = stats.teams.get(teamB.id) ?? null;
+  const playersA = teamA ? enrichPlayers(teamA.id) : [];
+  const playersB = teamB ? enrichPlayers(teamB.id) : [];
+  const teamStatA = teamA ? (stats.teams.get(teamA.id) ?? null) : null;
+  const teamStatB = teamB ? (stats.teams.get(teamB.id) ?? null) : null;
   const w = setsWon(match);
 
   const currentSetNumber = match.currentSet;
