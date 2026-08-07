@@ -369,7 +369,6 @@ function LiveMatch() {
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
-
   const teamA = useMemo(() => {
     const targetId = match?.teamAId;
     if (!targetId) return undefined;
