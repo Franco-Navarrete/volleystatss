@@ -356,14 +356,18 @@ function LiveMatch() {
   console.log("HOOK [LiveMatch] 43: useMemo(teamBBase)");
   const teamBBase = useMemo(() => teamsBase.find((t) => t.id === match?.teamBId), [teamsBase, match?.teamBId]);
 
+  console.log("HOOK [LiveMatch] 44: useState(pendingPlayer)");
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
+  console.log("HOOK [LiveMatch] 45: useState(pendingReception)");
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
+  console.log("HOOK [LiveMatch] 46: useState(pendingAttackType)");
   const [pendingAttackType, setPendingAttackType] = useState<{
     side: "A" | "B";
     playerId: string;
     type: PointType;
     zone: AttackZone;
   } | null>(null);
+  console.log("HOOK [LiveMatch] 47: useState(pendingAttackResult)");
   const [pendingAttackResult, setPendingAttackResult] = useState<{
     side: "A" | "B";
     playerId: string;
@@ -371,6 +375,7 @@ function LiveMatch() {
     zone: AttackZone;
     attackType: import("@/lib/formations/attack-types").AttackType | null;
   } | null>(null);
+  console.log("HOOK [LiveMatch] 48: useState(pendingAttackDirection)");
   const [pendingAttackDirection, setPendingAttackDirection] = useState<{
     side: "A" | "B";
     playerId: string;
@@ -382,20 +387,35 @@ function LiveMatch() {
     kind: "point" | "continue";
     isCounter: boolean;
   } | null>(null);
+  console.log("HOOK [LiveMatch] 49: useState(subState)");
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
+  console.log("HOOK [LiveMatch] 50: useState(liberoState)");
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
+  console.log("HOOK [LiveMatch] 51: useState(showLineupEditor)");
   const [showLineupEditor, setShowLineupEditor] = useState(false);
+  console.log("HOOK [LiveMatch] 52: useState(timeoutSide)");
   const [timeoutSide, setTimeoutSide] = useState<"A" | "B" | null>(null);
+  console.log("HOOK [LiveMatch] 53: useState(sanctionSide)");
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
+  console.log("HOOK [LiveMatch] 54: useState(showLiveStats)");
   const [showLiveStats, setShowLiveStats] = useState(false);
+  console.log("HOOK [LiveMatch] 55: useState(showSettingDialog)");
   const [showSettingDialog, setShowSettingDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 56: useState(integratedRally)");
   const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string; defenderId?: string } | null>(null);
+  console.log("HOOK [LiveMatch] 57: useState(showFormatDialog)");
   const [showFormatDialog, setShowFormatDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 58: useState(showScoreDialog)");
   const [showScoreDialog, setShowScoreDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 59: useState(showFormationDialog)");
   const [showFormationDialog, setShowFormationDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 60: useState(showRotateDialog)");
   const [showRotateDialog, setShowRotateDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 61: useNavigate()");
   const navigate = useNavigate();
+  console.log("HOOK [LiveMatch] 62: useRef(autoNavigatedRef)");
   const autoNavigatedRef = useRef(false);
+  console.log("HOOK [LiveMatch] 63: useEffect(autoNavigated)");
   useEffect(() => {
     if (match?.status === "finished" && !autoNavigatedRef.current) {
       autoNavigatedRef.current = true;
@@ -404,13 +424,18 @@ function LiveMatch() {
   }, [match?.status, match?.id, navigate]);
 
   // Auto-rotate to landscape on portrait phones during live scoring.
+  console.log("HOOK [LiveMatch] 64: useForceLandscape");
   useForceLandscape(match?.status === "live");
 
   
+  console.log("HOOK [LiveMatch] 65: useIsPlanilleroOnly");
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
+  console.log("HOOK [LiveMatch] 66: useIsMobileLayout");
   const isMobile = useIsMobileLayout();
 
+  console.log("HOOK [LiveMatch] 67: useCoachMode(enabled)");
   const coachEnabled = useCoachMode((s) => s.enabled);
+  console.log("HOOK [LiveMatch] 68: useCoachMode(setEnabled)");
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
   const teamA = useMemo(() => {
