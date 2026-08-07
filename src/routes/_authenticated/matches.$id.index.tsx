@@ -469,36 +469,35 @@ function LiveMatch() {
   const showSyncing = (!match || !teamA || !teamB) && isLoadingGlobal;
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal;
 
-    if (isSuperAdmin && adminAll.isLoading) {
-      console.log("RETURN loading (SuperAdmin syncing)");
-      return (
-        <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
-          <div className="mb-6">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-              <Volleyball className="w-8 h-8 text-primary animate-bounce" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold mb-2">Sincronizando...</p>
-          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-            Buscando datos globales para Super Admin...
-          </p>
-        </div>
-      );
+  const handleDeleteMatch = async () => {
+    try {
+      await deleteFn({ data: { matchId: matchIdParam } });
+      deleteMatch(matchIdParam);
+      toast.success("Partido eliminado correctamente");
+      navigate({ to: "/matches" });
+    } catch (e) {
+      toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
     }
+  };
 
-    const handleDeleteMatch = async () => {
-      try {
-        await deleteFn({ data: { matchId: matchIdParam } });
-        deleteMatch(matchIdParam);
-        toast.success("Partido eliminado correctamente");
-        navigate({ to: "/matches" });
-      } catch (e) {
-        toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
-      }
-    };
+  if (showSyncing) {
+    console.log("RETURN loading (SuperAdmin syncing)");
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
+        <div className="mb-6">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <Volleyball className="w-8 h-8 text-primary animate-bounce" />
+          </div>
+        </div>
+        <p className="text-2xl font-bold mb-2">Sincronizando...</p>
+        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+          Buscando datos globales para Super Admin...
+        </p>
+      </div>
+    );
+  }
 
-    const isSyncing = adminAll.isLoading;
-
+  if (showNotFound) {
     console.log("RETURN no match/teams found");
     return (
       <CompactShell>
@@ -508,16 +507,13 @@ function LiveMatch() {
               <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
             </div>
           </div>
-          <p className="text-2xl font-bold mb-2">
-            {isSyncing ? "Sincronizando..." : "Partido no encontrado"}
-          </p>
+          <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-            {isSyncing 
-              ? "Buscando datos globales para Super Admin..."
-              : match && (!teamA || !teamB)
-                ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
-                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
+            {match && (!teamA || !teamB)
+              ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
+              : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
           </p>
+
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
             <Button asChild variant="default" size="lg" className="bg-gradient-primary shadow-glow rounded-xl font-semibold">
