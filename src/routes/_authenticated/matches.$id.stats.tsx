@@ -165,20 +165,31 @@ function StatsPage() {
     );
   }
 
-  // attach player meta
-  const enrichPlayers = (teamId: string): PlayerStat[] => {
-    const team = teamId === teamA.id ? teamA : teamB;
+  // move enrichPlayers out of component or useMemo to be stable, but it's not a hook, so it's fine.
+  // however, let's make sure it doesn't cause issues if match/stats change.
+  const playersA = useMemo(() => {
+    if (!teamA || !stats) return [];
     return [...stats.players.values()]
-      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+      .filter((p) => teamA.players.some((tp) => tp.id === p.playerId))
       .map((p) => {
-        const tp = team.players.find((x) => x.id === p.playerId)!;
+        const tp = teamA.players.find((x) => x.id === p.playerId)!;
         return { ...p, name: tp.name, number: tp.number };
       })
       .sort((a, b) => b.total - a.total);
-  };
-  const playersA = teamA ? enrichPlayers(teamA.id) : [];
-  const playersB = teamB ? enrichPlayers(teamB.id) : [];
-  const teamStatA = teamA ? (stats.teams.get(teamA.id) ?? null) : null;
+  }, [teamA, stats]);
+
+  const playersB = useMemo(() => {
+    if (!teamB || !stats) return [];
+    return [...stats.players.values()]
+      .filter((p) => teamB.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = teamB.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [teamB, stats]);
+
+  const teamStatA = teamA && stats ? (stats.teams.get(teamA.id) ?? null) : null;
   const teamStatB = teamB ? (stats.teams.get(teamB.id) ?? null) : null;
   const w = setsWon(match);
 
