@@ -161,8 +161,10 @@ function PublicHome() {
                   Todo el voleibol en un <span className="text-primary">solo lugar</span>.
                 </h1>
                 <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl">
-                  Seguí tus ligas, equipos y {t.players.toLowerCase()} favorit{globalGender === "femenino" ? "as" : "os"} con estadísticas profesionales en tiempo real. 
-                  Explorá el ecosistema digital del voleibol.
+                  Corregir el componente LiveMatch
+                  La consola indica exactamente:
+                  Rendered fewer hooks than expected
+                  Component: LiveMatch
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
