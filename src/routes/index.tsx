@@ -1,114 +1,28 @@
 /**
  * Implementar vista "Cancha" en el modo EN VIVO (similar a Data Volley)
- * 
+ *
  * Objetivo:
  * Mientras se desarrolla el partido, la pestaña Cancha debe mostrar en tiempo real la distribución de ambos equipos sobre la cancha.
- * 
+ *
  * Implementar formaciones de recepción con reacomodo automático (Sistema 5-1)
- * 
+ *
  * La cancha debe representar dos momentos distintos del juego:
- * 
+ *
  * Estado 1 - Recepción
  * Cuando el rival está por sacar, el equipo debe mostrarse exactamente como se ubica para recibir el saque.
  * Esta formación depende de la rotación actual (1 a 6) y el sistema táctico (5-1).
- * 
+ *
  * Estado 2 - Formación táctica
  * Cuando el equipo recibe correctamente el saque (o cuando comienza el rally), los jugadores se desplazan
  * automáticamente hacia su posición táctica (animación 200–500 ms).
- * 
+ *
  * Gestión Multi-tenant:
  * - Federación -> Liga -> Club -> Entrenador.
+ *
+ * Super Admin:
+ * - franco.e.navarrete@gmail.com tiene acceso total a todos los partidos y estadísticas.
  */
 
-/**
- * 1. Rol Entrenador (Espacio "Mi Club")
- * Cada usuario con el rol Coach / Entrenador contará con un espacio centralizado llamado "Mi Club" para gestionar su información deportiva.
- * Podrá administrar únicamente la información de los clubes a los que fue asignado.
- * Un entrenador puede estar asignado a: Un club. Varios clubes.
- * El sistema siempre debe respetar esos permisos.
- *
- * 2. Clubes (Módulo Mi Club)
- * Dentro de "Mi Club", el entrenador visualizará únicamente los clubes donde posee permisos.
- * Si solo tiene un club asignado: Seleccionarlo automáticamente.
- * Si tiene varios clubes:
- * Mostrar un selector al ingresar al módulo.
- * Ejemplo:
- * ¿Con qué club desea trabajar?
- * ○ Club Independiente
- * ○ Club Virgen Niña
- * ○ Club Uruguay
- * Una vez seleccionado el club, todas las acciones posteriores deberán realizarse dentro de ese club.
- *
- * 3. Categorías
- * Cada club tendrá sus propias categorías.
- * Ejemplo: Sub 14 Femenino Sub 16 Masculino Primera División Maxi Vóley
- * Las categorías pertenecen al club.
- * Nunca son compartidas entre clubes.
- *
- * 4. Jugadores
- * Cada categoría tendrá su plantel.
- * Cada jugador deberá almacenar como mínimo: Nombre y apellido Número de camiseta Rol Armador Punta Central Opuesto Líbero Mano hábil Fecha de nacimiento (opcional) Altura (opcional)
- * Los roles solamente serán obligatorios para los jugadores del club propio.
- *
- * 5. Equipos rivales
- * El entrenador podrá crear equipos rivales.
- * Para un equipo rival solamente será obligatorio cargar: Nombre del equipo. Números de camiseta de los jugadores. Identificar cuál de ellos es el armador.
- * No será obligatorio cargar: nombres; altura; mano hábil; posiciones.
- *
- * 6. Asignación automática de roles del rival
- * Una vez indicado cuál jugador es el armador, el sistema deberá asignar automáticamente los demás roles.
- * No solicitar los otros roles al usuario.
- * Utilizar siempre el patrón del sistema 5-1:
- * Armador↓Punta↓Central↓Opuesto↓Punta↓Central
- * El sistema deberá detectar automáticamente: Armador Punta 1 Central 1 Opuesto Punta 2 Central 2
- * El usuario nunca deberá ingresar estos datos manualmente.
- *
- * 7. Creación de un partido
- * Al crear un nuevo partido, el sistema debe seguir el siguiente flujo.
- *
- * Paso 1
- * Seleccionar el club.
- * Si el entrenador solo tiene un club asignado:
- * Seleccionarlo automáticamente.
- * Si posee varios clubes:
- * Solicitar cuál utilizar.
- *
- * Paso 2
- * Una vez seleccionado el club:
- * Mostrar únicamente las categorías pertenecientes a ese club.
- * Ejemplo:
- * Club seleccionado
- * Club Virgen Niña
- * Categorías
- * ○ Sub 14
- * ○ Sub 16
- * ○ Sub 18
- * ○ Primera
- * Nunca mostrar categorías de otros clubes.
- *
- * Paso 3
- * Seleccionar la categoría.
- * Automáticamente cargar: jugadores; roles; números; líbero; capitán (si existe).
- *
- * Paso 4
- * Seleccionar el equipo rival.
- * Permitir: elegir uno existente; crear uno nuevo.
- *
- * Paso 5
- * Mostrar una cancha interactiva para ambos equipos.
- * Equipo propio
- * Mostrar los jugadores de la categoría seleccionada.
- * Permitir arrastrarlos a la cancha.
- * Los roles ya existen.
- * No volver a solicitarlos.
- * Equipo rival
- * Mostrar únicamente los números de camiseta.
- * Permitir arrastrarlos a las zonas de la cancha.
- * Luego seleccionar únicamente:
- * ¿Cuál es el armador?
- * A partir de esa información:
- * Ejecutar automáticamente el motor de rotaciones.
- */
 
 
 

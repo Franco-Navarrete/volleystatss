@@ -55,7 +55,9 @@ function MatchesIndex() {
   const matches = useMemo(() => {
     // 1. Obtener la base de partidos (Merge de todos los usuarios si es admin)
     let baseMatches = localMatches;
-    if (isAdmin) {
+    const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+
+    if (isAdmin || isSuperAdmin) {
       if (adminAll.data) {
         const byId = new Map(localMatches.map((m) => [m.id, m]));
         for (const m of adminAll.data.matches) if (!byId.has(m.id)) byId.set(m.id, m);
@@ -64,8 +66,7 @@ function MatchesIndex() {
     }
 
     // 2. Si es admin o super admin, ve todo.
-    if (isAdmin || user?.email === "franco.e.navarrete@gmail.com") return baseMatches;
-
+    if (isAdmin || isSuperAdmin) return baseMatches;
 
     // 3. Si es Coach u otro rol, filtramos estrictamente por propiedad.
     //    Solo debe ver sus partidos (donde al menos uno de sus equipos propiedad participe).
