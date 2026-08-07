@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useAuthUser } from "@/hooks/use-auth";
@@ -110,16 +110,18 @@ function StatsPage() {
   const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
   const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
 
-  console.log("StatsPage render", {
-    loading: adminAll.isLoading,
-    match: !!match,
-    teamA: !!teamA,
-    teamB: !!teamB,
-    stats: !!stats,
-    isSuperAdmin
-  });
+  const renderCount = useRef(0);
+  renderCount.current++;
 
-  if (!checkingPlanillero && isPlanilleroOnly && !isSuperAdmin) {
+  console.log(`===== StatsPage Render =====\nRender Nº: ${renderCount.current}\n1. useRef(renderCount)\n2. useParams\n3. useVolley(match)\n4. useVolley(teams)\n5. useVolley(leagues)\n6. useAuthUser\n7. useAllUsersAppState\n8. useCoachAccess\n9. useIsPlanilleroOnly\n10. useMemo(allMatches)\n11. useMemo(allTeams)\n12. useMemo(match)\n13. useMemo(teamA)\n14. useMemo(teamB)\n15. useMemo(statsMode)\n16. useMemo(stats)\n17. useState(pdfStatus)\n==========================`);
+
+
+  const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
+  const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
+  const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
+  const showNotFound = (!match || !teamA || !teamB || !stats) && !isLoadingGlobal;
+
+  if (showPlanilleroGate) {
     return (
       <AppShell>
         <div className="text-center py-20 space-y-4">
@@ -130,31 +132,29 @@ function StatsPage() {
     );
   }
 
-  if (!match || !teamA || !teamB || !stats) {
-    if (isSuperAdmin && adminAll.isLoading) {
-      console.log("RETURN loading stats (SuperAdmin syncing)");
-      return (
-        <AppShell>
-          <div className="text-center py-20 px-6">
-            <p className="text-2xl font-bold mb-2">Sincronizando estadísticas...</p>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-              Buscando datos globales para Super Admin...
-            </p>
-          </div>
-        </AppShell>
-      );
-    }
+  if (showSyncing) {
+    console.log("RETURN loading stats (SuperAdmin syncing)");
+    return (
+      <AppShell>
+        <div className="text-center py-20 px-6">
+          <p className="text-2xl font-bold mb-2">Sincronizando estadísticas...</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Buscando datos globales para Super Admin...
+          </p>
+        </div>
+      </AppShell>
+    );
+  }
 
+  if (showNotFound) {
     console.log("RETURN no stats/match found");
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
-          <p className="text-2xl font-bold mb-2">
-            {adminAll.isLoading ? "Sincronizando estadísticas..." : "Partido no encontrado"}
-          </p>
+          <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-            {adminAll.isLoading 
-              ? "Buscando datos globales para Super Admin..."
+            {match && (!teamA || !teamB || !stats)
+              ? `Error de carga: Faltan datos necesarios para el partido ${matchIdParam?.slice(0, 8)}.`
               : `No pudimos cargar las estadísticas del partido "${matchIdParam?.slice(0, 8)}".`}
           </p>
           <Button asChild variant="outline">
@@ -164,6 +164,11 @@ function StatsPage() {
       </AppShell>
     );
   }
+
+  // A partir de aquí garantizamos que match, teamA, teamB y stats existen para TypeScript
+  if (!match || !teamA || !teamB || !stats) return null;
+
+
 
   const playersA = useMemo(() => {
     if (!teamA || !stats) return [];

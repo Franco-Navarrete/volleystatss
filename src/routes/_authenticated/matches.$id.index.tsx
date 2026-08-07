@@ -210,6 +210,9 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 }
 
 function LiveMatch() {
+  const renderCount = useRef(0);
+  renderCount.current++;
+  
   const { id: matchIdParam } = Route.useParams();
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
   const teamsBase = useVolley((s) => s.teams);
@@ -218,6 +221,10 @@ function LiveMatch() {
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
+  const { isAdmin } = useIsAdmin();
+  const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
+  const coachOverride = coachAccess;
+
   
   // Mover hooks a nivel superior antes de cualquier return condicional
   const deleteMatch = useVolley.getState().deleteMatch;
@@ -226,6 +233,10 @@ function LiveMatch() {
 
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
+
+  console.log(`===== LiveMatch Render =====\nRender Nº: ${renderCount.current}\n1. useRef(renderCount)\n2. useParams\n3. useVolley(match)\n4. useVolley(teams)\n5. useVolley(leagues)\n6. useAuthUser\n7. useAllUsersAppState\n8. useIsAdmin\n9. useCoachAccess\n10. useServerFn\n11. useState(deleteConfirm)\n12. useMemo(allMatches)\n13. useMemo(allTeams)\n==========================`);
+
+
 
   const match = useMemo(() => {
     if (matchBase) return matchBase;
@@ -352,7 +363,7 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(match?.status === "live");
 
-  const { hasAccess: coachOverride } = useCoachAccess();
+  
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
 
@@ -451,42 +462,42 @@ function LiveMatch() {
 
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
 
-  const { isAdmin } = useIsAdmin();
-  const { hasAccess: coachAccess } = useCoachAccess();
 
   // Blindaje para Super Admin: Si no hay match/teams localmente, pero estamos sincronizando, esperamos un poco
   // antes de mostrar el error definitivo.
-  if (!match || !teamA || !teamB) {
-    if (isSuperAdmin && adminAll.isLoading) {
-      console.log("RETURN loading (SuperAdmin syncing)");
-      return (
-        <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
-          <div className="mb-6">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-              <Volleyball className="w-8 h-8 text-primary animate-bounce" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold mb-2">Sincronizando...</p>
-          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-            Buscando datos globales para Super Admin...
-          </p>
-        </div>
-      );
+  const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
+  const showSyncing = (!match || !teamA || !teamB) && isLoadingGlobal;
+  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal;
+
+  const handleDeleteMatch = async () => {
+    try {
+      await deleteFn({ data: { matchId: matchIdParam } });
+      deleteMatch(matchIdParam);
+      toast.success("Partido eliminado correctamente");
+      navigate({ to: "/matches" });
+    } catch (e) {
+      toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
     }
+  };
 
-    const handleDeleteMatch = async () => {
-      try {
-        await deleteFn({ data: { matchId: matchIdParam } });
-        deleteMatch(matchIdParam);
-        toast.success("Partido eliminado correctamente");
-        navigate({ to: "/matches" });
-      } catch (e) {
-        toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
-      }
-    };
+  if (showSyncing) {
+    console.log("RETURN loading (SuperAdmin syncing)");
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
+        <div className="mb-6">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <Volleyball className="w-8 h-8 text-primary animate-bounce" />
+          </div>
+        </div>
+        <p className="text-2xl font-bold mb-2">Sincronizando...</p>
+        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+          Buscando datos globales para Super Admin...
+        </p>
+      </div>
+    );
+  }
 
-    const isSyncing = adminAll.isLoading;
-
+  if (showNotFound) {
     console.log("RETURN no match/teams found");
     return (
       <CompactShell>
@@ -496,16 +507,13 @@ function LiveMatch() {
               <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
             </div>
           </div>
-          <p className="text-2xl font-bold mb-2">
-            {isSyncing ? "Sincronizando..." : "Partido no encontrado"}
-          </p>
+          <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-            {isSyncing 
-              ? "Buscando datos globales para Super Admin..."
-              : match && (!teamA || !teamB)
-                ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
-                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
+            {match && (!teamA || !teamB)
+              ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
+              : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
           </p>
+
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
             <Button asChild variant="default" size="lg" className="bg-gradient-primary shadow-glow rounded-xl font-semibold">
@@ -605,6 +613,11 @@ function LiveMatch() {
     );
   }
 
+
+  // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
+  if (!match || !teamA || !teamB) return null;
+
+
   const w = setsWon(match);
   const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
   const server = currentServer(match);
@@ -675,6 +688,11 @@ function LiveMatch() {
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   const [now, setNow] = useState(() => Date.now());
+  
+  useEffect(() => {
+    console.log(`===== LiveMatch Render Final Hooks =====\n13. useState(now)\n14. useEffect(timer)\n==========================`);
+  }, []);
+
   const prevSetEndedAt = match.currentSet > 1
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
     : undefined;
@@ -852,34 +870,42 @@ function LiveMatch() {
 
   const { analysisMode } = useWorkspaceStore();
 
-  if (analysisMode && !isMobile) {
+  const workspaceView = useMemo(() => {
+    if (!analysisMode || isMobile) return null;
+    return (
+      <WorkspaceLayout
+        video={
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+            Video Workspace
+          </div>
+        }
+        timeline={
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+            Timeline Workspace
+          </div>
+        }
+        left={
+          <div className="h-full w-full flex flex-col p-4">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
+          </div>
+        }
+        right={
+          <div className="h-full w-full flex flex-col p-4">
+            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
+          </div>
+        }
+      />
+    );
+  }, [analysisMode, isMobile]);
+
+  if (workspaceView) {
     return (
       <CompactShell isReadOnly={!canScout}>
-        <WorkspaceLayout
-          video={
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
-              Video Workspace
-            </div>
-          }
-          timeline={
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
-              Timeline Workspace
-            </div>
-          }
-          left={
-            <div className="h-full w-full flex flex-col p-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
-            </div>
-          }
-          right={
-            <div className="h-full w-full flex flex-col p-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
-            </div>
-          }
-        />
+        {workspaceView}
       </CompactShell>
     );
   }
+
 
   return (
     <CompactShell isReadOnly={!canScout}>
