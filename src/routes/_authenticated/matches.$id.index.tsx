@@ -239,6 +239,9 @@ function LiveMatch() {
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
   console.log("HOOK [LiveMatch] 11: useState(showDeleteConfirm)");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Recuperar deleteMatch de la store de forma segura
+  const deleteMatch = useVolley.getState().deleteMatch;
 
   console.log("HOOK [LiveMatch] 12: useMemo(allMatches)");
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
