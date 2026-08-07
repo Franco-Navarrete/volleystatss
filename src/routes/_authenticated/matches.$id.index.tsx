@@ -207,11 +207,15 @@ function LiveMatch() {
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
 
-  // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
-
   const adminAll = useAllUsersAppState();
+  
+  // Mover hooks a nivel superior antes de cualquier return condicional
+  const deleteMatch = useVolley.getState().deleteMatch;
+  const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
@@ -450,10 +454,6 @@ function LiveMatch() {
         </div>
       );
     }
-
-    const deleteMatch = useVolley.getState().deleteMatch;
-    const deleteFn = useServerFn(authorizeAndDeleteMatch);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const handleDeleteMatch = async () => {
       try {

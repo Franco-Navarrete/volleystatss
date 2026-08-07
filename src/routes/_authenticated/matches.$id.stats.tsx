@@ -105,6 +105,8 @@ function StatsPage() {
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
+  const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
+
   if (!checkingPlanillero && isPlanilleroOnly && !isSuperAdmin) {
     return (
       <AppShell>
@@ -115,8 +117,6 @@ function StatsPage() {
       </AppShell>
     );
   }
-
-  const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
 
   if (!match || !teamA || !teamB || !stats) {
     if (isSuperAdmin && adminAll.isLoading) {
