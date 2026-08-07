@@ -259,14 +259,20 @@ export function resolveFormation(opts: {
   }
 
 
+  const assignedIdsInMap = new Set(Object.values(roleToPlayer).filter(Boolean) as string[]);
+  
   const slots: ResolvedSlot[] = formation.slots.map((s) => {
     const o = override[s.role];
     let playerId = roleToPlayer[s.role] ?? null;
 
-    // Si es fase de recepción y el rol es líbero, pero el líbero no está asignado o no está en cancha,
-    // usamos al central zaguero (middle_back) para ocupar ese slot visual.
-    if (phase === "reception" && s.role === "libero" && !playerId) {
-      playerId = roleToPlayer.middle_back ?? null;
+    // Parche: Si el rol está vacío, buscamos una jugadora en cancha que no haya sido asignada aún.
+    // Esto asegura que siempre se muestren las 6 jugadoras, incluso si el motor de roles falla.
+    if (!playerId && onCourt.length === 6) {
+       const unassignedId = onCourt.find(id => !assignedIdsInMap.has(id));
+       if (unassignedId) {
+          playerId = unassignedId;
+          assignedIdsInMap.add(unassignedId);
+       }
     }
 
     const rotationPosition = playerId ? getRotationPosition(onCourt, playerId) : null;
@@ -280,8 +286,8 @@ export function resolveFormation(opts: {
       isFrontRow,
       isBackRow: rotationPosition ? !isFrontRow : false,
     };
-
   });
+
 
   const frontRow = slots.filter((s) => s.isFrontRow);
   const backRow = slots.filter((s) => s.isBackRow);
