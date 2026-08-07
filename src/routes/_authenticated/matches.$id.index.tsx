@@ -230,11 +230,11 @@ function LiveMatch() {
   const finishMatch = useVolley((s) => s.finishMatch);
   const updatePlayer = useVolley((s) => s.updatePlayer);
   const setLiberoA1 = useCallback((lid: string | null) => {
-    if (!matchBase?.id) return;
+    if (!match?.id) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA1Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setLiberoA2 = useCallback((lid: string | null) => {
     if (!matchBase?.id) return;
     useVolley.setState((s) => ({
@@ -392,8 +392,8 @@ function LiveMatch() {
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
 
   const adminAll = useAllUsersAppState();
-  const allMatches = adminAll.data?.matches ?? [];
-  const allTeams = adminAll.data?.teams ?? [];
+  const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
+  const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
   const match = useMemo(() => {
     if (matchBase) return matchBase;

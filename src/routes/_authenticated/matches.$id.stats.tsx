@@ -63,36 +63,38 @@ function StatsPage() {
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
+  const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
+  const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
   const match = useMemo(() => {
     if (matchBase) return matchBase;
-    if (isSuperAdmin && adminAll.data?.matches) {
-      return adminAll.data.matches.find((m: any) => m.id === matchIdParam);
+    if (isSuperAdmin && allMatches.length > 0) {
+      return allMatches.find((m: any) => m.id === matchIdParam);
     }
     return undefined;
-  }, [matchBase, isSuperAdmin, adminAll.data?.matches, matchIdParam]);
+  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
     const targetId = match?.teamAId;
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
-    if (isSuperAdmin && adminAll.data?.teams) {
-      return adminAll.data.teams.find((t: any) => t.id === targetId);
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: any) => t.id === targetId);
     }
     return undefined;
-  }, [match?.teamAId, teamsBase, isSuperAdmin, adminAll.data?.teams]);
+  }, [match?.teamAId, teamsBase, isSuperAdmin, allTeams]);
 
   const teamB = useMemo(() => {
     const targetId = match?.teamBId;
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
-    if (isSuperAdmin && adminAll.data?.teams) {
-      return adminAll.data.teams.find((t: any) => t.id === targetId);
+    if (isSuperAdmin && allTeams.length > 0) {
+      return allTeams.find((t: any) => t.id === targetId);
     }
     return undefined;
-  }, [match?.teamBId, teamsBase, isSuperAdmin, adminAll.data?.teams]);
+  }, [match?.teamBId, teamsBase, isSuperAdmin, allTeams]);
 
   const statsMode = useMemo(() => {
     if (!match) return "liga";
