@@ -206,6 +206,24 @@ function LiveMatch() {
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
+
+  // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
+  const { user } = useAuthUser();
+  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+
+  const adminAll = useAllUsersAppState();
+  const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
+  const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
+
+  const match = useMemo(() => {
+    if (matchBase) return matchBase;
+    if (isSuperAdmin && allMatches.length > 0) {
+      const found = allMatches.find((m: Match) => m.id === matchIdParam);
+      if (found) return found;
+    }
+    return undefined;
+  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
+
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const setSetLineup = useVolley((s) => s.setSetLineup);
@@ -388,21 +406,6 @@ function LiveMatch() {
 
 
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
-  const { user } = useAuthUser();
-  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
-
-  const adminAll = useAllUsersAppState();
-  const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
-  const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
-
-  const match = useMemo(() => {
-    if (matchBase) return matchBase;
-    if (isSuperAdmin && allMatches.length > 0) {
-      const found = allMatches.find((m: Match) => m.id === matchIdParam);
-      if (found) return found;
-    }
-    return undefined;
-  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
     const targetId = match?.teamAId;
