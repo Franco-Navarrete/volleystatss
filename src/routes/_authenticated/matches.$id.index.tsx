@@ -366,8 +366,6 @@ function LiveMatch() {
 
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
-
-
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
