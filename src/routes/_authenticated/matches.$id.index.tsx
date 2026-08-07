@@ -760,6 +760,11 @@ function LiveMatch() {
       ? { [receivingSide]: receivingPhase, [servingSide]: "attack" }
       : {};
 
+  const prevSetEndedAt = match.currentSet > 1
+    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && match.currentSet > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
   console.log("HOOK [LiveMatch] 75: useState(now)");
   const [now, setNow] = useState(() => Date.now());
