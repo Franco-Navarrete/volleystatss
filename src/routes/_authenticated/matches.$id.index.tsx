@@ -212,34 +212,34 @@ function LiveMatch() {
   const finishMatch = useVolley((s) => s.finishMatch);
   const updatePlayer = useVolley((s) => s.updatePlayer);
   const setLiberoA1 = useCallback((lid: string | null) => {
-    if (!match) return;
+    if (!matchBase) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
+      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA1Id: lid} : m)
     }));
-  }, [match?.id]);
+  }, [matchBase?.id]);
   const setLiberoA2 = useCallback((lid: string | null) => {
-    if (!match) return;
+    if (!matchBase) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
+      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA2Id: lid} : m)
     }));
-  }, [match?.id]);
+  }, [matchBase?.id]);
   const setLiberoB1 = useCallback((lid: string | null) => {
-    if (!match) return;
+    if (!matchBase) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
+      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB1Id: lid} : m)
     }));
-  }, [match?.id]);
+  }, [matchBase?.id]);
   const setLiberoB2 = useCallback((lid: string | null) => {
-    if (!match) return;
+    if (!matchBase) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
+      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB2Id: lid} : m)
     }));
-  }, [match?.id]);
+  }, [matchBase?.id]);
   const setOpponentSetter = useCallback((playerId: string | null) => {
-    if (!match) return;
+    if (!matchBase) return;
     useVolley.setState((s) => ({
       matches: s.matches.map((m) => {
-        if (m.id !== match.id) return m;
+        if (m.id !== matchBase.id) return m;
         return {
           ...m,
           metadata: {
@@ -249,7 +249,7 @@ function LiveMatch() {
         };
       })
     }));
-  }, [match?.id]);
+  }, [matchBase?.id]);
 
   const teamABase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamAId), [teamsBase, matchBase]);
   const teamBBase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamBId), [teamsBase, matchBase]);
@@ -299,10 +299,10 @@ function LiveMatch() {
       autoNavigatedRef.current = true;
       navigate({ to: "/matches/$id/stats", params: { id: match.id } });
     }
-  }, [match?.status, match?.id, navigate]);
+  }, [matchBase?.status, matchBase?.id, navigate]);
 
   // Auto-rotate to landscape on portrait phones during live scoring.
-  useForceLandscape(match?.status === "live");
+  useForceLandscape(matchBase?.status === "live");
 
   // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
@@ -313,13 +313,13 @@ function LiveMatch() {
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
   useEffect(() => {
-    if (!coachOverride || !match?.id || !coachEnabled) return;
-    const key = `rally.coachHelpShown.${match.id}`;
+    if (!coachOverride || !matchBase?.id || !coachEnabled) return;
+    const key = `rally.coachHelpShown.${matchBase.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, "1");
     window.dispatchEvent(new CustomEvent("coach:help:open"));
-  }, [coachEnabled, coachOverride, match?.id]);
+  }, [coachEnabled, coachOverride, matchBase?.id]);
 
   const toggleCoachMode = () => {
     const next = !coachEnabled;
@@ -333,8 +333,8 @@ function LiveMatch() {
   };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
   useCoachShortcuts({
-    active: coachOverride && !isMobile && match?.status === "live",
-    matchId: match?.id ?? null,
+    active: coachOverride && !isMobile && matchBase?.status === "live",
+    matchId: matchBase?.id ?? null,
   });
 
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
@@ -365,7 +365,7 @@ function LiveMatch() {
     window.addEventListener("coach:action", handler as EventListener);
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
+  }, [coachEnabled, matchBase?.id, matchBase?.servingSide, matchBase?.status]);
 
 
 
@@ -431,7 +431,7 @@ function LiveMatch() {
             {isSyncing 
               ? "Buscando datos del partido en la nube para Super Admin..."
               : !match 
-                ? `No pudimos encontrar el partido con ID "${id.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
+                ? `No pudimos encontrar el partido con ID "${matchIdParam.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
                 : `No se pudieron cargar los equipos asociados ("${match?.teamAId?.slice(0, 4) ?? '??'}" vs "${match?.teamBId?.slice(0, 4) ?? '??'}").`}
           </p>
           
@@ -495,7 +495,7 @@ function LiveMatch() {
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
-                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{id}</span></p>
+                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchIdParam}</span></p>
                 {match && (
                   <>
                     <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.metadata?.ownerId || "Global"}</span></p>
