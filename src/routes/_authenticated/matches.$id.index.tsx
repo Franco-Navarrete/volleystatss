@@ -545,7 +545,7 @@ function LiveMatch() {
   }
 
   const w = setsWon(match);
-  const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0];
+  const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
   const server = currentServer(match);
   const isLive = match.status === "live";
   const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
@@ -562,7 +562,7 @@ function LiveMatch() {
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teamsBase, leagues);
-  const isCoach = statsMode === "entrenador" || coachOverride;
+  const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
   // Restriction for Coach: only stats for their team or if they own the match
   const isMyMatch = useMemo(() => {
