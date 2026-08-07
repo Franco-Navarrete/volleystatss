@@ -213,31 +213,41 @@ function LiveMatch() {
   const renderCount = useRef(0);
   renderCount.current++;
   
+  console.log("HOOK [LiveMatch] 2: useParams");
   const { id: matchIdParam } = Route.useParams();
+  console.log("HOOK [LiveMatch] 3: useVolley(matchBase)");
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
+  console.log("HOOK [LiveMatch] 4: useVolley(teamsBase)");
   const teamsBase = useVolley((s) => s.teams);
+  console.log("HOOK [LiveMatch] 5: useVolley(leagues)");
   const leagues = useVolley((s) => s.leagues);
 
+  console.log("HOOK [LiveMatch] 6: useAuthUser");
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+  console.log("HOOK [LiveMatch] 7: useAllUsersAppState");
   const adminAll = useAllUsersAppState();
+  console.log("HOOK [LiveMatch] 8: useIsAdmin");
   const { isAdmin } = useIsAdmin();
+  console.log("HOOK [LiveMatch] 9: useCoachAccess");
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
   const coachOverride = coachAccess;
 
   
   // Mover hooks a nivel superior antes de cualquier return condicional
-  const deleteMatch = useVolley.getState().deleteMatch;
+  console.log("HOOK [LiveMatch] 10: useServerFn(authorizeAndDeleteMatch)");
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  console.log("HOOK [LiveMatch] 11: useState(showDeleteConfirm)");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  console.log("HOOK [LiveMatch] 12: useMemo(allMatches)");
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
+  console.log("HOOK [LiveMatch] 13: useMemo(allTeams)");
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
   console.log(`===== LiveMatch Render =====\nRender Nº: ${renderCount.current}\n1. useRef(renderCount)\n2. useParams\n3. useVolley(match)\n4. useVolley(teams)\n5. useVolley(leagues)\n6. useAuthUser\n7. useAllUsersAppState\n8. useIsAdmin\n9. useCoachAccess\n10. useServerFn\n11. useState(deleteConfirm)\n12. useMemo(allMatches)\n13. useMemo(allTeams)\n==========================`);
 
-
-
+  console.log("HOOK [LiveMatch] 14: useMemo(match)");
   const match = useMemo(() => {
     if (matchBase) return matchBase;
     if (isSuperAdmin && allMatches.length > 0) {
