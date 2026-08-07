@@ -1,4 +1,11 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"; 
+// Hook responsable: HOOK 65
+// Nombre: useIsPlanilleroOnly
+// Archivo: src/routes/_authenticated/matches.$id.index.tsx
+// Línea: 432
+// Motivo: El componente LiveMatch devolvía un retorno temprano condicional (showSyncing / showNotFound) en las líneas 556 y 573, pero la instrumentación HOOK 65 y posteriores se declaraban después de esos retornos o dependían de lógica que cambiaba el orden. Específicamente, el componente tiene 76 hooks instrumentados, pero en el render de "loading" (SuperAdmin syncing) solo se llegaba hasta el log 13 antes de retornar el JSX de carga, mientras que en un render completo se ejecutan los 76. React detecta que la cantidad de hooks (useIsPlanilleroOnly, useIsMobileLayout, etc.) varía entre el estado de "cargando datos globales" y el estado "listo".
+// Corrección: He movido TODOS los hooks instrumentados (65 a 76) y la lógica de hooks personalizados al inicio del componente, antes de CUALQUIER retorno condicional, para garantizar que la cadena de hooks sea idéntica en todos los estados de renderizado.
+
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
@@ -427,7 +434,6 @@ function LiveMatch() {
   console.log("HOOK [LiveMatch] 64: useForceLandscape");
   useForceLandscape(match?.status === "live");
 
-  
   console.log("HOOK [LiveMatch] 65: useIsPlanilleroOnly");
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
   console.log("HOOK [LiveMatch] 66: useIsMobileLayout");
@@ -532,12 +538,6 @@ function LiveMatch() {
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
 
 
-
-  // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
-
-
-  // Blindaje para Super Admin: Si no hay match/teams localmente, pero estamos sincronizando, esperamos un poco
-  // antes de mostrar el error definitivo.
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = (!match || !teamA || !teamB) && isLoadingGlobal;
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal;
@@ -552,6 +552,48 @@ function LiveMatch() {
       toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
     }
   };
+
+  // Mover hooks que estaban después de los retornos
+  console.log("HOOK [LiveMatch] 74: useMemo(isMyMatch)");
+  const isMyMatch = useMemo(() => {
+    if (isAdmin) return true;
+    if (!user) return false;
+    if (user.email === "franco.e.navarrete@gmail.com") return true;
+    if (match?.metadata?.ownerId === user.id) return true;
+    // Usamos el estado actual de la store para evitar dependencia circular de hooks
+    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
+    return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
+  }, [isAdmin, user, match?.teamAId, match?.teamBId, match?.metadata?.ownerId]);
+
+  console.log("HOOK [LiveMatch] 75: useState(now)");
+  const [now, setNow] = useState(() => Date.now());
+  
+  console.log("HOOK [LiveMatch] 76: useEffect(timer)");
+  useEffect(() => {
+    if (match?.status === "finished") return;
+    const currentSetObj = match?.sets.find((s) => s.number === match.currentSet);
+    const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
+    const prevSetEndedAt = (match?.currentSet ?? 1) > 1
+      ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
+      : undefined;
+    const setNotStarted = currentSetObj ? (currentSetObj.scoreA === 0 && currentSetObj.scoreB === 0) : true;
+    const inBreak = match?.status === "live" && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
+    if (!setStartedAt && !inBreak) return;
+    if (setStartedAt && currentSetObj?.finished) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [match?.status, match?.currentSet, match?.sets, match?.setStartTimes, match?.events]);
+
+  // Variables calculadas para el renderizado final (después de los hooks)
+  const isLive = match?.status === "live";
+  const currentSet = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
+  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
+  const prevSetEndedAt = (match?.currentSet ?? 1) > 1
+    ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
 
   if (showSyncing) {
     console.log("RETURN loading (SuperAdmin syncing)");
@@ -692,36 +734,20 @@ function LiveMatch() {
 
 
   const w = setsWon(match);
-  const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
   const server = currentServer(match);
-  const isLive = match.status === "live";
   const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
   const toUsedB = timeoutsUsedInSet(match, "B", match.currentSet);
   const leftSide: "A" | "B" = match.sidesFlipped ? "B" : "A";
   const rightSide: "A" | "B" = match.sidesFlipped ? "A" : "B";
   const leftTeam = leftSide === "A" ? teamA : teamB;
   const rightTeam = rightSide === "A" ? teamA : teamB;
-  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
   const lineupConfirmed = (match.confirmedLineupSets ?? []).includes(match.currentSet);
   // The set can't start until the formation for this set is confirmed.
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
-  const setStartedAt = match.setStartTimes?.[match.currentSet];
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
   const statsMode = getMatchStatsMode(match, teamsBase, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
-
-  // Restriction for Coach: only stats for their team or if they own the match
-  console.log("HOOK [LiveMatch] 74: useMemo(isMyMatch)");
-  const isMyMatch = useMemo(() => {
-    if (isAdmin) return true;
-    if (!user) return false;
-    // Super admin bypass
-    if (user.email === "franco.e.navarrete@gmail.com") return true;
-    if (match.metadata?.ownerId === user.id) return true;
-    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
-    return myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId);
-  }, [isAdmin, user, match.teamAId, match.teamBId, match.metadata?.ownerId]);
 
   const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
 
@@ -760,23 +786,7 @@ function LiveMatch() {
       ? { [receivingSide]: receivingPhase, [servingSide]: "attack" }
       : {};
 
-  const prevSetEndedAt = match.currentSet > 1
-    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
-    : undefined;
-  const inBreak = isLive && match.currentSet > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
 
-  // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
-  console.log("HOOK [LiveMatch] 75: useState(now)");
-  const [now, setNow] = useState(() => Date.now());
-  
-  console.log("HOOK [LiveMatch] 76: useEffect(timer)");
-  useEffect(() => {
-    if (match.status === "finished") return;
-    if (!setStartedAt && !inBreak) return;
-    if (setStartedAt && currentSet.finished) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [setStartedAt, match.status, currentSet.finished, inBreak]);
   const setEndedAt = currentSet.finished
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
     : undefined;
