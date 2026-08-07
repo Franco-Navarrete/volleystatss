@@ -143,7 +143,7 @@ function StatsPage() {
   }
 
   if (showNotFound) {
-    console.log("RETURN no stats/match found");
+    
     return (
       <AppShell>
         <div className="text-center py-20 px-6">
