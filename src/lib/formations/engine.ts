@@ -13,26 +13,17 @@ import type {
 export type FormationPhase = "reception" | "attack";
 
 /**
- * Las plantillas de recepción/ataque están indexadas internamente por la
- * posición de cancha del armador (1..6). El label de "rotación" que ve el
- * usuario sigue otra convención: armador en P2 → Rot 1, P1 → Rot 2,
- * P6 → Rot 3, P5 → Rot 4, P4 → Rot 5, P3 → Rot 6.
+ * Deriva la plantilla de formación según sistema, rotación y fase del rally.
  */
-/**
- * Las plantillas de recepción/ataque están indexadas por rotación (1..6).
- */
-function rotationToSetterPos(rotation: Rotation): Rotation {
-  return rotation;
-}
-
 export function getFormation(
   system: TacticalSystem,
   rotation: Rotation,
   phase: FormationPhase = "attack",
 ): ReceptionFormation {
-  const key = rotationToSetterPos(rotation);
-  if (phase === "reception") return FORMATIONS_5_1_RECEPTION[key];
-  return FORMATIONS_5_1[key];
+  // En fase de ataque (o cuando el equipo saca), usamos la plantilla base de posiciones tácticas.
+  // En fase de recepción (esperando el saque rival), usamos la plantilla de W/recepción.
+  if (phase === "reception") return FORMATIONS_5_1_RECEPTION[rotation];
+  return FORMATIONS_5_1[rotation];
 }
 
 /**
