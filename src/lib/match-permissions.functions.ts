@@ -70,11 +70,20 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
 
     // 2. Eliminar de la nube (app_state) de TODOS los usuarios que puedan tenerlo.
     // Esto es necesario porque varios usuarios pueden "ver" el mismo partido si comparten liga.
-    const { data: allStates } = await supabase
+    const { data: allStates, error: fetchError } = await supabase
       .from("app_state")
       .select("user_id, data");
 
-    if (allStates) {
+    if (fetchError) {
+      console.error("Error fetching all states for deletion:", fetchError);
+      // Intentamos al menos borrar el del usuario actual si falla el global
+      const { data: myState } = await supabase.from("app_state").select("data").eq("user_id", userId).maybeSingle();
+      if (myState) {
+        const d = myState.data as any;
+        const newMatches = (d?.matches ?? []).filter((m: any) => m.id !== data.matchId);
+        await supabase.from("app_state").update({ data: { ...d, matches: newMatches } }).eq("user_id", userId);
+      }
+    } else if (allStates) {
       for (const row of allStates) {
         const d = row.data as any;
         if (d?.matches?.some((m: any) => m.id === data.matchId)) {
