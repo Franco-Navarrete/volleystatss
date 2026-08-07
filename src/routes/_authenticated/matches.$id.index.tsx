@@ -122,20 +122,28 @@ import {
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
-  errorComponent: ({ error, reset }) => (
-    <div className="h-screen w-screen flex flex-col items-center justify-center bg-background px-6 text-center">
-      <h1 className="text-xl font-bold mb-2">Error al cargar el partido</h1>
-      <p className="text-muted-foreground text-sm max-w-xs mb-6">
-        {error instanceof Error ? error.message : "Algo salió mal al sincronizar los datos."}
-      </p>
-      <div className="flex gap-3">
-        <Button onClick={() => window.location.reload()}>Recargar página</Button>
-        <Button variant="outline" asChild>
-          <Link to="/matches">Volver a partidos</Link>
-        </Button>
+  errorComponent: ({ error, reset }) => {
+    console.error("Route ErrorBoundary caught error:", error);
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background px-6 text-center">
+        <h1 className="text-xl font-bold mb-2">Error al cargar el partido</h1>
+        <p className="text-muted-foreground text-sm max-w-xs mb-6 text-balance">
+          {error instanceof Error ? error.message : "Algo salió mal al sincronizar los datos."}
+        </p>
+        <div className="flex gap-3">
+          <Button onClick={() => window.location.reload()}>Recargar página</Button>
+          <Button variant="outline" asChild>
+            <Link to="/matches">Volver a partidos</Link>
+          </Button>
+        </div>
+        {error instanceof Error && error.stack && (
+          <pre className="mt-8 p-4 bg-muted rounded-lg text-[10px] text-left max-w-full overflow-auto max-h-40 opacity-50">
+            {error.stack}
+          </pre>
+        )}
       </div>
-    </div>
-  ),
+    );
+  },
   component: () => (
     <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch />
