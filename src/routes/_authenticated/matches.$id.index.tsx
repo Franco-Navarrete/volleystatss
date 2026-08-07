@@ -780,6 +780,11 @@ function LiveMatch() {
       ? { [receivingSide]: receivingPhase, [servingSide]: "attack" }
       : {};
 
+  const prevSetEndedAt = match.currentSet > 1
+    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && match.currentSet > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
   const setEndedAt = currentSet.finished
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet)?.timestamp
     : undefined;

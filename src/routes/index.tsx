@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { LandingPage } from '@/components/LandingPage'
+import { LiveMatchesFeed } from '@/components/LiveMatchesFeed'
 
 export const Route = createFileRoute('/')({
   head: () => ({
@@ -23,5 +23,5 @@ export const Route = createFileRoute('/')({
       },
     ],
   }),
-  component: LandingPage,
+  component: LiveMatchesFeed,
 })
