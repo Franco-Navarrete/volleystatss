@@ -3540,9 +3540,9 @@ function FormationDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-bold text-foreground">{teamA.name}</div>
-                {match.status === "live" && (
+                {match.status === "live" && match.servingSide === "B" && (
                   <div className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">
-                    {needsReceptionForRally(match) ? "Fase: Recepción" : "Fase: K2/Ataque"}
+                    {needsReceptionForRally(match, match.currentSet, "A") ? "Fase: Recepción" : "Fase: K2/Ataque"}
                   </div>
                 )}
               </div>
@@ -3553,16 +3553,16 @@ function FormationDialog({
                   teamA, 
                   "A", 
                   "5-1", 
-                  needsReceptionForRally(match) && match.servingSide === "B" ? "reception" : "attack"
+                  (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack"
                 )} 
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-bold text-foreground">{teamB.name}</div>
-                {match.status === "live" && (
+                {match.status === "live" && match.servingSide === "A" && (
                   <div className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">
-                    {needsReceptionForRally(match) ? "Fase: Recepción" : "Fase: K2/Ataque"}
+                    {needsReceptionForRally(match, match.currentSet, "B") ? "Fase: Recepción" : "Fase: K2/Ataque"}
                   </div>
                 )}
               </div>
@@ -3573,7 +3573,7 @@ function FormationDialog({
                   teamB, 
                   "B", 
                   "5-1", 
-                  needsReceptionForRally(match) && match.servingSide === "A" ? "reception" : "attack"
+                  (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack"
                 )} 
               />
             </div>
