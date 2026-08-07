@@ -122,6 +122,20 @@ import {
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
   head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
+  errorComponent: ({ error, reset }) => (
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-background px-6 text-center">
+      <h1 className="text-xl font-bold mb-2">Error al cargar el partido</h1>
+      <p className="text-muted-foreground text-sm max-w-xs mb-6">
+        {error instanceof Error ? error.message : "Algo salió mal al sincronizar los datos."}
+      </p>
+      <div className="flex gap-3">
+        <Button onClick={() => window.location.reload()}>Recargar página</Button>
+        <Button variant="outline" asChild>
+          <Link to="/matches">Volver a partidos</Link>
+        </Button>
+      </div>
+    </div>
+  ),
   component: () => (
     <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch />
@@ -192,6 +206,24 @@ function LiveMatch() {
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
+
+  // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
+  const { user } = useAuthUser();
+  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+
+  const adminAll = useAllUsersAppState();
+  const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
+  const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
+
+  const match = useMemo(() => {
+    if (matchBase) return matchBase;
+    if (isSuperAdmin && allMatches.length > 0) {
+      const found = allMatches.find((m: Match) => m.id === matchIdParam);
+      if (found) return found;
+    }
+    return undefined;
+  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
+
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
   const setSetLineup = useVolley((s) => s.setSetLineup);
@@ -216,34 +248,34 @@ function LiveMatch() {
   const finishMatch = useVolley((s) => s.finishMatch);
   const updatePlayer = useVolley((s) => s.updatePlayer);
   const setLiberoA1 = useCallback((lid: string | null) => {
-    if (!matchBase?.id) return;
+    if (!match?.id) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA1Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setLiberoA2 = useCallback((lid: string | null) => {
-    if (!matchBase?.id) return;
+    if (!match?.id) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA2Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setLiberoB1 = useCallback((lid: string | null) => {
-    if (!matchBase?.id) return;
+    if (!match?.id) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB1Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setLiberoB2 = useCallback((lid: string | null) => {
-    if (!matchBase?.id) return;
+    if (!match?.id) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB2Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setOpponentSetter = useCallback((playerId: string | null) => {
-    if (!matchBase?.id) return;
+    if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map((m) => {
-        if (m.id !== matchBase.id) return m;
+        if (m.id !== match.id) return m;
         return {
           ...m,
           metadata: {
@@ -253,7 +285,7 @@ function LiveMatch() {
         };
       })
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
 
   const teamABase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamAId), [teamsBase, matchBase]);
   const teamBBase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamBId), [teamsBase, matchBase]);
@@ -374,21 +406,6 @@ function LiveMatch() {
 
 
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
-  const { user } = useAuthUser();
-  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
-
-  const adminAll = useAllUsersAppState();
-  const allMatches = adminAll.data?.matches ?? [];
-  const allTeams = adminAll.data?.teams ?? [];
-
-  const match = useMemo(() => {
-    if (matchBase) return matchBase;
-    if (isSuperAdmin && allMatches.length > 0) {
-      const found = allMatches.find((m: Match) => m.id === matchIdParam);
-      if (found) return found;
-    }
-    return undefined;
-  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
     const targetId = match?.teamAId;
@@ -420,19 +437,17 @@ function LiveMatch() {
   if (!match || !teamA || !teamB) {
     if (isSuperAdmin && adminAll.isLoading) {
       return (
-        <CompactShell>
-          <div className="text-center py-20 px-6">
-            <div className="mb-6 flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Volleyball className="w-8 h-8 text-primary animate-bounce" />
-              </div>
+        <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+              <Volleyball className="w-8 h-8 text-primary animate-bounce" />
             </div>
-            <p className="text-2xl font-bold mb-2">Sincronizando...</p>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-              Buscando datos globales para Super Admin...
-            </p>
           </div>
-        </CompactShell>
+          <p className="text-2xl font-bold mb-2">Sincronizando...</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Buscando datos globales para Super Admin...
+          </p>
+        </div>
       );
     }
 
