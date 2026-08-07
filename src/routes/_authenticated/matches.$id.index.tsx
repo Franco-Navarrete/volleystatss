@@ -387,24 +387,26 @@ function LiveMatch() {
   }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
-    if (!match) return undefined;
-    const local = teamsBase.find((t) => t.id === match.teamAId);
+    const targetId = match?.teamAId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
     if (isSuperAdmin && allTeams.length > 0) {
-      return allTeams.find((t: Team) => t.id === match.teamAId);
+      return allTeams.find((t: Team) => t.id === targetId);
     }
     return undefined;
-  }, [teamsBase, isSuperAdmin, match, allTeams]);
+  }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
 
   const teamB = useMemo(() => {
-    if (!match) return undefined;
-    const local = teamsBase.find((t) => t.id === match.teamBId);
+    const targetId = match?.teamBId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
     if (isSuperAdmin && allTeams.length > 0) {
-      return allTeams.find((t: Team) => t.id === match.teamBId);
+      return allTeams.find((t: Team) => t.id === targetId);
     }
     return undefined;
-  }, [teamsBase, isSuperAdmin, match, allTeams]);
+  }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
 
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
