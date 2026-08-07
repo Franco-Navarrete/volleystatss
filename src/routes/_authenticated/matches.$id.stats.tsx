@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
+import { useAuthUser } from "@/hooks/use-auth";
+import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import {
   computeMatchStats, computeSetStats, computeReceptionStats, setsWon, useVolley, getSetDuration, formatDurationMs, formatLocalTime,
   getMatchStatsMode,
@@ -41,16 +43,50 @@ export const Route = createFileRoute("/_authenticated/matches/$id/stats")({
 });
 
 function StatsPage() {
-  const { id } = Route.useParams();
-  const match = useVolley((s) => s.matches.find((m) => m.id === id));
-  const teams = useVolley((s) => s.teams);
+  const { id: matchIdParam } = Route.useParams();
+  
+  const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
+  const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
-  const statsMode = useMemo(() => getMatchStatsMode(match, teams, leagues), [match, teams, leagues]);
+
+  const { user } = useAuthUser();
+  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+  const adminAll = useAllUsersAppState();
+
+  const match = useMemo(() => {
+    if (matchBase) return matchBase;
+    if (isSuperAdmin && adminAll.data?.matches) {
+      return adminAll.data.matches.find((m: any) => m.id === matchIdParam);
+    }
+    return undefined;
+  }, [matchBase, isSuperAdmin, adminAll.data?.matches, matchIdParam]);
+
+  const teamA = useMemo(() => {
+    if (!match) return undefined;
+    const local = teamsBase.find((t) => t.id === match.teamAId);
+    if (local) return local;
+    if (isSuperAdmin && adminAll.data?.teams) {
+      return adminAll.data.teams.find((t: any) => t.id === match.teamAId);
+    }
+    return undefined;
+  }, [match, teamsBase, isSuperAdmin, adminAll.data?.teams]);
+
+  const teamB = useMemo(() => {
+    if (!match) return undefined;
+    const local = teamsBase.find((t) => t.id === match.teamBId);
+    if (local) return local;
+    if (isSuperAdmin && adminAll.data?.teams) {
+      return adminAll.data.teams.find((t: any) => t.id === match.teamBId);
+    }
+    return undefined;
+  }, [match, teamsBase, isSuperAdmin, adminAll.data?.teams]);
+
+  const statsMode = useMemo(() => getMatchStatsMode(match, teamsBase, leagues), [match, teamsBase, leagues]);
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
-  const isCoach = statsMode === "entrenador" || coachOverride;
+  const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
-  if (!checkingPlanillero && isPlanilleroOnly) {
+  if (!checkingPlanillero && isPlanilleroOnly && !isSuperAdmin) {
     return (
       <AppShell>
         <div className="text-center py-20 space-y-4">
@@ -61,16 +97,23 @@ function StatsPage() {
     );
   }
 
-  const teamA = useMemo(() => teams.find((t) => t.id === match?.teamAId), [teams, match]);
-  const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);
   const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
 
   if (!match || !teamA || !teamB || !stats) {
     return (
       <AppShell>
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">Partido no encontrado.</p>
-          <Button asChild className="mt-4"><Link to="/matches">Volver</Link></Button>
+        <div className="text-center py-20 px-6">
+          <p className="text-2xl font-bold mb-2">
+            {adminAll.isLoading ? "Sincronizando estadísticas..." : "Partido no encontrado"}
+          </p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
+            {adminAll.isLoading 
+              ? "Buscando datos globales para Super Admin..."
+              : `No pudimos cargar las estadísticas del partido "${matchIdParam?.slice(0, 8)}".`}
+          </p>
+          <Button asChild variant="outline">
+            <Link to="/matches">Volver a partidos</Link>
+          </Button>
         </div>
       </AppShell>
     );
