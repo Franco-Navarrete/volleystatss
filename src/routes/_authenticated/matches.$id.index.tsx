@@ -213,31 +213,44 @@ function LiveMatch() {
   const renderCount = useRef(0);
   renderCount.current++;
   
+  console.log("HOOK [LiveMatch] 2: useParams");
   const { id: matchIdParam } = Route.useParams();
+  console.log("HOOK [LiveMatch] 3: useVolley(matchBase)");
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
+  console.log("HOOK [LiveMatch] 4: useVolley(teamsBase)");
   const teamsBase = useVolley((s) => s.teams);
+  console.log("HOOK [LiveMatch] 5: useVolley(leagues)");
   const leagues = useVolley((s) => s.leagues);
 
+  console.log("HOOK [LiveMatch] 6: useAuthUser");
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+  console.log("HOOK [LiveMatch] 7: useAllUsersAppState");
   const adminAll = useAllUsersAppState();
+  console.log("HOOK [LiveMatch] 8: useIsAdmin");
   const { isAdmin } = useIsAdmin();
+  console.log("HOOK [LiveMatch] 9: useCoachAccess");
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
   const coachOverride = coachAccess;
 
   
   // Mover hooks a nivel superior antes de cualquier return condicional
-  const deleteMatch = useVolley.getState().deleteMatch;
+  console.log("HOOK [LiveMatch] 10: useServerFn(authorizeAndDeleteMatch)");
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  console.log("HOOK [LiveMatch] 11: useState(showDeleteConfirm)");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Recuperar deleteMatch de la store de forma segura
+  const deleteMatch = useVolley.getState().deleteMatch;
 
+  console.log("HOOK [LiveMatch] 12: useMemo(allMatches)");
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
+  console.log("HOOK [LiveMatch] 13: useMemo(allTeams)");
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
   console.log(`===== LiveMatch Render =====\nRender Nº: ${renderCount.current}\n1. useRef(renderCount)\n2. useParams\n3. useVolley(match)\n4. useVolley(teams)\n5. useVolley(leagues)\n6. useAuthUser\n7. useAllUsersAppState\n8. useIsAdmin\n9. useCoachAccess\n10. useServerFn\n11. useState(deleteConfirm)\n12. useMemo(allMatches)\n13. useMemo(allTeams)\n==========================`);
 
-
-
+  console.log("HOOK [LiveMatch] 14: useMemo(match)");
   const match = useMemo(() => {
     if (matchBase) return matchBase;
     if (isSuperAdmin && allMatches.length > 0) {
@@ -247,53 +260,81 @@ function LiveMatch() {
     return undefined;
   }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
+  console.log("HOOK [LiveMatch] 15: useVolley(startMatch)");
   const startMatch = useVolley((s) => s.startMatch);
+  console.log("HOOK [LiveMatch] 16: useVolley(setInitialServingSide)");
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
+  console.log("HOOK [LiveMatch] 17: useVolley(setSetLineup)");
   const setSetLineup = useVolley((s) => s.setSetLineup);
+  console.log("HOOK [LiveMatch] 18: useVolley(confirmSetLineup)");
   const confirmSetLineup = useVolley((s) => s.confirmSetLineup);
+  console.log("HOOK [LiveMatch] 19: useVolley(startSet)");
   const startSet = useVolley((s) => s.startSet);
+  console.log("HOOK [LiveMatch] 20: useVolley(toggleSidesFlipped)");
   const toggleSidesFlipped = useVolley((s) => s.toggleSidesFlipped);
 
+  console.log("HOOK [LiveMatch] 21: useVolley(recordPoint)");
   const recordPoint = useVolley((s) => s.recordPoint);
+  console.log("HOOK [LiveMatch] 22: useVolley(recordSub)");
   const recordSub = useVolley((s) => s.recordSubstitution);
+  console.log("HOOK [LiveMatch] 23: useVolley(recordLiberoIn)");
   const recordLiberoIn = useVolley((s) => s.recordLiberoIn);
+  console.log("HOOK [LiveMatch] 24: useVolley(recordLiberoOut)");
   const recordLiberoOut = useVolley((s) => s.recordLiberoOut);
+  console.log("HOOK [LiveMatch] 25: useVolley(recordTimeout)");
   const recordTimeout = useVolley((s) => s.recordTimeout);
+  console.log("HOOK [LiveMatch] 26: useVolley(recordSanction)");
   const recordSanction = useVolley((s) => s.recordSanction);
+  console.log("HOOK [LiveMatch] 27: useVolley(overrideLineup)");
   const overrideLineup = useVolley((s) => s.overrideLineup);
+  console.log("HOOK [LiveMatch] 28: useVolley(recordReception)");
   const recordReception = useVolley((s) => s.recordReception);
+  console.log("HOOK [LiveMatch] 29: useVolley(recordDefense)");
   const recordDefense = useVolley((s) => s.recordDefense);
+  console.log("HOOK [LiveMatch] 30: useVolley(recordSetting)");
   const recordSetting = useVolley((s) => s.recordSetting);
+  console.log("HOOK [LiveMatch] 31: useVolley(updateMatchFormat)");
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
+  console.log("HOOK [LiveMatch] 32: useVolley(updateMatchMetadata)");
   const updateMatchMetadata = useVolley((s) => s.updateMatchMetadata);
+  console.log("HOOK [LiveMatch] 33: useVolley(overrideScore)");
   const overrideScore = useVolley((s) => s.overrideScore);
+  console.log("HOOK [LiveMatch] 34: useVolley(undoLastEvent)");
   const undo = useVolley((s) => s.undoLastEvent);
+  console.log("HOOK [LiveMatch] 35: useVolley(finishMatch)");
   const finishMatch = useVolley((s) => s.finishMatch);
+  console.log("HOOK [LiveMatch] 36: useVolley(updatePlayer)");
   const updatePlayer = useVolley((s) => s.updatePlayer);
+
+  console.log("HOOK [LiveMatch] 37: useCallback(setLiberoA1)");
   const setLiberoA1 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 38: useCallback(setLiberoA2)");
   const setLiberoA2 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 39: useCallback(setLiberoB1)");
   const setLiberoB1 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 40: useCallback(setLiberoB2)");
   const setLiberoB2 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 41: useCallback(setOpponentSetter)");
   const setOpponentSetter = useCallback((playerId: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
@@ -310,17 +351,23 @@ function LiveMatch() {
     }));
   }, [match?.id]);
 
+  console.log("HOOK [LiveMatch] 42: useMemo(teamABase)");
   const teamABase = useMemo(() => teamsBase.find((t) => t.id === match?.teamAId), [teamsBase, match?.teamAId]);
+  console.log("HOOK [LiveMatch] 43: useMemo(teamBBase)");
   const teamBBase = useMemo(() => teamsBase.find((t) => t.id === match?.teamBId), [teamsBase, match?.teamBId]);
 
+  console.log("HOOK [LiveMatch] 44: useState(pendingPlayer)");
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
+  console.log("HOOK [LiveMatch] 45: useState(pendingReception)");
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
+  console.log("HOOK [LiveMatch] 46: useState(pendingAttackType)");
   const [pendingAttackType, setPendingAttackType] = useState<{
     side: "A" | "B";
     playerId: string;
     type: PointType;
     zone: AttackZone;
   } | null>(null);
+  console.log("HOOK [LiveMatch] 47: useState(pendingAttackResult)");
   const [pendingAttackResult, setPendingAttackResult] = useState<{
     side: "A" | "B";
     playerId: string;
@@ -328,6 +375,7 @@ function LiveMatch() {
     zone: AttackZone;
     attackType: import("@/lib/formations/attack-types").AttackType | null;
   } | null>(null);
+  console.log("HOOK [LiveMatch] 48: useState(pendingAttackDirection)");
   const [pendingAttackDirection, setPendingAttackDirection] = useState<{
     side: "A" | "B";
     playerId: string;
@@ -339,20 +387,35 @@ function LiveMatch() {
     kind: "point" | "continue";
     isCounter: boolean;
   } | null>(null);
+  console.log("HOOK [LiveMatch] 49: useState(subState)");
   const [subState, setSubState] = useState<{ side: "A" | "B"; playerOutId: string } | null>(null);
+  console.log("HOOK [LiveMatch] 50: useState(liberoState)");
   const [liberoState, setLiberoState] = useState<{ side: "A" | "B"; liberoId: string | null } | null>(null);
+  console.log("HOOK [LiveMatch] 51: useState(showLineupEditor)");
   const [showLineupEditor, setShowLineupEditor] = useState(false);
+  console.log("HOOK [LiveMatch] 52: useState(timeoutSide)");
   const [timeoutSide, setTimeoutSide] = useState<"A" | "B" | null>(null);
+  console.log("HOOK [LiveMatch] 53: useState(sanctionSide)");
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
+  console.log("HOOK [LiveMatch] 54: useState(showLiveStats)");
   const [showLiveStats, setShowLiveStats] = useState(false);
+  console.log("HOOK [LiveMatch] 55: useState(showSettingDialog)");
   const [showSettingDialog, setShowSettingDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 56: useState(integratedRally)");
   const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string; defenderId?: string } | null>(null);
+  console.log("HOOK [LiveMatch] 57: useState(showFormatDialog)");
   const [showFormatDialog, setShowFormatDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 58: useState(showScoreDialog)");
   const [showScoreDialog, setShowScoreDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 59: useState(showFormationDialog)");
   const [showFormationDialog, setShowFormationDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 60: useState(showRotateDialog)");
   const [showRotateDialog, setShowRotateDialog] = useState(false);
+  console.log("HOOK [LiveMatch] 61: useNavigate()");
   const navigate = useNavigate();
+  console.log("HOOK [LiveMatch] 62: useRef(autoNavigatedRef)");
   const autoNavigatedRef = useRef(false);
+  console.log("HOOK [LiveMatch] 63: useEffect(autoNavigated)");
   useEffect(() => {
     if (match?.status === "finished" && !autoNavigatedRef.current) {
       autoNavigatedRef.current = true;
@@ -361,15 +424,21 @@ function LiveMatch() {
   }, [match?.status, match?.id, navigate]);
 
   // Auto-rotate to landscape on portrait phones during live scoring.
+  console.log("HOOK [LiveMatch] 64: useForceLandscape");
   useForceLandscape(match?.status === "live");
 
   
+  console.log("HOOK [LiveMatch] 65: useIsPlanilleroOnly");
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
+  console.log("HOOK [LiveMatch] 66: useIsMobileLayout");
   const isMobile = useIsMobileLayout();
 
+  console.log("HOOK [LiveMatch] 67: useCoachMode(enabled)");
   const coachEnabled = useCoachMode((s) => s.enabled);
+  console.log("HOOK [LiveMatch] 68: useCoachMode(setEnabled)");
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
+  console.log("HOOK [LiveMatch] 69: useMemo(teamA)");
   const teamA = useMemo(() => {
     const targetId = match?.teamAId;
     if (!targetId) return undefined;
@@ -381,6 +450,7 @@ function LiveMatch() {
     return undefined;
   }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
 
+  console.log("HOOK [LiveMatch] 70: useMemo(teamB)");
   const teamB = useMemo(() => {
     const targetId = match?.teamBId;
     if (!targetId) return undefined;
@@ -393,7 +463,7 @@ function LiveMatch() {
   }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
 
   // Logs para diagnóstico solicitado por el usuario
-  console.log("LiveMatch render", {
+  console.log("LiveMatch render diagnostics", {
     loading: adminAll.isLoading,
     match: !!match,
     teamA: !!teamA,
@@ -403,6 +473,7 @@ function LiveMatch() {
   });
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
+  console.log("HOOK [LiveMatch] 71: useEffect(coachHelp)");
   useEffect(() => {
     if (!coachOverride || !match?.id || !coachEnabled) return;
     const key = `rally.coachHelpShown.${match.id}`;
@@ -423,6 +494,7 @@ function LiveMatch() {
     });
   };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
+  console.log("HOOK [LiveMatch] 72: useCoachShortcuts");
   useCoachShortcuts({
     active: coachOverride && !isMobile && match?.status === "live",
     matchId: match?.id ?? null,
@@ -430,6 +502,7 @@ function LiveMatch() {
 
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
   // los maneja directamente la máquina de estados en CoachRallyPanel).
+  console.log("HOOK [LiveMatch] 73: useEffect(coachActionDispatcher)");
   useEffect(() => {
     if (!coachEnabled || !match) return;
     const handler = (e: Event) => {
@@ -639,6 +712,7 @@ function LiveMatch() {
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
   // Restriction for Coach: only stats for their team or if they own the match
+  console.log("HOOK [LiveMatch] 74: useMemo(isMyMatch)");
   const isMyMatch = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
@@ -686,17 +760,16 @@ function LiveMatch() {
       ? { [receivingSide]: receivingPhase, [servingSide]: "attack" }
       : {};
 
-  // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
-  const [now, setNow] = useState(() => Date.now());
-  
-  useEffect(() => {
-    console.log(`===== LiveMatch Render Final Hooks =====\n13. useState(now)\n14. useEffect(timer)\n==========================`);
-  }, []);
-
   const prevSetEndedAt = match.currentSet > 1
     ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
     : undefined;
   const inBreak = isLive && match.currentSet > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
+  // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
+  console.log("HOOK [LiveMatch] 75: useState(now)");
+  const [now, setNow] = useState(() => Date.now());
+  
+  console.log("HOOK [LiveMatch] 76: useEffect(timer)");
   useEffect(() => {
     if (match.status === "finished") return;
     if (!setStartedAt && !inBreak) return;
