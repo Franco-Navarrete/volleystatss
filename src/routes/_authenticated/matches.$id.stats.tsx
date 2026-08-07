@@ -785,3 +785,68 @@ function ReceptionTable({
     </section>
   );
 }
+
+function SetContent({
+  match,
+  set,
+  teamA,
+  teamB,
+  isCoach,
+}: {
+  match: Match;
+  set: NonNullable<Match["sets"][number]>;
+  teamA: Team;
+  teamB: Team;
+  isCoach: boolean;
+}) {
+  const setStats = useMemo(() => computeSetStats(match, set.number), [match, set.number]);
+  
+  const enrichTeamPlayers = useCallback((team: Team, statsPlayers: Map<string, PlayerStat>) => {
+    return [...statsPlayers.values()]
+      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = team.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, []);
+
+  const setPlayersA = useMemo(() => enrichTeamPlayers(teamA, setStats.players), [teamA, setStats.players, enrichTeamPlayers]);
+  const setPlayersB = useMemo(() => enrichTeamPlayers(teamB, setStats.players), [teamB, setStats.players, enrichTeamPlayers]);
+  const setTeamA = setStats.teams.get(teamA.id) ?? null;
+  const setTeamB = setStats.teams.get(teamB.id) ?? null;
+  const setEvents = useMemo(() => match.events.filter((e) => "setNumber" in e && e.setNumber === set.number), [match.events, set.number]);
+  const setRecA = useMemo(() => computeReceptionStats(setEvents, "A"), [setEvents]);
+  const setRecB = useMemo(() => computeReceptionStats(setEvents, "B"), [setEvents]);
+
+  return (
+    <>
+      <div className="grid sm:grid-cols-2 gap-4 mb-4">
+        <TeamSummary team={teamA} stat={setTeamA} />
+        <TeamSummary team={teamB} stat={setTeamB} />
+      </div>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <PlayerStatsTable team={teamA} rows={setPlayersA} />
+        <PlayerStatsTable team={teamB} rows={setPlayersB} />
+      </div>
+      {isCoach && (
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          <ReceptionTable team={teamA} recMap={setRecA} />
+          <ReceptionTable team={teamB} recMap={setRecB} />
+        </div>
+      )}
+      {isCoach && (
+        <div className="mt-6">
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Rotaciones</h3>
+          <RotationStatsPanel match={match} teamA={teamA} teamB={teamB} setNumber={set.number} />
+        </div>
+      )}
+      {isCoach && (
+        <div className="mt-6">
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Zonas de ataque</h3>
+          <AttackZonesPanel match={match} teamA={teamA} teamB={teamB} setNumber={set.number} />
+        </div>
+      )}
+    </>
+  );
+}
