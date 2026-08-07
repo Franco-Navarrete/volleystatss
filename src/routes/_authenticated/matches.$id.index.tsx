@@ -761,16 +761,10 @@ function LiveMatch() {
       : {};
 
   // Timer tick (1s) — activo durante set en vivo o durante el descanso entre sets.
+  console.log("HOOK [LiveMatch] 75: useState(now)");
   const [now, setNow] = useState(() => Date.now());
   
-  useEffect(() => {
-    console.log(`===== LiveMatch Render Final Hooks =====\n13. useState(now)\n14. useEffect(timer)\n==========================`);
-  }, []);
-
-  const prevSetEndedAt = match.currentSet > 1
-    ? [...match.events].reverse().find((e) => "setNumber" in e && e.setNumber === match.currentSet - 1)?.timestamp
-    : undefined;
-  const inBreak = isLive && match.currentSet > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+  console.log("HOOK [LiveMatch] 76: useEffect(timer)");
   useEffect(() => {
     if (match.status === "finished") return;
     if (!setStartedAt && !inBreak) return;
