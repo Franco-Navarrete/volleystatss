@@ -9,13 +9,14 @@ import type { ReceptionFormation, Rotation } from "./types";
  */
 
 const P = {
-  p1: { x: 85, y: 82 }, // zaguera derecha
-  p5: { x: 15, y: 82 }, // zaguera izquierda
+  p1: { x: 82, y: 80 }, // zaguera derecha
+  p5: { x: 18, y: 80 }, // zaguera izquierda
   p6: { x: 50, y: 82 }, // zaguera centro
-  z2: { x: 85, y: 18 }, // frente derecha
+  z2: { x: 82, y: 18 }, // frente derecha
   z3: { x: 50, y: 15 }, // frente centro
-  z4: { x: 15, y: 18 }, // frente izquierda
+  z4: { x: 18, y: 18 }, // frente izquierda
 } as const;
+
 
 const setterTarget = { x: 72, y: 18 };
 

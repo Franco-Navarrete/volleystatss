@@ -3547,6 +3547,8 @@ function FormationDialog({
                       : "Fase: K2/Ataque"}
                   </div>
                 )}
+
+
               </div>
               <CourtFormation 
                 team={teamA} 
