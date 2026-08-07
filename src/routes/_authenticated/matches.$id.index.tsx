@@ -712,6 +712,7 @@ function LiveMatch() {
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
   // Restriction for Coach: only stats for their team or if they own the match
+  console.log("HOOK [LiveMatch] 74: useMemo(isMyMatch)");
   const isMyMatch = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
