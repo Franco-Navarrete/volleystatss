@@ -36,7 +36,8 @@ export function useCoachAccess() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) console.warn("[useCoachAccess] error:", error.message);
-        setHasAccess((!!data && data.length > 0) || user.email === "franco.e.navarrete@gmail.com");
+        const isSuperAdmin = user.email === "franco.e.navarrete@gmail.com";
+        setHasAccess((!!data && data.length > 0) || isSuperAdmin);
         setChecking(false);
         clearTimeout(timeout);
       });

@@ -376,12 +376,16 @@ function LiveMatch() {
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
 
   if (!match || !teamA || !teamB) {
-    const isAdmin = useIsAdmin().isAdmin;
+    const isAdminResult = useIsAdmin();
+    const isAdmin = isAdminResult.isAdmin;
+    const isSuperAdmin = isAdminResult.user?.email === "franco.e.navarrete@gmail.com";
+    const deleteMatch = useVolley.getState().deleteMatch;
     const { hasAccess: isCoach } = useCoachAccess();
-    const deleteMatch = useVolley((s) => s.deleteMatch);
+
     const deleteFn = useServerFn(authorizeAndDeleteMatch);
     const navigate = useNavigate();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
 
     const handleDeleteMatch = async () => {
       try {

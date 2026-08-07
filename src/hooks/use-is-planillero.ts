@@ -29,8 +29,9 @@ export function useIsPlanilleroOnly() {
         if (cancelled) return;
         if (error) console.warn("[useIsPlanilleroOnly] error:", error.message);
         const roles = new Set((data ?? []).map((r) => r.role));
+        const isSuperAdmin = user.email === "franco.e.navarrete@gmail.com";
         setIsPlanilleroOnly(
-          roles.has("planillero") && !roles.has("admin") && !roles.has("entrenador"),
+          roles.has("planillero") && !roles.has("admin") && !roles.has("entrenador") && !isSuperAdmin,
         );
         setChecking(false);
       });
