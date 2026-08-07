@@ -14,18 +14,19 @@ import type { ReceptionFormation, Rotation } from "./types";
 
 const P = {
   // Red
-  z4: { x: 12, y: 15 },
+  z4: { x: 18, y: 15 },
   z3: { x: 50, y: 12 },
-  z2: { x: 88, y: 15 },
+  z2: { x: 82, y: 15 },
   // Zaga
-  z5: { x: 12, y: 80 },
-  z6: { x: 50, y: 85 },
-  z1: { x: 88, y: 80 },
+  z5: { x: 18, y: 80 },
+  z6: { x: 50, y: 82 },
+  z1: { x: 82, y: 80 },
   // Escondidos / Apoyo
   hide_left: { x: 8, y: 12 },
   hide_right: { x: 92, y: 12 },
   net_setter: { x: 72, y: 15 },
 } as const;
+
 
 export const FORMATIONS_5_1_RECEPTION: Record<Rotation, ReceptionFormation> = {
   // Rotación 1 (Armadora en P1)
