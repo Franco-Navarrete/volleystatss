@@ -165,16 +165,6 @@ function StatsPage() {
     );
   }
 
-  // helper to safely enrich set players
-  const enrichTeamPlayers = (team: Team, statsPlayers: Map<string, PlayerStat>) => {
-    return [...statsPlayers.values()]
-      .filter((p) => team.players.some((tp) => tp.id === p.playerId))
-      .map((p) => {
-        const tp = team.players.find((x) => x.id === p.playerId)!;
-        return { ...p, name: tp.name, number: tp.number };
-      })
-      .sort((a, b) => b.total - a.total);
-  };
 
   // move enrichPlayers out of component or useMemo to be stable, but it's not a hook, so it's fine.
   // however, let's make sure it doesn't cause issues if match/stats change.
