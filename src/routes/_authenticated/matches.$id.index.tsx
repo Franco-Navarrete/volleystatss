@@ -438,6 +438,7 @@ function LiveMatch() {
   console.log("HOOK [LiveMatch] 68: useCoachMode(setEnabled)");
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
+  console.log("HOOK [LiveMatch] 69: useMemo(teamA)");
   const teamA = useMemo(() => {
     const targetId = match?.teamAId;
     if (!targetId) return undefined;
@@ -449,6 +450,7 @@ function LiveMatch() {
     return undefined;
   }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
 
+  console.log("HOOK [LiveMatch] 70: useMemo(teamB)");
   const teamB = useMemo(() => {
     const targetId = match?.teamBId;
     if (!targetId) return undefined;
@@ -461,7 +463,7 @@ function LiveMatch() {
   }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
 
   // Logs para diagnóstico solicitado por el usuario
-  console.log("LiveMatch render", {
+  console.log("LiveMatch render diagnostics", {
     loading: adminAll.isLoading,
     match: !!match,
     teamA: !!teamA,
@@ -471,6 +473,7 @@ function LiveMatch() {
   });
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
+  console.log("HOOK [LiveMatch] 71: useEffect(coachHelp)");
   useEffect(() => {
     if (!coachOverride || !match?.id || !coachEnabled) return;
     const key = `rally.coachHelpShown.${match.id}`;
@@ -491,6 +494,7 @@ function LiveMatch() {
     });
   };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
+  console.log("HOOK [LiveMatch] 72: useCoachShortcuts");
   useCoachShortcuts({
     active: coachOverride && !isMobile && match?.status === "live",
     matchId: match?.id ?? null,
