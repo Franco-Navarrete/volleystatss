@@ -371,10 +371,13 @@ function LiveMatch() {
 
   const matchId = (Route.useParams() as { id: string }).id;
 
+  // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
+  const { user } = useAuthUser();
+  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+
   if (!match || !teamA || !teamB) {
     const isAdmin = useIsAdmin().isAdmin;
     const { hasAccess: isCoach } = useCoachAccess();
-    const { user } = useAuthUser();
     const deleteMatch = useVolley((s) => s.deleteMatch);
     const deleteFn = useServerFn(authorizeAndDeleteMatch);
     const navigate = useNavigate();

