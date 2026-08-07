@@ -1,17 +1,23 @@
 /**
- * El sistema implementa una visualización dinámica de la cancha de vóley (similar a Data Volley).
+ * Implementar vista "Cancha" en el modo EN VIVO (similar a Data Volley)
  * 
- * Invariantes del Motor de Rotación:
- * 1. Siempre hay exactamente 6 jugadores por equipo en cancha.
- * 2. Los jugadores rotan en sentido horario (P1 -> P6 -> P5 -> P4 -> P3 -> P2 -> P1).
- * 3. Al recuperar el saque, el equipo rota automáticamente una posición.
- * 4. El sistema 5-1 mueve a los jugadores a sus posiciones tácticas después del saque.
- * 5. Se visualizan roles específicos: Armador (A), Líbero (L) y Capitán (C).
+ * Objetivo:
+ * Mientras se desarrolla el partido, la pestaña Cancha debe mostrar en tiempo real la distribución de ambos equipos sobre la cancha.
+ * 
+ * Implementar formaciones de recepción con reacomodo automático (Sistema 5-1)
+ * 
+ * La cancha debe representar dos momentos distintos del juego:
+ * 
+ * Estado 1 - Recepción
+ * Cuando el rival está por sacar, el equipo debe mostrarse exactamente como se ubica para recibir el saque.
+ * Esta formación depende de la rotación actual (1 a 6) y el sistema táctico (5-1).
+ * 
+ * Estado 2 - Formación táctica
+ * Cuando el equipo recibe correctamente el saque (o cuando comienza el rally), los jugadores se desplazan
+ * automáticamente hacia su posición táctica (animación 200–500 ms).
  * 
  * Gestión Multi-tenant:
  * - Federación -> Liga -> Club -> Entrenador.
- * - Los entrenadores gestionan sus propios clubes y categorías.
- * - Seguridad basada en RLS y roles (Super Admin, Coach, etc.).
  */
 
 /**
