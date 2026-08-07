@@ -432,7 +432,7 @@ function LiveMatch() {
               ? "Buscando datos del partido en la nube para Super Admin..."
               : match && (!teamA || !teamB)
                 ? `No se pudieron cargar los equipos asociados ("${match.teamAId?.slice(0, 4) ?? '??'}" vs "${match.teamBId?.slice(0, 4) ?? '??'}").`
-                : `No pudimos encontrar el partido con ID "${matchIdParam.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`}
+                : `No pudimos encontrar el partido con ID "${matchIdParam?.slice(0, 8) ?? '...'}"...`. Es posible que haya sido eliminado o que exista un error de sincronización.`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
