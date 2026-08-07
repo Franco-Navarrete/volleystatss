@@ -213,8 +213,6 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 }
 
 function LiveMatch() {
-  
-  
   const { id: matchIdParam } = Route.useParams();
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
   const teamsBase = useVolley((s) => s.teams);
