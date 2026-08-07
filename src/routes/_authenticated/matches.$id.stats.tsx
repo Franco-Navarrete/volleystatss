@@ -119,7 +119,12 @@ function StatsPage() {
     isSuperAdmin
   });
 
-  if (!checkingPlanillero && isPlanilleroOnly && !isSuperAdmin) {
+  const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
+  const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
+  const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
+  const showNotFound = (!match || !teamA || !teamB || !stats) && !isLoadingGlobal;
+
+  if (showPlanilleroGate) {
     return (
       <AppShell>
         <div className="text-center py-20 space-y-4">
@@ -130,7 +135,8 @@ function StatsPage() {
     );
   }
 
-  if (!match || !teamA || !teamB || !stats) {
+  if (showSyncing) {
+
     if (isSuperAdmin && adminAll.isLoading) {
       console.log("RETURN loading stats (SuperAdmin syncing)");
       return (
