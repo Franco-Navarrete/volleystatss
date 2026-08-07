@@ -460,8 +460,6 @@ function LiveMatch() {
       toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
     }
   };
-
-  // Mover hooks que estaban después de los retornos
   const isMyMatch = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
