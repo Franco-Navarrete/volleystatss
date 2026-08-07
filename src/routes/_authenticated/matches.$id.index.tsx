@@ -343,14 +343,14 @@ function LiveMatch() {
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
-    if (matchBase?.status === "finished" && !autoNavigatedRef.current) {
+    if (match?.status === "finished" && !autoNavigatedRef.current) {
       autoNavigatedRef.current = true;
-      navigate({ to: "/matches/$id/stats", params: { id: matchBase.id } });
+      navigate({ to: "/matches/$id/stats", params: { id: match.id } });
     }
-  }, [matchBase?.status, matchBase?.id, navigate]);
+  }, [match?.status, match?.id, navigate]);
 
   // Auto-rotate to landscape on portrait phones during live scoring.
-  useForceLandscape(matchBase?.status === "live");
+  useForceLandscape(match?.status === "live");
 
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly } = useIsPlanilleroOnly();
@@ -393,13 +393,13 @@ function LiveMatch() {
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
   useEffect(() => {
-    if (!coachOverride || !matchBase?.id || !coachEnabled) return;
-    const key = `rally.coachHelpShown.${matchBase.id}`;
+    if (!coachOverride || !match?.id || !coachEnabled) return;
+    const key = `rally.coachHelpShown.${match.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, "1");
     window.dispatchEvent(new CustomEvent("coach:help:open"));
-  }, [coachEnabled, coachOverride, matchBase?.id]);
+  }, [coachEnabled, coachOverride, match?.id]);
 
   const toggleCoachMode = () => {
     const next = !coachEnabled;

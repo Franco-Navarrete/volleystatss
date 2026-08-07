@@ -63,6 +63,10 @@ function StatsPage() {
   const { user } = useAuthUser();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
+  
+  const { hasAccess: coachOverride } = useCoachAccess();
+  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
+
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
 
@@ -101,8 +105,6 @@ function StatsPage() {
     return getMatchStatsMode(match, teamsBase, leagues);
   }, [match, teamsBase, leagues]);
   
-  const { hasAccess: coachOverride } = useCoachAccess();
-  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
 
   const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
