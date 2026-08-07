@@ -398,7 +398,7 @@ function LiveMatch() {
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
 
-  if (!matchBaseBase || !teamA || !teamB) {
+  if (!match || !teamA || !teamB) {
     const deleteMatch = useVolley.getState().deleteMatch;
     const deleteFn = useServerFn(authorizeAndDeleteMatch);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -568,7 +568,7 @@ function LiveMatch() {
 
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
-  const receivingSide: "A" | "B" = matchBase.servingSide === "A" ? "B" : "A";
+  const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
   const receivingTeam = receivingSide === "A" ? teamA : teamB;
   const receivingOnCourt = receivingSide === "A" ? match.onCourtA : match.onCourtB;
   const designatedLiberos = (receivingSide === "A"
