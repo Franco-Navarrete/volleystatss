@@ -22,7 +22,8 @@ export function useCanCreateMatches() {
       setLoading(false);
       return;
     }
-    if (isAdmin || isCoach) {
+    const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+    if (isAdmin || isCoach || isSuperAdmin) {
       setAllowed(true);
       setLoading(false);
       return;
@@ -82,7 +83,8 @@ export function useCanManageTeams() {
       setLoading(false);
       return;
     }
-    if (isAdmin) {
+    const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+    if (isAdmin || isSuperAdmin) {
       setAllowed(true);
       setLoading(false);
       return;

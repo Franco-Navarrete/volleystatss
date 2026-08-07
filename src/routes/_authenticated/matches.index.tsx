@@ -41,14 +41,15 @@ function MatchesIndex() {
   const adminAll = useAllUsersAppState();
 
   const teams = useMemo(() => {
-    if (isAdmin) {
+    const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+    if (isAdmin || isSuperAdmin) {
       if (!adminAll.data) return localTeams;
       const byId = new Map(localTeams.map((t) => [t.id, t]));
       for (const t of adminAll.data.teams) if (!byId.has(t.id)) byId.set(t.id, t);
       return [...byId.values()];
     }
     return localTeams;
-  }, [isAdmin, adminAll.data, localTeams]);
+  }, [isAdmin, user?.email, adminAll.data, localTeams]);
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 

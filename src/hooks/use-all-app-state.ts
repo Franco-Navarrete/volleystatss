@@ -21,10 +21,12 @@ interface MergedAppState {
  * RLS ya permite a los admins leer todas las filas de `app_state`.
  */
 export function useAllUsersAppState() {
-  const { isAdmin, checking } = useIsAdmin();
+  const { isAdmin, user, checking } = useIsAdmin();
+  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+  
   return useQuery<MergedAppState>({
     queryKey: ["admin-all-app-state"],
-    enabled: !checking && isAdmin,
+    enabled: !checking && (isAdmin || isSuperAdmin),
     staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("app_state").select("data");
