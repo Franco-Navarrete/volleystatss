@@ -63,8 +63,9 @@ function MatchesIndex() {
       }
     }
 
-    // 2. Si es admin, ve todo.
-    if (isAdmin) return baseMatches;
+    // 2. Si es admin o super admin, ve todo.
+    if (isAdmin || user?.email === "franco.e.navarrete@gmail.com") return baseMatches;
+
 
     // 3. Si es Coach u otro rol, filtramos estrictamente por propiedad.
     //    Solo debe ver sus partidos (donde al menos uno de sus equipos propiedad participe).
@@ -86,7 +87,7 @@ function MatchesIndex() {
       
       return false;
     });
-  }, [isAdmin, adminAll.data, localMatches, localTeams, user?.id]);
+  }, [isAdmin, adminAll.data, localMatches, localTeams, user?.id, user?.email]);
 
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
