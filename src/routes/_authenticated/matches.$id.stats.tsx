@@ -109,9 +109,6 @@ function StatsPage() {
 
   const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
   const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
-
-
-
   const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
