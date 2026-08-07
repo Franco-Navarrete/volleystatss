@@ -446,9 +446,6 @@ function LiveMatch() {
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
-
-
-
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = (!match || !teamA || !teamB) && isLoadingGlobal;
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal;
