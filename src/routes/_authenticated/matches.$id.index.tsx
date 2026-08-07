@@ -370,6 +370,7 @@ function LiveMatch() {
 
 
   const matchId = (Route.useParams() as { id: string }).id;
+  const id = matchId; // alias for the code below
 
   // Acceso universal para Super Admin incluso si el objeto match/teams no cargó localmente aún
   const { user } = useAuthUser();
