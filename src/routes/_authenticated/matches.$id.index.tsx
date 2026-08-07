@@ -260,53 +260,81 @@ function LiveMatch() {
     return undefined;
   }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
+  console.log("HOOK [LiveMatch] 15: useVolley(startMatch)");
   const startMatch = useVolley((s) => s.startMatch);
+  console.log("HOOK [LiveMatch] 16: useVolley(setInitialServingSide)");
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
+  console.log("HOOK [LiveMatch] 17: useVolley(setSetLineup)");
   const setSetLineup = useVolley((s) => s.setSetLineup);
+  console.log("HOOK [LiveMatch] 18: useVolley(confirmSetLineup)");
   const confirmSetLineup = useVolley((s) => s.confirmSetLineup);
+  console.log("HOOK [LiveMatch] 19: useVolley(startSet)");
   const startSet = useVolley((s) => s.startSet);
+  console.log("HOOK [LiveMatch] 20: useVolley(toggleSidesFlipped)");
   const toggleSidesFlipped = useVolley((s) => s.toggleSidesFlipped);
 
+  console.log("HOOK [LiveMatch] 21: useVolley(recordPoint)");
   const recordPoint = useVolley((s) => s.recordPoint);
+  console.log("HOOK [LiveMatch] 22: useVolley(recordSub)");
   const recordSub = useVolley((s) => s.recordSubstitution);
+  console.log("HOOK [LiveMatch] 23: useVolley(recordLiberoIn)");
   const recordLiberoIn = useVolley((s) => s.recordLiberoIn);
+  console.log("HOOK [LiveMatch] 24: useVolley(recordLiberoOut)");
   const recordLiberoOut = useVolley((s) => s.recordLiberoOut);
+  console.log("HOOK [LiveMatch] 25: useVolley(recordTimeout)");
   const recordTimeout = useVolley((s) => s.recordTimeout);
+  console.log("HOOK [LiveMatch] 26: useVolley(recordSanction)");
   const recordSanction = useVolley((s) => s.recordSanction);
+  console.log("HOOK [LiveMatch] 27: useVolley(overrideLineup)");
   const overrideLineup = useVolley((s) => s.overrideLineup);
+  console.log("HOOK [LiveMatch] 28: useVolley(recordReception)");
   const recordReception = useVolley((s) => s.recordReception);
+  console.log("HOOK [LiveMatch] 29: useVolley(recordDefense)");
   const recordDefense = useVolley((s) => s.recordDefense);
+  console.log("HOOK [LiveMatch] 30: useVolley(recordSetting)");
   const recordSetting = useVolley((s) => s.recordSetting);
+  console.log("HOOK [LiveMatch] 31: useVolley(updateMatchFormat)");
   const updateMatchFormat = useVolley((s) => s.updateMatchFormat);
+  console.log("HOOK [LiveMatch] 32: useVolley(updateMatchMetadata)");
   const updateMatchMetadata = useVolley((s) => s.updateMatchMetadata);
+  console.log("HOOK [LiveMatch] 33: useVolley(overrideScore)");
   const overrideScore = useVolley((s) => s.overrideScore);
+  console.log("HOOK [LiveMatch] 34: useVolley(undoLastEvent)");
   const undo = useVolley((s) => s.undoLastEvent);
+  console.log("HOOK [LiveMatch] 35: useVolley(finishMatch)");
   const finishMatch = useVolley((s) => s.finishMatch);
+  console.log("HOOK [LiveMatch] 36: useVolley(updatePlayer)");
   const updatePlayer = useVolley((s) => s.updatePlayer);
+
+  console.log("HOOK [LiveMatch] 37: useCallback(setLiberoA1)");
   const setLiberoA1 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 38: useCallback(setLiberoA2)");
   const setLiberoA2 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 39: useCallback(setLiberoB1)");
   const setLiberoB1 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 40: useCallback(setLiberoB2)");
   const setLiberoB2 = useCallback((lid: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
       matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
     }));
   }, [match?.id]);
+  console.log("HOOK [LiveMatch] 41: useCallback(setOpponentSetter)");
   const setOpponentSetter = useCallback((playerId: string | null) => {
     if (!match?.id) return;
     useVolley.setState((s) => ({
@@ -323,7 +351,9 @@ function LiveMatch() {
     }));
   }, [match?.id]);
 
+  console.log("HOOK [LiveMatch] 42: useMemo(teamABase)");
   const teamABase = useMemo(() => teamsBase.find((t) => t.id === match?.teamAId), [teamsBase, match?.teamAId]);
+  console.log("HOOK [LiveMatch] 43: useMemo(teamBBase)");
   const teamBBase = useMemo(() => teamsBase.find((t) => t.id === match?.teamBId), [teamsBase, match?.teamBId]);
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
