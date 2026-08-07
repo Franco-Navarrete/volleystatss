@@ -62,24 +62,26 @@ function StatsPage() {
   }, [matchBase, isSuperAdmin, adminAll.data?.matches, matchIdParam]);
 
   const teamA = useMemo(() => {
-    if (!match) return undefined;
-    const local = teamsBase.find((t) => t.id === match.teamAId);
+    const targetId = match?.teamAId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
     if (isSuperAdmin && adminAll.data?.teams) {
-      return adminAll.data.teams.find((t: any) => t.id === match.teamAId);
+      return adminAll.data.teams.find((t: any) => t.id === targetId);
     }
     return undefined;
-  }, [match, teamsBase, isSuperAdmin, adminAll.data?.teams]);
+  }, [match?.teamAId, teamsBase, isSuperAdmin, adminAll.data?.teams]);
 
   const teamB = useMemo(() => {
-    if (!match) return undefined;
-    const local = teamsBase.find((t) => t.id === match.teamBId);
+    const targetId = match?.teamBId;
+    if (!targetId) return undefined;
+    const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
     if (isSuperAdmin && adminAll.data?.teams) {
-      return adminAll.data.teams.find((t: any) => t.id === match.teamBId);
+      return adminAll.data.teams.find((t: any) => t.id === targetId);
     }
     return undefined;
-  }, [match, teamsBase, isSuperAdmin, adminAll.data?.teams]);
+  }, [match?.teamBId, teamsBase, isSuperAdmin, adminAll.data?.teams]);
 
   const statsMode = useMemo(() => getMatchStatsMode(match, teamsBase, leagues), [match, teamsBase, leagues]);
   const { hasAccess: coachOverride } = useCoachAccess();

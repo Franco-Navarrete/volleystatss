@@ -379,19 +379,19 @@ function LiveMatch() {
 
   const match = useMemo(() => {
     if (matchBase) return matchBase;
-    if (isSuperAdmin) return allMatches.find((m: Match) => m.id === matchIdParam);
+    if (isSuperAdmin && allMatches.length > 0) return allMatches.find((m: Match) => m.id === matchIdParam);
     return undefined;
   }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
 
   const teamA = useMemo(() => {
     if (teamABase) return teamABase;
-    if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamAId);
+    if (isSuperAdmin && match && allTeams.length > 0) return allTeams.find((t: Team) => t.id === match.teamAId);
     return undefined;
   }, [teamABase, isSuperAdmin, match, allTeams]);
 
   const teamB = useMemo(() => {
     if (teamBBase) return teamBBase;
-    if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamBId);
+    if (isSuperAdmin && match && allTeams.length > 0) return allTeams.find((t: Team) => t.id === match.teamBId);
     return undefined;
   }, [teamBBase, isSuperAdmin, match, allTeams]);
 
