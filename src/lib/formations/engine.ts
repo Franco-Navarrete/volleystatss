@@ -246,10 +246,18 @@ export function resolveFormation(opts: {
   // El slot 'libero' en la formación se usa para dibujar al líbero o al central zaguero si no hay líbero.
   if (liberoOnCourt && lineup.libero) {
     roleToPlayer.libero = lineup.libero;
+    // Si el líbero está en cancha, reemplaza al central zaguero (middle_back).
+    // Para que el central zaguero no aparezca duplicado en los slots, lo quitamos de su rol original.
+    if (roleToPlayer.middle_back === lineup.libero) {
+       // Esto no debería pasar si middleBackId se calculó bien, pero por seguridad:
+       roleToPlayer.middle_back = undefined;
+    }
   } else {
     // Si no hay líbero, el rol 'libero' en el dibujo táctico lo ocupa el central zaguero.
     roleToPlayer.libero = middleBackId;
+    roleToPlayer.middle_back = undefined;
   }
+
 
   const slots: ResolvedSlot[] = formation.slots.map((s) => {
     const o = override[s.role];
