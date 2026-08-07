@@ -380,28 +380,28 @@ function LiveMatch() {
   const allMatches = adminAll.data?.matches ?? [];
   const allTeams = adminAll.data?.teams ?? [];
 
-  const effectiveMatch = useMemo(() => {
+  const match = useMemo(() => {
     if (match) return match;
     if (isSuperAdmin) return allMatches.find((m: Match) => m.id === id);
     return undefined;
   }, [match, isSuperAdmin, allMatches, id]);
 
-  const effectiveTeamA = useMemo(() => {
+  const teamA = useMemo(() => {
     if (teamA) return teamA;
-    if (isSuperAdmin && effectiveMatch) return allTeams.find((t: Team) => t.id === effectiveMatch.teamAId);
+    if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamAId);
     return undefined;
-  }, [teamA, isSuperAdmin, effectiveMatch, allTeams]);
+  }, [teamA, isSuperAdmin, match, allTeams]);
 
-  const effectiveTeamB = useMemo(() => {
+  const teamB = useMemo(() => {
     if (teamB) return teamB;
-    if (isSuperAdmin && effectiveMatch) return allTeams.find((t: Team) => t.id === effectiveMatch.teamBId);
+    if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamBId);
     return undefined;
-  }, [teamB, isSuperAdmin, effectiveMatch, allTeams]);
+  }, [teamB, isSuperAdmin, match, allTeams]);
 
   const { isAdmin } = useIsAdmin();
   const { hasAccess: isCoach } = useCoachAccess();
 
-  if (!effectiveMatch || !effectiveTeamA || !effectiveTeamB) {
+  if (!match || !teamA || !teamB) {
     const deleteMatch = useVolley.getState().deleteMatch;
     const deleteFn = useServerFn(authorizeAndDeleteMatch);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -433,9 +433,9 @@ function LiveMatch() {
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {isSyncing 
               ? "Buscando datos del partido en la nube para Super Admin..."
-              : !effectiveMatch 
+              : !match 
                 ? `No pudimos encontrar el partido con ID "${id.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
-                : `No se pudieron cargar los equipos asociados ("${effectiveMatch?.teamAId?.slice(0, 4) ?? '??'}" vs "${effectiveMatch?.teamBId?.slice(0, 4) ?? '??'}").`}
+                : `No se pudieron cargar los equipos asociados ("${match?.teamAId?.slice(0, 4) ?? '??'}" vs "${match?.teamBId?.slice(0, 4) ?? '??'}").`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
@@ -536,25 +536,25 @@ function LiveMatch() {
     );
   }
 
-  const w = setsWon(effectiveMatch);
-  const currentSet = effectiveMatch.sets.find((s) => s.number === effectiveMatch.currentSet)!;
-  const server = currentServer(effectiveMatch);
-  const isLive = effectiveMatch.status === "live";
-  const toUsedA = timeoutsUsedInSet(effectiveMatch, "A", effectiveMatch.currentSet);
-  const toUsedB = timeoutsUsedInSet(effectiveMatch, "B", effectiveMatch.currentSet);
-  const leftSide: "A" | "B" = effectiveMatch.sidesFlipped ? "B" : "A";
-  const rightSide: "A" | "B" = effectiveMatch.sidesFlipped ? "A" : "B";
-  const leftTeam = leftSide === "A" ? effectiveTeamA : effectiveTeamB;
-  const rightTeam = rightSide === "A" ? effectiveTeamA : effectiveTeamB;
+  const w = setsWon(match);
+  const currentSet = match.sets.find((s) => s.number === match.currentSet)!;
+  const server = currentServer(match);
+  const isLive = match.status === "live";
+  const toUsedA = timeoutsUsedInSet(match, "A", match.currentSet);
+  const toUsedB = timeoutsUsedInSet(match, "B", match.currentSet);
+  const leftSide: "A" | "B" = match.sidesFlipped ? "B" : "A";
+  const rightSide: "A" | "B" = match.sidesFlipped ? "A" : "B";
+  const leftTeam = leftSide === "A" ? teamA : teamB;
+  const rightTeam = rightSide === "A" ? teamA : teamB;
   const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
-  const lineupConfirmed = (effectiveMatch.confirmedLineupSets ?? []).includes(effectiveMatch.currentSet);
+  const lineupConfirmed = (match.confirmedLineupSets ?? []).includes(match.currentSet);
   // The set can't start until the formation for this set is confirmed.
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
-  const setStartedAt = effectiveMatch.setStartTimes?.[effectiveMatch.currentSet];
+  const setStartedAt = match.setStartTimes?.[match.currentSet];
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const statsMode = getMatchStatsMode(effectiveMatch, teams, leagues);
-  const isCoachMode = statsMode === "entrenador" || coachOverride;
+  const statsMode = getMatchStatsMode(match, teams, leagues);
+  const isCoach = statsMode === "entrenador" || coachOverride;
 
   // Restriction for Coach: only stats for their team or if they own the match
   const isMyMatch = useMemo(() => {
@@ -562,21 +562,21 @@ function LiveMatch() {
     if (!user) return false;
     // Super admin bypass
     if (user.email === "franco.e.navarrete@gmail.com") return true;
-    if (effectiveMatch.metadata?.ownerId === user.id) return true;
+    if (match.metadata?.ownerId === user.id) return true;
     const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
-    return myTeamIds.has(effectiveMatch.teamAId) || myTeamIds.has(effectiveMatch.teamBId);
-  }, [isAdmin, user, effectiveMatch.teamAId, effectiveMatch.teamBId, effectiveMatch.metadata?.ownerId]);
+    return myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId);
+  }, [isAdmin, user, match.teamAId, match.teamBId, match.metadata?.ownerId]);
 
-  const canScout = isAdmin || (isCoachMode && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
+  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
 
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
-  const receivingSide: "A" | "B" = effectiveMatch.servingSide === "A" ? "B" : "A";
-  const receivingTeam = receivingSide === "A" ? effectiveTeamA : effectiveTeamB;
-  const receivingOnCourt = receivingSide === "A" ? effectiveMatch.onCourtA : effectiveMatch.onCourtB;
+  const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
+  const receivingTeam = receivingSide === "A" ? teamA : teamB;
+  const receivingOnCourt = receivingSide === "A" ? match.onCourtA : match.onCourtB;
   const designatedLiberos = (receivingSide === "A"
-    ? [effectiveMatch.liberoA1Id, effectiveMatch.liberoA2Id]
-    : [effectiveMatch.liberoB1Id, effectiveMatch.liberoB2Id]
+    ? [match.liberoA1Id, match.liberoA2Id]
+    : [match.liberoB1Id, match.liberoB2Id]
   ).filter(Boolean) as string[];
   const receiverIds = new Set<string>(
     receivingOnCourt.filter((pid) => {
@@ -587,7 +587,7 @@ function LiveMatch() {
       return false;
     })
   );
-  const needsReception = isCoachMode && !actionsDisabled && needsReceptionForRally(effectiveMatch, effectiveMatch.currentSet, receivingSide);
+  const needsReception = isCoach && !actionsDisabled && needsReceptionForRally(match, match.currentSet, receivingSide);
   // Configuración de formación por equipo (modo entrenador):
   //   - Equipo que RECIBE:
   //       · Sin recepción registrada en el rally → plantilla "reception" (W).
@@ -595,7 +595,7 @@ function LiveMatch() {
   //         posición táctica de ataque (P1=armadora/opuesta, P6=punta zaguero,
   //         P5=líbero/central; opp→z2, mid→z3, out→z4).
   //   - Equipo que SACA → SIEMPRE formación de ataque.
-  const lastReceptionSide = getCurrentRallyReceptionSide(effectiveMatch, effectiveMatch.currentSet);
+  const lastReceptionSide = getCurrentRallyReceptionSide(match, match.currentSet);
   const receptionRegistered = lastReceptionSide === receivingSide;
   const receivingPhase: "reception" | "attack" = receptionRegistered ? "attack" : "reception";
   const servingSide: "A" | "B" = receivingSide === "A" ? "B" : "A";
