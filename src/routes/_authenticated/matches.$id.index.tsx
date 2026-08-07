@@ -585,6 +585,16 @@ function LiveMatch() {
     return () => clearInterval(t);
   }, [match?.status, match?.currentSet, match?.sets, match?.setStartTimes, match?.events]);
 
+  // Variables calculadas para el renderizado final (después de los hooks)
+  const isLive = match?.status === "live";
+  const currentSet = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
+  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
+  const prevSetEndedAt = (match?.currentSet ?? 1) > 1
+    ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
   if (showSyncing) {
     console.log("RETURN loading (SuperAdmin syncing)");
     return (
