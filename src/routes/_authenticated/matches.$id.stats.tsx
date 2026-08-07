@@ -166,10 +166,12 @@ function StatsPage() {
           <Button asChild variant="outline">
             <Link to="/matches">Volver a partidos</Link>
           </Button>
-        </div>
-      </AppShell>
     );
   }
+
+  // A partir de aquí garantizamos que match, teamA, teamB y stats existen para TypeScript
+  if (!match || !teamA || !teamB || !stats) return null;
+
 
   const playersA = useMemo(() => {
     if (!teamA || !stats) return [];
