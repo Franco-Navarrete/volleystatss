@@ -184,9 +184,9 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 }
 
 function LiveMatch() {
-  const { id: matchIdParam } = Route.useParams();
-  const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
-  const teamsBase = useVolley((s) => s.teams);
+  const { id: id } = Route.useParams();
+  const match = useVolley((s) => s.matches.find((m) => m.id === id));
+  const teams = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
@@ -212,34 +212,34 @@ function LiveMatch() {
   const finishMatch = useVolley((s) => s.finishMatch);
   const updatePlayer = useVolley((s) => s.updatePlayer);
   const setLiberoA1 = useCallback((lid: string | null) => {
-    if (!matchBaseBaseBase) return;
+    if (!match) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA1Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setLiberoA2 = useCallback((lid: string | null) => {
-    if (!matchBaseBaseBase) return;
+    if (!match) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoA2Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setLiberoB1 = useCallback((lid: string | null) => {
-    if (!matchBaseBaseBase) return;
+    if (!match) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB1Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setLiberoB2 = useCallback((lid: string | null) => {
-    if (!matchBaseBaseBase) return;
+    if (!match) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === matchBase.id ? {...m, liberoB2Id: lid} : m)
+      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
   const setOpponentSetter = useCallback((playerId: string | null) => {
-    if (!matchBaseBaseBase) return;
+    if (!match) return;
     useVolley.setState((s) => ({
       matches: s.matches.map((m) => {
-        if (m.id !== matchBase.id) return m;
+        if (m.id !== match.id) return m;
         return {
           ...m,
           metadata: {
@@ -249,10 +249,10 @@ function LiveMatch() {
         };
       })
     }));
-  }, [matchBase?.id]);
+  }, [match?.id]);
 
-  const teamABase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamAId), [teamsBase, matchBase]);
-  const teamBBase = useMemo(() => teamsBase.find((t) => t.id === matchBase?.teamBId), [teamsBase, matchBase]);
+  const teamA = useMemo(() => teams.find((t) => t.id === match?.teamAId), [teams, match]);
+  const teamB = useMemo(() => teams.find((t) => t.id === match?.teamBId), [teams, match]);
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
@@ -295,14 +295,14 @@ function LiveMatch() {
   const navigate = useNavigate();
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
-    if (matchBase?.status === "finished" && !autoNavigatedRef.current) {
+    if (match?.status === "finished" && !autoNavigatedRef.current) {
       autoNavigatedRef.current = true;
-      navigate({ to: "/matches/$id/stats", params: { id: matchBase.id } });
+      navigate({ to: "/matches/$id/stats", params: { id: match.id } });
     }
-  }, [matchBase?.status, matchBase?.id, navigate]);
+  }, [match?.status, match?.id, navigate]);
 
   // Auto-rotate to landscape on portrait phones during live scoring.
-  useForceLandscape(matchBase?.status === "live");
+  useForceLandscape(match?.status === "live");
 
   // Admins y entrenadores acceden al modo entrenador aunque la liga no lo defina.
   const { hasAccess: coachOverride } = useCoachAccess();
@@ -313,13 +313,13 @@ function LiveMatch() {
 
   // Primera activación de Coach Mode dentro de este partido → abre la ayuda una sola vez.
   useEffect(() => {
-    if (!coachOverride || !matchBaseBase?.id || !coachEnabled) return;
-    const key = `rally.coachHelpShown.${matchBase.id}`;
+    if (!coachOverride || !match?.id || !coachEnabled) return;
+    const key = `rally.coachHelpShown.${match.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, "1");
     window.dispatchEvent(new CustomEvent("coach:help:open"));
-  }, [coachEnabled, coachOverride, matchBase?.id]);
+  }, [coachEnabled, coachOverride, match?.id]);
 
   const toggleCoachMode = () => {
     const next = !coachEnabled;
@@ -333,19 +333,19 @@ function LiveMatch() {
   };
   // Coach Mode: solo activo para coach/admin, no móvil, y partido en vivo.
   useCoachShortcuts({
-    active: coachOverride && !isMobile && matchBase?.status === "live",
-    matchId: matchBase?.id ?? null,
+    active: coachOverride && !isMobile && match?.status === "live",
+    matchId: match?.id ?? null,
   });
 
   // Dispatcher central: sólo atajos EXTERNOS al rally (los fundamentos
   // los maneja directamente la máquina de estados en CoachRallyPanel).
   useEffect(() => {
-    if (!coachEnabled || !matchBase) return;
+    if (!coachEnabled || !match) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: CoachAction }>).detail;
       const action = detail?.action;
       if (!action) return;
-      const side = matchBase.servingSide as "A" | "B";
+      const side = match.servingSide as "A" | "B";
       switch (action) {
         case "timeout":
           handleTimeout(side);
@@ -365,7 +365,7 @@ function LiveMatch() {
     window.addEventListener("coach:action", handler as EventListener);
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coachEnabled, matchBase?.id, matchBase?.servingSide, matchBase?.status]);
+  }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
 
 
 
@@ -378,22 +378,22 @@ function LiveMatch() {
   const allTeams = adminAll.data?.teams ?? [];
 
   const match = useMemo(() => {
-    if (matchBase) return matchBase;
-    if (isSuperAdmin) return allMatches.find((m: Match) => m.id === matchIdParam);
+    if (match) return match;
+    if (isSuperAdmin) return allMatches.find((m: Match) => m.id === id);
     return undefined;
-  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
+  }, [match, isSuperAdmin, allMatches, id]);
 
   const teamA = useMemo(() => {
-    if (teamABase) return teamABase;
+    if (teamA) return teamA;
     if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamAId);
     return undefined;
-  }, [teamABase, isSuperAdmin, match, allTeams]);
+  }, [teamA, isSuperAdmin, match, allTeams]);
 
   const teamB = useMemo(() => {
-    if (teamBBase) return teamBBase;
+    if (teamB) return teamB;
     if (isSuperAdmin && match) return allTeams.find((t: Team) => t.id === match.teamBId);
     return undefined;
-  }, [teamBBase, isSuperAdmin, match, allTeams]);
+  }, [teamB, isSuperAdmin, match, allTeams]);
 
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess } = useCoachAccess();
@@ -405,8 +405,8 @@ function LiveMatch() {
 
     const handleDeleteMatch = async () => {
       try {
-        await deleteFn({ data: { matchId: matchIdParam } });
-        deleteMatch(matchIdParam);
+        await deleteFn({ data: { matchId: id } });
+        deleteMatch(id);
         toast.success("Partido eliminado correctamente");
         navigate({ to: "/matches" });
       } catch (e) {
@@ -430,8 +430,8 @@ function LiveMatch() {
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {isSyncing 
               ? "Buscando datos del partido en la nube para Super Admin..."
-              : !matchBase 
-                ? `No pudimos encontrar el partido con ID "${matchIdParam.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
+              : !match 
+                ? `No pudimos encontrar el partido con ID "${id.slice(0, 8)}...". Es posible que haya sido eliminado o que exista un error de sincronización.`
                 : `No se pudieron cargar los equipos asociados ("${match?.teamAId?.slice(0, 4) ?? '??'}" vs "${match?.teamBId?.slice(0, 4) ?? '??'}").`}
           </p>
           
@@ -495,7 +495,7 @@ function LiveMatch() {
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
-                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchIdParam}</span></p>
+                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{id}</span></p>
                 {match && (
                   <>
                     <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match.metadata?.ownerId || "Global"}</span></p>
@@ -550,7 +550,7 @@ function LiveMatch() {
   const setStartedAt = match.setStartTimes?.[match.currentSet];
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const statsMode = getMatchStatsMode(match, teamsBase, leagues);
+  const statsMode = getMatchStatsMode(match, teams, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride;
 
   // Restriction for Coach: only stats for their team or if they own the match
@@ -664,7 +664,7 @@ function LiveMatch() {
       if (match.metadata?.skipDefenseScouting) {
         // Si el scouting de defensa está desactivado, registramos una defensa neutra
         // automáticamente y abrimos el diálogo directamente en el paso de Armado.
-        recordDefense(matchBase.id, side, playerId, "neutral");
+        recordDefense(match.id, side, playerId, "neutral");
         setIntegratedRally({ side });
         return;
       }
@@ -687,7 +687,7 @@ function LiveMatch() {
       setPendingPlayer(null);
       return;
     }
-    recordPoint(matchBase.id, pendingPlayer.side, type, pendingPlayer.playerId);
+    recordPoint(match.id, pendingPlayer.side, type, pendingPlayer.playerId);
     setPendingPlayer(null);
   };
 
@@ -704,7 +704,7 @@ function LiveMatch() {
     const { side, playerId, type, zone, attackType } = pendingAttackResult;
     setPendingAttackResult(null);
     if (result === "error") {
-      recordPoint(matchBase.id, side, "attack_error", playerId, zone, attackType ?? undefined);
+      recordPoint(match.id, side, "attack_error", playerId, zone, attackType ?? undefined);
       return;
     }
     const isCounter = type === "counter_attack";
@@ -728,7 +728,7 @@ function LiveMatch() {
     setPendingAttackDirection(null);
     if (kind === "point") {
       recordPoint(
-        matchBase.id,
+        match.id,
         side,
         type,
         playerId,
@@ -738,7 +738,7 @@ function LiveMatch() {
       );
     } else {
       // Continúa el rally → intento de ataque neutro (no afecta marcador ni eficiencia).
-      useVolley.getState().recordAttackAttempt(matchBase.id, side, playerId, {
+      useVolley.getState().recordAttackAttempt(match.id, side, playerId, {
         attackZone: zone,
         attackType: attackType ?? undefined,
         attackDirection: dir ?? undefined,
@@ -750,7 +750,7 @@ function LiveMatch() {
   const submitReception = (rating: ReceptionRating) => {
     if (!pendingReception) return;
     const side = pendingReception.side;
-    recordReception(matchBase.id, side, pendingReception.playerId, rating);
+    recordReception(match.id, side, pendingReception.playerId, rating);
     setPendingReception(null);
     // Solo continuar el flujo integrado si la recepción permite armar.
     const canSet = rating === "double_positive" || rating === "positive" || rating === "neutral";
@@ -765,7 +765,7 @@ function LiveMatch() {
   };
 
   const handleTimeout = (side: "A" | "B") => {
-    const ok = recordTimeout(matchBase.id, side);
+    const ok = recordTimeout(match.id, side);
     if (ok) setTimeoutSide(side);
     else alert(`${side === "A" ? teamA.name : teamB.name} ya usó los 2 tiempos del set.`);
   };
@@ -842,7 +842,7 @@ function LiveMatch() {
           rallyCtx={rallyCtx}
           isReadOnly={!canScout}
           canUndo={match.status !== "scheduled" && match.events.length > 0}
-          onUndo={() => undo(matchBase.id)}
+          onUndo={() => undo(match.id)}
           onOpenSetting={() => setShowSettingDialog(true)}
           onOpenFormation={() => setShowFormationDialog(true)}
           onOpenLineup={() => setShowLineupEditor(true)}
@@ -851,13 +851,13 @@ function LiveMatch() {
           onOpenFormat={() => setShowFormatDialog(true)}
           onOpenScore={() => setShowScoreDialog(true)}
           onOpenRotate={() => setShowRotateDialog(true)}
-          onFinishMatch={() => finishMatch(matchBase.id)}
+          onFinishMatch={() => finishMatch(match.id)}
           onCambio={(side) => setSubState({ side, playerOutId: "" })}
           onLibero={(side) => setLiberoState({ side, liberoId: null })}
           onTimeout={(side) => handleTimeout(side)}
           onSancion={(side) => setSanctionSide(side)}
-          onStartSet={() => startSet(matchBase.id)}
-          onToggleSides={() => toggleSidesFlipped(matchBase.id)}
+          onStartSet={() => startSet(match.id)}
+          onToggleSides={() => toggleSidesFlipped(match.id)}
           needsLineup={needsLineup}
           needsSetStart={needsSetStart}
           courtSlot={
@@ -924,7 +924,7 @@ function LiveMatch() {
             <div>
               <button
                 type="button"
-                onClick={() => toggleSidesFlipped(matchBase.id)}
+                onClick={() => toggleSidesFlipped(match.id)}
                 title="Invertir lados"
                 className="md:mt-2 device-tablet:mt-0 inline-flex items-center justify-center size-6 md:size-9 device-tablet:size-7 rounded-md md:rounded-lg border border-border/60 text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95"
               >
@@ -947,7 +947,7 @@ function LiveMatch() {
                   <button
                     key={side}
                     type="button"
-                    onClick={() => setInitialServingSide(matchBase.id, side)}
+                    onClick={() => setInitialServingSide(match.id, side)}
                     className={`px-3 py-1.5 rounded-md border-2 text-xs md:text-sm font-semibold transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
                   >
                     {t.shortName}
@@ -955,7 +955,7 @@ function LiveMatch() {
                 );
               })}
             </div>
-            <Button onClick={() => startMatch(matchBase.id)} size="lg" className="bg-gradient-primary text-primary-foreground shadow-glow">
+            <Button onClick={() => startMatch(match.id)} size="lg" className="bg-gradient-primary text-primary-foreground shadow-glow">
               <Play className="size-4 md:size-5" /> Iniciar partido
             </Button>
           </div>
@@ -987,7 +987,7 @@ function LiveMatch() {
               </p>
             </div>
             <Button asChild size="sm" variant="outline" className="h-8 md:h-10 text-xs md:text-sm">
-              <Link to="/matches/$id/stats" params={{ id: matchBase.id }}>
+              <Link to="/matches/$id/stats" params={{ id: match.id }}>
                 <ChartBarBig className="size-3.5 md:size-4" /> Ver estadísticas
               </Link>
             </Button>
@@ -1009,7 +1009,7 @@ function LiveMatch() {
                   <button
                     key={side}
                     type="button"
-                    onClick={() => setInitialServingSide(matchBase.id, side)}
+                    onClick={() => setInitialServingSide(match.id, side)}
                     className={`px-3 py-1.5 rounded-md border-2 text-xs md:text-sm font-semibold transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
                   >
                     {t.shortName}
@@ -1017,7 +1017,7 @@ function LiveMatch() {
                 );
               })}
             </div>
-            <Button size="sm" className="h-8 md:h-10 bg-success text-success-foreground hover:bg-success/90" onClick={() => startSet(matchBase.id)}>
+            <Button size="sm" className="h-8 md:h-10 bg-success text-success-foreground hover:bg-success/90" onClick={() => startSet(match.id)}>
               <Play className="size-3.5 md:size-4" /> Iniciar Set {match.currentSet}
             </Button>
           </div>
@@ -1088,7 +1088,7 @@ function LiveMatch() {
 
         {/* Bottom action row — solo primarias visibles; el resto en un menú "⋮" */}
         <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-1 md:gap-3 shrink-0">
-          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" disabled={match.status === "scheduled" || match.events.length === 0} onClick={() => undo(matchBase.id)}>
+          <Button size="sm" variant="secondary" className="h-9 md:h-11 text-xs md:text-sm" disabled={match.status === "scheduled" || match.events.length === 0} onClick={() => undo(match.id)}>
             <Undo2 className="size-4" /> Deshacer
           </Button>
           {isCoach ? (
@@ -1142,7 +1142,7 @@ function LiveMatch() {
               )}
               {!isPlanilleroOnly && (
                 <DropdownMenuItem asChild>
-                  <Link to="/matches/$id/stats" params={{ id: matchBase.id }}>
+                  <Link to="/matches/$id/stats" params={{ id: match.id }}>
                     <ChartBarBig className="size-4" /> Estadísticas completas
                   </Link>
                 </DropdownMenuItem>
@@ -1150,17 +1150,17 @@ function LiveMatch() {
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Video</DropdownMenuLabel>
               <DropdownMenuItem asChild>
-                <Link to="/video/$matchId/live" params={{ matchId: matchBase.id }}>
+                <Link to="/video/$matchId/live" params={{ matchId: match.id }}>
                   <Crosshair className="size-4" /> Scouting en vivo (cámara)
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/video/$matchId/scout" params={{ matchId: matchBase.id }}>
+                <Link to="/video/$matchId/scout" params={{ matchId: match.id }}>
                   <Film className="size-4" /> Scouting con video
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/video/$matchId" params={{ matchId: matchBase.id }}>
+                <Link to="/video/$matchId" params={{ matchId: match.id }}>
                   <Film className="size-4" /> Ver / cargar video
                 </Link>
               </DropdownMenuItem>
@@ -1188,8 +1188,8 @@ function LiveMatch() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => {
-                    const next = !matchBase.metadata?.skipDefenseScouting;
-                    updateMatchMetadata(matchBase.id, { skipDefenseScouting: next });
+                    const next = !match.metadata?.skipDefenseScouting;
+                    updateMatchMetadata(match.id, { skipDefenseScouting: next });
                     toast.success(next ? "Scouting de defensa desactivado" : "Scouting de defensa activado");
                   }}>
                     {match.metadata?.skipDefenseScouting ? (
@@ -1205,7 +1205,7 @@ function LiveMatch() {
               <DropdownMenuItem
                 disabled={match.status === "finished"}
                 onSelect={() => {
-                  if (confirm("¿Finalizar el partido manualmente?")) finishMatch(matchBase.id);
+                  if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id);
                 }}
                 className="text-destructive focus:text-destructive"
               >
@@ -1314,7 +1314,7 @@ function LiveMatch() {
                 {isActiveLibero && replacedPlayer && (
                   <button
                     onClick={() => {
-                      recordLiberoOut(matchBase.id, pendingPlayer.side);
+                      recordLiberoOut(match.id, pendingPlayer.side);
                       setPendingPlayer(null);
                     }}
                     className="mt-2 w-full min-h-11 px-3 py-2 rounded-lg font-bold text-[13px] leading-tight bg-destructive text-destructive-foreground hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
@@ -1496,7 +1496,7 @@ function LiveMatch() {
                         setSubState({ ...subState, playerOutId: p.id });
                         return;
                       }
-                      recordSub(matchBase.id, subState.side, p.id, subState.playerOutId);
+                      recordSub(match.id, subState.side, p.id, subState.playerOutId);
                       setSubState(null);
                     }}
                     className="flex min-w-0 items-center gap-1.5 rounded-lg bg-secondary p-1.5 text-left transition hover:bg-secondary/70 active:scale-95 md:p-3"
@@ -1534,7 +1534,7 @@ function LiveMatch() {
         <DialogContent className="max-w-xs">
           <FormatDialog
             match={match}
-            onSave={(stw, pps) => { updateMatchFormat(matchBase.id, stw, pps); setShowFormatDialog(false); }}
+            onSave={(stw, pps) => { updateMatchFormat(match.id, stw, pps); setShowFormatDialog(false); }}
             onCancel={() => setShowFormatDialog(false)}
           />
         </DialogContent>
@@ -1560,7 +1560,7 @@ function LiveMatch() {
               if (current.filter(Boolean).length !== 6) return;
               const n = ((steps % 6) + 6) % 6;
               const next = current.map((_, i) => current[(i + n) % 6]);
-              overrideLineup(matchBase.id, side, next);
+              overrideLineup(match.id, side, next);
             };
             const setSetterAt = (targetPos: number) => {
               if (setterIdx < 0) return;
@@ -1620,7 +1620,7 @@ function LiveMatch() {
               team={sanctionSide === "A" ? teamA : teamB}
               onCourt={sanctionSide === "A" ? match.onCourtA : match.onCourtB}
               onSubmit={(playerId, sanction) => {
-                recordSanction(matchBase.id, sanctionSide, playerId, sanction);
+                recordSanction(match.id, sanctionSide, playerId, sanction);
                 setSanctionSide(null);
               }}
             />
@@ -1677,7 +1677,7 @@ function LiveMatch() {
                       variant="destructive"
                       className="w-full"
                       onClick={() => {
-                        recordLiberoOut(matchBase.id, liberoState.side);
+                        recordLiberoOut(match.id, liberoState.side);
                         setLiberoState(null);
                       }}
                     >
@@ -1731,7 +1731,7 @@ function LiveMatch() {
                         return (
                           <button key={p.id}
                             disabled={!isBackRow}
-                            onClick={() => { if (!isBackRow) return; recordLiberoIn(matchBase.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
+                            onClick={() => { if (!isBackRow) return; recordLiberoIn(match.id, liberoState.side, liberoState.liberoId!, p.id); setLiberoState(null); }}
                             className={`flex items-center gap-1.5 p-1.5 md:p-3 rounded-lg transition ${isBackRow ? "bg-secondary hover:bg-destructive/20 active:scale-95" : "bg-secondary/30 opacity-40 cursor-not-allowed"}`}>
                             <span className="size-6 md:size-8 rounded scoreboard-digit font-bold bg-background flex items-center justify-center text-[10px] md:text-xs shrink-0">{p.number}</span>
                             <span className="text-[11px] md:text-sm truncate min-w-0">{p.name}</span>
@@ -1763,16 +1763,16 @@ function LiveMatch() {
                 if (armadorB !== null) metadataUpdate[`manualArmadorB_set${match.currentSet}`] = armadorB;
                 
                 if (Object.keys(metadataUpdate).length > 0) {
-                  updateMatchMetadata(matchBase.id, metadataUpdate);
+                  updateMatchMetadata(match.id, metadataUpdate);
                 }
 
                 if (setNotStarted) {
-                  setSetLineup(matchBase.id, "A", lineupA);
-                  setSetLineup(matchBase.id, "B", lineupB);
-                  confirmSetLineup(matchBase.id);
+                  setSetLineup(match.id, "A", lineupA);
+                  setSetLineup(match.id, "B", lineupB);
+                  confirmSetLineup(match.id);
                 } else {
-                  overrideLineup(matchBase.id, "A", lineupA);
-                  overrideLineup(matchBase.id, "B", lineupB);
+                  overrideLineup(match.id, "A", lineupA);
+                  overrideLineup(match.id, "B", lineupB);
                 }
                 setShowLineupEditor(false);
               }}
@@ -1790,7 +1790,7 @@ function LiveMatch() {
             teamB={teamB}
             scoreA={currentSet.scoreA}
             scoreB={currentSet.scoreB}
-            onSave={(sa, sb) => { overrideScore(matchBase.id, sa, sb); setShowScoreDialog(false); }}
+            onSave={(sa, sb) => { overrideScore(match.id, sa, sb); setShowScoreDialog(false); }}
             onCancel={() => setShowScoreDialog(false)}
           />
         </DialogContent>
@@ -1830,7 +1830,7 @@ function LiveMatch() {
           onCourtB={match.onCourtB}
           onSubmit={(payload) => {
             const { side, ...rest } = payload;
-            recordSetting(matchBase.id, side, rest);
+            recordSetting(match.id, side, rest);
           }}
         />
       )}
@@ -1849,7 +1849,7 @@ function LiveMatch() {
             playerId: integratedRally.receiverId,
             onRegister: (rating) => {
               const side = integratedRally.side;
-              recordReception(matchBase.id, side, integratedRally.receiverId!, rating);
+              recordReception(match.id, side, integratedRally.receiverId!, rating);
               const map: Partial<Record<ReceptionRating, SettingQuality>> = {
                 double_positive: "++",
                 positive: "+",
@@ -1863,7 +1863,7 @@ function LiveMatch() {
             playerId: integratedRally.defenderId,
             onRegister: (rating) => {
               const side = integratedRally.side;
-              recordDefense(matchBase.id, side, integratedRally.defenderId!, rating);
+              recordDefense(match.id, side, integratedRally.defenderId!, rating);
               // Toda defensa que no cierra el rally habilita armado (calidad neutra).
               return { proceed: rating !== "error", quality: "!" };
             },
@@ -1876,7 +1876,7 @@ function LiveMatch() {
               payload.action === "rotation_attack" || payload.action === "counter_attack";
             const isCounter =
               payload.action === "counter_attack" || payload.action === "counter_neutral";
-            recordSetting(matchBase.id, integratedRally.side, {
+            recordSetting(match.id, integratedRally.side, {
               setterId: payload.setterId,
               quality: payload.setterQuality,
               attackZone: payload.attackZone,
@@ -1893,7 +1893,7 @@ function LiveMatch() {
             });
             if (isNeutral) {
               useVolley.getState().recordAttackAttempt(
-                matchBase.id,
+                match.id,
                 integratedRally.side,
                 payload.attackerId,
                 { attackZone, attackDirection: payload.attackDirection, isCounter },
@@ -1906,13 +1906,13 @@ function LiveMatch() {
               return !!defenderId;
             }
             if (payload.action === "block") {
-              recordPoint(matchBase.id, integratedRally.side === "A" ? "B" : "A", "block", null);
+              recordPoint(match.id, integratedRally.side === "A" ? "B" : "A", "block", null);
               setIntegratedRally(null);
               return;
             }
             const type: PointType = payload.action as PointType;
             recordPoint(
-              matchBase.id,
+              match.id,
               integratedRally.side,
               type,
               payload.attackerId,
@@ -3570,7 +3570,7 @@ function FormationDialog({
                 <div className="text-sm font-bold text-foreground">{teamA.name}</div>
                 {match.status === "live" && (
                   <div className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">
-                    {matchBase.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A") 
+                    {match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A") 
                       ? "Fase: Recepción" 
                       : "Fase: K2/Ataque"}
                   </div>
@@ -3585,7 +3585,7 @@ function FormationDialog({
                   teamA, 
                   "A", 
                   "5-1", 
-                  (matchBase.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack"
+                  (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack"
                 )} 
               />
 
@@ -3595,7 +3595,7 @@ function FormationDialog({
                 <div className="text-sm font-bold text-foreground">{teamB.name}</div>
                 {match.status === "live" && (
                   <div className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold uppercase tracking-wider">
-                    {matchBase.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B") 
+                    {match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B") 
                       ? "Fase: Recepción" 
                       : "Fase: K2/Ataque"}
                   </div>
@@ -3608,7 +3608,7 @@ function FormationDialog({
                   teamB, 
                   "B", 
                   "5-1", 
-                  (matchBase.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack"
+                  (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack"
                 )} 
               />
 
