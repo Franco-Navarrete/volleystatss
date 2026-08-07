@@ -165,9 +165,6 @@ function StatsPage() {
     );
   }
 
-
-  // move enrichPlayers out of component or useMemo to be stable, but it's not a hook, so it's fine.
-  // however, let's make sure it doesn't cause issues if match/stats change.
   const playersA = useMemo(() => {
     if (!teamA || !stats) return [];
     return [...stats.players.values()]
