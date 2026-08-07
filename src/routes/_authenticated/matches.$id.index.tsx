@@ -210,6 +210,9 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 }
 
 function LiveMatch() {
+  const renderCount = useRef(0);
+  renderCount.current++;
+  
   const { id: matchIdParam } = Route.useParams();
   const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
   const teamsBase = useVolley((s) => s.teams);
@@ -228,6 +231,9 @@ function LiveMatch() {
 
   const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
   const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
+
+  console.log(`===== LiveMatch Render =====\nRender Nº: ${renderCount.current}\n1. useParams\n2. useVolley(match)\n3. useVolley(teams)\n4. useVolley(leagues)\n5. useAuthUser\n6. useAllUsersAppState\n7. useIsAdmin\n8. useCoachAccess\n9. useServerFn\n10. useState(deleteConfirm)\n11. useMemo(allMatches)\n12. useMemo(allTeams)\n==========================`);
+
 
 
   const match = useMemo(() => {
