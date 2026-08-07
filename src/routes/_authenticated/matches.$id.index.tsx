@@ -436,14 +436,14 @@ function LiveMatch() {
             </div>
           </div>
           <p className="text-2xl font-bold mb-2">
-            {isSyncing ? "Sincronizando partido..." : "Partido no encontrado"}
+            {isSyncing ? "Sincronizando..." : "Partido no encontrado"}
           </p>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
             {isSyncing 
-              ? "Sincronizando partido desde la nube..."
+              ? "Buscando datos globales para Super Admin..."
               : match && (!teamA || !teamB)
-                ? `Error de integridad: Faltan datos de equipos (${match.teamAId?.slice(0, 4)} / ${match.teamBId?.slice(0, 4)}).`
-                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}". Si acabas de recibir el link, esperá unos segundos a que se sincronice.`}
+                ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
+                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
           </p>
           
           <div className="flex flex-col gap-3 max-w-xs mx-auto">
