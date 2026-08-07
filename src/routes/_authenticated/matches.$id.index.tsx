@@ -532,12 +532,15 @@ function LiveMatch() {
   const isMyMatch = useMemo(() => {
     if (isAdmin) return true;
     if (!user) return false;
+    // Super admin bypass
+    if (user.email === "franco.e.navarrete@gmail.com") return true;
     if (match.metadata?.ownerId === user.id) return true;
     const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
     return myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId);
   }, [isAdmin, user, match.teamAId, match.teamBId, match.metadata?.ownerId]);
 
-  const canScout = isAdmin || (isCoach && isMyMatch);
+  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
+
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
   const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
