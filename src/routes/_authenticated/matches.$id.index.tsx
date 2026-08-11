@@ -1318,12 +1318,13 @@ function LiveMatch() {
               <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
                 <Hourglass className="size-4" /> Formato del partido
               </DropdownMenuItem>
-              {coachOverride && (
+              {coachAccess && (
                 <DropdownMenuItem onSelect={() => setShowFormationDialog(true)}>
                   <Users className="size-4" /> Cancha 5-1
                 </DropdownMenuItem>
               )}
-              {coachOverride && (
+              {coachAccess && (
+
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Coach Mode</DropdownMenuLabel>
