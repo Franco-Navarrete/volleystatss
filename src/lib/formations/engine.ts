@@ -34,6 +34,7 @@ export function inferLineupFromPlayers(
   players: Player[],
   onCourt: string[],
   designatedLiberoIds: string[] = [],
+  setRoles: Record<string, PlayerPosition> = {},
 ): TeamLineup {
   const inCourt = onCourt
     .map((id) => players.find((p) => p.id === id))
@@ -41,17 +42,19 @@ export function inferLineupFromPlayers(
   const designated = new Set(designatedLiberoIds);
   const libero =
     inCourt.find((p) => designated.has(p.id)) ??
-    (designated.size === 0 ? inCourt.find((p) => p.position === "libero") : undefined);
+    (designated.size === 0 ? inCourt.find((p) => (setRoles[p.id] || p.position) === "libero") : undefined);
   
   // tacticalPlayers son los 6 en cancha. 
   // No filtramos al líbero porque el motor 5-1 necesita 6 slots físicos.
   const tacticalPlayers = inCourt;
 
 
-  const setter = tacticalPlayers.find((p) => p.position === "armador");
-  const opposite = tacticalPlayers.find((p) => p.position === "opuesto");
-  const middles = tacticalPlayers.filter((p) => p.position === "central");
-  const outsides = tacticalPlayers.filter((p) => p.position === "punta");
+  const getEffectivePos = (p: Player) => setRoles[p.id] || p.position;
+
+  const setter = tacticalPlayers.find((p) => getEffectivePos(p) === "armador");
+  const opposite = tacticalPlayers.find((p) => getEffectivePos(p) === "opuesto");
+  const middles = tacticalPlayers.filter((p) => getEffectivePos(p) === "central");
+  const outsides = tacticalPlayers.filter((p) => getEffectivePos(p) === "punta");
 
   const lineup: TeamLineup = {
     setter: setter?.id,
@@ -61,7 +64,7 @@ export function inferLineupFromPlayers(
     outside1: outsides[0]?.id,
     outside2: outsides[1]?.id,
     libero: libero?.id,
-    liberoReplaces: designated.size > 0 || inCourt.some(p => p.position === "libero") ? "middle2" : "none",
+    liberoReplaces: designated.size > 0 || inCourt.some(p => (setRoles[p.id] || p.position) === "libero") ? "middle2" : "none",
   };
 
   // Fallback: si el equipo no tiene todas las posiciones tácticas asignadas
@@ -200,8 +203,10 @@ export function resolveFormation(opts: {
   customs?: Partial<Record<Rotation, Partial<Record<TacticalRole, { x: number; y: number }>>>>;
   /** Si el líbero está en cancha reemplazando a una central, swap. */
   liberoOnCourt?: boolean;
+  /** Effective roles for the set (e.g. for Universals). */
+  setRoles?: Record<string, PlayerPosition>;
 }): ResolvedFormation {
-  const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack", onCourt = [] } = opts;
+  const { system, rotation, lineup, customs, liberoOnCourt = true, phase = "attack", onCourt = [], setRoles = {} } = opts;
   
   if (onCourt.length !== 6) {
     // Si llegamos aquí con != 6, forzamos un array de 6 para evitar errores de renderizado.

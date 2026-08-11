@@ -491,6 +491,8 @@ export interface Match {
   venue?: string;
   /** Datos tácticos adicionales. */
   metadata?: Record<string, any>;
+  /** Assigned roles for "Universal" players in each set. { [setNumber]: { [playerId]: assignedRole } } */
+  setPlayerRoles?: Record<number, Record<string, PlayerPosition>>;
 }
 
 /** Semilla de categorías sugeridas para partidos (editable en Ajustes). */
@@ -1184,6 +1186,16 @@ export const useVolley = create<VolleyState>()(
               status: m.status,
               lastLocalChange: Date.now()
             };
+          }),
+        })),
+
+      setUniversalRole: (matchId, setNumber, playerId, assignedRole) =>
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const spr = { ...(m.setPlayerRoles ?? {}) };
+            spr[setNumber] = { ...(spr[setNumber] ?? {}), [playerId]: assignedRole };
+            return { ...m, setPlayerRoles: spr, lastLocalChange: Date.now() };
           }),
         })),
 
