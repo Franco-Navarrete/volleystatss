@@ -748,9 +748,11 @@ function LiveMatch() {
     // jugador de ese equipo, abrimos el flujo integrado en el paso "Defensa".
     if (
       isCoach &&
+      rallyCtx &&
       rallyCtx.currentPhase === "defense" &&
       rallyCtx.currentPhaseSide === side &&
       !rallyCtx.finished
+
     ) {
       if (match.metadata?.skipDefenseScouting) {
         // Si el scouting de defensa está desactivado, registramos una defensa neutra
@@ -933,7 +935,7 @@ function LiveMatch() {
           toUsedA={toUsedA}
           toUsedB={toUsedB}
           actionsDisabled={actionsDisabled}
-          rallyCtx={rallyCtx}
+          rallyCtx={rallyCtx!}
           isReadOnly={!canScout}
           canUndo={match.status !== "scheduled" && match.events.length > 0}
           onUndo={() => undo(match.id)}
@@ -1133,7 +1135,7 @@ function LiveMatch() {
           <div className="relative min-h-0 flex flex-col gap-1">
             {/* Barra de progreso del rally (fase actual) */}
             {isLive && (
-              <RallyProgressBar ctx={rallyCtx} />
+              <RallyProgressBar ctx={rallyCtx!} />
             )}
 
             <div className="relative flex-1 min-h-0">
