@@ -106,14 +106,14 @@ export function buildEnrichedAttacks(
     setStateFor(ev.setNumber);
 
     if ("kind" in ev && ev.kind === "reception") {
-      lastPhase[ev.side] = "K1";
+      lastPhase[ev.side as "A" | "B"] = "K1";
       continue;
     }
     if ("kind" in ev && ev.kind === "defense") {
       // El equipo que defiende pasa a atacar en contraataque.
       const attacker = ev.side === "A" ? "B" : "A";
       // El defensor recupera balón: su próximo ataque será K2.
-      lastPhase[ev.side] = "K2";
+      lastPhase[ev.side as "A" | "B"] = "K2";
       // El equipo que estaba atacando pierde la iniciativa de este rally.
       lastPhase[attacker] = null;
       continue;
@@ -139,7 +139,7 @@ export function buildEnrichedAttacks(
         setNumber: se.setNumber,
         rotation: (se.side === "A" ? rotA : rotB) + 1,
         setterZone: setterLookup ? setterLookup(se.side, se.timestamp, se.setNumber) : null,
-        phase: lastPhase[se.side],
+        phase: lastPhase[se.side as "A" | "B"],
         timestamp: se.timestamp,
       });
     } else if ("kind" in ev && ev.kind === "attackAttempt") {
@@ -155,7 +155,7 @@ export function buildEnrichedAttacks(
           setNumber: ae.setNumber,
           rotation: (ae.side === "A" ? rotA : rotB) + 1,
           setterZone: setterLookup ? setterLookup(ae.side, ae.timestamp, ae.setNumber) : null,
-          phase: ae.isCounter ? "K2" : (lastPhase[ae.side] ?? "K1"),
+          phase: ae.isCounter ? "K2" : (lastPhase[ae.side as "A" | "B"] ?? "K1"),
           timestamp: ae.timestamp,
         });
       }
