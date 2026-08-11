@@ -45,9 +45,9 @@ interface Props {
 }
 
 const IMPACT_STYLES: Record<Impact, string> = {
-  high: "border-destructive/40 bg-destructive/10 text-destructive-foreground",
-  med: "border-warning/40 bg-warning/10 text-warning-foreground",
-  low: "border-primary/30 bg-primary/5 text-foreground",
+  high: "border-destructive/40 bg-destructive/10 text-white dark:text-destructive-foreground",
+  med: "border-warning/40 bg-warning/10 text-white dark:text-warning-foreground",
+  low: "border-primary/30 bg-primary/5 text-white dark:text-foreground",
 };
 const IMPACT_LABEL: Record<Impact, string> = { high: "ALTO", med: "MEDIO", low: "BAJO" };
 
@@ -265,8 +265,8 @@ function RecommendationsPanel({ recs }: { recs: CoachRecommendation[] }) {
               <div className="flex items-start gap-2">
                 <Target className="size-4 text-primary shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold leading-tight">{r.title}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{r.detail}</div>
+                  <div className="text-sm font-bold leading-tight text-white dark:text-foreground">{r.title}</div>
+                  <div className="text-xs text-white/70 dark:text-muted-foreground mt-0.5">{r.detail}</div>
                 </div>
               </div>
             </div>
