@@ -1173,7 +1173,7 @@ function LiveMatch() {
               {/* Chips flotantes de contexto (no consumen alto de layout) */}
               {isLive && (
                 <RallyContextCards
-                  ctx={rallyCtx}
+                  ctx={rallyCtx!}
                   teamA={teamA}
                   teamB={teamB}
                 />
