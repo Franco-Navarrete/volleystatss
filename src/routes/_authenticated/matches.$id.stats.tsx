@@ -67,18 +67,12 @@ function StatsPage() {
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
 
-  const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
-  const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
+  const allMatches = adminAll.data?.matches ?? [];
+  const allTeams = adminAll.data?.teams ?? [];
 
-  const match = useMemo(() => {
-    if (matchBase) return matchBase;
-    if (isSuperAdmin && allMatches.length > 0) {
-      return allMatches.find((m: any) => m.id === matchIdParam);
-    }
-    return undefined;
-  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
+  const match = matchBase || (isSuperAdmin && allMatches.length > 0 ? allMatches.find((m: any) => m.id === matchIdParam) : undefined);
 
-  const teamA = useMemo(() => {
+  const teamA = (() => {
     const targetId = match?.teamAId;
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
@@ -87,9 +81,9 @@ function StatsPage() {
       return allTeams.find((t: any) => t.id === targetId);
     }
     return undefined;
-  }, [match?.teamAId, teamsBase, isSuperAdmin, allTeams]);
+  })();
 
-  const teamB = useMemo(() => {
+  const teamB = (() => {
     const targetId = match?.teamBId;
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
@@ -98,21 +92,47 @@ function StatsPage() {
       return allTeams.find((t: any) => t.id === targetId);
     }
     return undefined;
-  }, [match?.teamBId, teamsBase, isSuperAdmin, allTeams]);
+  })();
 
-  const statsMode = useMemo(() => {
-    if (!match) return "liga";
-    return getMatchStatsMode(match, teamsBase, leagues);
-  }, [match, teamsBase, leagues]);
-  
+  const statsMode = match ? getMatchStatsMode(match, teamsBase, leagues) : "liga";
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
-
-  const stats = useMemo(() => match ? computeMatchStats(match) : null, [match]);
+  const stats = match ? computeMatchStats(match) : null;
   const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
+
   const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
   const showNotFound = (!match || !teamA || !teamB || !stats) && !isLoadingGlobal;
+
+  const currentSetNumber = match?.currentSet;
+  const orderedSets = (() => {
+    if (!match) return [];
+    const current = match.sets.find((s) => s.number === currentSetNumber);
+    const others = match.sets.filter((s) => s.number !== currentSetNumber).sort((a, b) => a.number - b.number);
+    return current ? [current, ...others] : match.sets;
+  })();
+
+  const playersA = (() => {
+    if (!teamA || !stats) return [];
+    return [...stats.players.values()]
+      .filter((p) => teamA.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = teamA.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  })();
+
+  const playersB = (() => {
+    if (!teamB || !stats) return [];
+    return [...stats.players.values()]
+      .filter((p) => teamB.players.some((tp) => tp.id === p.playerId))
+      .map((p) => {
+        const tp = teamB.players.find((x) => x.id === p.playerId)!;
+        return { ...p, name: tp.name, number: tp.number };
+      })
+      .sort((a, b) => b.total - a.total);
+  })();
 
   if (showPlanilleroGate) {
     return (
@@ -161,38 +181,11 @@ function StatsPage() {
 
 
 
-  const playersA = useMemo(() => {
-    if (!teamA || !stats) return [];
-    return [...stats.players.values()]
-      .filter((p) => teamA.players.some((tp) => tp.id === p.playerId))
-      .map((p) => {
-        const tp = teamA.players.find((x) => x.id === p.playerId)!;
-        return { ...p, name: tp.name, number: tp.number };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [teamA, stats]);
-
-  const playersB = useMemo(() => {
-    if (!teamB || !stats) return [];
-    return [...stats.players.values()]
-      .filter((p) => teamB.players.some((tp) => tp.id === p.playerId))
-      .map((p) => {
-        const tp = teamB.players.find((x) => x.id === p.playerId)!;
-        return { ...p, name: tp.name, number: tp.number };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [teamB, stats]);
 
   const teamStatA = teamA && stats ? (stats.teams.get(teamA.id) ?? null) : null;
   const teamStatB = teamB ? (stats.teams.get(teamB.id) ?? null) : null;
   const w = setsWon(match);
 
-  const currentSetNumber = match.currentSet;
-  const orderedSets = useMemo(() => {
-    const current = match.sets.find((s) => s.number === currentSetNumber);
-    const others = match.sets.filter((s) => s.number !== currentSetNumber).sort((a, b) => a.number - b.number);
-    return current ? [current, ...others] : match.sets;
-  }, [match.sets, currentSetNumber]);
 
 
   const allPlayers: EnrichedPlayer[] = [
