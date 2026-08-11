@@ -1200,7 +1200,10 @@ function LiveMatch() {
                 setLiberoB2={setLiberoB2}
                 setOpponentSetter={setOpponentSetter}
                 blockPick={blockPick}
+                formationA={formationA}
+                formationB={formationB}
               />
+
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
               {showLineupEditor && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
                 <UniversalRoleDialog
