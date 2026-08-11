@@ -31,7 +31,7 @@ function LeaguePage() {
   const matches = useVolley((s) => s.matches);
   const leagues = useVolley((s) => s.leagues);
   const seed = useVolley((s) => s.seedDemo);
-  const seedMatch = useVolley((s) => s.seedDemoMatch);
+  const seedMatch = useVolley((s) => s.seedDemoMatch || (() => null));
   const { allowed: canCreate } = useCanCreateMatches();
 
   const [genderFilter, setGenderFilter] = useState<GenderFilterValue>("all");

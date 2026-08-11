@@ -675,6 +675,7 @@ interface VolleyState {
   deleteMatch: (id: string) => void;
   clearAllMatches: () => void;
   seedDemo: () => void;
+  seedDemoMatch: () => string | null;
 }
 
 
@@ -1049,6 +1050,7 @@ interface VolleyState {
   startMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
   clearAllMatches: () => void;
+  seedDemoMatch: () => string | null;
   setInitialServingSide: (id: string, side: "A" | "B") => void;
   setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   confirmSetLineup: (matchId: string) => void;
@@ -1747,11 +1749,32 @@ export const useVolley = create<VolleyState>()(
           lastLocalChange: Date.now()
         })),
 
-      clearAllMatches: () =>
-        set((s) => ({
-          matches: [],
-          lastLocalChange: Date.now()
-        })),
+      seedDemoMatch: () => {
+        const teams = get().teams;
+        if (teams.length < 2) return null;
+        const matchId = uid();
+        const m: Match = {
+          id: matchId,
+          teamAId: teams[0].id,
+          teamBId: teams[1].id,
+          startingLineupA: teams[0].players.slice(0, 6).map((p) => p.id),
+          startingLineupB: teams[1].players.slice(0, 6).map((p) => p.id),
+          onCourtA: teams[0].players.slice(0, 6).map((p) => p.id),
+          onCourtB: teams[1].players.slice(0, 6).map((p) => p.id),
+          status: "live",
+          currentSet: 1,
+          setsToWin: 2,
+          pointsPerSet: 25,
+          sets: [{ number: 1, scoreA: 0, scoreB: 0, finished: false }],
+          events: [],
+          servingSide: "A",
+          initialServingSide: "A",
+          scheduledAt: Date.now(),
+          createdAt: Date.now(),
+        };
+        set((s) => ({ matches: [...s.matches, m], lastLocalChange: Date.now() }));
+        return matchId;
+      },
 
       seedDemo: () => {
         if (get().teams.length > 0) return;
