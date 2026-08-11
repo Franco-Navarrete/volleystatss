@@ -1117,6 +1117,12 @@ export const useVolley = create<VolleyState>()(
       removeScorekeeper: (name) =>
         set((s) => ({ scorekeepers: s.scorekeepers.filter((r) => r !== name) })),
 
+      clearAllMatches: () =>
+        set((s) => ({
+          matches: [],
+          lastLocalChange: Date.now()
+        })),
+
 
       setReceptionSlot: (rotation, role, pos) =>
         set((s) => {
