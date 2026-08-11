@@ -3703,6 +3703,11 @@ function FormationDialog({
             </div>
           </div>
         )}
+        <p className="text-xs text-muted-foreground">
+          {editing
+            ? "Arrastrá cada jugadora a la zona que quieras. Los cambios se aplican a todos los equipos y rotaciones que muestren esta formación."
+            : "Las posiciones se recalculan automáticamente cuando el equipo rota. Los colores indican el rol táctico de cada jugadora. Asigná la posición (armadora / central / punta / opuesta / líbero) en la ficha de cada jugadora para que la formación se ajuste correctamente."}
+        </p>
       </DialogContent>
     </Dialog>
   );
@@ -3777,15 +3782,6 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
             Una vez iniciado el set, el rol del jugador Universal se mantendrá fijo y no cambiará con las rotaciones. Podrás reasignarlo al comenzar el próximo set.
           </p>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-        <p className="text-xs text-muted-foreground">
-          {editing
-            ? "Arrastrá cada jugadora a la zona que quieras. Los cambios se aplican a todos los equipos y rotaciones que muestren esta formación."
-            : "Las posiciones se recalculan automáticamente cuando el equipo rota. Los colores indican el rol táctico de cada jugadora. Asigná la posición (armadora / central / punta / opuesta / líbero) en la ficha de cada jugadora para que la formación se ajuste correctamente."}
-        </p>
       </DialogContent>
     </Dialog>
   );
