@@ -172,16 +172,17 @@ export function buildEnrichedAttacks(
           // Evitar duplicados si ya se registró vía setting o attempt
           const alreadyExists = out.some(a => Math.abs(a.timestamp - pe.timestamp) < 500 && a.side === pe.playerSide);
           if (!alreadyExists) {
+            const side = pe.playerSide!;
             out.push({
-              side: pe.playerSide!,
+              side,
               playerId: pe.playerId,
               origin,
               direction: (pe.attackDirection ?? null) as AttackDirection | null,
               result: pe.type === "attack_error" ? "negative" : "positive",
               setNumber: pe.setNumber,
-              rotation: (pe.playerSide === "A" ? rotA : rotB) + 1,
-              setterZone: setterLookup ? setterLookup(pe.playerSide!, pe.timestamp, pe.setNumber) : null,
-              phase: lastPhase[pe.playerSide!] ?? "K1",
+              rotation: (side === "A" ? rotA : rotB) + 1,
+              setterZone: setterLookup ? setterLookup(side, pe.timestamp, pe.setNumber) : null,
+              phase: lastPhase[side] ?? "K1",
               timestamp: pe.timestamp,
             });
           }
