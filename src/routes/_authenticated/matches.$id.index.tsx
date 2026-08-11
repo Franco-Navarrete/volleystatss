@@ -2168,7 +2168,8 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 
 function CourtView({ 
   match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
-  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPick
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPick,
+  formationA, formationB
 }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
@@ -2183,6 +2184,8 @@ function CourtView({
   setLiberoB2: (lid: string | null) => void;
   setOpponentSetter: (playerId: string | null) => void;
   blockPick: import("@/lib/coach/rally-machine").BlockPickState | null;
+  formationA: any;
+  formationB: any;
 }) {
   const blockPickInfo = blockPick
     ? {
@@ -2241,11 +2244,9 @@ function CourtView({
   const b = buildEffective("B", match.onCourtB, match.startingLineupB, match.liberoActiveB);
   const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
-  const phaseFor = (s: "A" | "B"): "reception" | "attack" => formationByTeam?.[s] ?? "attack";
-  const formationA = useFormation(match, teamA, "A", "5-1", phaseFor("A"));
-  const formationB = useFormation(match, teamB, "B", "5-1", phaseFor("B"));
   const formationFor = (s: "A" | "B") => (s === "A" ? formationA : formationB);
   const hasFormationFor = (s: "A" | "B") => !!formationByTeam?.[s];
+
 
   // 4 columns left→right: left back, left front, right front, right back
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
