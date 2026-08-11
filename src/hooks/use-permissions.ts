@@ -167,7 +167,8 @@ export function useCanDeleteMatches() {
         if (cancelled) return;
         clearTimeout(timeout);
         const isSuperAdmin = user.email === "franco.e.navarrete@gmail.com";
-        setAllowed((!!data && data.length > 0) || isSuperAdmin);
+        const hasRole = !!data && data.length > 0;
+        setAllowed(hasRole || isSuperAdmin);
         setLoading(false);
       });
     return () => {

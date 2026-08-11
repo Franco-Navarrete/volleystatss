@@ -94,16 +94,18 @@ function MatchesIndex() {
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
-  const [, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleDelete(matchId: string) {
+    if (deletingId) return;
     setDeletingId(matchId);
     try {
       await deleteFn({ data: { matchId } });
       deleteMatch(matchId);
       toast.success("Partido eliminado");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No tienes permisos para eliminar partidos en vivo.");
+      console.error("Delete error:", e);
+      toast.error(e instanceof Error ? e.message : "Error al eliminar el partido.");
     } finally {
       setDeletingId(null);
     }
@@ -238,13 +240,14 @@ function MatchesIndex() {
                                 </AlertDialogCancel>
                                 <AlertDialogAction
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl flex-1"
+                                  disabled={deletingId === m.id}
                                   onClick={async (e) => {
                                     e.stopPropagation();
                                     e.preventDefault();
                                     await handleDelete(m.id);
                                   }}
                                 >
-                                  Eliminar
+                                  {deletingId === m.id ? "Eliminando..." : "Eliminar"}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
