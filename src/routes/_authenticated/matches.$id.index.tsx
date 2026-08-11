@@ -868,33 +868,30 @@ function LiveMatch() {
 
   const { analysisMode } = useWorkspaceStore();
 
-  const workspaceView = useMemo(() => {
-    if (!analysisMode || isMobile) return null;
-    return (
-      <WorkspaceLayout
-        video={
-          <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
-            Video Workspace
-          </div>
-        }
-        timeline={
-          <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
-            Timeline Workspace
-          </div>
-        }
-        left={
-          <div className="h-full w-full flex flex-col p-4">
-            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
-          </div>
-        }
-        right={
-          <div className="h-full w-full flex flex-col p-4">
-            <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
-          </div>
-        }
-      />
-    );
-  }, [analysisMode, isMobile]);
+  const workspaceView = (!analysisMode || isMobile) ? null : (
+    <WorkspaceLayout
+      video={
+        <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+          Video Workspace
+        </div>
+      }
+      timeline={
+        <div className="h-full w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/20 rounded-lg">
+          Timeline Workspace
+        </div>
+      }
+      left={
+        <div className="h-full w-full flex flex-col p-4">
+          <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Estructura / Listas</h2>
+        </div>
+      }
+      right={
+        <div className="h-full w-full flex flex-col p-4">
+          <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Inspector / IA</h2>
+        </div>
+      }
+    />
+  );
 
   if (workspaceView) {
     return (
