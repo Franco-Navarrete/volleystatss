@@ -1043,7 +1043,7 @@ interface VolleyState {
   updatePlayer: (teamId: string, playerId: string, patch: Partial<Player>) => void;
   removePlayer: (teamId: string, playerId: string) => void;
 
-  createMatch: (match: Omit<Match, "id" | "status" | "currentSet" | "sets" | "events" | "createdAt">) => string;
+  createMatch: (m: Omit<Match, "createdAt" | "currentSet" | "events" | "id" | "initialServingSide" | "onCourtA" | "onCourtB" | "servingSide" | "sets" | "status"> & { initialServingSide?: "A" | "B" }) => string;
   updateMatch: (id: string, patch: Partial<Match>) => void;
   removeMatch: (id: string) => void;
   startMatch: (id: string) => void;
@@ -1058,7 +1058,7 @@ interface VolleyState {
   recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
   recordDefense: (matchId: string, side: "A" | "B", playerId: string, rating: DefenseRating) => void;
   recordSetting: (matchId: string, side: "A" | "B", payload: Omit<SettingEvent, "id" | "kind" | "side" | "setNumber" | "timestamp">) => void;
-  recordAttackAttempt: (matchId: string, side: "A" | "B", payload: Omit<AttackAttemptEvent, "id" | "kind" | "side" | "setNumber" | "timestamp">) => void;
+  recordAttackAttempt: (matchId: string, side: "A" | "B", playerId: string | null, opts?: { attackZone?: AttackZone; attackType?: import("@/lib/formations/attack-types").AttackType; attackDirection?: AttackDirection; isCounter?: boolean }) => void;
   recordBlock: (matchId: string, side: "A" | "B", playerId: string | null, rating: "point" | "touch" | "error") => void;
   recordPoint: (matchId: string, playerSide: "A" | "B", type: PointType, playerId: string | null, attackZone?: AttackZone, attackType?: import("@/lib/formations/attack-types").AttackType, attackDirection?: AttackDirection, finishType?: AttackFinishType) => void;
   recordBlockPoint: (matchId: string, scoringSide: "A" | "B", blockerIds: string[]) => void;
@@ -1070,7 +1070,7 @@ interface VolleyState {
   overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   updateMatchMetadata: (id: string, metadata: Record<string, any>) => void;
   updateMatchFormat: (id: string, setsToWin: number, pointsPerSet: number) => void;
-  overrideScore: (matchId: string, setNumber: number, side: "A" | "B", score: number) => void;
+  overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
   undoLastEvent: (matchId: string) => void;
   finishMatch: (matchId: string) => void;
 }
