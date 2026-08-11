@@ -107,6 +107,12 @@ function StatsPage() {
     return current ? [current, ...others] : match.sets;
   })();
 
+  const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
+  const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
+  const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
+  const showNotFound = (!match || !teamA || !teamB || !stats) && !isLoadingGlobal;
+
+
 
   const playersA = (() => {
     if (!teamA || !stats) return [];
