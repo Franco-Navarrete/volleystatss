@@ -270,34 +270,39 @@ function LiveMatch() {
 
 
   const setLiberoA1 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoA1Id: lid} : m)
     }));
   }, [match?.id]);
   const setLiberoA2 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoA2Id: lid} : m)
     }));
   }, [match?.id]);
   const setLiberoB1 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoB1Id: lid} : m)
     }));
   }, [match?.id]);
   const setLiberoB2 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoB2Id: lid} : m)
     }));
   }, [match?.id]);
   const setOpponentSetter = useCallback((playerId: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
       matches: s.matches.map((m) => {
-        if (m.id !== match.id) return m;
+        if (m.id !== targetId) return m;
         return {
           ...m,
           metadata: {
