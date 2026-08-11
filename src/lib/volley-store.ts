@@ -1016,7 +1016,7 @@ interface VolleyState {
   teams: Team[];
   matches: Match[];
   leagues: League[];
-  customReceptionFormations: Partial<Record<Rotation, Partial<Record<TacticalRole, { x: number; y: number }>>>>;
+  customReceptionFormations?: Partial<Record<import("@/lib/formations/types").Rotation, Partial<Record<import("@/lib/formations/types").TacticalRole, { x: number; y: number }>>>>;
   matchCategories: string[];
   referees: string[];
   scorekeepers: string[];
@@ -1028,8 +1028,8 @@ interface VolleyState {
   addScorekeeper: (name: string) => void;
   removeScorekeeper: (name: string) => void;
 
-  setReceptionSlot: (rotation: Rotation, role: TacticalRole, pos: { x: number; y: number }) => void;
-  resetReceptionRotation: (rotation: Rotation) => void;
+  setReceptionSlot: (rotation: import("@/lib/formations/types").Rotation, role: import("@/lib/formations/types").TacticalRole, pos: { x: number; y: number }) => void;
+  resetReceptionRotation: (rotation: import("@/lib/formations/types").Rotation) => void;
   resetAllReceptionFormations: () => void;
 
   addLeague: (league: Omit<League, "id"> & { id?: string }) => string;
