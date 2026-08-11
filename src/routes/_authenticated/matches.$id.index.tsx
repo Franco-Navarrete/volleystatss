@@ -954,11 +954,10 @@ function LiveMatch() {
           needsLineup={needsLineup}
           needsSetStart={needsSetStart}
           courtSlot={
-            <>
-              <CourtView
-                match={match}
-                teamA={teamA}
-                teamB={teamB}
+            <CourtView
+              match={match}
+              teamA={teamA}
+              teamB={teamB}
               leftSide={leftSide}
               serverPlayerId={server.playerId}
               serverSide={server.side}
