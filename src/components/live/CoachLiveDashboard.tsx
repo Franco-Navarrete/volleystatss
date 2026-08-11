@@ -45,9 +45,9 @@ interface Props {
 }
 
 const IMPACT_STYLES: Record<Impact, string> = {
-  high: "border-destructive/40 bg-destructive/10 text-white dark:text-destructive-foreground",
-  med: "border-warning/40 bg-warning/10 text-white dark:text-warning-foreground",
-  low: "border-primary/30 bg-primary/5 text-white dark:text-foreground",
+  high: "border-destructive/40 bg-destructive/20 text-white dark:text-white",
+  med: "border-warning/60 bg-warning/20 text-white dark:text-white",
+  low: "border-primary/40 bg-primary/20 text-white dark:text-white",
 };
 const IMPACT_LABEL: Record<Impact, string> = { high: "ALTO", med: "MEDIO", low: "BAJO" };
 
@@ -261,7 +261,7 @@ function RecommendationsPanel({ recs }: { recs: CoachRecommendation[] }) {
           </p>
         ) : (
           recs.map((r) => (
-            <div key={r.id} className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 animate-fade-in">
+            <div key={r.id} className="rounded-lg border border-primary/40 bg-primary/20 px-3 py-2 animate-fade-in">
               <div className="flex items-start gap-2">
                 <Target className="size-4 text-primary shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
