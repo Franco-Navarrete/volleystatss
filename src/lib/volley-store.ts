@@ -1150,6 +1150,13 @@ export const useVolley = create<VolleyState>()(
           teams: s.teams.map((t) => (t.leagueId === id ? { ...t, leagueId: undefined } : t)),
         })),
 
+      updateMatch: (id, patch) =>
+        set((s) => ({
+          matches: s.matches.map((m) => (m.id === id ? { ...m, ...patch, lastLocalChange: Date.now() } : m)),
+        })),
+      removeMatch: (id) =>
+        set((s) => ({ matches: s.matches.filter((m) => m.id !== id) })),
+
       addTeam: (t) => {
         const id = uid();
         set((s) => ({ teams: [...s.teams, { ...t, id, players: [] }] }));
