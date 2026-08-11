@@ -589,15 +589,17 @@ function LiveMatch() {
       </Dialog>
 
       {/* Universal Player Role Assignment */}
+      {showLineupEditor && !!match && (teamA?.players.some(p => p.position === "universal") || teamB?.players.some(p => p.position === "universal")) && (
       <UniversalRoleDialog
-        open={showLineupEditor && !!match && (teamA?.players.some(p => p.position === "universal") || teamB?.players.some(p => p.position === "universal"))}
+        open={true}
         match={match!}
         teamA={teamA!}
         teamB={teamB!}
-        onConfirm={(playerId, role) => {
+        onConfirm={(playerId: string, role: PlayerPosition) => {
           useVolley.getState().setUniversalRole(match!.id, match!.currentSet, playerId, role);
         }}
       />
+      )}
               </>
             )}
             
