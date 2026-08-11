@@ -447,8 +447,9 @@ function LiveMatch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
-  const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || checkingCoach || checkingPlanillero;
+  const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
+
 
 
   const handleDeleteMatch = async () => {
