@@ -454,7 +454,8 @@ function LiveMatch() {
   const blockPick = useCoachRally((s) => s.blockPick);
 
   const statsMode = getMatchStatsMode(match, teamsBase, leagues);
-  const isCoachForHook = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+  const isCoachForHook = statsMode === "entrenador" || coachAccess || isSuperAdmin;
+
   const isLiveForHook = match?.status === "live";
   const lineupConfirmedForHook = match ? (match.confirmedLineupSets ?? []).includes(match.currentSet) : false;
   const currentSetObjForHook = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0];
@@ -697,7 +698,7 @@ function LiveMatch() {
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
 
 
   const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
@@ -1250,7 +1251,7 @@ function LiveMatch() {
               <Users className="size-4" /> Formación
             </Button>
           )}
-          {coachOverride ? (
+          {coachAccess ? (
             <Button
               size="sm"
               variant="secondary"
