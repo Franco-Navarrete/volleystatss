@@ -84,16 +84,20 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
         await supabase.from("app_state").update({ data: { ...d, matches: newMatches } }).eq("user_id", userId);
       }
     } else if (allStates) {
-      for (const row of allStates) {
-        const d = row.data as any;
-        if (d?.matches?.some((m: any) => m.id === data.matchId)) {
-          const newMatches = d.matches.filter((m: any) => m.id !== data.matchId);
-          await supabase
-            .from("app_state")
-            .update({ data: { ...d, matches: newMatches } })
-            .eq("user_id", row.user_id);
-        }
-      }
+      // Usar Promise.all para actualizaciones concurrentes y más rápidas
+      await Promise.all(
+        allStates.map(async (row) => {
+          const d = row.data as any;
+          if (d?.matches?.some((m: any) => m.id === data.matchId)) {
+            const newMatches = d.matches.filter((m: any) => m.id !== data.matchId);
+            return supabase
+              .from("app_state")
+              .update({ data: { ...d, matches: newMatches } })
+              .eq("user_id", row.user_id);
+          }
+          return Promise.resolve();
+        })
+      );
     }
 
     return { ok: true };
