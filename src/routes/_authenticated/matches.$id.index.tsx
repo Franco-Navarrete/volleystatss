@@ -880,7 +880,7 @@ function LiveMatch() {
 
 
 
-  const { analysisMode } = useWorkspaceStore();
+  const analysisMode = useWorkspaceStore((s) => s.analysisMode);
 
   const workspaceView = (!analysisMode || isMobile) ? null : (
     <WorkspaceLayout
