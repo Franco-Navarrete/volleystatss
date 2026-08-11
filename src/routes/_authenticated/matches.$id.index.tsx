@@ -3664,8 +3664,8 @@ function FormationDialog({
 }) {
   const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
   const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
-  const formationA = useFormation(match, teamA, "A", "5-1", phaseA as any);
-  const formationB = useFormation(match, teamB, "B", "5-1", phaseB as any);
+  const formationA = useFormation(match, teamA, "A", "5-1", phaseA as "reception" | "attack");
+  const formationB = useFormation(match, teamB, "B", "5-1", phaseB as "reception" | "attack");
 
 
   const [editing, setEditing] = useState(false);
