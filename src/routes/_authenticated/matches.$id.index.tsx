@@ -3726,10 +3726,11 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
   onConfirm: (playerId: string, role: PlayerPosition) => void;
 }) {
   const currentSetRoles = match.setPlayerRoles?.[match.currentSet] ?? {};
-  const universals = useMemo(() => {
+  const universals = (() => {
     const all = [...teamA.players, ...teamB.players];
     return all.filter(p => p.position === "universal");
-  }, [teamA.players, teamB.players]);
+  })();
+
 
   if (universals.length === 0) return null;
 
