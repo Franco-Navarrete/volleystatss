@@ -863,10 +863,7 @@ function LiveMatch() {
 
   // Contexto del rally (fase actual + posesión + última acción) para las guías
   // visuales sobre la cancha. Solo lectura — no altera el store ni el flujo.
-  const rallyCtx = useMemo(
-    () => computeRallyContext(match, { A: teamA, B: teamB }),
-    [match, teamA, teamB],
-  );
+  const rallyCtx = computeRallyContext(match, { A: teamA, B: teamB });
 
 
   const { analysisMode } = useWorkspaceStore();
