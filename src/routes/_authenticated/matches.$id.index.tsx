@@ -986,7 +986,10 @@ function LiveMatch() {
               setLiberoB2={setLiberoB2}
               setOpponentSetter={setOpponentSetter}
               blockPick={blockPick}
+              formationA={formationA}
+              formationB={formationB}
             />
+
           }
         />
       ) : (
