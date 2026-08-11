@@ -1162,6 +1162,16 @@ function LiveMatch() {
                 setLiberoB2={setLiberoB2}
                 setOpponentSetter={setOpponentSetter}
               />
+              {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
+              {showLineupEditor && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
+                <UniversalRoleDialog
+                  open={true}
+                  match={match}
+                  teamA={teamA}
+                  teamB={teamB}
+                  onConfirm={(playerId, role) => useVolley.getState().setUniversalRole(match.id, match.currentSet, playerId, role)}
+                />
+              )}
 
               {/* Chips flotantes de contexto (no consumen alto de layout) */}
               {isLive && (
