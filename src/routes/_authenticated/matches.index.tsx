@@ -202,17 +202,17 @@ function MatchesIndex() {
                         <div className="absolute top-2 right-2 z-20">
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <button
-                                type="button"
-                                aria-label="Eliminar partido"
-                                className="size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors pointer-events-auto shadow-sm"
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors pointer-events-auto shadow-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
                                 }}
                               >
                                 <Trash2 className="size-4" />
-                              </button>
+                              </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent
                               className="rounded-2xl border-border/60"
