@@ -1,4 +1,4 @@
-import type { Player } from "@/lib/volley-store";
+import type { Player, PlayerPosition } from "@/lib/volley-store";
 import { FORMATIONS_5_1 } from "./5-1";
 import { FORMATIONS_5_1_RECEPTION } from "./5-1-reception";
 import type {

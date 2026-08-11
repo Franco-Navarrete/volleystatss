@@ -1189,7 +1189,7 @@ export const useVolley = create<VolleyState>()(
           }),
         })),
 
-      setUniversalRole: (matchId, setNumber, playerId, assignedRole) =>
+      setUniversalRole: (matchId: string, setNumber: number, playerId: string, assignedRole: PlayerPosition) =>
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
