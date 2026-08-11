@@ -419,7 +419,7 @@ function LiveMatch() {
     });
   };
   useCoachShortcuts({
-    active: coachOverride && !isMobile && match?.status === "live",
+    active: coachOverride && !isMobile && (match?.status === "live"),
     matchId: match?.id ?? null,
   });
 
@@ -451,6 +451,9 @@ function LiveMatch() {
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
+
+  const blockPick = useCoachRally((s) => s.blockPick);
+
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
