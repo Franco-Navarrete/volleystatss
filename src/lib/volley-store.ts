@@ -673,8 +673,8 @@ interface VolleyState {
   ) => void;
   finishMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
+  clearAllMatches: () => void;
   seedDemo: () => void;
-  seedDemoMatch: () => string | null;
 }
 
 
@@ -1048,6 +1048,7 @@ interface VolleyState {
   removeMatch: (id: string) => void;
   startMatch: (id: string) => void;
   deleteMatch: (id: string) => void;
+  clearAllMatches: () => void;
   setInitialServingSide: (id: string, side: "A" | "B") => void;
   setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
   confirmSetLineup: (matchId: string) => void;
@@ -1743,6 +1744,12 @@ export const useVolley = create<VolleyState>()(
       deleteMatch: (id) =>
         set((s) => ({
           matches: s.matches.filter((m) => m.id !== id),
+          lastLocalChange: Date.now()
+        })),
+
+      clearAllMatches: () =>
+        set((s) => ({
+          matches: [],
           lastLocalChange: Date.now()
         })),
 

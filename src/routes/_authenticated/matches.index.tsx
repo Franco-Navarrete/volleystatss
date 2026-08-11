@@ -34,7 +34,7 @@ function MatchesIndex() {
   const localMatches = useVolley((s) => s.matches);
   const localTeams = useVolley((s) => s.teams);
   const deleteMatch = useVolley((s) => s.deleteMatch);
-  const clearAllMatches = useVolley((s) => s.clearAllMatches || (() => {})); // En caso de que no exista
+  const clearAllMatches = useVolley((s) => s.clearAllMatches);
   const navigate = useNavigate();
   
   const { user } = useIsAdmin();
