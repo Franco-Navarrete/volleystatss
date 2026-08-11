@@ -34,6 +34,7 @@ import {
   Undo2,
   Users,
   Star,
+  Info,
 } from "lucide-react";
 import {
   useVolley,
