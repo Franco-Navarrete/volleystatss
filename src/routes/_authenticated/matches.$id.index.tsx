@@ -458,6 +458,44 @@ function LiveMatch() {
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
 
+  const handleDeleteMatch = async () => {
+    try {
+      await deleteFn({ data: { matchId: matchIdParam } });
+      deleteMatch(matchIdParam);
+      toast.success("Partido eliminado correctamente");
+      navigate({ to: "/matches" });
+    } catch (e) {
+      toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
+    }
+  };
+
+  const isMyMatch = (() => {
+    if (isAdmin) return true;
+    if (!user) return false;
+    if (user.email === "franco.e.navarrete@gmail.com") return true;
+    if (match?.metadata?.ownerId === user.id) return true;
+    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
+    return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
+  })();
+
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (match?.status === "finished") return;
+    const currentSetObj = match?.sets.find((s) => s.number === match.currentSet);
+    const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
+    const prevSetEndedAt = (match?.currentSet ?? 1) > 1
+      ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
+      : undefined;
+    const setNotStarted = currentSetObj ? (currentSetObj.scoreA === 0 && currentSetObj.scoreB === 0) : true;
+    const inBreak = match?.status === "live" && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
+    if (!setStartedAt && !inBreak) return;
+    if (setStartedAt && currentSetObj?.finished) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [match?.status, match?.currentSet, match?.sets, match?.setStartTimes, match?.events]);
+
   if (showSyncing) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
