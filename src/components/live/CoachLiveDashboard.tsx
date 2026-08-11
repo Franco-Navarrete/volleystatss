@@ -265,8 +265,8 @@ function RecommendationsPanel({ recs }: { recs: CoachRecommendation[] }) {
               <div className="flex items-start gap-2">
                 <Target className="size-4 text-primary shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold leading-tight text-white dark:text-foreground">{r.title}</div>
-                  <div className="text-xs text-white/70 dark:text-muted-foreground mt-0.5">{r.detail}</div>
+                  <div className="text-sm font-bold leading-tight text-white dark:text-white">{r.title}</div>
+                  <div className="text-xs text-white/90 dark:text-white/80 mt-0.5">{r.detail}</div>
                 </div>
               </div>
             </div>
