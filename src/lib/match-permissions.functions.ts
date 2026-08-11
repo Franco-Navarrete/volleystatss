@@ -33,7 +33,7 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
     // El super admin y los administradores pueden eliminar cualquier partido.
     // Los planilleros pueden eliminar partidos.
     // Los entrenadores pueden eliminar SUS partidos (donde son dueños).
-    let allowed = role === "admin" || role === "planillero";
+    let allowed = isSuperAdmin || role === "admin" || role === "planillero";
 
     if (!allowed && role === "entrenador") {
       const { data: row } = await supabase
