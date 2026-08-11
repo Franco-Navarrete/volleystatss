@@ -106,14 +106,14 @@ export function buildEnrichedAttacks(
     setStateFor(ev.setNumber);
 
     if ("kind" in ev && ev.kind === "reception") {
-      lastPhase[ev.side] = "K1";
+      lastPhase[ev.side as "A" | "B"] = "K1";
       continue;
     }
     if ("kind" in ev && ev.kind === "defense") {
       // El equipo que defiende pasa a atacar en contraataque.
       const attacker = ev.side === "A" ? "B" : "A";
       // El defensor recupera balón: su próximo ataque será K2.
-      lastPhase[ev.side] = "K2";
+      lastPhase[ev.side as "A" | "B"] = "K2";
       // El equipo que estaba atacando pierde la iniciativa de este rally.
       lastPhase[attacker] = null;
       continue;
@@ -139,7 +139,7 @@ export function buildEnrichedAttacks(
         setNumber: se.setNumber,
         rotation: (se.side === "A" ? rotA : rotB) + 1,
         setterZone: setterLookup ? setterLookup(se.side, se.timestamp, se.setNumber) : null,
-        phase: lastPhase[se.side],
+        phase: lastPhase[se.side as "A" | "B"],
         timestamp: se.timestamp,
       });
     } else if ("kind" in ev && ev.kind === "attackAttempt") {
@@ -155,7 +155,7 @@ export function buildEnrichedAttacks(
           setNumber: ae.setNumber,
           rotation: (ae.side === "A" ? rotA : rotB) + 1,
           setterZone: setterLookup ? setterLookup(ae.side, ae.timestamp, ae.setNumber) : null,
-          phase: ae.isCounter ? "K2" : (lastPhase[ae.side] ?? "K1"),
+          phase: ae.isCounter ? "K2" : (lastPhase[ae.side as "A" | "B"] ?? "K1"),
           timestamp: ae.timestamp,
         });
       }
@@ -167,20 +167,25 @@ export function buildEnrichedAttacks(
         const near = out.find(
           (a) => Math.abs(a.timestamp - pe.timestamp) < 1500 && a.side === pe.playerSide,
         );
-        if (!near && pe.attackZone !== undefined) {
+        if (pe.attackZone !== undefined) {
           const origin = pe.attackZone as OriginZone;
-          out.push({
-            side: pe.playerSide,
-            playerId: pe.playerId,
-            origin,
-            direction: (pe.attackDirection ?? null) as AttackDirection | null,
-            result: pe.type === "attack_error" ? "negative" : "positive",
-            setNumber: pe.setNumber,
-            rotation: (pe.playerSide === "A" ? rotA : rotB) + 1,
-            setterZone: setterLookup ? setterLookup(pe.playerSide, pe.timestamp, pe.setNumber) : null,
-            phase: lastPhase[pe.playerSide] ?? "K1",
-            timestamp: pe.timestamp,
-          });
+          // Evitar duplicados si ya se registró vía setting o attempt
+          const alreadyExists = out.some(a => Math.abs(a.timestamp - pe.timestamp) < 500 && a.side === pe.playerSide);
+          if (!alreadyExists) {
+            const side = pe.playerSide!;
+            out.push({
+              side,
+              playerId: pe.playerId,
+              origin,
+              direction: (pe.attackDirection ?? null) as AttackDirection | null,
+              result: pe.type === "attack_error" ? "negative" : "positive",
+              setNumber: pe.setNumber,
+              rotation: (side === "A" ? rotA : rotB) + 1,
+              setterZone: setterLookup ? setterLookup(side, pe.timestamp, pe.setNumber) : null,
+              phase: lastPhase[side] ?? "K1",
+              timestamp: pe.timestamp,
+            });
+          }
         }
       }
 
@@ -249,7 +254,9 @@ export function aggregateAttacks(
     if (filters.setNumber !== undefined && filters.setNumber !== "all" && a.setNumber !== filters.setNumber) continue;
     if (filters.rotation !== undefined && filters.rotation !== "all" && a.rotation !== filters.rotation) continue;
     if (filters.setterZone !== undefined && filters.setterZone !== "all" && a.setterZone !== filters.setterZone) continue;
-    if (filters.playerId !== undefined && filters.playerId !== "all" && a.playerId !== filters.playerId) continue;
+    if (filters.playerId !== undefined && filters.playerId !== "all") {
+      if (a.playerId !== filters.playerId) continue;
+    }
     if (filters.phase !== undefined && filters.phase !== "all" && a.phase !== filters.phase) continue;
 
 
