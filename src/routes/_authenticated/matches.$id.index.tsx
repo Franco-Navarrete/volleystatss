@@ -229,18 +229,17 @@ function LiveMatch() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const deleteMatch = useVolley.getState().deleteMatch;
 
-  const allMatches = useMemo(() => adminAll.data?.matches ?? [], [adminAll.data?.matches]);
-  const allTeams = useMemo(() => adminAll.data?.teams ?? [], [adminAll.data?.teams]);
+  const allMatches = adminAll.data?.matches ?? [];
+  const allTeams = adminAll.data?.teams ?? [];
 
-  const match = useMemo(() => {
-
+  const match = (() => {
     if (matchBase) return matchBase;
     if (isSuperAdmin && allMatches.length > 0) {
       const found = allMatches.find((m: Match) => m.id === matchIdParam);
       if (found) return found;
     }
     return undefined;
-  }, [matchBase, isSuperAdmin, allMatches, matchIdParam]);
+  })();
 
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
@@ -311,8 +310,8 @@ function LiveMatch() {
   }, [match?.id]);
 
 
-  const teamABase = useMemo(() => teamsBase.find((t) => t.id === match?.teamAId), [teamsBase, match?.teamAId]);
-  const teamBBase = useMemo(() => teamsBase.find((t) => t.id === match?.teamBId), [teamsBase, match?.teamBId]);
+  const teamABase = teamsBase.find((t) => t.id === match?.teamAId);
+  const teamBBase = teamsBase.find((t) => t.id === match?.teamBId);
 
   const [pendingPlayer, setPendingPlayer] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
   const [pendingReception, setPendingReception] = useState<{ side: "A" | "B"; playerId: string } | null>(null);
@@ -370,7 +369,7 @@ function LiveMatch() {
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
-  const teamA = useMemo(() => {
+  const teamA = (() => {
     const targetId = match?.teamAId;
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
@@ -379,9 +378,9 @@ function LiveMatch() {
       return allTeams.find((t: Team) => t.id === targetId);
     }
     return undefined;
-  }, [teamsBase, isSuperAdmin, match?.teamAId, allTeams]);
+  })();
 
-  const teamB = useMemo(() => {
+  const teamB = (() => {
     const targetId = match?.teamBId;
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
@@ -390,7 +389,7 @@ function LiveMatch() {
       return allTeams.find((t: Team) => t.id === targetId);
     }
     return undefined;
-  }, [teamsBase, isSuperAdmin, match?.teamBId, allTeams]);
+  })();
 
 
 
@@ -461,15 +460,14 @@ function LiveMatch() {
       toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
     }
   };
-  const isMyMatch = useMemo(() => {
+  const isMyMatch = (() => {
     if (isAdmin) return true;
     if (!user) return false;
     if (user.email === "franco.e.navarrete@gmail.com") return true;
     if (match?.metadata?.ownerId === user.id) return true;
-    // Usamos el estado actual de la store para evitar dependencia circular de hooks
     const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
     return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
-  }, [isAdmin, user, match?.teamAId, match?.teamBId, match?.metadata?.ownerId]);
+  })();
 
   const [now, setNow] = useState(() => Date.now());
   
