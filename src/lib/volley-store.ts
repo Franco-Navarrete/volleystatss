@@ -1012,6 +1012,65 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
   return next;
 }
 
+export interface VolleyState {
+  teams: Team[];
+  matches: Match[];
+  leagues: League[];
+  customReceptionFormations: Partial<Record<Rotation, Partial<Record<TacticalRole, { x: number; y: number }>>>>;
+  matchCategories: string[];
+  referees: string[];
+  scorekeepers: string[];
+
+  addMatchCategory: (name: string) => void;
+  removeMatchCategory: (name: string) => void;
+  addReferee: (name: string) => void;
+  removeReferee: (name: string) => void;
+  addScorekeeper: (name: string) => void;
+  removeScorekeeper: (name: string) => void;
+
+  setReceptionSlot: (rotation: Rotation, role: TacticalRole, pos: { x: number; y: number }) => void;
+  resetReceptionRotation: (rotation: Rotation) => void;
+  resetAllReceptionFormations: () => void;
+
+  addLeague: (league: Omit<League, "id"> & { id?: string }) => string;
+  updateLeague: (id: string, patch: Partial<League>) => void;
+  removeLeague: (id: string) => void;
+
+  addTeam: (team: Omit<Team, "id" | "players">) => string;
+  updateTeam: (id: string, patch: Partial<Team>) => void;
+  removeTeam: (id: string) => void;
+  addPlayer: (teamId: string, player: Omit<Player, "id">) => void;
+  updatePlayer: (teamId: string, playerId: string, patch: Partial<Player>) => void;
+  removePlayer: (teamId: string, playerId: string) => void;
+
+  createMatch: (match: Omit<Match, "id" | "status" | "currentSet" | "sets" | "events" | "createdAt">) => string;
+  startMatch: (id: string) => void;
+  deleteMatch: (id: string) => void;
+  setInitialServingSide: (id: string, side: "A" | "B") => void;
+  setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  confirmSetLineup: (matchId: string) => void;
+  startSet: (matchId: string) => void;
+  toggleSidesFlipped: (matchId: string) => void;
+  recordPoint: (matchId: string, playerSide: "A" | "B", type: PointType, playerId: string | null, attackZone?: AttackZone, attackType?: import("@/lib/formations/attack-types").AttackType, attackDirection?: AttackDirection, finishType?: AttackFinishType) => void;
+  recordBlockPoint: (matchId: string, scoringSide: "A" | "B", blockerIds: string[]) => void;
+  recordSubstitution: (matchId: string, side: "A" | "B", playerInId: string, playerOutId: string) => void;
+  recordLiberoIn: (matchId: string, side: "A" | "B", liberoId: string, replacedId: string) => void;
+  recordLiberoOut: (matchId: string, side: "A" | "B") => void;
+  recordTimeout: (matchId: string, side: "A" | "B") => boolean;
+  recordSanction: (matchId: string, side: "A" | "B", playerId: string | null, sanction: SanctionType) => void;
+  overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
+  recordDefense: (matchId: string, side: "A" | "B", playerId: string, rating: DefenseRating) => void;
+  recordSetting: (matchId: string, side: "A" | "B", payload: Omit<SettingEvent, "id" | "kind" | "side" | "setNumber" | "timestamp">) => void;
+  recordAttackAttempt: (matchId: string, side: "A" | "B", payload: Omit<AttackAttemptEvent, "id" | "kind" | "side" | "setNumber" | "timestamp">) => void;
+  updateMatchMetadata: (id: string, metadata: Record<string, any>) => void;
+  updateMatchFormat: (id: string, setsToWin: number, pointsPerSet: number) => void;
+  overrideScore: (matchId: string, setNumber: number, side: "A" | "B", score: number) => void;
+  undoLastEvent: (matchId: string) => void;
+  finishMatch: (matchId: string) => void;
+  setUniversalRole: (matchId: string, setNumber: number, playerId: string, assignedRole: PlayerPosition) => void;
+}
+
 export const useVolley = create<VolleyState>()(
   persist(
     (set, get) => ({
