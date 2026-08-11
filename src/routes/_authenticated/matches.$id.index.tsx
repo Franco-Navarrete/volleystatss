@@ -870,7 +870,10 @@ function LiveMatch() {
 
   // Contexto del rally (fase actual + posesión + última acción) para las guías
   // visuales sobre la cancha. Solo lectura — no altera el store ni el flujo.
-  const rallyCtx = match && teamA && teamB ? computeRallyContext(match, { A: teamA, B: teamB }) : null;
+  const rallyCtx = (() => {
+    if (!match || !teamA || !teamB) return null;
+    return computeRallyContext(match, { A: teamA, B: teamB });
+  })();
 
 
 
