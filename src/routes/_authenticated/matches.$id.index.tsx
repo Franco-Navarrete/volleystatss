@@ -698,8 +698,8 @@ function LiveMatch() {
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const statsMode = getMatchStatsMode(match, teamsBase, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+
 
   const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
 
