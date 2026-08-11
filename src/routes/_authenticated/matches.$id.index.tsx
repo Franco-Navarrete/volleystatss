@@ -148,12 +148,16 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
       </div>
     );
   },
-  component: () => (
+  component: LiveMatchWrapper,
+});
+
+function LiveMatchWrapper() {
+  return (
     <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch />
     </Suspense>
-  ),
-});
+  );
+}
 
 
 
@@ -215,7 +219,7 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 
 function LiveMatch() {
   const { id: matchIdParam } = Route.useParams();
-  const matchBase = useVolley((s) => s.matches.find((m) => m.id === matchIdParam));
+  const volleyMatches = useVolley((s) => s.matches);
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
   const { user } = useAuthUser();
@@ -223,7 +227,7 @@ function LiveMatch() {
   const adminAll = useAllUsersAppState();
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
-  const coachOverride = coachAccess;
+  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
 
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -232,14 +236,9 @@ function LiveMatch() {
   const allMatches = adminAll.data?.matches ?? [];
   const allTeams = adminAll.data?.teams ?? [];
 
-  const match = (() => {
-    if (matchBase) return matchBase;
-    if (isSuperAdmin && allMatches.length > 0) {
-      const found = allMatches.find((m: Match) => m.id === matchIdParam);
-      if (found) return found;
-    }
-    return undefined;
-  })();
+  const match = volleyMatches.find((m) => m.id === matchIdParam) || 
+    (isSuperAdmin ? allMatches.find((m: Match) => m.id === matchIdParam) : undefined);
+
 
   const startMatch = useVolley((s) => s.startMatch);
   const setInitialServingSide = useVolley((s) => s.setInitialServingSide);
@@ -368,9 +367,9 @@ function LiveMatch() {
 
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(match?.status === "live");
-
-  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
+
+
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
 
@@ -396,16 +395,15 @@ function LiveMatch() {
     return undefined;
   })();
 
-
-
   useEffect(() => {
-    if (!coachOverride || !match?.id || !coachEnabled) return;
+    if (!coachAccess || !match?.id || !coachEnabled) return;
     const key = `rally.coachHelpShown.${match.id}`;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(key)) return;
     localStorage.setItem(key, "1");
     window.dispatchEvent(new CustomEvent("coach:help:open"));
-  }, [coachEnabled, coachOverride, match?.id]);
+  }, [coachEnabled, coachAccess, match?.id]);
+
 
 
   const toggleCoachMode = () => {
@@ -419,9 +417,10 @@ function LiveMatch() {
     });
   };
   useCoachShortcuts({
-    active: coachOverride && !isMobile && (match?.status === "live"),
+    active: coachAccess && !isMobile && (match?.status === "live"),
     matchId: match?.id ?? null,
   });
+
 
 
   useEffect(() => {
@@ -455,7 +454,8 @@ function LiveMatch() {
   const blockPick = useCoachRally((s) => s.blockPick);
 
   const statsMode = getMatchStatsMode(match, teamsBase, leagues);
-  const isCoachForHook = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+  const isCoachForHook = statsMode === "entrenador" || coachAccess || isSuperAdmin;
+
   const isLiveForHook = match?.status === "live";
   const lineupConfirmedForHook = match ? (match.confirmedLineupSets ?? []).includes(match.currentSet) : false;
   const currentSetObjForHook = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0];
@@ -698,7 +698,7 @@ function LiveMatch() {
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
 
 
   const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
@@ -1251,7 +1251,7 @@ function LiveMatch() {
               <Users className="size-4" /> Formación
             </Button>
           )}
-          {coachOverride ? (
+          {coachAccess ? (
             <Button
               size="sm"
               variant="secondary"
@@ -1318,12 +1318,13 @@ function LiveMatch() {
               <DropdownMenuItem onSelect={() => setShowFormatDialog(true)} disabled={match.status === "finished"}>
                 <Hourglass className="size-4" /> Formato del partido
               </DropdownMenuItem>
-              {coachOverride && (
+              {coachAccess && (
                 <DropdownMenuItem onSelect={() => setShowFormationDialog(true)}>
                   <Users className="size-4" /> Cancha 5-1
                 </DropdownMenuItem>
               )}
-              {coachOverride && (
+              {coachAccess && (
+
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">Coach Mode</DropdownMenuLabel>
@@ -3777,10 +3778,9 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
   onConfirm: (playerId: string, role: PlayerPosition) => void;
 }) {
   const currentSetRoles = match.setPlayerRoles?.[match.currentSet] ?? {};
-  const universals = (() => {
-    const all = [...teamA.players, ...teamB.players];
-    return all.filter(p => p.position === "universal");
-  })();
+  const allPlayers = [...teamA.players, ...teamB.players];
+  const universals = allPlayers.filter(p => p.position === "universal");
+
 
 
   if (universals.length === 0) return null;
