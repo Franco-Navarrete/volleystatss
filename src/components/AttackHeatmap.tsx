@@ -67,11 +67,11 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
   };
 
   const aggA = useMemo(
-    () => aggregateAttacks(enriched, "A", { ...filters, playerId: playerA === "all" ? "all" : playerA }),
+    () => aggregateAttacks(enriched, "A", { ...filters, playerId: playerA }),
     [enriched, filters.setNumber, filters.rotation, filters.setterZone, playerA],
   );
   const aggB = useMemo(
-    () => aggregateAttacks(enriched, "B", { ...filters, playerId: playerB === "all" ? "all" : playerB }),
+    () => aggregateAttacks(enriched, "B", { ...filters, playerId: playerB }),
     [enriched, filters.setNumber, filters.rotation, filters.setterZone, playerB],
   );
 
