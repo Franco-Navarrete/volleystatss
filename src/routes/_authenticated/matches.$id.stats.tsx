@@ -61,12 +61,12 @@ function StatsPage() {
   const leagues = useVolley((s) => s.leagues);
 
   const { user } = useAuthUser();
-  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
   
   const { hasAccess: coachOverride } = useCoachAccess();
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
 
+  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const allMatches = adminAll.data?.matches ?? [];
   const allTeams = adminAll.data?.teams ?? [];
 
@@ -99,11 +99,6 @@ function StatsPage() {
   const stats = match ? computeMatchStats(match) : null;
   const [pdfStatus, setPdfStatus] = useState<PdfStatus>({ kind: "idle" });
 
-  const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
-  const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
-  const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
-  const showNotFound = (!match || !teamA || !teamB || !stats) && !isLoadingGlobal;
-
   const currentSetNumber = match?.currentSet;
   const orderedSets = (() => {
     if (!match) return [];
@@ -111,6 +106,13 @@ function StatsPage() {
     const others = match.sets.filter((s) => s.number !== currentSetNumber).sort((a, b) => a.number - b.number);
     return current ? [current, ...others] : match.sets;
   })();
+
+  const showPlanilleroGate = !checkingPlanillero && isPlanilleroOnly && !isSuperAdmin;
+  const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
+  const showSyncing = (!match || !teamA || !teamB || !stats) && isLoadingGlobal;
+  const showNotFound = (!match || !teamA || !teamB || !stats) && !isLoadingGlobal;
+
+
 
   const playersA = (() => {
     if (!teamA || !stats) return [];

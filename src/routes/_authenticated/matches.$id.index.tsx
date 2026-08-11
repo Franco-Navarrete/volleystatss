@@ -223,11 +223,13 @@ function LiveMatch() {
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
   const { user } = useAuthUser();
-  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
   const adminAll = useAllUsersAppState();
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
+
+  const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+
 
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
