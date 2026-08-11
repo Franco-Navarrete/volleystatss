@@ -2183,12 +2183,13 @@ function CourtView({
   setLiberoB1: (lid: string | null) => void;
   setLiberoB2: (lid: string | null) => void;
   setOpponentSetter: (playerId: string | null) => void;
+  blockPick: import("@/lib/coach/rally-machine").BlockPickState | null;
 }) {
   const blockPickInfo = blockPick
     ? {
-        blockingSide: blockPick.blockingSide,
-        eligible: new Set(blockPick.eligible),
-        picks: new Set(blockPick.picks),
+        blockingSide: blockPick.blockingSide as "A" | "B",
+        eligible: new Set(blockPick.eligible) as Set<string>,
+        picks: new Set(blockPick.picks) as Set<string>,
       }
     : null;
   // Formación efectiva: SIEMPRE 6 IDs únicos por equipo aplicando el swap
