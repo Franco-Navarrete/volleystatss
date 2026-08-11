@@ -63,10 +63,20 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
     }
 
     // 1. Limpiar la copia pública del partido si existía.
+    // Usamos el matchId o el slug si fuera necesario, pero la tabla usa match_id como FK lógica.
     await supabase
       .from("public_matches")
       .delete()
       .eq("match_id", data.matchId);
+
+    // Búsqueda adicional por ID (slug) por si el matchId en la snapshot no coincide con match_id columna
+    const { data: snaps } = await supabase.from("public_matches").select("id, data");
+    if (snaps) {
+      const toDelete = snaps.filter(s => (s.data as any)?.match?.id === data.matchId).map(s => s.id);
+      if (toDelete.length > 0) {
+        await supabase.from("public_matches").delete().in("id", toDelete);
+      }
+    }
 
     // 2. Eliminar de la nube (app_state) de TODOS los usuarios que puedan tenerlo.
     // Esto es necesario porque varios usuarios pueden "ver" el mismo partido si comparten liga.
