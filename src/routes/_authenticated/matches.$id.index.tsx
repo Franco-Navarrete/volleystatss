@@ -454,6 +454,34 @@ function LiveMatch() {
 
   const blockPick = useCoachRally((s) => s.blockPick);
 
+  const statsMode = getMatchStatsMode(match, teamsBase, leagues);
+  const isCoachForHook = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+  const isLiveForHook = match?.status === "live";
+  const lineupConfirmedForHook = match ? (match.confirmedLineupSets ?? []).includes(match.currentSet) : false;
+  const currentSetObjForHook = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0];
+  const setNotStartedForHook = currentSetObjForHook ? (currentSetObjForHook.scoreA === 0 && currentSetObjForHook.scoreB === 0) : true;
+  const needsLineupForHook = isLiveForHook && setNotStartedForHook && !lineupConfirmedForHook;
+  const setStartedAtForHook = match?.setStartTimes?.[match.currentSet ?? 1];
+  const needsSetStartForHook = isLiveForHook && setNotStartedForHook && lineupConfirmedForHook && !setStartedAtForHook;
+  const actionsDisabledForHook = !isLiveForHook || needsLineupForHook || needsSetStartForHook;
+
+  const receivingSideForHook: "A" | "B" = match?.servingSide === "A" ? "B" : "A";
+  const lastReceptionSideForHook = match ? getCurrentRallyReceptionSide(match, match.currentSet) : null;
+  const receptionRegisteredForHook = lastReceptionSideForHook === receivingSideForHook;
+  const receivingPhaseForHook: "reception" | "attack" = receptionRegisteredForHook ? "attack" : "reception";
+  const servingSideForHook: "A" | "B" = receivingSideForHook === "A" ? "B" : "A";
+
+  const phaseA = isCoachForHook && isLiveForHook && !actionsDisabledForHook
+    ? (receivingSideForHook === "A" ? receivingPhaseForHook : "attack")
+    : "attack";
+  const phaseB = isCoachForHook && isLiveForHook && !actionsDisabledForHook
+    ? (receivingSideForHook === "B" ? receivingPhaseForHook : "attack")
+    : "attack";
+
+  const formationA = useFormation(match, teamA, "A", "5-1", phaseA);
+  const formationB = useFormation(match, teamB, "B", "5-1", phaseB);
+
+
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
@@ -496,6 +524,16 @@ function LiveMatch() {
     return () => clearInterval(t);
   }, [match?.status, match?.currentSet, match?.sets, match?.setStartTimes, match?.events]);
 
+  // Variables calculadas para el renderizado final (después de los hooks)
+  const isLive = match?.status === "live";
+  const currentSet = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
+  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
+  const prevSetEndedAt = (match?.currentSet ?? 1) > 1
+    ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
   if (showSyncing) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
@@ -512,15 +550,6 @@ function LiveMatch() {
     );
   }
 
-  // Variables calculadas para el renderizado final (después de los hooks)
-  const isLive = match?.status === "live";
-  const currentSet = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
-  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
-  const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
-  const prevSetEndedAt = (match?.currentSet ?? 1) > 1
-    ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
-    : undefined;
-  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
 
   if (showNotFound) {
 
@@ -669,8 +698,8 @@ function LiveMatch() {
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const statsMode = getMatchStatsMode(match, teamsBase, leagues);
   const isCoach = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+
 
   const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
 
@@ -985,7 +1014,10 @@ function LiveMatch() {
               setLiberoB2={setLiberoB2}
               setOpponentSetter={setOpponentSetter}
               blockPick={blockPick}
+              formationA={formationA}
+              formationB={formationB}
             />
+
           }
         />
       ) : (
@@ -1168,7 +1200,10 @@ function LiveMatch() {
                 setLiberoB2={setLiberoB2}
                 setOpponentSetter={setOpponentSetter}
                 blockPick={blockPick}
+                formationA={formationA}
+                formationB={formationB}
               />
+
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
               {showLineupEditor && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
                 <UniversalRoleDialog
@@ -2167,7 +2202,8 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 
 function CourtView({ 
   match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
-  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPick
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPick,
+  formationA, formationB
 }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
@@ -2182,6 +2218,8 @@ function CourtView({
   setLiberoB2: (lid: string | null) => void;
   setOpponentSetter: (playerId: string | null) => void;
   blockPick: import("@/lib/coach/rally-machine").BlockPickState | null;
+  formationA: any;
+  formationB: any;
 }) {
   const blockPickInfo = blockPick
     ? {
@@ -2240,11 +2278,9 @@ function CourtView({
   const b = buildEffective("B", match.onCourtB, match.startingLineupB, match.liberoActiveB);
   const rightSide: "A" | "B" = leftSide === "A" ? "B" : "A";
   const teamFor = (s: "A" | "B") => (s === "A" ? teamA : teamB);
-  const phaseFor = (s: "A" | "B"): "reception" | "attack" => formationByTeam?.[s] ?? "attack";
-  const formationA = useFormation(match, teamA, "A", "5-1", phaseFor("A"));
-  const formationB = useFormation(match, teamB, "B", "5-1", phaseFor("B"));
   const formationFor = (s: "A" | "B") => (s === "A" ? formationA : formationB);
   const hasFormationFor = (s: "A" | "B") => !!formationByTeam?.[s];
+
 
   // 4 columns left→right: left back, left front, right front, right back
   const columns: Array<{ side: "A" | "B"; team: Team; idxs: number[] }> = [
