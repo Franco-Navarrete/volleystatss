@@ -987,6 +987,7 @@ function LiveMatch() {
               setLiberoB1={setLiberoB1}
               setLiberoB2={setLiberoB2}
               setOpponentSetter={setOpponentSetter}
+              blockPick={blockPick}
             />
           }
         />
