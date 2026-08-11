@@ -148,12 +148,16 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
       </div>
     );
   },
-  component: () => (
+  component: LiveMatchWrapper,
+});
+
+function LiveMatchWrapper() {
+  return (
     <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch />
     </Suspense>
-  ),
-});
+  );
+}
 
 
 
@@ -3777,10 +3781,9 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
   onConfirm: (playerId: string, role: PlayerPosition) => void;
 }) {
   const currentSetRoles = match.setPlayerRoles?.[match.currentSet] ?? {};
-  const universals = (() => {
-    const all = [...teamA.players, ...teamB.players];
-    return all.filter(p => p.position === "universal");
-  })();
+  const allPlayers = [...teamA.players, ...teamB.players];
+  const universals = allPlayers.filter(p => p.position === "universal");
+
 
 
   if (universals.length === 0) return null;
