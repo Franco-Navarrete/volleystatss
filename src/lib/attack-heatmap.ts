@@ -159,6 +159,21 @@ export function buildEnrichedAttacks(
           timestamp: ae.timestamp,
         });
       }
+    } else if ("kind" in ev && (ev.kind === "attack_error" || ev.kind === "attack_point")) {
+      // Manejar eventos de ataque directos si existen
+      const ae = ev as any;
+      out.push({
+        side: ae.side,
+        playerId: ae.playerId,
+        origin: ae.attackZone as OriginZone,
+        direction: (ae.attackDirection ?? null) as AttackDirection | null,
+        result: ev.kind === "attack_point" ? "positive" : "negative",
+        setNumber: ae.setNumber,
+        rotation: (ae.side === "A" ? rotA : rotB) + 1,
+        setterZone: setterLookup ? setterLookup(ae.side, ae.timestamp, ae.setNumber) : null,
+        phase: lastPhase[ae.side] ?? "K1",
+        timestamp: ae.timestamp,
+      });
     } else if (!("kind" in ev)) {
       // PointEvent: si no hubo setting-event asociado pero tiene attackZone,
       // registramos el ataque igual (evita perder datos del flujo rápido).
@@ -167,20 +182,24 @@ export function buildEnrichedAttacks(
         const near = out.find(
           (a) => Math.abs(a.timestamp - pe.timestamp) < 1500 && a.side === pe.playerSide,
         );
-        if (!near && pe.attackZone !== undefined) {
+        if (pe.attackZone !== undefined) {
           const origin = pe.attackZone as OriginZone;
-          out.push({
-            side: pe.playerSide,
-            playerId: pe.playerId,
-            origin,
-            direction: (pe.attackDirection ?? null) as AttackDirection | null,
-            result: pe.type === "attack_error" ? "negative" : "positive",
-            setNumber: pe.setNumber,
-            rotation: (pe.playerSide === "A" ? rotA : rotB) + 1,
-            setterZone: setterLookup ? setterLookup(pe.playerSide, pe.timestamp, pe.setNumber) : null,
-            phase: lastPhase[pe.playerSide] ?? "K1",
-            timestamp: pe.timestamp,
-          });
+          // Evitar duplicados si ya se registró vía setting o attempt
+          const alreadyExists = out.some(a => Math.abs(a.timestamp - pe.timestamp) < 500 && a.side === pe.playerSide);
+          if (!alreadyExists) {
+            out.push({
+              side: pe.playerSide!,
+              playerId: pe.playerId,
+              origin,
+              direction: (pe.attackDirection ?? null) as AttackDirection | null,
+              result: pe.type === "attack_error" ? "negative" : "positive",
+              setNumber: pe.setNumber,
+              rotation: (pe.playerSide === "A" ? rotA : rotB) + 1,
+              setterZone: setterLookup ? setterLookup(pe.playerSide!, pe.timestamp, pe.setNumber) : null,
+              phase: lastPhase[pe.playerSide!] ?? "K1",
+              timestamp: pe.timestamp,
+            });
+          }
         }
       }
 
