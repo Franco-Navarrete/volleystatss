@@ -2183,7 +2183,6 @@ function CourtView({
   setLiberoB2: (lid: string | null) => void;
   setOpponentSetter: (playerId: string | null) => void;
 }) {
-  const blockPick = useCoachRally((s) => s.blockPick);
   const blockPickInfo = blockPick
     ? {
         blockingSide: blockPick.blockingSide,
