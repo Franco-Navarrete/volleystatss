@@ -1687,7 +1687,28 @@ export const useVolley = create<VolleyState>()(
             }
             events.pop();
             const next = { ...m, events };
-            // If still has events, stay live; if no events and was finished, revert.
+            return applyAutoLibero(next, s.teams);
+          }),
+        }));
+      },
+      recordBlock: (matchId, side, playerId, rating) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const scoringSide = rating === "point" ? side : rating === "error" ? (side === "A" ? "B" : "A") : null;
+            let next = { ...m };
+            if (scoringSide) {
+              const pev: PointEvent = {
+                id: uid(),
+                scoringSide,
+                playerSide: side,
+                playerId,
+                type: rating === "point" ? "block" : "opponent_error",
+                setNumber: m.currentSet,
+                timestamp: Date.now(),
+              };
+              next = { ...m, events: [...m.events, pev] };
+            }
             return applyAutoLibero(next, s.teams);
           }),
         }));
