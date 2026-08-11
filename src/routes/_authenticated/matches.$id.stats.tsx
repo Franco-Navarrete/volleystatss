@@ -182,38 +182,10 @@ function StatsPage() {
 
 
 
-  const playersA = useMemo(() => {
-    if (!teamA || !stats) return [];
-    return [...stats.players.values()]
-      .filter((p) => teamA.players.some((tp) => tp.id === p.playerId))
-      .map((p) => {
-        const tp = teamA.players.find((x) => x.id === p.playerId)!;
-        return { ...p, name: tp.name, number: tp.number };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [teamA, stats]);
-
-  const playersB = useMemo(() => {
-    if (!teamB || !stats) return [];
-    return [...stats.players.values()]
-      .filter((p) => teamB.players.some((tp) => tp.id === p.playerId))
-      .map((p) => {
-        const tp = teamB.players.find((x) => x.id === p.playerId)!;
-        return { ...p, name: tp.name, number: tp.number };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [teamB, stats]);
-
   const teamStatA = teamA && stats ? (stats.teams.get(teamA.id) ?? null) : null;
   const teamStatB = teamB ? (stats.teams.get(teamB.id) ?? null) : null;
   const w = setsWon(match);
 
-  const currentSetNumber = match.currentSet;
-  const orderedSets = useMemo(() => {
-    const current = match.sets.find((s) => s.number === currentSetNumber);
-    const others = match.sets.filter((s) => s.number !== currentSetNumber).sort((a, b) => a.number - b.number);
-    return current ? [current, ...others] : match.sets;
-  }, [match.sets, currentSetNumber]);
 
 
   const allPlayers: EnrichedPlayer[] = [
