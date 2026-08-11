@@ -63,7 +63,6 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
     }
 
     // 1. Limpiar la copia pública del partido si existía.
-    // Usamos el matchId o el slug si fuera necesario, pero la tabla usa match_id como FK lógica.
     await supabase
       .from("public_matches")
       .delete()
