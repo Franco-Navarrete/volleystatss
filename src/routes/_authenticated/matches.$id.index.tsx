@@ -2170,7 +2170,7 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 
 function CourtView({ 
   match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
-  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPick
 }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
