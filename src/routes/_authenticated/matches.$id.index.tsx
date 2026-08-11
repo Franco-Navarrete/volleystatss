@@ -270,34 +270,39 @@ function LiveMatch() {
 
 
   const setLiberoA1 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA1Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoA1Id: lid} : m)
     }));
   }, [match?.id]);
   const setLiberoA2 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoA2Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoA2Id: lid} : m)
     }));
   }, [match?.id]);
   const setLiberoB1 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB1Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoB1Id: lid} : m)
     }));
   }, [match?.id]);
   const setLiberoB2 = useCallback((lid: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
-      matches: s.matches.map(m => m.id === match.id ? {...m, liberoB2Id: lid} : m)
+      matches: s.matches.map(m => m.id === targetId ? {...m, liberoB2Id: lid} : m)
     }));
   }, [match?.id]);
   const setOpponentSetter = useCallback((playerId: string | null) => {
-    if (!match?.id) return;
+    const targetId = match?.id;
+    if (!targetId) return;
     useVolley.setState((s) => ({
       matches: s.matches.map((m) => {
-        if (m.id !== match.id) return m;
+        if (m.id !== targetId) return m;
         return {
           ...m,
           metadata: {
@@ -414,7 +419,7 @@ function LiveMatch() {
     });
   };
   useCoachShortcuts({
-    active: coachOverride && !isMobile && match?.status === "live",
+    active: coachOverride && !isMobile && (match?.status === "live"),
     matchId: match?.id ?? null,
   });
 
@@ -446,11 +451,12 @@ function LiveMatch() {
     return () => window.removeEventListener("coach:action", handler as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
+
+  const blockPick = useCoachRally((s) => s.blockPick);
+
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
-
-
 
   const handleDeleteMatch = async () => {
     try {
@@ -462,6 +468,7 @@ function LiveMatch() {
       toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
     }
   };
+
   const isMyMatch = (() => {
     if (isAdmin) return true;
     if (!user) return false;
@@ -472,7 +479,7 @@ function LiveMatch() {
   })();
 
   const [now, setNow] = useState(() => Date.now());
-  
+
   useEffect(() => {
     if (match?.status === "finished") return;
     const currentSetObj = match?.sets.find((s) => s.number === match.currentSet);
@@ -489,19 +496,7 @@ function LiveMatch() {
     return () => clearInterval(t);
   }, [match?.status, match?.currentSet, match?.sets, match?.setStartTimes, match?.events]);
 
-
-  // Variables calculadas para el renderizado final (después de los hooks)
-  const isLive = match?.status === "live";
-  const currentSet = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
-  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
-  const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
-  const prevSetEndedAt = (match?.currentSet ?? 1) > 1
-    ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
-    : undefined;
-  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
-
   if (showSyncing) {
-
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
         <div className="mb-6">
@@ -516,6 +511,16 @@ function LiveMatch() {
       </div>
     );
   }
+
+  // Variables calculadas para el renderizado final (después de los hooks)
+  const isLive = match?.status === "live";
+  const currentSet = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
+  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
+  const prevSetEndedAt = (match?.currentSet ?? 1) > 1
+    ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
 
   if (showNotFound) {
 
@@ -865,11 +870,14 @@ function LiveMatch() {
 
   // Contexto del rally (fase actual + posesión + última acción) para las guías
   // visuales sobre la cancha. Solo lectura — no altera el store ni el flujo.
-  const rallyCtx = match && teamA && teamB ? computeRallyContext(match, { A: teamA, B: teamB }) : null;
+  const rallyCtx = (() => {
+    if (!match || !teamA || !teamB) return null;
+    return computeRallyContext(match, { A: teamA, B: teamB });
+  })();
 
 
 
-  const { analysisMode } = useWorkspaceStore();
+  const analysisMode = useWorkspaceStore((s) => s.analysisMode);
 
   const workspaceView = (!analysisMode || isMobile) ? null : (
     <WorkspaceLayout
@@ -976,6 +984,7 @@ function LiveMatch() {
               setLiberoB1={setLiberoB1}
               setLiberoB2={setLiberoB2}
               setOpponentSetter={setOpponentSetter}
+              blockPick={blockPick}
             />
           }
         />
@@ -1158,6 +1167,7 @@ function LiveMatch() {
                 setLiberoB1={setLiberoB1}
                 setLiberoB2={setLiberoB2}
                 setOpponentSetter={setOpponentSetter}
+                blockPick={blockPick}
               />
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
               {showLineupEditor && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
@@ -2157,7 +2167,7 @@ function SideButton({ icon, label, onClick, disabled, reverse, badge }: {
 
 function CourtView({ 
   match, teamA, teamB, leftSide, serverPlayerId, serverSide, onPlayerClick, receivingSide, needsReception, receiverIds, formationByTeam, activePlayerId,
-  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
+  updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter, blockPick
 }: {
   match: Match; teamA: Team; teamB: Team; leftSide: "A" | "B";
   serverPlayerId: string | null; serverSide: "A" | "B";
@@ -2171,13 +2181,13 @@ function CourtView({
   setLiberoB1: (lid: string | null) => void;
   setLiberoB2: (lid: string | null) => void;
   setOpponentSetter: (playerId: string | null) => void;
+  blockPick: import("@/lib/coach/rally-machine").BlockPickState | null;
 }) {
-  const blockPick = useCoachRally((s) => s.blockPick);
   const blockPickInfo = blockPick
     ? {
-        blockingSide: blockPick.blockingSide,
-        eligible: new Set(blockPick.eligible),
-        picks: new Set(blockPick.picks),
+        blockingSide: blockPick.blockingSide as "A" | "B",
+        eligible: new Set(blockPick.eligible) as Set<string>,
+        picks: new Set(blockPick.picks) as Set<string>,
       }
     : null;
   // Formación efectiva: SIEMPRE 6 IDs únicos por equipo aplicando el swap
@@ -3651,8 +3661,8 @@ function FormationDialog({
 }) {
   const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
   const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
-  const formationA = useFormation(match, teamA, "A", "5-1", phaseA as any);
-  const formationB = useFormation(match, teamB, "B", "5-1", phaseB as any);
+  const formationA = useFormation(match, teamA, "A", "5-1", phaseA as "reception" | "attack");
+  const formationB = useFormation(match, teamB, "B", "5-1", phaseB as "reception" | "attack");
 
 
   const [editing, setEditing] = useState(false);
