@@ -235,7 +235,7 @@ function AlertsPanel({ alerts }: { alerts: CoachAlert[] }) {
                 <AlertTriangle className="size-4 shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold leading-tight">{a.title}</div>
-                  <div className="text-xs opacity-80 mt-0.5">{a.detail}</div>
+                  <div className="text-xs text-white/90 dark:text-white/80 mt-0.5">{a.detail}</div>
                 </div>
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-background/60">{IMPACT_LABEL[a.impact]}</span>
               </div>
