@@ -364,7 +364,7 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(match?.status === "live");
 
-  const { isPlanilleroOnly } = useIsPlanilleroOnly();
+  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
@@ -447,8 +447,10 @@ function LiveMatch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
-  const showSyncing = (!match || !teamA || !teamB) && isLoadingGlobal;
-  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal;
+  const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
+  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
+
+
 
   const handleDeleteMatch = async () => {
     try {
@@ -746,9 +748,11 @@ function LiveMatch() {
     // jugador de ese equipo, abrimos el flujo integrado en el paso "Defensa".
     if (
       isCoach &&
+      rallyCtx &&
       rallyCtx.currentPhase === "defense" &&
       rallyCtx.currentPhaseSide === side &&
       !rallyCtx.finished
+
     ) {
       if (match.metadata?.skipDefenseScouting) {
         // Si el scouting de defensa está desactivado, registramos una defensa neutra
@@ -861,7 +865,8 @@ function LiveMatch() {
 
   // Contexto del rally (fase actual + posesión + última acción) para las guías
   // visuales sobre la cancha. Solo lectura — no altera el store ni el flujo.
-  const rallyCtx = computeRallyContext(match, { A: teamA, B: teamB });
+  const rallyCtx = match && teamA && teamB ? computeRallyContext(match, { A: teamA, B: teamB }) : null;
+
 
 
   const { analysisMode } = useWorkspaceStore();
@@ -930,7 +935,7 @@ function LiveMatch() {
           toUsedA={toUsedA}
           toUsedB={toUsedB}
           actionsDisabled={actionsDisabled}
-          rallyCtx={rallyCtx}
+          rallyCtx={rallyCtx!}
           isReadOnly={!canScout}
           canUndo={match.status !== "scheduled" && match.events.length > 0}
           onUndo={() => undo(match.id)}
@@ -1130,7 +1135,7 @@ function LiveMatch() {
           <div className="relative min-h-0 flex flex-col gap-1">
             {/* Barra de progreso del rally (fase actual) */}
             {isLive && (
-              <RallyProgressBar ctx={rallyCtx} />
+              <RallyProgressBar ctx={rallyCtx!} />
             )}
 
             <div className="relative flex-1 min-h-0">
@@ -1168,7 +1173,7 @@ function LiveMatch() {
               {/* Chips flotantes de contexto (no consumen alto de layout) */}
               {isLive && (
                 <RallyContextCards
-                  ctx={rallyCtx}
+                  ctx={rallyCtx!}
                   teamA={teamA}
                   teamB={teamB}
                 />
@@ -3726,10 +3731,11 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
   onConfirm: (playerId: string, role: PlayerPosition) => void;
 }) {
   const currentSetRoles = match.setPlayerRoles?.[match.currentSet] ?? {};
-  const universals = useMemo(() => {
+  const universals = (() => {
     const all = [...teamA.players, ...teamB.players];
     return all.filter(p => p.position === "universal");
-  }, [teamA.players, teamB.players]);
+  })();
+
 
   if (universals.length === 0) return null;
 
