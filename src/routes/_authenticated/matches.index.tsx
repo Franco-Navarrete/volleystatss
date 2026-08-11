@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
@@ -34,6 +34,8 @@ function MatchesIndex() {
   const localMatches = useVolley((s) => s.matches);
   const localTeams = useVolley((s) => s.teams);
   const deleteMatch = useVolley((s) => s.deleteMatch);
+  const clearAllMatches = useVolley((s) => s.clearAllMatches);
+  const navigate = useNavigate();
   
   const { user } = useIsAdmin();
   const { isAdmin } = useIsAdmin();
