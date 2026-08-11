@@ -491,6 +491,8 @@ export interface Match {
   venue?: string;
   /** Datos tácticos adicionales. */
   metadata?: Record<string, any>;
+  /** Assigned roles for "Universal" players in each set. { [setNumber]: { [playerId]: assignedRole } } */
+  setPlayerRoles?: Record<number, Record<string, PlayerPosition>>;
 }
 
 /** Semilla de categorías sugeridas para partidos (editable en Ajustes). */
@@ -1010,6 +1012,69 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
   return next;
 }
 
+interface VolleyState {
+  teams: Team[];
+  matches: Match[];
+  leagues: League[];
+  customReceptionFormations?: Partial<Record<import("@/lib/formations/types").Rotation, Partial<Record<import("@/lib/formations/types").TacticalRole, { x: number; y: number }>>>>;
+  matchCategories: string[];
+  referees: string[];
+  scorekeepers: string[];
+
+  addMatchCategory: (name: string) => void;
+  removeMatchCategory: (name: string) => void;
+  addReferee: (name: string) => void;
+  removeReferee: (name: string) => void;
+  addScorekeeper: (name: string) => void;
+  removeScorekeeper: (name: string) => void;
+
+  setReceptionSlot: (rotation: import("@/lib/formations/types").Rotation, role: import("@/lib/formations/types").TacticalRole, pos: { x: number; y: number }) => void;
+  resetReceptionRotation: (rotation: import("@/lib/formations/types").Rotation) => void;
+  resetAllReceptionFormations: () => void;
+
+  addLeague: (league: Omit<League, "id"> & { id?: string }) => string;
+  updateLeague: (id: string, patch: Partial<League>) => void;
+  removeLeague: (id: string) => void;
+
+  addTeam: (team: Omit<Team, "id" | "players">) => string;
+  updateTeam: (id: string, patch: Partial<Team>) => void;
+  removeTeam: (id: string) => void;
+  addPlayer: (teamId: string, player: Omit<Player, "id">) => void;
+  updatePlayer: (teamId: string, playerId: string, patch: Partial<Player>) => void;
+  removePlayer: (teamId: string, playerId: string) => void;
+
+  createMatch: (m: Omit<Match, "createdAt" | "currentSet" | "events" | "id" | "initialServingSide" | "onCourtA" | "onCourtB" | "servingSide" | "sets" | "status"> & { initialServingSide?: "A" | "B" }) => string;
+  updateMatch: (id: string, patch: Partial<Match>) => void;
+  removeMatch: (id: string) => void;
+  startMatch: (id: string) => void;
+  deleteMatch: (id: string) => void;
+  setInitialServingSide: (id: string, side: "A" | "B") => void;
+  setSetLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  confirmSetLineup: (matchId: string) => void;
+  startSet: (matchId: string) => void;
+  toggleSidesFlipped: (matchId: string) => void;
+  setUniversalRole: (matchId: string, setNumber: number, playerId: string, assignedRole: PlayerPosition) => void;
+
+  recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
+  recordDefense: (matchId: string, side: "A" | "B", playerId: string, rating: DefenseRating) => void;
+  recordSetting: (matchId: string, side: "A" | "B", payload: Omit<SettingEvent, "id" | "kind" | "side" | "setNumber" | "timestamp">) => void;
+  recordAttackAttempt: (matchId: string, side: "A" | "B", playerId: string | null, opts?: { attackZone?: AttackZone; attackType?: import("@/lib/formations/attack-types").AttackType; attackDirection?: AttackDirection; isCounter?: boolean }) => void;
+  recordBlock: (matchId: string, side: "A" | "B", playerId: string | null, rating: "point" | "touch" | "error") => void;
+  recordPoint: (matchId: string, playerSide: "A" | "B", type: PointType, playerId: string | null, attackZone?: AttackZone, attackType?: import("@/lib/formations/attack-types").AttackType, attackDirection?: AttackDirection, finishType?: AttackFinishType) => void;
+  recordBlockPoint: (matchId: string, scoringSide: "A" | "B", blockerIds: string[]) => void;
+  recordSubstitution: (matchId: string, side: "A" | "B", playerInId: string, playerOutId: string) => void;
+  recordLiberoIn: (matchId: string, side: "A" | "B", liberoId: string, replacedId: string) => void;
+  recordLiberoOut: (matchId: string, side: "A" | "B") => void;
+  recordTimeout: (matchId: string, side: "A" | "B") => boolean;
+  recordSanction: (matchId: string, side: "A" | "B", playerId: string | null, sanction: SanctionType) => void;
+  overrideLineup: (matchId: string, side: "A" | "B", lineup: string[]) => void;
+  updateMatchMetadata: (id: string, metadata: Record<string, any>) => void;
+  updateMatchFormat: (id: string, setsToWin: number, pointsPerSet: number) => void;
+  overrideScore: (matchId: string, scoreA: number, scoreB: number) => void;
+  undoLastEvent: (matchId: string) => void;
+  finishMatch: (matchId: string) => void;
+}
+
 export const useVolley = create<VolleyState>()(
   persist(
     (set, get) => ({
@@ -1084,6 +1149,13 @@ export const useVolley = create<VolleyState>()(
           leagues: s.leagues.filter((l) => l.id !== id),
           teams: s.teams.map((t) => (t.leagueId === id ? { ...t, leagueId: undefined } : t)),
         })),
+
+      updateMatch: (id, patch) =>
+        set((s) => ({
+          matches: s.matches.map((m) => (m.id === id ? { ...m, ...patch, lastLocalChange: Date.now() } : m)),
+        })),
+      removeMatch: (id) =>
+        set((s) => ({ matches: s.matches.filter((m) => m.id !== id) })),
 
       addTeam: (t) => {
         const id = uid();
@@ -1184,6 +1256,16 @@ export const useVolley = create<VolleyState>()(
               status: m.status,
               lastLocalChange: Date.now()
             };
+          }),
+        })),
+
+      setUniversalRole: (matchId: string, setNumber: number, playerId: string, assignedRole: PlayerPosition) =>
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const spr = { ...(m.setPlayerRoles ?? {}) };
+            spr[setNumber] = { ...(spr[setNumber] ?? {}), [playerId]: assignedRole };
+            return { ...m, setPlayerRoles: spr, lastLocalChange: Date.now() };
           }),
         })),
 
@@ -1612,7 +1694,28 @@ export const useVolley = create<VolleyState>()(
             }
             events.pop();
             const next = { ...m, events };
-            // If still has events, stay live; if no events and was finished, revert.
+            return applyAutoLibero(next, s.teams);
+          }),
+        }));
+      },
+      recordBlock: (matchId, side, playerId, rating) => {
+        set((s) => ({
+          matches: s.matches.map((m) => {
+            if (m.id !== matchId) return m;
+            const scoringSide = rating === "point" ? side : rating === "error" ? (side === "A" ? "B" : "A") : null;
+            let next = { ...m };
+            if (scoringSide) {
+              const pev: PointEvent = {
+                id: uid(),
+                scoringSide,
+                playerSide: side,
+                playerId,
+                type: rating === "point" ? "block" : "opponent_error",
+                setNumber: m.currentSet,
+                timestamp: Date.now(),
+              };
+              next = { ...m, events: [...m.events, pev] };
+            }
             return applyAutoLibero(next, s.teams);
           }),
         }));
