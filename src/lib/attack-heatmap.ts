@@ -159,21 +159,6 @@ export function buildEnrichedAttacks(
           timestamp: ae.timestamp,
         });
       }
-    } else if ("kind" in ev && (ev.kind === "attack_error" || ev.kind === "attack_point")) {
-      // Manejar eventos de ataque directos si existen
-      const ae = ev as any;
-      out.push({
-        side: ae.side,
-        playerId: ae.playerId,
-        origin: ae.attackZone as OriginZone,
-        direction: (ae.attackDirection ?? null) as AttackDirection | null,
-        result: ev.kind === "attack_point" ? "positive" : "negative",
-        setNumber: ae.setNumber,
-        rotation: (ae.side === "A" ? rotA : rotB) + 1,
-        setterZone: setterLookup ? setterLookup(ae.side, ae.timestamp, ae.setNumber) : null,
-        phase: lastPhase[ae.side] ?? "K1",
-        timestamp: ae.timestamp,
-      });
     } else if (!("kind" in ev)) {
       // PointEvent: si no hubo setting-event asociado pero tiene attackZone,
       // registramos el ataque igual (evita perder datos del flujo rápido).
