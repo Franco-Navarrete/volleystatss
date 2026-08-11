@@ -68,6 +68,15 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
       .delete()
       .eq("match_id", data.matchId);
 
+    // Búsqueda adicional por ID (slug) por si el matchId en la snapshot no coincide con match_id columna
+    const { data: snaps } = await supabase.from("public_matches").select("id, data");
+    if (snaps) {
+      const toDelete = snaps.filter(s => (s.data as any)?.match?.id === data.matchId).map(s => s.id);
+      if (toDelete.length > 0) {
+        await supabase.from("public_matches").delete().in("id", toDelete);
+      }
+    }
+
     // 2. Eliminar de la nube (app_state) de TODOS los usuarios que puedan tenerlo.
     // Esto es necesario porque varios usuarios pueden "ver" el mismo partido si comparten liga.
     const { data: allStates, error: fetchError } = await supabase
@@ -76,7 +85,6 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
 
     if (fetchError) {
       console.error("Error fetching all states for deletion:", fetchError);
-      // Intentamos al menos borrar el del usuario actual si falla el global
       const { data: myState } = await supabase.from("app_state").select("data").eq("user_id", userId).maybeSingle();
       if (myState) {
         const d = myState.data as any;
@@ -87,11 +95,36 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
       await Promise.all(
         allStates.map(async (row) => {
           const d = row.data as any;
-          if (d?.matches?.some((m: any) => m.id === data.matchId)) {
-            const newMatches = (d.matches || []).filter((m: any) => m.id !== data.matchId);
+          const matches = d?.matches || [];
+          const teams = d?.teams || [];
+          
+          const hasMatch = matches.some((m: any) => m.id === data.matchId);
+          if (hasMatch) {
+            // Eliminar el partido
+            const newMatches = matches.filter((m: any) => m.id !== data.matchId);
+            
+            // Opcional: Si el partido dejó equipos huérfanos (rivales rápidos) que no pertenecen al club real del usuario
+            // los eliminamos para mantener el workspace limpio. 
+            // Solo si el usuario no es el dueño original de esos equipos.
+            const matchToRemove = matches.find((m: any) => m.id === data.matchId);
+            const teamIdsInMatch = [matchToRemove.teamAId, matchToRemove.teamBId];
+            
+            const newTeams = teams.filter((t: any) => {
+              // Si el equipo estaba en el partido...
+              if (teamIdsInMatch.includes(t.id)) {
+                // ...y es un equipo "rival" (sin ownerId o de otro dueño)
+                const isRival = !t.ownerId || t.ownerId !== row.user_id;
+                // ...y no participa en NINGÚN OTRO partido del usuario
+                const usedInOtherMatches = newMatches.some((m: any) => m.teamAId === t.id || m.teamBId === t.id);
+                
+                if (isRival && !usedInOtherMatches) return false;
+              }
+              return true;
+            });
+
             return supabase
               .from("app_state")
-              .update({ data: { ...d, matches: newMatches } })
+              .update({ data: { ...d, matches: newMatches, teams: newTeams } })
               .eq("user_id", row.user_id);
           }
         })
