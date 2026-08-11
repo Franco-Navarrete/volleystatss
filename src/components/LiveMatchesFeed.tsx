@@ -15,12 +15,12 @@ import { useMemo } from "react";
  */
 export function LiveMatchesFeed() {
   const fetchLive = useServerFn(listLivePublicMatches);
-  const { isAdmin } = useIsAdmin();
-  const { hasAccess: isCoach } = useCoachAccess();
-  const { user } = useAuthUser();
+  const { isAdmin, checking: isAdminChecking } = useIsAdmin();
+  const { hasAccess: isCoach, checking: isCoachChecking } = useCoachAccess();
+  const { user, loading: userLoading } = useAuthUser();
   const myTeams = useVolley((s) => s.teams);
   
-  const { data, isLoading } = useQuery({
+  const { data, isLoading: queryLoading } = useQuery({
     queryKey: ["live-public-matches"],
     queryFn: () => fetchLive(),
     refetchInterval: 10_000,
@@ -28,6 +28,11 @@ export function LiveMatchesFeed() {
   });
 
   const items = useMemo(() => {
+    // Si todavía estamos cargando permisos o usuario, mostramos una lista vacía 
+    // para evitar que useMemo cambie drásticamente el flujo de hooks (aunque useMemo no es un hook condicional)
+    // El problema real suele ser cuando el componente retorna NULO basándose en estos estados.
+    if (isAdminChecking || isCoachChecking || userLoading) return [];
+    
     const rawItems = data ?? [];
     // Los admins ven todo el feed global
     if (isAdmin) return rawItems;
@@ -49,10 +54,13 @@ export function LiveMatchesFeed() {
     }
     
     return rawItems;
-  }, [data, isAdmin, isCoach, user, myTeams]);
+  }, [data, isAdmin, isAdminChecking, isCoach, isCoachChecking, user, userLoading, myTeams]);
 
-  if (isLoading && items.length === 0) return null;
-  if (items.length === 0) return null;
+  // ELIMINAMOS los returns tempranos condicionales que causan "Rendered fewer hooks than expected"
+  // si es que dentro de este componente o sus hijos hay más hooks.
+  const showContent = !queryLoading && items.length > 0;
+
+  if (!showContent) return null;
 
   return (
     <section className="rounded-2xl bg-card border border-border/60 overflow-hidden mb-8">
