@@ -114,10 +114,7 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
         <FilterSelect
           label={`Jugadora · ${teamA.shortName ?? "A"}`}
           value={playerA}
-          onChange={(v) => {
-            console.log("Player A filter changed to:", v);
-            setPlayerA(v);
-          }}
+          onChange={setPlayerA}
           options={[
             { value: "all", label: "Todas" },
             ...teamA.players.map((p) => ({ value: p.id, label: `#${p.number} ${p.name}` })),
@@ -126,10 +123,7 @@ export function AttackHeatmap({ match, teamA, teamB }: Props) {
         <FilterSelect
           label={`Jugadora · ${teamB.shortName ?? "B"}`}
           value={playerB}
-          onChange={(v) => {
-            console.log("Player B filter changed to:", v);
-            setPlayerB(v);
-          }}
+          onChange={setPlayerB}
           options={[
             { value: "all", label: "Todas" },
             ...teamB.players.map((p) => ({ value: p.id, label: `#${p.number} ${p.name}` })),
