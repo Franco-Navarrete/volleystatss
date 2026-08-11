@@ -454,6 +454,34 @@ function LiveMatch() {
 
   const blockPick = useCoachRally((s) => s.blockPick);
 
+  const statsMode = getMatchStatsMode(match, teamsBase, leagues);
+  const isCoachForHook = statsMode === "entrenador" || coachOverride || isSuperAdmin;
+  const isLiveForHook = match?.status === "live";
+  const lineupConfirmedForHook = match ? (match.confirmedLineupSets ?? []).includes(match.currentSet) : false;
+  const currentSetObjForHook = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0];
+  const setNotStartedForHook = currentSetObjForHook ? (currentSetObjForHook.scoreA === 0 && currentSetObjForHook.scoreB === 0) : true;
+  const needsLineupForHook = isLiveForHook && setNotStartedForHook && !lineupConfirmedForHook;
+  const setStartedAtForHook = match?.setStartTimes?.[match.currentSet ?? 1];
+  const needsSetStartForHook = isLiveForHook && setNotStartedForHook && lineupConfirmedForHook && !setStartedAtForHook;
+  const actionsDisabledForHook = !isLiveForHook || needsLineupForHook || needsSetStartForHook;
+
+  const receivingSideForHook: "A" | "B" = match?.servingSide === "A" ? "B" : "A";
+  const lastReceptionSideForHook = match ? getCurrentRallyReceptionSide(match, match.currentSet) : null;
+  const receptionRegisteredForHook = lastReceptionSideForHook === receivingSideForHook;
+  const receivingPhaseForHook: "reception" | "attack" = receptionRegisteredForHook ? "attack" : "reception";
+  const servingSideForHook: "A" | "B" = receivingSideForHook === "A" ? "B" : "A";
+
+  const phaseA = isCoachForHook && isLiveForHook && !actionsDisabledForHook
+    ? (receivingSideForHook === "A" ? receivingPhaseForHook : "attack")
+    : "attack";
+  const phaseB = isCoachForHook && isLiveForHook && !actionsDisabledForHook
+    ? (receivingSideForHook === "B" ? receivingPhaseForHook : "attack")
+    : "attack";
+
+  const formationA = useFormation(match, teamA, "A", "5-1", phaseA);
+  const formationB = useFormation(match, teamB, "B", "5-1", phaseB);
+
+
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
