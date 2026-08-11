@@ -364,7 +364,7 @@ function LiveMatch() {
   // Auto-rotate to landscape on portrait phones during live scoring.
   useForceLandscape(match?.status === "live");
 
-  const { isPlanilleroOnly } = useIsPlanilleroOnly();
+  const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
   const isMobile = useIsMobileLayout();
   const coachEnabled = useCoachMode((s) => s.enabled);
   const setCoachEnabled = useCoachMode((s) => s.setEnabled);
@@ -447,8 +447,9 @@ function LiveMatch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coachEnabled, match?.id, match?.servingSide, match?.status]);
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
-  const showSyncing = (!match || !teamA || !teamB) && isLoadingGlobal;
-  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal;
+  const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || checkingCoach || checkingPlanillero;
+  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
+
 
   const handleDeleteMatch = async () => {
     try {
