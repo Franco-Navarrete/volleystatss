@@ -3703,6 +3703,84 @@ function FormationDialog({
             </div>
           </div>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
+  open: boolean;
+  match: Match;
+  teamA: Team;
+  teamB: Team;
+  onConfirm: (playerId: string, role: PlayerPosition) => void;
+}) {
+  const currentSetRoles = match.setPlayerRoles?.[match.currentSet] ?? {};
+  const universals = useMemo(() => {
+    const all = [...teamA.players, ...teamB.players];
+    return all.filter(p => p.position === "universal");
+  }, [teamA.players, teamB.players]);
+
+  if (universals.length === 0) return null;
+
+  return (
+    <Dialog open={open}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings2 className="size-5 text-primary" />
+            Roles de Jugadores Universales
+          </DialogTitle>
+          <DialogDescription>
+            Asigná el rol táctico para este Set {match.currentSet}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {universals.map(p => {
+            const team = teamA.players.some(tp => tp.id === p.id) ? teamA : teamB;
+            const currentRole = currentSetRoles[p.id];
+            
+            return (
+              <div key={p.id} className="p-3 rounded-lg border border-border bg-secondary/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="size-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: team.color }}>
+                    {p.number}
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold">{p.name}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{team.name}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {(["armador", "punta", "central", "opuesto"] as PlayerPosition[]).map(role => (
+                    <Button
+                      key={role}
+                      size="sm"
+                      variant={currentRole === role ? "default" : "outline"}
+                      className="h-8 text-[11px] font-bold"
+                      onClick={() => onConfirm(p.id, role)}
+                    >
+                      {PLAYER_POSITION_LABEL[role]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-[11px] text-primary/80 leading-relaxed">
+          <Info className="size-4 shrink-0 mt-0.5" />
+          <p>
+            Una vez iniciado el set, el rol del jugador Universal se mantendrá fijo y no cambiará con las rotaciones. Podrás reasignarlo al comenzar el próximo set.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
         <p className="text-xs text-muted-foreground">
           {editing
             ? "Arrastrá cada jugadora a la zona que quieras. Los cambios se aplican a todos los equipos y rotaciones que muestren esta formación."

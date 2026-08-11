@@ -1012,7 +1012,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
   return next;
 }
 
-export interface VolleyState {
+interface VolleyState {
   teams: Team[];
   matches: Match[];
   leagues: League[];
