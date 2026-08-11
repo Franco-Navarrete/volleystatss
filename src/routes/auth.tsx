@@ -32,22 +32,36 @@ function AuthPage() {
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setBusy(false);
-    if (error) {
-      setError(
-        error.message.includes("Invalid login credentials")
-          ? "Email o contraseña incorrectos."
-          : error.message,
-      );
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setError("Por favor, ingresá tu email.");
       return;
     }
-    navigate({ to: "/dashboard", replace: true });
+    setBusy(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+      
+      if (error) {
+        setBusy(false);
+        setError(
+          error.message.includes("Invalid login credentials")
+            ? "Email o contraseña incorrectos."
+            : error.message,
+        );
+        return;
+      }
+      
+      // La navegación se maneja después de setBusy(false) para evitar fugas de memoria si desmonta rápido
+      setBusy(false);
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err: any) {
+      setBusy(false);
+      setError("Error inesperado al intentar ingresar. Por favor, intenta de nuevo.");
+    }
   };
 
   return (
