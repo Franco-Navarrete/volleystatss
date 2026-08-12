@@ -10,6 +10,7 @@ import { Plus, Radio, Trash2 } from "lucide-react";
 import { useCanCreateMatches, useCanDeleteMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ function MatchesIndex() {
   const { isAdmin } = useIsAdmin();
   const { hasAccess: isCoach } = useCoachAccess();
   const adminAll = useAllUsersAppState();
+  const { isPlanilleroOnly } = useIsPlanilleroOnly();
 
   const teams = useMemo(() => {
     const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
@@ -71,8 +73,10 @@ function MatchesIndex() {
     // 2. Si es admin o super admin, ve todo.
     if (isAdmin || isSuperAdmin) return baseMatches;
 
-    // 3. Si es Coach u otro rol, filtramos estrictamente por propiedad.
-    //    Solo debe ver sus partidos (donde al menos uno de sus equipos propiedad participe).
+    // 3. Si es Coach, Planillero u otro rol, filtramos estrictamente por propiedad.
+    //    Si es planillero, ve sus partidos (donde m.metadata?.ownerId === user?.id).
+    //    Si es coach, ve sus partidos y los de sus equipos.
+    const isPlanillero = isPlanilleroOnly;
     const myOwnedTeamIds = new Set(localTeams.filter(t => t.ownerId === user?.id).map(t => t.id));
     const myLeagueIds = new Set(localTeams.filter(t => t.ownerId === user?.id && t.leagueId).map(t => t.leagueId));
 
@@ -80,7 +84,7 @@ function MatchesIndex() {
       // 1. Participa un equipo que YO poseo
       if (myOwnedTeamIds.has(m.teamAId) || myOwnedTeamIds.has(m.teamBId)) return true;
       
-      // 2. O el partido me pertenece directamente (soy el creador)
+      // 2. O el partido me pertenece directamente (soy el creador/planillero)
       if (m.metadata?.ownerId === user?.id) return true;
 
       // 3. O participa un equipo que está en una liga que YO gestiono/participo
