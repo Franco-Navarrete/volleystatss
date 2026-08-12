@@ -362,6 +362,12 @@ function LiveMatch() {
   const [showRotateDialog, setShowRotateDialog] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const handler = () => setShowLineupEditor(false);
+    window.addEventListener("universal-dialog:close", handler);
+    return () => window.removeEventListener("universal-dialog:close", handler);
+  }, []);
+
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
     if (match?.status === "finished" && !autoNavigatedRef.current) {
