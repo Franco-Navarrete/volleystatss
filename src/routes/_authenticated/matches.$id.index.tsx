@@ -230,8 +230,8 @@ function LiveMatch() {
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
-
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+  const canManageUniversals = isSuperAdmin || isAdmin || isPlanilleroOnly;
 
 
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
@@ -361,6 +361,12 @@ function LiveMatch() {
   const [showFormationDialog, setShowFormationDialog] = useState(false);
   const [showRotateDialog, setShowRotateDialog] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handler = () => setShowLineupEditor(false);
+    window.addEventListener("universal-dialog:close", handler);
+    return () => window.removeEventListener("universal-dialog:close", handler);
+  }, []);
 
   const autoNavigatedRef = useRef(false);
   useEffect(() => {
@@ -1114,7 +1120,7 @@ function LiveMatch() {
               />
 
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
-              {showLineupEditor && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
+              {showLineupEditor && canManageUniversals && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
                 <UniversalRoleDialog
                   open={true}
                   match={match}
@@ -3698,7 +3704,12 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
   if (universals.length === 0) return null;
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={() => {}}>
+      <div className="absolute top-4 right-4 z-50">
+        <Button variant="ghost" size="icon" onClick={() => (window as any).dispatchEvent(new CustomEvent("universal-dialog:close"))}>
+          <X className="size-4" />
+        </Button>
+      </div>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

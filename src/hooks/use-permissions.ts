@@ -7,7 +7,65 @@ import { useCoachAccess } from "@/hooks/use-coach-access";
  * Devuelve si el usuario actual puede crear partidos.
  * Pueden: admins, entrenadores, planilleros, o usuarios con `user_permissions.can_create_matches`.
  */
+/**
+ * Devuelve si el usuario actual puede crear partidos.
+ * Pueden: admins, entrenadores, planilleros, o usuarios con `user_permissions.can_create_matches`.
+ */
 export function useCanCreateMatches() {
+  const { user, loading: userLoading } = useAuthUser();
+  const { isAdmin, checking: adminChecking } = useIsAdmin();
+  const { hasAccess: isCoach, checking: coachChecking } = useCoachAccess();
+  const [allowed, setAllowed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (userLoading || adminChecking || coachChecking) return;
+    if (!user) {
+      setAllowed(false);
+      setLoading(false);
+      return;
+    }
+    const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+    
+    // Inyectamos lógica para que planillero siempre pueda crear partidos
+    (async () => {
+      const [rolesRes, permRes] = await Promise.all([
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "planillero"),
+        supabase
+          .from("user_permissions")
+          .select("can_create_matches")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+
+      if (cancelled) return;
+
+      const isPlanillero = !!rolesRes.data && rolesRes.data.length > 0;
+      
+      if (isAdmin || isCoach || isSuperAdmin || isPlanillero || !!permRes.data?.can_create_matches) {
+        setAllowed(true);
+        setLoading(false);
+        return;
+      }
+
+      setAllowed(false);
+      setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, isAdmin, isCoach, userLoading, adminChecking, coachChecking]);
+
+  return { allowed, loading };
+}
+
+export function useCanCreateMatches_LEGACY() {
   const { user, loading: userLoading } = useAuthUser();
   const { isAdmin, checking: adminChecking } = useIsAdmin();
   const { hasAccess: isCoach, checking: coachChecking } = useCoachAccess();
