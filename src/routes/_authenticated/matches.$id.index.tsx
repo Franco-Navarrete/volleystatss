@@ -3698,7 +3698,12 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
   if (universals.length === 0) return null;
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={() => {}}>
+      <div className="absolute top-4 right-4 z-50">
+        <Button variant="ghost" size="icon" onClick={() => (window as any).dispatchEvent(new CustomEvent("universal-dialog:close"))}>
+          <X className="size-4" />
+        </Button>
+      </div>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
