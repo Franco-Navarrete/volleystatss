@@ -207,8 +207,14 @@ function NewMatch() {
               })}
             </div>
           </div>
+        </>
+      )}
+    </AppShell>
+  );
+}
 
-
+function OldNewMatch() {
+  return (
 
       <div className="grid lg:grid-cols-2 gap-6">
         <TeamPicker label="Equipo local" teams={filteredTeams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA(emptyLineup()); }} />
