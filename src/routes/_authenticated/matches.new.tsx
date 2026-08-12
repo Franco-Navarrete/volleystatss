@@ -207,17 +207,7 @@ function NewMatch() {
               })}
             </div>
           </div>
-        </>
-      )}
-    </AppShell>
-  );
-}
 
-// Dummy return to remove old return and closing brace
-function Dummy() {
-  return (
-    <AppShell>
-      <h1 className="text-3xl font-extrabold mb-1">Nuevo partido</h1>
 
       <p className="text-muted-foreground text-sm mb-4">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
 
