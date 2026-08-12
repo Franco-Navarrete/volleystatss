@@ -125,16 +125,12 @@ function NewMatch() {
   const isPlanilleroOnly = planilleroData.isPlanilleroOnly;
   const checkingPlanillero = planilleroData.checking;
 
-  if (permLoading || adminChecking || coachChecking || checkingPlanillero) {
-    return (
-      <AppShell>
+  // No conditional returns here, use the state inside the return to keep hooks execution stable
+  return (
+    <AppShell>
+      {(permLoading || adminChecking || coachChecking || checkingPlanillero) ? (
         <p className="text-sm text-muted-foreground">Verificando permisos…</p>
-      </AppShell>
-    );
-  }
-  if (!canCreate) {
-    return (
-      <AppShell>
+      ) : !canCreate ? (
         <div className="max-w-md mx-auto text-center py-16">
           <h1 className="text-lg font-semibold">Sin permiso</h1>
           <p className="text-sm text-muted-foreground mt-2">
@@ -144,13 +140,85 @@ function NewMatch() {
             <Link to="/matches">Volver a partidos</Link>
           </Button>
         </div>
-      </AppShell>
-    );
-  }
+      ) : (
+        <>
+          <h1 className="text-3xl font-extrabold mb-1">Nuevo partido</h1>
+          <p className="text-muted-foreground text-sm mb-4">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
 
+          {leagues.length > 0 && (
+            <div className="mb-6 flex items-center gap-2 flex-wrap">
+              <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Liga</span>
+              <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
+                <button
+                  type="button"
+                  onClick={() => { setLeagueFilter("all"); }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Todas
+                </button>
+                {leagues.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => {
+                      setLeagueFilter(l.id);
+                      if (l.gender) setGenderFilter(l.gender);
+                      const a = teams.find((t) => t.id === teamAId);
+                      const b = teams.find((t) => t.id === teamBId);
+                      if (a && a.leagueId !== l.id) { setTeamAId(""); setLineupA(emptyLineup()); }
+                      if (b && b.leagueId !== l.id) { setTeamBId(""); setLineupB(emptyLineup()); }
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === l.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {l.name}{l.season ? ` · ${l.season}` : ""}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mb-6 flex items-center gap-2 flex-wrap">
+            <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Género</span>
+            <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
+              {([
+                { v: "all" as const, label: "Todos" },
+                { v: "F" as const, label: "Femenino" },
+                { v: "M" as const, label: "Masculino" },
+              ]).map((opt) => {
+                const active = genderFilter === opt.v;
+                return (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => {
+                      setGenderFilter(opt.v);
+                      const a = teams.find((t) => t.id === teamAId);
+                      const b = teams.find((t) => t.id === teamBId);
+                      if (opt.v !== "all") {
+                        if (a && a.gender !== opt.v) { setTeamAId(""); setLineupA(emptyLineup()); }
+                        if (b && b.gender !== opt.v) { setTeamBId(""); setLineupB(emptyLineup()); }
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </AppShell>
+  );
+}
+
+// Dummy return to remove old return and closing brace
+function Dummy() {
   return (
     <AppShell>
       <h1 className="text-3xl font-extrabold mb-1">Nuevo partido</h1>
+
       <p className="text-muted-foreground text-sm mb-4">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
 
       {leagues.length > 0 && (
