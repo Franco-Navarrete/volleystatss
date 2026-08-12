@@ -1,4 +1,5 @@
 // LiveMatch: Scouting en vivo y gestión de partidos.
+// Franco: El rol "planillero" ahora tiene permisos de escritura (canScout) y puede registrar puntos, cambios y tiempos.
 import { AppShell } from "@/components/AppShell"; 
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
