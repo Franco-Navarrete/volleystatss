@@ -6,14 +6,13 @@ interface Props {
 }
 
 /**
- * Grilla 3×3 sobre la cancha rival, siguiendo la convención estándar de vóley:
- *   4 3 2  (cerca de la red)
- *   7 8 9  (centro)
- *   5 6 1  (fondo)
- * Números vistos desde la perspectiva del atacante que mira la cancha rival.
+ * Grilla 2x3 sobre la cancha rival, siguiendo la solicitud del usuario:
+ * Fila superior (cerca de la red): 4 3 2
+ * Fila inferior (fondo): 5 6 1
  */
 export function AttackDirectionGrid({ onPick, value }: Props) {
-  // De arriba (red) hacia abajo (fondo).
+  // Fila superior (4, 3, 2) pegada a la red
+  // Fila inferior (5, 6, 1) al fondo
   const rows: AttackDirection[][] = [
     [4, 3, 2],
     [5, 6, 1],
@@ -30,7 +29,7 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
       >
         {/* Red del rival arriba (la fila 4-3-2 está pegada a la red) */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-white shadow" />
-        <div className="grid grid-rows-3 h-full">
+        <div className="grid grid-rows-2 h-full">
           {rows.map((row, r) => (
             <div key={r} className="grid grid-cols-3 gap-[2px] p-[2px]">
               {row.map((d) => (
@@ -52,7 +51,7 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        5-6-1 arriba (fondo) · 4-3-2 abajo (red) · zonas oficiales de vóley
+        4-3-2 pegado a la red · 5-6-1 al fondo · zonas oficiales de vóley
       </p>
     </div>
   );
