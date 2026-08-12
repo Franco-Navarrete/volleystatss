@@ -33,11 +33,13 @@ import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as PartidosIdRouteImport } from './routes/partidos.$id'
 import { Route as AuthenticatedFinancesAccountsRouteImport } from './routes/_authenticated/finances.accounts'
 import { Route as AuthenticatedFinancesBudgetRouteImport } from './routes/_authenticated/finances.budget'
+import { Route as AuthenticatedFinancesCalendarRouteImport } from './routes/_authenticated/finances.calendar'
 import { Route as AuthenticatedFinancesExpensesRouteImport } from './routes/_authenticated/finances.expenses'
 import { Route as AuthenticatedFinancesFortnightRouteImport } from './routes/_authenticated/finances.fortnight'
 import { Route as AuthenticatedFinancesFundsRouteImport } from './routes/_authenticated/finances.funds'
 import { Route as AuthenticatedFinancesGoalsRouteImport } from './routes/_authenticated/finances.goals'
 import { Route as AuthenticatedFinancesIncomeRouteImport } from './routes/_authenticated/finances.income'
+import { Route as AuthenticatedFinancesStatsRouteImport } from './routes/_authenticated/finances.stats'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedMatchesIdRouteImport } from './routes/_authenticated/matches.$id'
 import { Route as AuthenticatedMatchesNewRouteImport } from './routes/_authenticated/matches.new'
@@ -175,6 +177,12 @@ const AuthenticatedFinancesBudgetRoute =
     path: '/finances/budget',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFinancesCalendarRoute =
+  AuthenticatedFinancesCalendarRouteImport.update({
+    id: '/finances/calendar',
+    path: '/finances/calendar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFinancesExpensesRoute =
   AuthenticatedFinancesExpensesRouteImport.update({
     id: '/finances/expenses',
@@ -203,6 +211,12 @@ const AuthenticatedFinancesIncomeRoute =
   AuthenticatedFinancesIncomeRouteImport.update({
     id: '/finances/income',
     path: '/finances/income',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancesStatsRoute =
+  AuthenticatedFinancesStatsRouteImport.update({
+    id: '/finances/stats',
+    path: '/finances/stats',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMatchesIndexRoute =
@@ -303,11 +317,13 @@ export interface FileRoutesByFullPath {
   '/ligas/': typeof LigasIndexRoute
   '/finances/accounts': typeof AuthenticatedFinancesAccountsRoute
   '/finances/budget': typeof AuthenticatedFinancesBudgetRoute
+  '/finances/calendar': typeof AuthenticatedFinancesCalendarRoute
   '/finances/expenses': typeof AuthenticatedFinancesExpensesRoute
   '/finances/fortnight': typeof AuthenticatedFinancesFortnightRoute
   '/finances/funds': typeof AuthenticatedFinancesFundsRoute
   '/finances/goals': typeof AuthenticatedFinancesGoalsRoute
   '/finances/income': typeof AuthenticatedFinancesIncomeRoute
+  '/finances/stats': typeof AuthenticatedFinancesStatsRoute
   '/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/matches/new': typeof AuthenticatedMatchesNewRoute
   '/session/$id': typeof AuthenticatedSessionIdRoute
@@ -344,11 +360,13 @@ export interface FileRoutesByTo {
   '/ligas': typeof LigasIndexRoute
   '/finances/accounts': typeof AuthenticatedFinancesAccountsRoute
   '/finances/budget': typeof AuthenticatedFinancesBudgetRoute
+  '/finances/calendar': typeof AuthenticatedFinancesCalendarRoute
   '/finances/expenses': typeof AuthenticatedFinancesExpensesRoute
   '/finances/fortnight': typeof AuthenticatedFinancesFortnightRoute
   '/finances/funds': typeof AuthenticatedFinancesFundsRoute
   '/finances/goals': typeof AuthenticatedFinancesGoalsRoute
   '/finances/income': typeof AuthenticatedFinancesIncomeRoute
+  '/finances/stats': typeof AuthenticatedFinancesStatsRoute
   '/matches/new': typeof AuthenticatedMatchesNewRoute
   '/session/$id': typeof AuthenticatedSessionIdRoute
   '/session/new': typeof AuthenticatedSessionNewRoute
@@ -387,11 +405,13 @@ export interface FileRoutesById {
   '/ligas/': typeof LigasIndexRoute
   '/_authenticated/finances/accounts': typeof AuthenticatedFinancesAccountsRoute
   '/_authenticated/finances/budget': typeof AuthenticatedFinancesBudgetRoute
+  '/_authenticated/finances/calendar': typeof AuthenticatedFinancesCalendarRoute
   '/_authenticated/finances/expenses': typeof AuthenticatedFinancesExpensesRoute
   '/_authenticated/finances/fortnight': typeof AuthenticatedFinancesFortnightRoute
   '/_authenticated/finances/funds': typeof AuthenticatedFinancesFundsRoute
   '/_authenticated/finances/goals': typeof AuthenticatedFinancesGoalsRoute
   '/_authenticated/finances/income': typeof AuthenticatedFinancesIncomeRoute
+  '/_authenticated/finances/stats': typeof AuthenticatedFinancesStatsRoute
   '/_authenticated/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/_authenticated/matches/new': typeof AuthenticatedMatchesNewRoute
   '/_authenticated/session/$id': typeof AuthenticatedSessionIdRoute
@@ -432,11 +452,13 @@ export interface FileRouteTypes {
     | '/ligas/'
     | '/finances/accounts'
     | '/finances/budget'
+    | '/finances/calendar'
     | '/finances/expenses'
     | '/finances/fortnight'
     | '/finances/funds'
     | '/finances/goals'
     | '/finances/income'
+    | '/finances/stats'
     | '/matches/$id'
     | '/matches/new'
     | '/session/$id'
@@ -473,11 +495,13 @@ export interface FileRouteTypes {
     | '/ligas'
     | '/finances/accounts'
     | '/finances/budget'
+    | '/finances/calendar'
     | '/finances/expenses'
     | '/finances/fortnight'
     | '/finances/funds'
     | '/finances/goals'
     | '/finances/income'
+    | '/finances/stats'
     | '/matches/new'
     | '/session/$id'
     | '/session/new'
@@ -515,11 +539,13 @@ export interface FileRouteTypes {
     | '/ligas/'
     | '/_authenticated/finances/accounts'
     | '/_authenticated/finances/budget'
+    | '/_authenticated/finances/calendar'
     | '/_authenticated/finances/expenses'
     | '/_authenticated/finances/fortnight'
     | '/_authenticated/finances/funds'
     | '/_authenticated/finances/goals'
     | '/_authenticated/finances/income'
+    | '/_authenticated/finances/stats'
     | '/_authenticated/matches/$id'
     | '/_authenticated/matches/new'
     | '/_authenticated/session/$id'
@@ -716,6 +742,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinancesBudgetRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/finances/calendar': {
+      id: '/_authenticated/finances/calendar'
+      path: '/finances/calendar'
+      fullPath: '/finances/calendar'
+      preLoaderRoute: typeof AuthenticatedFinancesCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/finances/expenses': {
       id: '/_authenticated/finances/expenses'
       path: '/finances/expenses'
@@ -749,6 +782,13 @@ declare module '@tanstack/react-router' {
       path: '/finances/income'
       fullPath: '/finances/income'
       preLoaderRoute: typeof AuthenticatedFinancesIncomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finances/stats': {
+      id: '/_authenticated/finances/stats'
+      path: '/finances/stats'
+      fullPath: '/finances/stats'
+      preLoaderRoute: typeof AuthenticatedFinancesStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/matches/': {
@@ -895,11 +935,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
   AuthenticatedFinancesAccountsRoute: typeof AuthenticatedFinancesAccountsRoute
   AuthenticatedFinancesBudgetRoute: typeof AuthenticatedFinancesBudgetRoute
+  AuthenticatedFinancesCalendarRoute: typeof AuthenticatedFinancesCalendarRoute
   AuthenticatedFinancesExpensesRoute: typeof AuthenticatedFinancesExpensesRoute
   AuthenticatedFinancesFortnightRoute: typeof AuthenticatedFinancesFortnightRoute
   AuthenticatedFinancesFundsRoute: typeof AuthenticatedFinancesFundsRoute
   AuthenticatedFinancesGoalsRoute: typeof AuthenticatedFinancesGoalsRoute
   AuthenticatedFinancesIncomeRoute: typeof AuthenticatedFinancesIncomeRoute
+  AuthenticatedFinancesStatsRoute: typeof AuthenticatedFinancesStatsRoute
   AuthenticatedMatchesIdRoute: typeof AuthenticatedMatchesIdRouteWithChildren
   AuthenticatedMatchesNewRoute: typeof AuthenticatedMatchesNewRoute
   AuthenticatedSessionIdRoute: typeof AuthenticatedSessionIdRoute
@@ -922,11 +964,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
   AuthenticatedFinancesAccountsRoute: AuthenticatedFinancesAccountsRoute,
   AuthenticatedFinancesBudgetRoute: AuthenticatedFinancesBudgetRoute,
+  AuthenticatedFinancesCalendarRoute: AuthenticatedFinancesCalendarRoute,
   AuthenticatedFinancesExpensesRoute: AuthenticatedFinancesExpensesRoute,
   AuthenticatedFinancesFortnightRoute: AuthenticatedFinancesFortnightRoute,
   AuthenticatedFinancesFundsRoute: AuthenticatedFinancesFundsRoute,
   AuthenticatedFinancesGoalsRoute: AuthenticatedFinancesGoalsRoute,
   AuthenticatedFinancesIncomeRoute: AuthenticatedFinancesIncomeRoute,
+  AuthenticatedFinancesStatsRoute: AuthenticatedFinancesStatsRoute,
   AuthenticatedMatchesIdRoute: AuthenticatedMatchesIdRouteWithChildren,
   AuthenticatedMatchesNewRoute: AuthenticatedMatchesNewRoute,
   AuthenticatedSessionIdRoute: AuthenticatedSessionIdRoute,
