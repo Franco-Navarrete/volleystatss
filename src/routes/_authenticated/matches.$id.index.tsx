@@ -1,4 +1,5 @@
 // LiveMatch: Scouting en vivo y gestión de partidos.
+import { CompactShell } from "@/components/AppShell"; // Assuming CompactShell is defined or reused here if it exists in AppShell or similar. If not, fallback to AppShell.
 
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -129,7 +130,7 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
   errorComponent: ({ error, reset }) => {
     console.error("Route ErrorBoundary caught error:", error);
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background px-6 text-center">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background px-6 text-center">
         <h1 className="text-xl font-bold mb-2">Error al cargar el partido</h1>
         <p className="text-muted-foreground text-sm max-w-xs mb-6 text-balance">
           {error instanceof Error ? error.message : "Algo salió mal al sincronizar los datos."}
@@ -154,7 +155,7 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 function LiveMatchWrapper() {
   const params = Route.useParams();
   return (
-    <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch key={params.id} />
     </Suspense>
   );
@@ -539,23 +540,23 @@ function LiveMatch() {
 
   if (showSyncing) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
-        <div className="mb-6">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-            <Volleyball className="w-8 h-8 text-primary animate-bounce" />
+      <CompactShell>
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-6 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+              <Volleyball className="w-8 h-8 text-primary animate-bounce" />
+            </div>
           </div>
+          <p className="text-2xl font-bold mb-2">Sincronizando...</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Buscando datos globales para Super Admin...
+          </p>
         </div>
-        <p className="text-2xl font-bold mb-2">Sincronizando...</p>
-        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-          Buscando datos globales para Super Admin...
-        </p>
-      </div>
+      </CompactShell>
     );
   }
 
-
   if (showNotFound) {
-
     return (
       <CompactShell>
         <div className="flex flex-col items-center justify-center min-h-[80vh] py-20 px-6">
@@ -689,6 +690,12 @@ function LiveMatch() {
 
   // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
   if (!match || !teamA || !teamB) return null;
+
+  // We should render the full match UI here, ensuring all hooks were called above.
+  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
+  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
+
+  // Re-verify that no hooks are called after this point in the main component.
 
 
   const w = setsWon(match);
