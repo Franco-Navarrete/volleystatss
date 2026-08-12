@@ -484,6 +484,7 @@ function LiveMatch() {
   const formationA = useFormation(match, teamA, "A", "5-1", phaseA);
   const formationB = useFormation(match, teamB, "B", "5-1", phaseB);
 
+  const [now, setNow] = useState(() => Date.now());
 
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
@@ -509,7 +510,6 @@ function LiveMatch() {
     return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
   })();
 
-  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (match?.status === "finished") return;
@@ -3702,12 +3702,15 @@ function FormationDialog({
   teamA: Team;
   teamB: Team;
 }) {
+  // Moved hooks to top level of LiveMatch for consistency if needed, but here they are called inside a component.
+  // The error "Rendered fewer hooks" usually comes from conditional returns in LiveMatch.
+  // However, FormationDialog is a separate function component.
   const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
   const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
+  
+  // These hooks MUST be called unconditionally if FormationDialog is rendered.
   const formationA = useFormation(match, teamA, "A", "5-1", phaseA as "reception" | "attack");
   const formationB = useFormation(match, teamB, "B", "5-1", phaseB as "reception" | "attack");
-
-
   const [editing, setEditing] = useState(false);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
