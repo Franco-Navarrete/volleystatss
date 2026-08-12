@@ -209,8 +209,6 @@ function NewMatch() {
           </div>
 
 
-      <p className="text-muted-foreground text-sm mb-4">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
-
       {leagues.length > 0 && (
         <div className="mb-6 flex items-center gap-2 flex-wrap">
           <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Liga</span>
