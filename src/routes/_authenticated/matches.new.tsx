@@ -462,54 +462,54 @@ function CategoryPicker({
 }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
-  if (adding) {
-    return (
-      <div className="flex gap-1">
-        <input
-          autoFocus
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Nueva categoría"
-          className="flex-1 bg-background border border-input rounded-md px-2 py-2 text-sm"
-        />
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            const v = draft.trim();
-            if (!v) { setAdding(false); return; }
-            onAddOption(v);
-            onChange(v);
-            setDraft("");
-            setAdding(false);
-          }}
-        >
-          OK
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft(""); }}>
-          <X className="size-3.5" />
-        </Button>
-      </div>
-    );
-  }
+  // No condition here, use the state inside the return
   return (
     <div className="flex gap-1">
-      <select
-        value={value}
-        onChange={(e) => {
-          if (e.target.value === "__new__") { setAdding(true); return; }
-          onChange(e.target.value);
-        }}
-        className={`flex-1 bg-background border rounded-md px-2 py-2 text-sm ${invalid ? "border-destructive/60" : "border-input"}`}
-      >
-        <option value="">— Seleccionar —</option>
-        {options.map((o) => (
-          <option key={o} value={o}>{o}</option>
-        ))}
-        <option value="__new__">＋ Otra…</option>
-      </select>
+      {adding ? (
+        <>
+          <input
+            autoFocus
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Nueva categoría"
+            className="flex-1 bg-background border border-input rounded-md px-2 py-2 text-sm"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const v = draft.trim();
+              if (!v) { setAdding(false); return; }
+              onAddOption(v);
+              onChange(v);
+              setDraft("");
+              setAdding(false);
+            }}
+          >
+            OK
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft(""); }}>
+            <X className="size-3.5" />
+          </Button>
+        </>
+      ) : (
+        <select
+          value={value}
+          onChange={(e) => {
+            if (e.target.value === "__new__") { setAdding(true); return; }
+            onChange(e.target.value);
+          }}
+          className={`flex-1 bg-background border rounded-md px-2 py-2 text-sm ${invalid ? "border-destructive/60" : "border-input"}`}
+        >
+          <option value="">— Seleccionar —</option>
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+          <option value="__new__">＋ Otra…</option>
+        </select>
+      )}
     </div>
   );
 }
