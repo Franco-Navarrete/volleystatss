@@ -213,8 +213,8 @@ function NewMatch() {
   );
 }
 
-function OldNewMatch() {
-  return (
+  // Eliminated OldNewMatch as it was redundant and caused build errors.
+
     <>
       <div className="grid lg:grid-cols-2 gap-6">
 
