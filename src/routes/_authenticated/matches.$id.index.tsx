@@ -580,34 +580,8 @@ function LiveMatch() {
     );
   }
 
-  if (showNotFound) {
-    return (
-      <InternalCompactShell>
+  // showNotFound ya fue manejado arriba.
 
-        <div className="flex flex-col items-center justify-center min-h-[80vh] py-20 px-6">
-          <div className="text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-                <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-              {match && (!teamA || !teamB)
-                ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
-                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 max-w-xs mx-auto w-full">
-            <Button asChild variant="default" size="lg" className="bg-gradient-primary shadow-glow rounded-xl font-semibold">
-              <Link to="/matches">
-                <ArrowLeftRight className="w-4 h-4 mr-2" />
-                Volver a mis partidos
-              </Link>
-            </Button>
-
-            {isSuperAdmin && (
               <>
                 <Button 
                   variant="destructive" 
