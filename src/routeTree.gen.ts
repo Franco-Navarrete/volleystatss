@@ -31,7 +31,9 @@ import { Route as LigasIndexRouteImport } from './routes/ligas.index'
 import { Route as LigasIdRouteImport } from './routes/ligas.$id'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as PartidosIdRouteImport } from './routes/partidos.$id'
+import { Route as AuthenticatedFinancesExpensesRouteImport } from './routes/_authenticated/finances.expenses'
 import { Route as AuthenticatedFinancesFortnightRouteImport } from './routes/_authenticated/finances.fortnight'
+import { Route as AuthenticatedFinancesIncomeRouteImport } from './routes/_authenticated/finances.income'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedMatchesIdRouteImport } from './routes/_authenticated/matches.$id'
 import { Route as AuthenticatedMatchesNewRouteImport } from './routes/_authenticated/matches.new'
@@ -157,10 +159,22 @@ const PartidosIdRoute = PartidosIdRouteImport.update({
   path: '/partidos/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedFinancesExpensesRoute =
+  AuthenticatedFinancesExpensesRouteImport.update({
+    id: '/finances/expenses',
+    path: '/finances/expenses',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFinancesFortnightRoute =
   AuthenticatedFinancesFortnightRouteImport.update({
     id: '/finances/fortnight',
     path: '/finances/fortnight',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFinancesIncomeRoute =
+  AuthenticatedFinancesIncomeRouteImport.update({
+    id: '/finances/income',
+    path: '/finances/income',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMatchesIndexRoute =
@@ -259,7 +273,9 @@ export interface FileRoutesByFullPath {
   '/partidos/$id': typeof PartidosIdRoute
   '/equipos/': typeof EquiposIndexRoute
   '/ligas/': typeof LigasIndexRoute
+  '/finances/expenses': typeof AuthenticatedFinancesExpensesRoute
   '/finances/fortnight': typeof AuthenticatedFinancesFortnightRoute
+  '/finances/income': typeof AuthenticatedFinancesIncomeRoute
   '/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/matches/new': typeof AuthenticatedMatchesNewRoute
   '/session/$id': typeof AuthenticatedSessionIdRoute
@@ -294,7 +310,9 @@ export interface FileRoutesByTo {
   '/partidos/$id': typeof PartidosIdRoute
   '/equipos': typeof EquiposIndexRoute
   '/ligas': typeof LigasIndexRoute
+  '/finances/expenses': typeof AuthenticatedFinancesExpensesRoute
   '/finances/fortnight': typeof AuthenticatedFinancesFortnightRoute
+  '/finances/income': typeof AuthenticatedFinancesIncomeRoute
   '/matches/new': typeof AuthenticatedMatchesNewRoute
   '/session/$id': typeof AuthenticatedSessionIdRoute
   '/session/new': typeof AuthenticatedSessionNewRoute
@@ -331,7 +349,9 @@ export interface FileRoutesById {
   '/partidos/$id': typeof PartidosIdRoute
   '/equipos/': typeof EquiposIndexRoute
   '/ligas/': typeof LigasIndexRoute
+  '/_authenticated/finances/expenses': typeof AuthenticatedFinancesExpensesRoute
   '/_authenticated/finances/fortnight': typeof AuthenticatedFinancesFortnightRoute
+  '/_authenticated/finances/income': typeof AuthenticatedFinancesIncomeRoute
   '/_authenticated/matches/$id': typeof AuthenticatedMatchesIdRouteWithChildren
   '/_authenticated/matches/new': typeof AuthenticatedMatchesNewRoute
   '/_authenticated/session/$id': typeof AuthenticatedSessionIdRoute
@@ -370,7 +390,9 @@ export interface FileRouteTypes {
     | '/partidos/$id'
     | '/equipos/'
     | '/ligas/'
+    | '/finances/expenses'
     | '/finances/fortnight'
+    | '/finances/income'
     | '/matches/$id'
     | '/matches/new'
     | '/session/$id'
@@ -405,7 +427,9 @@ export interface FileRouteTypes {
     | '/partidos/$id'
     | '/equipos'
     | '/ligas'
+    | '/finances/expenses'
     | '/finances/fortnight'
+    | '/finances/income'
     | '/matches/new'
     | '/session/$id'
     | '/session/new'
@@ -441,7 +465,9 @@ export interface FileRouteTypes {
     | '/partidos/$id'
     | '/equipos/'
     | '/ligas/'
+    | '/_authenticated/finances/expenses'
     | '/_authenticated/finances/fortnight'
+    | '/_authenticated/finances/income'
     | '/_authenticated/matches/$id'
     | '/_authenticated/matches/new'
     | '/_authenticated/session/$id'
@@ -624,11 +650,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartidosIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/finances/expenses': {
+      id: '/_authenticated/finances/expenses'
+      path: '/finances/expenses'
+      fullPath: '/finances/expenses'
+      preLoaderRoute: typeof AuthenticatedFinancesExpensesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/finances/fortnight': {
       id: '/_authenticated/finances/fortnight'
       path: '/finances/fortnight'
       fullPath: '/finances/fortnight'
       preLoaderRoute: typeof AuthenticatedFinancesFortnightRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/finances/income': {
+      id: '/_authenticated/finances/income'
+      path: '/finances/income'
+      fullPath: '/finances/income'
+      preLoaderRoute: typeof AuthenticatedFinancesIncomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/matches/': {
@@ -773,7 +813,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatsCombinadasRoute: typeof AuthenticatedStatsCombinadasRoute
   AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
+  AuthenticatedFinancesExpensesRoute: typeof AuthenticatedFinancesExpensesRoute
   AuthenticatedFinancesFortnightRoute: typeof AuthenticatedFinancesFortnightRoute
+  AuthenticatedFinancesIncomeRoute: typeof AuthenticatedFinancesIncomeRoute
   AuthenticatedMatchesIdRoute: typeof AuthenticatedMatchesIdRouteWithChildren
   AuthenticatedMatchesNewRoute: typeof AuthenticatedMatchesNewRoute
   AuthenticatedSessionIdRoute: typeof AuthenticatedSessionIdRoute
@@ -794,7 +836,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatsCombinadasRoute: AuthenticatedStatsCombinadasRoute,
   AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
+  AuthenticatedFinancesExpensesRoute: AuthenticatedFinancesExpensesRoute,
   AuthenticatedFinancesFortnightRoute: AuthenticatedFinancesFortnightRoute,
+  AuthenticatedFinancesIncomeRoute: AuthenticatedFinancesIncomeRoute,
   AuthenticatedMatchesIdRoute: AuthenticatedMatchesIdRouteWithChildren,
   AuthenticatedMatchesNewRoute: AuthenticatedMatchesNewRoute,
   AuthenticatedSessionIdRoute: AuthenticatedSessionIdRoute,
