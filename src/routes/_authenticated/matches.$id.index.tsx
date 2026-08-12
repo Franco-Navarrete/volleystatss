@@ -1,7 +1,5 @@
 // LiveMatch: Scouting en vivo y gestión de partidos.
-
-
-
+import { AppShell } from "@/components/AppShell"; 
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -28,6 +26,14 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Settings2,
+  ShieldOff,
+  Shirt,
+  Undo2,
+  Users,
+  Info,
+} from "lucide-react";
+
   RotateCw,
   Search,
   Settings2,
