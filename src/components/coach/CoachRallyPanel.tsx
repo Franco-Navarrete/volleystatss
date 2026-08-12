@@ -264,8 +264,8 @@ function StepView({ current, teams, onPlayer, onTarget, onRating, onAttackResult
         </div>
         <div className="grid grid-cols-3 gap-1.5">
           {[
-            { z: 5 as const, k: "Q" }, { z: 6 as const, k: "W" }, { z: 1 as const, k: "E" },
             { z: 4 as const, k: "A" }, { z: 3 as const, k: "S" }, { z: 2 as const, k: "D" },
+            { z: 5 as const, k: "Q" }, { z: 6 as const, k: "W" }, { z: 1 as const, k: "E" },
           ].map((it) => (
             <button
               key={it.z}
