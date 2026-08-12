@@ -1,6 +1,5 @@
 // LiveMatch: Scouting en vivo y gestión de partidos.
-import { AppShell } from "@/components/AppShell"; // Falling back to AppShell since CompactShell is not exported.
-const CompactShell = AppShell; 
+
 
 
 
