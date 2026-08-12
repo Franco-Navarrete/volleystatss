@@ -462,7 +462,8 @@ function CategoryPicker({
 }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
-  // No condition here, use the state inside the return
+
+  // Use state inside the return to keep hooks execution stable
   return (
     <div className="flex gap-1">
       {adding ? (
