@@ -487,6 +487,8 @@ function LiveMatch() {
 
   const [now, setNow] = useState(() => Date.now());
 
+  const analysisMode = useWorkspaceStore((s) => s.analysisMode);
+
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
@@ -814,7 +816,6 @@ function LiveMatch() {
 
 
 
-  const analysisMode = useWorkspaceStore((s) => s.analysisMode);
 
   const workspaceView = (!analysisMode || isMobile) ? null : (
     <WorkspaceLayout
