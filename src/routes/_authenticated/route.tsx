@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { startCloudSync } from "@/lib/cloud-sync";
 import { Sidebar } from "@/components/Sidebar";
+import { MobileNav } from "@/components/MobileNav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -22,9 +23,10 @@ function AuthenticatedLayout() {
   }, [user.id, user.email]);
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen bg-background overflow-hidden">
       <Sidebar className="hidden md:flex" />
-      <main className="flex-1 overflow-y-auto relative">
+      <MobileNav />
+      <main className="flex-1 overflow-y-auto relative pb-20 md:pb-0">
         <Outlet />
       </main>
     </div>
