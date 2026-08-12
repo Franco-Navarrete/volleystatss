@@ -537,11 +537,9 @@ function LiveMatch() {
   const prevSetEndedAt = (match?.currentSet ?? 1) > 1
     ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
     : undefined;
-  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
-
   if (showSyncing) {
     return (
-      <CompactShell>
+      <InternalCompactShell>
         <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-6 text-center">
           <div className="mb-6">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
@@ -553,7 +551,30 @@ function LiveMatch() {
             Buscando datos globales para Super Admin...
           </p>
         </div>
-      </CompactShell>
+      </InternalCompactShell>
+    );
+  }
+
+  if (showNotFound) {
+    return (
+      <InternalCompactShell>
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-6 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+              <X className="w-8 h-8 text-destructive" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Partido no encontrado</h1>
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+            No pudimos encontrar el partido o no tenés permisos para verlo.
+          </p>
+          <div className="flex flex-col gap-2 w-full max-w-xs mx-auto">
+            <Button asChild variant="default">
+              <Link to="/matches">Volver a Partidos</Link>
+            </Button>
+          </div>
+        </div>
+      </InternalCompactShell>
     );
   }
 
@@ -2090,7 +2111,7 @@ function LiveMatch() {
   );
 }
 
-function CompactShell({ children, isReadOnly }: { children: React.ReactNode; isReadOnly?: boolean }) {
+function InternalCompactShell({ children, isReadOnly }: { children: React.ReactNode; isReadOnly?: boolean }) {
   const navigate = useNavigate();
   const handleBack = () => {
     // Prefer real browser history so we return to whichever page (perfil de jugador,
