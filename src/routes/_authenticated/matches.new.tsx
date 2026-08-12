@@ -9,6 +9,7 @@ import { Check, Plus, X, Info } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/matches/new")({
