@@ -639,12 +639,8 @@ function LiveMatch() {
                 )}
               </>
             )}
-          </div>
-        </div>
-      </CompactShell>
-    );
-  }
-
+            
+            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
@@ -685,6 +681,7 @@ function LiveMatch() {
       </CompactShell>
     );
   }
+
 
 
   // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
