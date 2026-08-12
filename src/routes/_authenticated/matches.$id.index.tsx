@@ -1114,7 +1114,7 @@ function LiveMatch() {
               />
 
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
-              {showLineupEditor && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
+              {showLineupEditor && canManageUniversals && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
                 <UniversalRoleDialog
                   open={true}
                   match={match}
