@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { startCloudSync } from "@/lib/cloud-sync";
+import { Sidebar } from "@/components/Sidebar";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -20,5 +21,12 @@ function AuthenticatedLayout() {
     void startCloudSync(user.id, user.email ?? null);
   }, [user.id, user.email]);
 
-  return <Outlet />;
+  return (
+    <div className="flex h-screen bg-background overflow-hidden">
+      <Sidebar className="hidden md:flex" />
+      <main className="flex-1 overflow-y-auto relative">
+        <Outlet />
+      </main>
+    </div>
+  );
 }
