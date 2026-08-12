@@ -639,7 +639,7 @@ function LiveMatch() {
                 )}
               </>
             )}
-            
+
             <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
               <div className="space-y-1">
@@ -681,6 +681,7 @@ function LiveMatch() {
       </CompactShell>
     );
   }
+
 
 
 
