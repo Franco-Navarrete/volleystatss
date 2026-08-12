@@ -230,9 +230,8 @@ function LiveMatch() {
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
   const { isPlanilleroOnly, checking: checkingPlanillero } = useIsPlanilleroOnly();
-  const canManageUniversals = isSuperAdmin || isAdmin || isPlanilleroOnly;
-
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
+  const canManageUniversals = isSuperAdmin || isAdmin || isPlanilleroOnly;
 
 
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
