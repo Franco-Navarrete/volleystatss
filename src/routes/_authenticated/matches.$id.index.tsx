@@ -537,6 +537,8 @@ function LiveMatch() {
   const prevSetEndedAt = (match?.currentSet ?? 1) > 1
     ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
     : undefined;
+  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
   if (showSyncing) {
     return (
       <InternalCompactShell>
@@ -580,7 +582,8 @@ function LiveMatch() {
 
   if (showNotFound) {
     return (
-      <CompactShell>
+      <InternalCompactShell>
+
         <div className="flex flex-col items-center justify-center min-h-[80vh] py-20 px-6">
           <div className="text-center">
             <div className="mb-6 flex justify-center">
@@ -703,7 +706,7 @@ function LiveMatch() {
           </div>
         </div>
 
-      </CompactShell>
+      </InternalCompactShell>
     );
   }
 
@@ -965,15 +968,15 @@ function LiveMatch() {
 
   if (workspaceView) {
     return (
-      <CompactShell isReadOnly={!canScout}>
+      <InternalCompactShell isReadOnly={!canScout}>
         {workspaceView}
-      </CompactShell>
+      </InternalCompactShell>
     );
   }
 
 
   return (
-    <CompactShell isReadOnly={!canScout}>
+    <InternalCompactShell isReadOnly={!canScout}>
       <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />
@@ -2107,7 +2110,7 @@ function LiveMatch() {
         />
       )}
 
-    </CompactShell>
+    </InternalCompactShell>
   );
 }
 
