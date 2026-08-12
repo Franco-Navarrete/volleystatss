@@ -628,18 +628,20 @@ function LiveMatch() {
 
       {/* Universal Player Role Assignment */}
       {showLineupEditor && !!match && (teamA?.players.some(p => p.position === "universal") || teamB?.players.some(p => p.position === "universal")) && (
-      <UniversalRoleDialog
-        open={true}
-        match={match!}
-        teamA={teamA!}
-        teamB={teamB!}
-        onConfirm={(playerId: string, role: PlayerPosition) => {
-          useVolley.getState().setUniversalRole(match!.id, match!.currentSet, playerId, role);
-        }}
-      />
+        <UniversalRoleDialog
+          open={true}
+          match={match!}
+          teamA={teamA!}
+          teamB={teamB!}
+          onConfirm={(playerId: string, role: PlayerPosition) => {
+            useVolley.getState().setUniversalRole(match!.id, match!.currentSet, playerId, role);
+          }}
+        />
       )}
-              </>
-            )}
+    </>
+  );
+}
+
             
             <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
