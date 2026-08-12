@@ -152,9 +152,10 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 });
 
 function LiveMatchWrapper() {
+  const params = Route.useParams();
   return (
     <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
-      <LiveMatch />
+      <LiveMatch key={params.id} />
     </Suspense>
   );
 }
