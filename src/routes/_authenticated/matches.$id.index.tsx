@@ -623,8 +623,8 @@ function LiveMatch() {
                         Confirmar Eliminación
                       </Button>
                     </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                  </DialogContent>
+                </Dialog>
 
                 {showLineupEditor && !!match && (teamA?.players.some(p => p.position === "universal") || teamB?.players.some(p => p.position === "universal")) && (
                   <UniversalRoleDialog
@@ -639,10 +639,12 @@ function LiveMatch() {
                 )}
               </>
             )}
+          </div>
+        </div>
+      </CompactShell>
+    );
+  }
 
-
-            
-            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
