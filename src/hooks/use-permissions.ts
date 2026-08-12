@@ -204,7 +204,8 @@ export function useCanDeleteMatches() {
       setLoading(false);
       return;
     }
-    if (isAdmin) {
+    const isSuperAdmin = user.email === "franco.e.navarrete@gmail.com";
+    if (isAdmin || isSuperAdmin) {
       setAllowed(true);
       setLoading(false);
       return;
