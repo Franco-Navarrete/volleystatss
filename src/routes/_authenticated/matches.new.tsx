@@ -9,6 +9,7 @@ import { Check, Plus, X, Info } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/matches/new")({
@@ -32,13 +33,14 @@ function NewMatch() {
   const addScorekeeper = useVolley((s) => s.addScorekeeper);
   const createMatch = useVolley((s) => s.createMatch);
   const startMatch = useVolley((s) => s.startMatch);
+  
   const { allowed: canCreate, loading: permLoading } = useCanCreateMatches();
+  const { isAdmin, user, checking: adminChecking } = useIsAdmin();
+  const { hasAccess: isCoach, checking: coachChecking } = useCoachAccess();
+  const planilleroData = useIsPlanilleroOnly();
 
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<"all" | "M" | "F">("all");
-  
-  const { isAdmin, user } = useIsAdmin();
-  const { hasAccess: isCoach } = useCoachAccess();
 
   const filteredTeams = useMemo(() => {
     let list = teams;
@@ -119,7 +121,11 @@ function NewMatch() {
     setLineup(next);
   };
 
-  if (permLoading) {
+  // Render logic moved after all hook calls
+  const isPlanilleroOnly = planilleroData.isPlanilleroOnly;
+  const checkingPlanillero = planilleroData.checking;
+
+  if (permLoading || adminChecking || coachChecking || checkingPlanillero) {
     return (
       <AppShell>
         <p className="text-sm text-muted-foreground">Verificando permisos…</p>
