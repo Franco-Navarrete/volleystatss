@@ -1,5 +1,7 @@
 // LiveMatch: Scouting en vivo y gestión de partidos.
-import { CompactShell } from "@/components/AppShell"; // Assuming CompactShell is defined or reused here if it exists in AppShell or similar. If not, fallback to AppShell.
+import { AppShell } from "@/components/AppShell"; // Falling back to AppShell since CompactShell is not exported.
+const CompactShell = AppShell; 
+
 
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -711,10 +713,8 @@ function LiveMatch() {
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
 
 
-  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
 
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
