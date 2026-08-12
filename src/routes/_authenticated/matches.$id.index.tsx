@@ -601,7 +601,8 @@ function LiveMatch() {
 
   // We should render the full match UI here, ensuring all hooks were called above.
   const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
-  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
+  const isPlanillero = isPlanilleroOnly;
+  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com") || isPlanillero;
 
   // Re-verify that no hooks are called after this point in the main component.
 
