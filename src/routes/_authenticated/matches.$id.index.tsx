@@ -474,8 +474,7 @@ function LiveMatch() {
   const lastReceptionSideForHook = match ? getCurrentRallyReceptionSide(match, match.currentSet) : null;
   const receptionRegisteredForHook = lastReceptionSideForHook === receivingSideForHook;
   const receivingPhaseForHook: "reception" | "attack" = receptionRegisteredForHook ? "attack" : "reception";
-  const servingSideForHook: "A" | "B" = receivingSideForHook === "A" ? "B" : "A";
-
+  
   const phaseA = isCoachForHook && isLiveForHook && !actionsDisabledForHook
     ? (receivingSideForHook === "A" ? receivingPhaseForHook : "attack")
     : "attack";
@@ -492,27 +491,6 @@ function LiveMatch() {
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
   const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
 
-  const handleDeleteMatch = async () => {
-    try {
-      await deleteFn({ data: { matchId: matchIdParam } });
-      deleteMatch(matchIdParam);
-      toast.success("Partido eliminado correctamente");
-      navigate({ to: "/matches" });
-    } catch (e) {
-      toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
-    }
-  };
-
-  const isMyMatch = (() => {
-    if (isAdmin) return true;
-    if (!user) return false;
-    if (user.email === "franco.e.navarrete@gmail.com") return true;
-    if (match?.metadata?.ownerId === user.id) return true;
-    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
-    return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
-  })();
-
-
   useEffect(() => {
     if (match?.status === "finished") return;
     const currentSetObj = match?.sets.find((s) => s.number === match.currentSet);
@@ -528,16 +506,6 @@ function LiveMatch() {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, [match?.status, match?.currentSet, match?.sets, match?.setStartTimes, match?.events]);
-
-  // Variables calculadas para el renderizado final (después de los hooks)
-  const isLive = match?.status === "live";
-  const currentSet = match?.sets.find((s) => s.number === match.currentSet) || match?.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
-  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
-  const setStartedAt = match?.setStartTimes?.[match.currentSet ?? 1];
-  const prevSetEndedAt = (match?.currentSet ?? 1) > 1
-    ? [...(match?.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match?.currentSet ?? 1) - 1)?.timestamp
-    : undefined;
-  const inBreak = isLive && (match?.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
 
   if (showSyncing) {
     return (
@@ -579,6 +547,40 @@ function LiveMatch() {
       </InternalCompactShell>
     );
   }
+
+  // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
+  if (!match || !teamA || !teamB) return null;
+
+  const handleDeleteMatch = async () => {
+    try {
+      await deleteFn({ data: { matchId: matchIdParam } });
+      deleteMatch(matchIdParam);
+      toast.success("Partido eliminado correctamente");
+      navigate({ to: "/matches" });
+    } catch (e) {
+      toast.error("Error al eliminar: " + (e instanceof Error ? e.message : "Error desconocido"));
+    }
+  };
+
+  const isMyMatch = (() => {
+    if (isAdmin) return true;
+    if (!user) return false;
+    if (user.email === "franco.e.navarrete@gmail.com") return true;
+    if (match?.metadata?.ownerId === user.id) return true;
+    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
+    return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
+  })();
+
+  // Variables calculadas para el renderizado final (después de los hooks)
+  const isLive = match.status === "live";
+  const currentSet = match.sets.find((s) => s.number === match.currentSet) || match.sets[0] || { scoreA: 0, scoreB: 0, finished: false, number: 1 };
+  const setNotStarted = currentSet.scoreA === 0 && currentSet.scoreB === 0;
+  const setStartedAt = match.setStartTimes?.[match.currentSet ?? 1];
+  const prevSetEndedAt = (match.currentSet ?? 1) > 1
+    ? [...(match.events ?? [])].reverse().find((e) => "setNumber" in e && e.setNumber === (match.currentSet ?? 1) - 1)?.timestamp
+    : undefined;
+  const inBreak = isLive && (match.currentSet ?? 1) > 1 && setNotStarted && !!prevSetEndedAt && !setStartedAt;
+
 
   // showNotFound ya fue manejado arriba.
 
