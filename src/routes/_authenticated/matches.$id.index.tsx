@@ -1,5 +1,5 @@
 // LiveMatch: Scouting en vivo y gestión de partidos.
-
+import { AppShell } from "@/components/AppShell"; 
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -31,13 +31,15 @@ import {
   Settings2,
   ShieldOff,
   Shirt,
+  Star,
   Undo2,
   Users,
-  Star,
   Info,
 } from "lucide-react";
+
 import {
   useVolley,
+
   setsWon,
   currentServer,
   timeoutsUsedInSet,
@@ -129,7 +131,7 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
   errorComponent: ({ error, reset }) => {
     console.error("Route ErrorBoundary caught error:", error);
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background px-6 text-center">
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background px-6 text-center">
         <h1 className="text-xl font-bold mb-2">Error al cargar el partido</h1>
         <p className="text-muted-foreground text-sm max-w-xs mb-6 text-balance">
           {error instanceof Error ? error.message : "Algo salió mal al sincronizar los datos."}
@@ -154,7 +156,7 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 function LiveMatchWrapper() {
   const params = Route.useParams();
   return (
-    <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch key={params.id} />
     </Suspense>
   );
@@ -484,6 +486,7 @@ function LiveMatch() {
   const formationA = useFormation(match, teamA, "A", "5-1", phaseA);
   const formationB = useFormation(match, teamB, "B", "5-1", phaseB);
 
+  const [now, setNow] = useState(() => Date.now());
 
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
   const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
@@ -509,7 +512,6 @@ function LiveMatch() {
     return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
   })();
 
-  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (match?.status === "finished") return;
@@ -539,156 +541,59 @@ function LiveMatch() {
 
   if (showSyncing) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-background p-6 text-center">
-        <div className="mb-6">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-            <Volleyball className="w-8 h-8 text-primary animate-bounce" />
+      <InternalCompactShell>
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-6 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+              <Volleyball className="w-8 h-8 text-primary animate-bounce" />
+            </div>
           </div>
+          <p className="text-2xl font-bold mb-2">Sincronizando...</p>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Buscando datos globales para Super Admin...
+          </p>
         </div>
-        <p className="text-2xl font-bold mb-2">Sincronizando...</p>
-        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-          Buscando datos globales para Super Admin...
-        </p>
-      </div>
+      </InternalCompactShell>
     );
   }
-
 
   if (showNotFound) {
-
     return (
-      <CompactShell>
-        <div className="flex flex-col items-center justify-center min-h-[80vh] py-20 px-6">
-          <div className="text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-                <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
-              </div>
+      <InternalCompactShell>
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-6 text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+              <X className="w-8 h-8 text-destructive" />
             </div>
-            <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
-            <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-              {match && (!teamA || !teamB)
-                ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
-                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
-            </p>
           </div>
-
-          <div className="flex flex-col gap-3 max-w-xs mx-auto w-full">
-            <Button asChild variant="default" size="lg" className="bg-gradient-primary shadow-glow rounded-xl font-semibold">
-              <Link to="/matches">
-                <ArrowLeftRight className="w-4 h-4 mr-2" />
-                Volver a mis partidos
-              </Link>
+          <h1 className="text-2xl font-bold mb-2">Partido no encontrado</h1>
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+            No pudimos encontrar el partido o no tenés permisos para verlo.
+          </p>
+          <div className="flex flex-col gap-2 w-full max-w-xs mx-auto">
+            <Button asChild variant="default">
+              <Link to="/matches">Volver a Partidos</Link>
             </Button>
-
-            {isSuperAdmin && (
-              <>
-                <Button 
-                  variant="destructive" 
-                  size="lg"
-                  className="mt-2 rounded-xl border border-destructive/20 hover:bg-destructive/90 transition-all duration-300"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Eliminar partido (Admin)
-                </Button>
-
-                <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-                  <DialogContent className="max-w-md rounded-2xl border-destructive/20">
-                    <DialogHeader className="pt-4">
-                      <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-                        <X className="w-6 h-6 text-destructive" />
-                      </div>
-                      <DialogTitle className="text-center text-xl">¿Eliminar partido fantasma?</DialogTitle>
-                      <DialogDescription className="text-center text-balance pt-2">
-                        Esta acción es irreversible y eliminará permanentemente el registro de este partido de la base de datos.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4 pb-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="rounded-xl flex-1 order-2 sm:order-1"
-                      >
-                        Cancelar
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          await handleDeleteMatch();
-                        }}
-                        className="rounded-xl flex-1 order-1 sm:order-2"
-                      >
-                        Confirmar Eliminación
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-
-                {showLineupEditor && !!match && (teamA?.players.some(p => p.position === "universal") || teamB?.players.some(p => p.position === "universal")) && (
-                  <UniversalRoleDialog
-                    open={true}
-                    match={match!}
-                    teamA={teamA!}
-                    teamB={teamB!}
-                    onConfirm={(playerId: string, role: PlayerPosition) => {
-                      useVolley.getState().setUniversalRole(match!.id, match!.currentSet, playerId, role);
-                    }}
-                  />
-                )}
-              </>
-            )}
-
-            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3 w-full">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
-              <div className="space-y-1">
-                <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
-                <p className="text-[10px] text-muted-foreground">ID Partido: <span className="text-foreground font-mono">{matchIdParam}</span></p>
-                {match && (
-                  <>
-                    <p className="text-[10px] text-muted-foreground">Dueño: <span className="text-foreground font-mono">{match?.metadata?.ownerId || "Global"}</span></p>
-                    <p className="text-[10px] text-muted-foreground">Fecha: <span className="text-foreground font-mono">{match ? new Date(match.createdAt).toLocaleDateString() : 'N/A'}</span></p>
-                  </>
-                )}
-              </div>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full text-[10px] h-7"
-                onClick={async () => {
-                  if (!user) return;
-                  const { forceReloadFromCloud } = await import("@/lib/cloud-sync");
-                  toast.promise(forceReloadFromCloud(user.id), {
-                    loading: 'Sincronizando con la nube...',
-                    success: (data) => `Sincronización completa: ${data.matches} partidos recuperados.`,
-                    error: 'Error al sincronizar. Revisa tu conexión.'
-                  });
-                }}
-              >
-                Forzar sincronización desde la nube
-              </Button>
-            </div>
-
-            {(!isAdmin && coachAccess) && (
-              <p className="text-[10px] text-muted-foreground mt-2 italic">
-                Nota: Los entrenadores solo pueden ver partidos donde participan equipos de su club o liga compartida.
-              </p>
-            )}
           </div>
         </div>
-
-      </CompactShell>
+      </InternalCompactShell>
     );
   }
+
+  // showNotFound ya fue manejado arriba.
+
 
 
 
 
   // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
   if (!match || !teamA || !teamB) return null;
+
+  // We should render the full match UI here, ensuring all hooks were called above.
+  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
+  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
+
+  // Re-verify that no hooks are called after this point in the main component.
 
 
   const w = setsWon(match);
@@ -704,11 +609,6 @@ function LiveMatch() {
   const needsLineup = isLive && setNotStarted && !lineupConfirmed;
   const needsSetStart = isLive && setNotStarted && lineupConfirmed && !setStartedAt;
   const actionsDisabled = !isLive || needsLineup || needsSetStart;
-  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
-
-
-  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com");
-
 
   // Reception flow: the receiving side must register reception (+/0/-) before any other action.
   const receivingSide: "A" | "B" = match.servingSide === "A" ? "B" : "A";
@@ -941,15 +841,15 @@ function LiveMatch() {
 
   if (workspaceView) {
     return (
-      <CompactShell isReadOnly={!canScout}>
+      <InternalCompactShell isReadOnly={!canScout}>
         {workspaceView}
-      </CompactShell>
+      </InternalCompactShell>
     );
   }
 
 
   return (
-    <CompactShell isReadOnly={!canScout}>
+    <InternalCompactShell isReadOnly={!canScout}>
       <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />
@@ -2083,11 +1983,11 @@ function LiveMatch() {
         />
       )}
 
-    </CompactShell>
+    </InternalCompactShell>
   );
 }
 
-function CompactShell({ children, isReadOnly }: { children: React.ReactNode; isReadOnly?: boolean }) {
+function InternalCompactShell({ children, isReadOnly }: { children: React.ReactNode; isReadOnly?: boolean }) {
   const navigate = useNavigate();
   const handleBack = () => {
     // Prefer real browser history so we return to whichever page (perfil de jugador,
@@ -3702,12 +3602,15 @@ function FormationDialog({
   teamA: Team;
   teamB: Team;
 }) {
+  // Moved hooks to top level of LiveMatch for consistency if needed, but here they are called inside a component.
+  // The error "Rendered fewer hooks" usually comes from conditional returns in LiveMatch.
+  // However, FormationDialog is a separate function component.
   const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
   const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
+  
+  // These hooks MUST be called unconditionally if FormationDialog is rendered.
   const formationA = useFormation(match, teamA, "A", "5-1", phaseA as "reception" | "attack");
   const formationB = useFormation(match, teamB, "B", "5-1", phaseB as "reception" | "attack");
-
-
   const [editing, setEditing] = useState(false);
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
