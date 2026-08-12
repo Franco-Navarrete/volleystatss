@@ -125,16 +125,12 @@ function NewMatch() {
   const isPlanilleroOnly = planilleroData.isPlanilleroOnly;
   const checkingPlanillero = planilleroData.checking;
 
-  if (permLoading || adminChecking || coachChecking || checkingPlanillero) {
-    return (
-      <AppShell>
+  // No conditional returns here, use the state inside the return to keep hooks execution stable
+  return (
+    <AppShell>
+      {(permLoading || adminChecking || coachChecking || checkingPlanillero) ? (
         <p className="text-sm text-muted-foreground">Verificando permisos…</p>
-      </AppShell>
-    );
-  }
-  if (!canCreate) {
-    return (
-      <AppShell>
+      ) : !canCreate ? (
         <div className="max-w-md mx-auto text-center py-16">
           <h1 className="text-lg font-semibold">Sin permiso</h1>
           <p className="text-sm text-muted-foreground mt-2">
@@ -144,292 +140,292 @@ function NewMatch() {
             <Link to="/matches">Volver a partidos</Link>
           </Button>
         </div>
-      </AppShell>
-    );
-  }
+      ) : (
+        <>
+          <h1 className="text-3xl font-extrabold mb-1">Nuevo partido</h1>
+          <p className="text-muted-foreground text-sm mb-4">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
 
-  return (
-    <AppShell>
-      <h1 className="text-3xl font-extrabold mb-1">Nuevo partido</h1>
-      <p className="text-muted-foreground text-sm mb-4">Elegí los equipos y asigná cada jugador a su posición en la cancha.</p>
+          {leagues.length > 0 && (
+            <div className="mb-6 flex items-center gap-2 flex-wrap">
+              <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Liga</span>
+              <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
+                <button
+                  type="button"
+                  onClick={() => { setLeagueFilter("all"); }}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Todas
+                </button>
+                {leagues.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => {
+                      setLeagueFilter(l.id);
+                      if (l.gender) setGenderFilter(l.gender);
+                      const a = teams.find((t) => t.id === teamAId);
+                      const b = teams.find((t) => t.id === teamBId);
+                      if (a && a.leagueId !== l.id) { setTeamAId(""); setLineupA(emptyLineup()); }
+                      if (b && b.leagueId !== l.id) { setTeamBId(""); setLineupB(emptyLineup()); }
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === l.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {l.name}{l.season ? ` · ${l.season}` : ""}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-      {leagues.length > 0 && (
-        <div className="mb-6 flex items-center gap-2 flex-wrap">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Liga</span>
-          <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
-            <button
-              type="button"
-              onClick={() => { setLeagueFilter("all"); }}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Todas
-            </button>
-            {leagues.map((l) => (
-              <button
-                key={l.id}
-                type="button"
-                onClick={() => {
-                  setLeagueFilter(l.id);
-                  if (l.gender) setGenderFilter(l.gender);
-                  const a = teams.find((t) => t.id === teamAId);
-                  const b = teams.find((t) => t.id === teamBId);
-                  if (a && a.leagueId !== l.id) { setTeamAId(""); setLineupA(emptyLineup()); }
-                  if (b && b.leagueId !== l.id) { setTeamBId(""); setLineupB(emptyLineup()); }
-                }}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${leagueFilter === l.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {l.name}{l.season ? ` · ${l.season}` : ""}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mb-6 flex items-center gap-2 flex-wrap">
-        <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Género</span>
-        <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
-          {([
-            { v: "all" as const, label: "Todos" },
-            { v: "F" as const, label: "Femenino" },
-            { v: "M" as const, label: "Masculino" },
-          ]).map((opt) => {
-            const active = genderFilter === opt.v;
-            return (
-              <button
-                key={opt.v}
-                type="button"
-                onClick={() => {
-                  setGenderFilter(opt.v);
-                  const a = teams.find((t) => t.id === teamAId);
-                  const b = teams.find((t) => t.id === teamBId);
-                  if (opt.v !== "all") {
-                    if (a && a.gender !== opt.v) { setTeamAId(""); setLineupA(emptyLineup()); }
-                    if (b && b.gender !== opt.v) { setTeamBId(""); setLineupB(emptyLineup()); }
-                  }
-                }}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-
-      <div className="grid lg:grid-cols-2 gap-6">
-        <TeamPicker label="Equipo local" teams={filteredTeams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA(emptyLineup()); }} />
-        <TeamPicker label="Equipo visitante" teams={filteredTeams} excludeId={teamAId} selectedId={teamBId} onSelect={(id) => { setTeamBId(id); setLineupB(emptyLineup()); }} />
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <LineupPicker team={teamA} lineup={lineupA} onAssign={(i, pid) => assignSlot(lineupA, setLineupA, i, pid)} />
-        <LineupPicker team={teamB} lineup={lineupB} onAssign={(i, pid) => assignSlot(lineupB, setLineupB, i, pid)} />
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <RolePicker
-          team={teamA}
-          label="Roles · local"
-          lineup={lineupA}
-          captain={captainA} setCaptain={setCaptainA}
-          setter={setterA} setSetter={setSetterA}
-          opponentSetterId={teamA?.metadata?.opponentSetterId || ""}
-          onOpponentSetterChange={(id) => {
-            if (!teamA) return;
-            useVolley.setState((state) => ({
-              teams: state.teams.map((t) => t.id === teamA.id ? { ...t, metadata: { ...t.metadata, opponentSetterId: id || null } } : t)
-            }));
-          }}
-          libero1={liberoA1} setLibero1={setLiberoA1}
-          libero2={liberoA2} setLibero2={setLiberoA2}
-        />
-        <RolePicker
-          team={teamB}
-          label="Roles · visitante"
-          lineup={lineupB}
-          captain={captainB} setCaptain={setCaptainB}
-          setter={setterB} setSetter={setSetterB}
-          opponentSetterId={teamB?.metadata?.opponentSetterId || ""}
-          onOpponentSetterChange={(id) => {
-            if (!teamB) return;
-            useVolley.setState((state) => ({
-              teams: state.teams.map((t) => t.id === teamB.id ? { ...t, metadata: { ...t.metadata, opponentSetterId: id || null } } : t)
-            }));
-          }}
-          libero1={liberoB1} setLibero1={setLiberoB1}
-          libero2={liberoB2} setLibero2={setLiberoB2}
-        />
-      </div>
-
-      <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Info className="size-4 text-primary" />
-          <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold">
-            Información del partido
-          </h2>
-        </div>
-
-        {/* Fila 1: Fecha · Categoría · Sets · Puntos */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <FieldLabel label="Fecha y hora" required>
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
-            />
-          </FieldLabel>
-          <FieldLabel label="Categoría" required>
-            <CategoryPicker
-              value={category}
-              onChange={setCategory}
-              options={matchCategories}
-              onAddOption={addMatchCategory}
-              invalid={!categoryValid}
-            />
-          </FieldLabel>
-          <FieldLabel label="Sets para ganar" required>
-            <select
-              value={setsToWin}
-              onChange={(e) => setSetsToWin(Number(e.target.value))}
-              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
-            >
-              <option value={2}>Al mejor de 3 (2)</option>
-              <option value={3}>Al mejor de 5 (3)</option>
-            </select>
-          </FieldLabel>
-          <FieldLabel label="Puntos por set" required>
-            <select
-              value={pointsPerSet}
-              onChange={(e) => setPointsPerSet(Number(e.target.value))}
-              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
-            >
-              <option value={25}>25 puntos</option>
-              <option value={21}>21 puntos</option>
-              <option value={15}>15 puntos</option>
-            </select>
-          </FieldLabel>
-        </div>
-
-        {/* Fila 2: Árbitro principal · Segundo · Planillero */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          <FieldLabel label="Árbitro principal" required>
-            <AutocompleteInput
-              value={mainReferee}
-              onChange={setMainReferee}
-              options={referees}
-              placeholder="Seleccionar o escribir árbitro"
-              invalid={!mainRefValid}
-              listId="referee-list-main"
-            />
-          </FieldLabel>
-          <FieldLabel label="Segundo árbitro" hint="Opcional">
-            <AutocompleteInput
-              value={secondReferee}
-              onChange={setSecondReferee}
-              options={referees}
-              placeholder="Segundo árbitro"
-              listId="referee-list-second"
-            />
-          </FieldLabel>
-          <FieldLabel label="Planillero" required>
-            <AutocompleteInput
-              value={scorekeeper}
-              onChange={setScorekeeper}
-              options={scorekeepers}
-              placeholder="Seleccionar planillero"
-              invalid={!scorekeeperValid}
-              listId="scorekeeper-list"
-            />
-          </FieldLabel>
-        </div>
-
-
-        {/* Fila 3: Saque inicial · Local · Visitante */}
-        <div className="grid sm:grid-cols-3 gap-4 mt-4">
-          <FieldLabel label="Saque inicial">
-            <div className="grid grid-cols-2 gap-2">
-              {(["A", "B"] as const).map((side) => {
-                const t = side === "A" ? teamA : teamB;
-                const active = servingSide === side;
+          <div className="mb-6 flex items-center gap-2 flex-wrap">
+            <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Género</span>
+            <div className="inline-flex flex-wrap items-center gap-1 rounded-lg bg-card border border-border/60 p-1">
+              {([
+                { v: "all" as const, label: "Todos" },
+                { v: "F" as const, label: "Femenino" },
+                { v: "M" as const, label: "Masculino" },
+              ]).map((opt) => {
+                const active = genderFilter === opt.v;
                 return (
                   <button
-                    key={side}
+                    key={opt.v}
                     type="button"
-                    onClick={() => setServingSide(side)}
-                    className={`px-2 py-2 rounded-md border-2 text-xs font-semibold truncate transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
+                    onClick={() => {
+                      setGenderFilter(opt.v);
+                      const a = teams.find((t) => t.id === teamAId);
+                      const b = teams.find((t) => t.id === teamBId);
+                      if (opt.v !== "all") {
+                        if (a && a.gender !== opt.v) { setTeamAId(""); setLineupA(emptyLineup()); }
+                        if (b && b.gender !== opt.v) { setTeamBId(""); setLineupB(emptyLineup()); }
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    {t?.shortName ?? (side === "A" ? "Local" : "Visitante")}
+                    {opt.label}
                   </button>
                 );
               })}
             </div>
-          </FieldLabel>
-          <FieldLabel label="Equipo local">
-            <div className="w-full bg-background/60 border border-border/40 rounded-md px-3 py-2 text-sm truncate">
-              {teamA?.name ?? <span className="text-muted-foreground">Sin seleccionar</span>}
-            </div>
-          </FieldLabel>
-          <FieldLabel label="Equipo visitante">
-            <div className="w-full bg-background/60 border border-border/40 rounded-md px-3 py-2 text-sm truncate">
-              {teamB?.name ?? <span className="text-muted-foreground">Sin seleccionar</span>}
-            </div>
-          </FieldLabel>
-        </div>
-      </section>
+          </div>
 
-      <div className="mt-6 flex flex-col sm:flex-row justify-end gap-2">
-        {(["scheduled", "live"] as const).map((mode) => (
-          <Button
-            key={mode}
-            size="lg"
-            variant={mode === "scheduled" ? "secondary" : "default"}
-            disabled={!canStart}
-            className={mode === "live" ? "bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow" : ""}
-            onClick={() => {
-              if (!categoryValid) { toast.error("Elegí una categoría."); return; }
-              if (!mainRefValid) { toast.error("Falta el árbitro principal."); return; }
-              if (!scorekeeperValid) { toast.error("Falta el planillero."); return; }
-              // Auto-registrar nombres nuevos para futuros autocompletados
-              addMatchCategory(category);
-              addReferee(mainReferee);
-              if (secondReferee.trim()) addReferee(secondReferee);
-              addScorekeeper(scorekeeper);
-              const ts = new Date(scheduledAt).getTime();
-              const id = createMatch({
-                teamAId, teamBId,
-                startingLineupA: lineupA.map(x => x || ""),
-                startingLineupB: lineupB.map(x => x || ""),
-                setsToWin, pointsPerSet,
-                initialServingSide: servingSide,
-                scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
-                captainAId: captainA || null,
-                captainBId: captainB || null,
-                liberoA1Id: liberoA1 || null,
-                liberoA2Id: liberoA2 || null,
-                liberoB1Id: liberoB1 || null,
-                liberoB2Id: liberoB2 || null,
-                category: category.trim(),
-                mainRefereeName: mainReferee.trim(),
-                secondRefereeName: secondReferee.trim() || undefined,
-                scorekeeperName: scorekeeper.trim(),
-                metadata: {
-                  setterAId: setterA || null,
-                  setterBId: setterB || null,
-                }
-              });
-              if (mode === "live") startMatch(id);
-              navigate({ to: "/matches/$id", params: { id } });
-            }}
-          >
-            {mode === "scheduled" ? "Crear programado" : "Empezar en vivo"}
-          </Button>
-        ))}
-      </div>
+          <div className="grid lg:grid-cols-2 gap-6">
+            <TeamPicker label="Equipo local" teams={filteredTeams} excludeId={teamBId} selectedId={teamAId} onSelect={(id) => { setTeamAId(id); setLineupA(emptyLineup()); }} />
+            <TeamPicker label="Equipo visitante" teams={filteredTeams} excludeId={teamAId} selectedId={teamBId} onSelect={(id) => { setTeamBId(id); setLineupB(emptyLineup()); }} />
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-6 mt-6">
+            <LineupPicker team={teamA} lineup={lineupA} onAssign={(i, pid) => assignSlot(lineupA, setLineupA, i, pid)} />
+            <LineupPicker team={teamB} lineup={lineupB} onAssign={(i, pid) => assignSlot(lineupB, setLineupB, i, pid)} />
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-6 mt-6">
+            <RolePicker
+              team={teamA}
+              label="Roles · local"
+              lineup={lineupA}
+              captain={captainA} setCaptain={setCaptainA}
+              setter={setterA} setSetter={setSetterA}
+              opponentSetterId={teamA?.metadata?.opponentSetterId || ""}
+              onOpponentSetterChange={(id) => {
+                if (!teamA) return;
+                useVolley.setState((state) => ({
+                  teams: state.teams.map((t) => t.id === teamA.id ? { ...t, metadata: { ...t.metadata, opponentSetterId: id || null } } : t)
+                }));
+              }}
+              libero1={liberoA1} setLibero1={setLiberoA1}
+              libero2={liberoA2} setLibero2={setLiberoA2}
+            />
+            <RolePicker
+              team={teamB}
+              label="Roles · visitante"
+              lineup={lineupB}
+              captain={captainB} setCaptain={setCaptainB}
+              setter={setterB} setSetter={setSetterB}
+              opponentSetterId={teamB?.metadata?.opponentSetterId || ""}
+              onOpponentSetterChange={(id) => {
+                if (!teamB) return;
+                useVolley.setState((state) => ({
+                  teams: state.teams.map((t) => t.id === teamB.id ? { ...t, metadata: { ...t.metadata, opponentSetterId: id || null } } : t)
+                }));
+              }}
+              libero1={liberoB1} setLibero1={setLiberoB1}
+              libero2={liberoB2} setLibero2={setLiberoB2}
+            />
+          </div>
+
+          <section className="mt-6 rounded-2xl bg-card border border-border/60 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Info className="size-4 text-primary" />
+              <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-bold">
+                Información del partido
+              </h2>
+            </div>
+
+            {/* Fila 1: Fecha · Categoría · Sets · Puntos */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <FieldLabel label="Fecha y hora" required>
+                <input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+                />
+              </FieldLabel>
+              <FieldLabel label="Categoría" required>
+                <CategoryPicker
+                  value={category}
+                  onChange={setCategory}
+                  options={matchCategories}
+                  onAddOption={addMatchCategory}
+                  invalid={!categoryValid}
+                />
+              </FieldLabel>
+              <FieldLabel label="Sets para ganar" required>
+                <select
+                  value={setsToWin}
+                  onChange={(e) => setSetsToWin(Number(e.target.value))}
+                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+                >
+                  <option value={2}>Al mejor de 3 (2)</option>
+                  <option value={3}>Al mejor de 5 (3)</option>
+                </select>
+              </FieldLabel>
+              <FieldLabel label="Puntos por set" required>
+                <select
+                  value={pointsPerSet}
+                  onChange={(e) => setPointsPerSet(Number(e.target.value))}
+                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
+                >
+                  <option value={25}>25 puntos</option>
+                  <option value={21}>21 puntos</option>
+                  <option value={15}>15 puntos</option>
+                </select>
+              </FieldLabel>
+            </div>
+
+            {/* Fila 2: Árbitro principal · Segundo · Planillero */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <FieldLabel label="Árbitro principal" required>
+                <AutocompleteInput
+                  value={mainReferee}
+                  onChange={setMainReferee}
+                  options={referees}
+                  placeholder="Seleccionar o escribir árbitro"
+                  invalid={!mainRefValid}
+                  listId="referee-list-main"
+                />
+              </FieldLabel>
+              <FieldLabel label="Segundo árbitro" hint="Opcional">
+                <AutocompleteInput
+                  value={secondReferee}
+                  onChange={setSecondReferee}
+                  options={referees}
+                  placeholder="Segundo árbitro"
+                  listId="referee-list-second"
+                />
+              </FieldLabel>
+              <FieldLabel label="Planillero" required>
+                <AutocompleteInput
+                  value={scorekeeper}
+                  onChange={setScorekeeper}
+                  options={scorekeepers}
+                  placeholder="Seleccionar planillero"
+                  invalid={!scorekeeperValid}
+                  listId="scorekeeper-list"
+                />
+              </FieldLabel>
+            </div>
+
+
+            {/* Fila 3: Saque inicial · Local · Visitante */}
+            <div className="grid sm:grid-cols-3 gap-4 mt-4">
+              <FieldLabel label="Saque inicial">
+                <div className="grid grid-cols-2 gap-2">
+                  {(["A", "B"] as const).map((side) => {
+                    const t = side === "A" ? teamA : teamB;
+                    const active = servingSide === side;
+                    return (
+                      <button
+                        key={side}
+                        type="button"
+                        onClick={() => setServingSide(side)}
+                        className={`px-2 py-2 rounded-md border-2 text-xs font-semibold truncate transition-all ${active ? "border-primary bg-primary/10 text-primary" : "border-border/40 hover:border-border text-muted-foreground"}`}
+                      >
+                        {t?.shortName ?? (side === "A" ? "Local" : "Visitante")}
+                      </button>
+                    );
+                  })}
+                </div>
+              </FieldLabel>
+              <FieldLabel label="Equipo local">
+                <div className="w-full bg-background/60 border border-border/40 rounded-md px-3 py-2 text-sm truncate">
+                  {teamA?.name ?? <span className="text-muted-foreground">Sin seleccionar</span>}
+                </div>
+              </FieldLabel>
+              <FieldLabel label="Equipo visitante">
+                <div className="w-full bg-background/60 border border-border/40 rounded-md px-3 py-2 text-sm truncate">
+                  {teamB?.name ?? <span className="text-muted-foreground">Sin seleccionar</span>}
+                </div>
+              </FieldLabel>
+            </div>
+          </section>
+
+          <div className="mt-6 flex flex-col sm:flex-row justify-end gap-2">
+            {(["scheduled", "live"] as const).map((mode) => (
+              <Button
+                key={mode}
+                size="lg"
+                variant={mode === "scheduled" ? "secondary" : "default"}
+                disabled={!canStart}
+                className={mode === "live" ? "bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow" : ""}
+                onClick={() => {
+                  if (!categoryValid) { toast.error("Elegí una categoría."); return; }
+                  if (!mainRefValid) { toast.error("Falta el árbitro principal."); return; }
+                  if (!scorekeeperValid) { toast.error("Falta el planillero."); return; }
+                  // Auto-registrar nombres nuevos para futuros autocompletados
+                  addMatchCategory(category);
+                  addReferee(mainReferee);
+                  if (secondReferee.trim()) addReferee(secondReferee);
+                  addScorekeeper(scorekeeper);
+                  const ts = new Date(scheduledAt).getTime();
+                  const id = createMatch({
+                    teamAId, teamBId,
+                    startingLineupA: lineupA.map(x => x || ""),
+                    startingLineupB: lineupB.map(x => x || ""),
+                    setsToWin, pointsPerSet,
+                    initialServingSide: servingSide,
+                    scheduledAt: Number.isFinite(ts) ? ts : Date.now(),
+                    captainAId: captainA || null,
+                    captainBId: captainB || null,
+                    liberoA1Id: liberoA1 || null,
+                    liberoA2Id: liberoA2 || null,
+                    liberoB1Id: liberoB1 || null,
+                    liberoB2Id: liberoB2 || null,
+                    category: category.trim(),
+                    mainRefereeName: mainReferee.trim(),
+                    secondRefereeName: secondReferee.trim() || undefined,
+                    scorekeeperName: scorekeeper.trim(),
+                    metadata: {
+                      setterAId: setterA || null,
+                      setterBId: setterB || null,
+                    }
+                  });
+                  if (mode === "live") startMatch(id);
+                  navigate({ to: "/matches/$id", params: { id } });
+                }}
+              >
+                {mode === "scheduled" ? "Crear programado" : "Empezar en vivo"}
+              </Button>
+            ))}
+          </div>
+        </>
+      )}
     </AppShell>
+
   );
 }
+
+
 
 function FieldLabel({
   label, required, hint, children,
@@ -462,54 +458,55 @@ function CategoryPicker({
 }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
-  if (adding) {
-    return (
-      <div className="flex gap-1">
-        <input
-          autoFocus
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Nueva categoría"
-          className="flex-1 bg-background border border-input rounded-md px-2 py-2 text-sm"
-        />
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            const v = draft.trim();
-            if (!v) { setAdding(false); return; }
-            onAddOption(v);
-            onChange(v);
-            setDraft("");
-            setAdding(false);
-          }}
-        >
-          OK
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft(""); }}>
-          <X className="size-3.5" />
-        </Button>
-      </div>
-    );
-  }
+
+  // Use state inside the return to keep hooks execution stable
   return (
     <div className="flex gap-1">
-      <select
-        value={value}
-        onChange={(e) => {
-          if (e.target.value === "__new__") { setAdding(true); return; }
-          onChange(e.target.value);
-        }}
-        className={`flex-1 bg-background border rounded-md px-2 py-2 text-sm ${invalid ? "border-destructive/60" : "border-input"}`}
-      >
-        <option value="">— Seleccionar —</option>
-        {options.map((o) => (
-          <option key={o} value={o}>{o}</option>
-        ))}
-        <option value="__new__">＋ Otra…</option>
-      </select>
+      {adding ? (
+        <>
+          <input
+            autoFocus
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Nueva categoría"
+            className="flex-1 bg-background border border-input rounded-md px-2 py-2 text-sm"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const v = draft.trim();
+              if (!v) { setAdding(false); return; }
+              onAddOption(v);
+              onChange(v);
+              setDraft("");
+              setAdding(false);
+            }}
+          >
+            OK
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(false); setDraft(""); }}>
+            <X className="size-3.5" />
+          </Button>
+        </>
+      ) : (
+        <select
+          value={value}
+          onChange={(e) => {
+            if (e.target.value === "__new__") { setAdding(true); return; }
+            onChange(e.target.value);
+          }}
+          className={`flex-1 bg-background border rounded-md px-2 py-2 text-sm ${invalid ? "border-destructive/60" : "border-input"}`}
+        >
+          <option value="">— Seleccionar —</option>
+          {options.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+          <option value="__new__">＋ Otra…</option>
+        </select>
+      )}
     </div>
   );
 }

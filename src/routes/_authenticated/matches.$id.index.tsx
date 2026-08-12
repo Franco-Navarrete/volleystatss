@@ -152,9 +152,10 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 });
 
 function LiveMatchWrapper() {
+  const params = Route.useParams();
   return (
     <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
-      <LiveMatch />
+      <LiveMatch key={params.id} />
     </Suspense>
   );
 }
@@ -557,21 +558,22 @@ function LiveMatch() {
 
     return (
       <CompactShell>
-        <div className="text-center py-20 px-6">
-          <div className="mb-6 flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-              <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
+        <div className="flex flex-col items-center justify-center min-h-[80vh] py-20 px-6">
+          <div className="text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                <ShieldOff className="w-8 h-8 text-destructive animate-pulse" />
+              </div>
             </div>
+            <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
+              {match && (!teamA || !teamB)
+                ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
+                : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
+            </p>
           </div>
-          <p className="text-2xl font-bold mb-2">Partido no encontrado</p>
-          <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-8">
-            {match && (!teamA || !teamB)
-              ? `Error de carga: Faltan datos de equipos para el partido ${matchIdParam?.slice(0, 8)}.`
-              : `No pudimos encontrar el partido "${matchIdParam?.slice(0, 8)}".`}
-          </p>
 
-          
-          <div className="flex flex-col gap-3 max-w-xs mx-auto">
+          <div className="flex flex-col gap-3 max-w-xs mx-auto w-full">
             <Button asChild variant="default" size="lg" className="bg-gradient-primary shadow-glow rounded-xl font-semibold">
               <Link to="/matches">
                 <ArrowLeftRight className="w-4 h-4 mr-2" />
@@ -622,25 +624,24 @@ function LiveMatch() {
                         Confirmar Eliminación
                       </Button>
                     </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                  </DialogContent>
+                </Dialog>
 
-      {/* Universal Player Role Assignment */}
-      {showLineupEditor && !!match && (teamA?.players.some(p => p.position === "universal") || teamB?.players.some(p => p.position === "universal")) && (
-      <UniversalRoleDialog
-        open={true}
-        match={match!}
-        teamA={teamA!}
-        teamB={teamB!}
-        onConfirm={(playerId: string, role: PlayerPosition) => {
-          useVolley.getState().setUniversalRole(match!.id, match!.currentSet, playerId, role);
-        }}
-      />
-      )}
+                {showLineupEditor && !!match && (teamA?.players.some(p => p.position === "universal") || teamB?.players.some(p => p.position === "universal")) && (
+                  <UniversalRoleDialog
+                    open={true}
+                    match={match!}
+                    teamA={teamA!}
+                    teamB={teamB!}
+                    onConfirm={(playerId: string, role: PlayerPosition) => {
+                      useVolley.getState().setUniversalRole(match!.id, match!.currentSet, playerId, role);
+                    }}
+                  />
+                )}
               </>
             )}
-            
-            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3">
+
+            <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-border/60 text-left space-y-3 w-full">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Diagnóstico</p>
               <div className="space-y-1">
                 <p className="text-[10px] text-muted-foreground">Usuario: <span className="text-foreground font-mono">{user?.email || "No autenticado"}</span></p>
@@ -678,9 +679,12 @@ function LiveMatch() {
             )}
           </div>
         </div>
+
       </CompactShell>
     );
   }
+
+
 
 
   // A partir de aquí garantizamos que match, teamA y teamB existen para TypeScript
