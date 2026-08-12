@@ -15,9 +15,9 @@ interface Props {
 export function AttackDirectionGrid({ onPick, value }: Props) {
   // De arriba (red) hacia abajo (fondo).
   const rows: AttackDirection[][] = [
-    [4, 3, 2],
-    [7, 8, 9],
     [5, 6, 1],
+    [7, 8, 9],
+    [4, 3, 2],
   ];
 
   return (
@@ -29,8 +29,8 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
             "repeating-linear-gradient(135deg, oklch(0.72 0.09 60) 0 6px, oklch(0.68 0.1 55) 6px 12px)",
         }}
       >
-        {/* Red del rival arriba (la fila 4-3-2 está pegada a la red) */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-white shadow" />
+        {/* Red del rival abajo (la fila 4-3-2 está pegada a la red) */}
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white shadow" />
         <div className="grid grid-rows-3 h-full">
           {rows.map((row, r) => (
             <div key={r} className="grid grid-cols-3 gap-[2px] p-[2px]">
@@ -53,7 +53,7 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        4-3-2 pegado a la red · 5-6-1 al fondo · zonas oficiales de vóley
+        5-6-1 arriba (fondo) · 4-3-2 abajo (red) · zonas oficiales de vóley
       </p>
     </div>
   );
