@@ -1337,13 +1337,13 @@ function LiveMatch() {
             const isActiveLibero = !!activeLibero && activeLibero.liberoId === pendingPlayer.playerId;
             const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedPlayerId) : null;
             const allActions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger"; positive: boolean }[] = [
-              { type: "ace", label: isCoach ? "Saque (Ace)" : "Saque", tone: "primary", positive: true },
+              { type: "ace", label: "Saque", tone: "primary", positive: true },
               { type: "serve_error", label: "Error de saque", tone: "danger", positive: false },
-              { type: "rotation_attack", label: isCoach ? "Ataque de rotación" : "Ataque", tone: "primary", positive: true },
+              { type: "rotation_attack", label: "Ataque", tone: "primary", positive: true },
               { type: "attack_error", label: "Error de ataque", tone: "danger", positive: false },
-              { type: "counter_attack", label: "Contraataque", tone: "primary", positive: true },
-              { type: "unforced_error", label: "Error no forzado", tone: "danger", positive: false },
               { type: "block", label: "Bloqueo", tone: "primary", positive: true },
+              { type: "unforced_error", label: "Error no forzado", tone: "danger", positive: false },
+              { type: "counter_attack", label: "Contraataque", tone: "primary", positive: true },
               { type: "block_error", label: "Error de bloqueo", tone: "danger", positive: false },
             ];
             // Sólo el sacador (P1) puede registrar Saque / Error de saque; el líbero nunca saca.
