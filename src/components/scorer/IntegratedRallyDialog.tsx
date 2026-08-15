@@ -610,21 +610,23 @@ export function IntegratedRallyDialog({
 
           </div>
 
-          {/* Resumen lateral */}
-          <aside className="hidden md:flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/30 p-2 self-start">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-1">
-              Resumen del rally
-            </p>
-            {summary.length === 0 && (
-              <p className="text-[11px] text-muted-foreground px-1 py-2">Todavía no hay datos.</p>
-            )}
-            {summary.map((s) => (
-              <div key={s.label} className="flex items-baseline justify-between gap-2 px-1 py-0.5 text-[11px] border-b border-border/40 last:border-0">
-                <span className="text-muted-foreground">{s.label}</span>
-                <span className="font-bold text-right truncate">{s.value}</span>
-              </div>
-            ))}
-          </aside>
+          {/* Resumen lateral (oculto en modo planillero rápido) */}
+          {!startAtAction && (
+            <aside className="hidden md:flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/30 p-2 self-start">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-1">
+                Resumen del rally
+              </p>
+              {summary.length === 0 && (
+                <p className="text-[11px] text-muted-foreground px-1 py-2">Todavía no hay datos.</p>
+              )}
+              {summary.map((s) => (
+                <div key={s.label} className="flex items-baseline justify-between gap-2 px-1 py-0.5 text-[11px] border-b border-border/40 last:border-0">
+                  <span className="text-muted-foreground">{s.label}</span>
+                  <span className="font-bold text-right truncate">{s.value}</span>
+                </div>
+              ))}
+            </aside>
+          )}
         </div>
       </DialogContent>
     </Dialog>
