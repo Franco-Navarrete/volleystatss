@@ -688,7 +688,7 @@ function LiveMatch() {
     }
     if (needsSetStart) return;
     if (needsReception && side === receivingSide) {
-      if (isCoach) {
+      if (isCoach || isPlanillero) {
         // Flujo continuo: abrimos el panel único directamente en el paso "Recepción".
         setIntegratedRally({ side, receiverId: playerId });
       } else {
@@ -699,7 +699,7 @@ function LiveMatch() {
     // Continuidad del rally: si toca defender y el usuario clickea a un
     // jugador de ese equipo, abrimos el flujo integrado en el paso "Defensa".
     if (
-      isCoach &&
+      (isCoach || isPlanillero) &&
       rallyCtx &&
       rallyCtx.currentPhase === "defense" &&
       rallyCtx.currentPhaseSide === side &&
@@ -716,6 +716,14 @@ function LiveMatch() {
       setIntegratedRally({ side, defenderId: playerId });
       return;
     }
+
+    if (isPlanillero) {
+      // In planillero mode, clicking any player on their team opens the integrated rally dialog
+      // starting from the scout step (action) or zone if they want more detail.
+      setIntegratedRally({ side });
+      return;
+    }
+
     setPendingPlayer({ side, playerId });
   };
 
@@ -1121,6 +1129,19 @@ function LiveMatch() {
                 formationB={formationB}
               />
 
+              <IntegratedRallyDialogWrapper
+                integratedRally={integratedRally}
+                setIntegratedRally={setIntegratedRally}
+                match={match}
+                teamA={teamA}
+                teamB={teamB}
+                recordReception={recordReception}
+                recordDefense={recordDefense}
+                recordPoint={recordPoint}
+                recordAttackAttempt={recordAttackAttempt}
+                oppositeSide={oppositeSide}
+              />
+
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
               {showLineupEditor && canManageUniversals && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
                 <UniversalRoleDialog
@@ -1329,13 +1350,13 @@ function LiveMatch() {
             const isActiveLibero = !!activeLibero && activeLibero.liberoId === pendingPlayer.playerId;
             const replacedPlayer = isActiveLibero ? t.players.find((p) => p.id === activeLibero!.replacedPlayerId) : null;
             const allActions: { type: PointType; label: string; tone: "primary" | "neutral" | "danger"; positive: boolean }[] = [
-              { type: "ace", label: isCoach ? "Saque (Ace)" : "Saque", tone: "primary", positive: true },
+              { type: "ace", label: "Saque", tone: "primary", positive: true },
               { type: "serve_error", label: "Error de saque", tone: "danger", positive: false },
-              { type: "rotation_attack", label: isCoach ? "Ataque de rotación" : "Ataque", tone: "primary", positive: true },
+              { type: "rotation_attack", label: "Ataque", tone: "primary", positive: true },
               { type: "attack_error", label: "Error de ataque", tone: "danger", positive: false },
-              { type: "counter_attack", label: "Contraataque", tone: "primary", positive: true },
-              { type: "unforced_error", label: "Error no forzado", tone: "danger", positive: false },
               { type: "block", label: "Bloqueo", tone: "primary", positive: true },
+              { type: "unforced_error", label: "Error no forzado", tone: "danger", positive: false },
+              { type: "counter_attack", label: "Contraataque", tone: "primary", positive: true },
               { type: "block_error", label: "Error de bloqueo", tone: "danger", positive: false },
             ];
             // Sólo el sacador (P1) puede registrar Saque / Error de saque; el líbero nunca saca.
@@ -3768,5 +3789,78 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
     </Dialog>
   );
 }
+
+const IntegratedRallyDialogWrapper = ({
+  integratedRally,
+  setIntegratedRally,
+  match,
+  teamA,
+  teamB,
+  recordReception,
+  recordDefense,
+  recordPoint,
+  recordAttackAttempt,
+  oppositeSide,
+}: any) => {
+  if (!integratedRally) return null;
+
+  return (
+    <IntegratedRallyDialog
+      open={!!integratedRally}
+      onClose={() => setIntegratedRally(null)}
+      match={match}
+      team={integratedRally.side === "A" ? teamA : teamB}
+      side={integratedRally.side}
+      onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
+      receptionQuality={integratedRally.receptionQuality}
+      receptionStep={integratedRally.receiverId ? {
+        playerId: integratedRally.receiverId,
+        onRegister: (rating: any) => {
+          recordReception(match.id, integratedRally.side, integratedRally.receiverId!, rating);
+          const RECEPTION_OPTIONS = [
+            { key: "double_positive", quality: "++" },
+            { key: "positive", quality: "+" },
+            { key: "neutral", quality: "!" },
+            { key: "negative", quality: undefined },
+            { key: "double_negative", quality: undefined },
+            { key: "overpass", quality: undefined },
+          ];
+          const quality = RECEPTION_OPTIONS.find(o => o.key === rating)?.quality;
+          return { proceed: !!quality, quality: quality as any };
+        }
+      } : undefined}
+      defenseStep={integratedRally.defenderId ? {
+        playerId: integratedRally.defenderId,
+        onRegister: (rating: any) => {
+          recordDefense(match.id, integratedRally.side, integratedRally.defenderId!, rating);
+          const DEFENSE_OPTIONS = [
+            { key: "excellent", quality: "++" },
+            { key: "controlled", quality: "!" },
+            { key: "neutral", quality: "!" },
+            { key: "error", quality: undefined },
+          ];
+          const quality = DEFENSE_OPTIONS.find(o => o.key === rating)?.quality;
+          return { proceed: !!quality, quality: quality as any };
+        }
+      } : undefined}
+      onSubmit={(data: any) => {
+        if (data.action === "serve" || data.action === "serve_error") {
+           const pointSide = data.action === "serve" ? integratedRally.side : oppositeSide(integratedRally.side);
+           const pointType = data.action === "serve" ? "ace" : "serve_error";
+           recordPoint(match.id, pointSide, pointType, data.attackerId);
+           return false;
+        }
+        recordAttackAttempt(match.id, integratedRally.side, data.attackerId, {
+          setterId: data.setterId,
+          setterQuality: data.setterQuality,
+          attackZone: settingZoneToAttackZone(data.attackZone)!,
+          action: data.action,
+          attackDirection: data.attackDirection,
+          isCounter: data.isCounter,
+        });
+      }}
+    />
+  );
+};
 
 
