@@ -580,6 +580,9 @@ export function IntegratedRallyDialog({
               <div className="flex flex-wrap gap-2">
                 {ATTACK_RESULT_OPTIONS.filter((o) => {
                   const isServeOption = o.key === "serve" || o.key === "serve_error";
+                  // En modo planillero rápido siempre mostramos las 6 opciones;
+                  // el wrapper se encarga de asignar el punto al sacador real.
+                  if (startAtAction) return true;
                   if (!isServeOption) return true;
                   return !!serverPlayerId && attackerId === serverPlayerId;
                 }).map((o) => {
