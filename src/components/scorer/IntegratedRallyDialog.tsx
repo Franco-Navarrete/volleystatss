@@ -483,7 +483,7 @@ export function IntegratedRallyDialog({
         )}
 
         {/* Cuerpo + resumen (md+) */}
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] mt-1">
+        <div className={`grid gap-3 mt-1 ${startAtAction ? "" : "md:grid-cols-[minmax(0,1fr)_180px]"}`}>
           <div key={fadeKey} className="animate-fade-in min-w-0">
             {step === "reception" && receptionPlayer && (
               <div className="space-y-2">
