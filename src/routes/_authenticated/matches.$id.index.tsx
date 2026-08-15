@@ -3850,6 +3850,32 @@ const IntegratedRallyDialogWrapper = ({
         }
       } : undefined}
       onSubmit={(data: any) => {
+        // En modo planillero rápido las 6 opciones son puntos directos.
+        if (integratedRally.startAtAction) {
+          const action = data.action as import("@/components/scorer/IntegratedRallyDialog").RallyAction;
+          const side = integratedRally.side;
+          const opposite = oppositeSide(side);
+          const playerId = data.attackerId;
+
+          if (action === "serve") {
+            // Si el clic no fue en el sacador, registramos el punto para el sacador real.
+            const serverId = serverPlayerId ?? playerId;
+            recordPoint(match.id, side, "ace", serverId);
+          } else if (action === "serve_error") {
+            const serverId = serverPlayerId ?? playerId;
+            recordPoint(match.id, opposite, "serve_error", serverId);
+          } else if (action === "rotation_attack" || action === "counter_attack") {
+            recordPoint(match.id, side, "attack", playerId);
+          } else if (action === "attack_error") {
+            recordPoint(match.id, opposite, "attack_error", playerId);
+          } else if (action === "block") {
+            recordPoint(match.id, side, "block", playerId);
+          } else if (action === "unforced_error") {
+            recordPoint(match.id, opposite, "unforced_error", playerId);
+          }
+          return false;
+        }
+
         if (data.action === "serve" || data.action === "serve_error") {
            const pointSide = data.action === "serve" ? integratedRally.side : oppositeSide(integratedRally.side);
            const pointType = data.action === "serve" ? "ace" : "serve_error";
