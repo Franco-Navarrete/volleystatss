@@ -3813,7 +3813,7 @@ const IntegratedRallyDialogWrapper = ({
             { key: "overpass", quality: undefined },
           ];
           const quality = RECEPTION_OPTIONS.find(o => o.key === rating)?.quality;
-          return { proceed: !!quality, quality };
+          return { proceed: !!quality, quality: quality as any };
         }
       } : undefined}
       defenseStep={integratedRally.defenderId ? {
@@ -3827,7 +3827,7 @@ const IntegratedRallyDialogWrapper = ({
             { key: "error", quality: undefined },
           ];
           const quality = DEFENSE_OPTIONS.find(o => o.key === rating)?.quality;
-          return { proceed: !!quality, quality };
+          return { proceed: !!quality, quality: quality as any };
         }
       } : undefined}
       onSubmit={(data: any) => {
