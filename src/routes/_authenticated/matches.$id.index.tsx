@@ -356,7 +356,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showSettingDialog, setShowSettingDialog] = useState(false);
-  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string; defenderId?: string } | null>(null);
+  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string; defenderId?: string; playerId?: string; startAtAction?: boolean } | null>(null);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [showFormationDialog, setShowFormationDialog] = useState(false);
@@ -718,9 +718,9 @@ function LiveMatch() {
     }
 
     if (isPlanillero) {
-      // In planillero mode, clicking any player on their team opens the integrated rally dialog
-      // starting from the scout step (action) or zone if they want more detail.
-      setIntegratedRally({ side });
+      // Modo planillero rápido: al tocar una jugadora se abre directamente el
+      // selector de acción con esa jugadora preseleccionada como atacante.
+      setIntegratedRally({ side, playerId, startAtAction: true });
       return;
     }
 
@@ -1140,6 +1140,7 @@ function LiveMatch() {
                 recordPoint={recordPoint}
                 recordAttackAttempt={recordAttackAttempt}
                 oppositeSide={oppositeSide}
+                serverPlayerId={server.playerId}
               />
 
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
@@ -1959,6 +1960,7 @@ function LiveMatch() {
             },
           } : undefined}
           onSubmit={(payload) => {
+            if (!payload.attackZone) return;
             const attackZone = settingZoneToAttackZone(payload.attackZone);
             const isNeutral =
               payload.action === "attack_neutral" || payload.action === "counter_neutral";
@@ -3801,6 +3803,7 @@ const IntegratedRallyDialogWrapper = ({
   recordPoint,
   recordAttackAttempt,
   oppositeSide,
+  serverPlayerId,
 }: any) => {
   if (!integratedRally) return null;
 
@@ -3813,6 +3816,9 @@ const IntegratedRallyDialogWrapper = ({
       side={integratedRally.side}
       onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
       receptionQuality={integratedRally.receptionQuality}
+      initialAttackerId={integratedRally.playerId}
+      startAtAction={integratedRally.startAtAction}
+      serverPlayerId={serverPlayerId}
       receptionStep={integratedRally.receiverId ? {
         playerId: integratedRally.receiverId,
         onRegister: (rating: any) => {
@@ -3850,10 +3856,11 @@ const IntegratedRallyDialogWrapper = ({
            recordPoint(match.id, pointSide, pointType, data.attackerId);
            return false;
         }
+        const attackZoneNum = data.attackZone ? settingZoneToAttackZone(data.attackZone) : undefined;
         recordAttackAttempt(match.id, integratedRally.side, data.attackerId, {
           setterId: data.setterId,
           setterQuality: data.setterQuality,
-          attackZone: settingZoneToAttackZone(data.attackZone)!,
+          attackZone: attackZoneNum,
           action: data.action,
           attackDirection: data.attackDirection,
           isCounter: data.isCounter,

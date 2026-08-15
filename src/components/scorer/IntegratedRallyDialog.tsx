@@ -45,10 +45,16 @@ interface Props {
       quality?: SettingQuality;
     };
   };
+  /** Jugadora preseleccionada como atacante (modo planillero rápido). */
+  initialAttackerId?: string;
+  /** Salta directamente al paso de acción final. */
+  startAtAction?: boolean;
+  /** Jugadora que actualmente saca; se usa para filtrar opciones de saque. */
+  serverPlayerId?: string | null;
   onSubmit: (payload: {
     setterId: string;
     setterQuality: SettingQuality;
-    attackZone: SettingAttackZone;
+    attackZone?: SettingAttackZone;
     attackerId: string;
     action: RallyAction;
     attackDirection?: AttackDirection;
@@ -141,6 +147,21 @@ const ATTACK_RESULT_OPTIONS: { key: AttackResult; label: string; hotkey: string 
 
 const ZONE_ORDER: SettingAttackZone[] = ["z4", "z3", "z2", "back5", "pipe", "back1"];
 
+function getZoneForPlayer(onCourt: string[], playerId: string): SettingAttackZone | null {
+  const idx = onCourt.indexOf(playerId);
+  if (idx === -1) return null;
+  // onCourt: [P1, P2, P3, P4, P5, P6]
+  const map: Record<number, SettingAttackZone> = {
+    0: "back1",
+    1: "z2",
+    2: "z3",
+    3: "z4",
+    4: "back5",
+    5: "pipe",
+  };
+  return map[idx] ?? null;
+}
+
 function computeZoneAssignments(
   onCourt: string[],
   players: Player[],
@@ -210,6 +231,9 @@ export function IntegratedRallyDialog({
   receptionQuality,
   receptionStep,
   defenseStep,
+  initialAttackerId,
+  startAtAction,
+  serverPlayerId,
   onSubmit,
 }: Props) {
   const playersOnCourt: Player[] = useMemo(
@@ -229,11 +253,21 @@ export function IntegratedRallyDialog({
     [defenseStep, team.players],
   );
 
-  const initialStep: Step = defenseStep ? "defense" : receptionStep ? "reception" : "zone";
+  const initialStep: Step = startAtAction
+    ? "action"
+    : defenseStep
+    ? "defense"
+    : receptionStep
+    ? "reception"
+    : "zone";
   const isCounterFlow = !!defenseStep;
+  const initialZone = useMemo(
+    () => (initialAttackerId ? getZoneForPlayer(onCourt, initialAttackerId) : null),
+    [initialAttackerId, onCourt],
+  );
   const [step, setStep] = useState<Step>(initialStep);
-  const [zone, setZone] = useState<SettingAttackZone | null>(null);
-  const [attackerId, setAttackerId] = useState<string | null>(null);
+  const [zone, setZone] = useState<SettingAttackZone | null>(initialZone);
+  const [attackerId, setAttackerId] = useState<string | null>(initialAttackerId ?? null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
   const [actionKind, setActionKind] = useState<AttackResult | null>(null);
   const [receptionValue, setReceptionValue] = useState<ReceptionRating | null>(null);
@@ -245,14 +279,14 @@ export function IntegratedRallyDialog({
 
   useEffect(() => {
     setStep(initialStep);
-    setZone(null);
-    setAttackerId(null);
+    setZone(initialZone);
+    setAttackerId(initialAttackerId ?? null);
     setDirection(null);
     setActionKind(null);
     setReceptionValue(null);
     setDefenseValue(null);
     setEffectiveQuality(receptionQuality);
-  }, [open, initialStep, receptionQuality, receptionStep?.playerId, defenseStep?.playerId]);
+  }, [open, initialStep, initialZone, initialAttackerId, receptionQuality, receptionStep?.playerId, defenseStep?.playerId]);
 
   const zoneAssignments = useMemo(
     () => computeZoneAssignments(onCourt, team.players),
@@ -300,11 +334,18 @@ export function IntegratedRallyDialog({
   }, []);
 
   const finalize = useCallback((a: RallyAction) => {
-    if (!attackerId || !setter || !zone) return;
+    if (!attackerId || !setter) return;
+    const needsZone =
+      a === "rotation_attack" ||
+      a === "counter_attack" ||
+      a === "attack_neutral" ||
+      a === "counter_neutral" ||
+      a === "attack_error";
+    if (needsZone && !zone) return;
     const keepOpen = onSubmit({
       setterId: setter.id,
       setterQuality: "!",
-      attackZone: zone,
+      attackZone: zone ?? undefined,
       attackerId,
       action: a,
       attackDirection: direction ?? undefined,
@@ -537,7 +578,11 @@ export function IntegratedRallyDialog({
 
             {step === "action" && (
               <div className="flex flex-wrap gap-2">
-                {ATTACK_RESULT_OPTIONS.map((o) => {
+                {ATTACK_RESULT_OPTIONS.filter((o) => {
+                  const isServeOption = o.key === "serve" || o.key === "serve_error";
+                  if (!isServeOption) return true;
+                  return !!serverPlayerId && attackerId === serverPlayerId;
+                }).map((o) => {
                   const tone = o.key === "point"
                     ? "bg-success text-success-foreground hover:bg-success/90"
                     : o.key === "continue"
