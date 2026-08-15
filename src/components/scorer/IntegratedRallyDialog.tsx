@@ -45,10 +45,16 @@ interface Props {
       quality?: SettingQuality;
     };
   };
+  /** Jugadora preseleccionada como atacante (modo planillero rápido). */
+  initialAttackerId?: string;
+  /** Salta directamente al paso de acción final. */
+  startAtAction?: boolean;
+  /** Jugadora que actualmente saca; se usa para filtrar opciones de saque. */
+  serverPlayerId?: string | null;
   onSubmit: (payload: {
     setterId: string;
     setterQuality: SettingQuality;
-    attackZone: SettingAttackZone;
+    attackZone?: SettingAttackZone;
     attackerId: string;
     action: RallyAction;
     attackDirection?: AttackDirection;
@@ -141,6 +147,21 @@ const ATTACK_RESULT_OPTIONS: { key: AttackResult; label: string; hotkey: string 
 
 const ZONE_ORDER: SettingAttackZone[] = ["z4", "z3", "z2", "back5", "pipe", "back1"];
 
+function getZoneForPlayer(onCourt: string[], playerId: string): SettingAttackZone | null {
+  const idx = onCourt.indexOf(playerId);
+  if (idx === -1) return null;
+  // onCourt: [P1, P2, P3, P4, P5, P6]
+  const map: Record<number, SettingAttackZone> = {
+    0: "back1",
+    1: "z2",
+    2: "z3",
+    3: "z4",
+    4: "back5",
+    5: "pipe",
+  };
+  return map[idx] ?? null;
+}
+
 function computeZoneAssignments(
   onCourt: string[],
   players: Player[],
@@ -210,6 +231,9 @@ export function IntegratedRallyDialog({
   receptionQuality,
   receptionStep,
   defenseStep,
+  initialAttackerId,
+  startAtAction,
+  serverPlayerId,
   onSubmit,
 }: Props) {
   const playersOnCourt: Player[] = useMemo(
@@ -229,11 +253,21 @@ export function IntegratedRallyDialog({
     [defenseStep, team.players],
   );
 
-  const initialStep: Step = defenseStep ? "defense" : receptionStep ? "reception" : "zone";
+  const initialStep: Step = startAtAction
+    ? "action"
+    : defenseStep
+    ? "defense"
+    : receptionStep
+    ? "reception"
+    : "zone";
   const isCounterFlow = !!defenseStep;
+  const initialZone = useMemo(
+    () => (initialAttackerId ? getZoneForPlayer(onCourt, initialAttackerId) : null),
+    [initialAttackerId, onCourt],
+  );
   const [step, setStep] = useState<Step>(initialStep);
-  const [zone, setZone] = useState<SettingAttackZone | null>(null);
-  const [attackerId, setAttackerId] = useState<string | null>(null);
+  const [zone, setZone] = useState<SettingAttackZone | null>(initialZone);
+  const [attackerId, setAttackerId] = useState<string | null>(initialAttackerId ?? null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
   const [actionKind, setActionKind] = useState<AttackResult | null>(null);
   const [receptionValue, setReceptionValue] = useState<ReceptionRating | null>(null);
@@ -245,14 +279,14 @@ export function IntegratedRallyDialog({
 
   useEffect(() => {
     setStep(initialStep);
-    setZone(null);
-    setAttackerId(null);
+    setZone(initialZone);
+    setAttackerId(initialAttackerId ?? null);
     setDirection(null);
     setActionKind(null);
     setReceptionValue(null);
     setDefenseValue(null);
     setEffectiveQuality(receptionQuality);
-  }, [open, initialStep, receptionQuality, receptionStep?.playerId, defenseStep?.playerId]);
+  }, [open, initialStep, initialZone, initialAttackerId, receptionQuality, receptionStep?.playerId, defenseStep?.playerId]);
 
   const zoneAssignments = useMemo(
     () => computeZoneAssignments(onCourt, team.players),
@@ -300,11 +334,18 @@ export function IntegratedRallyDialog({
   }, []);
 
   const finalize = useCallback((a: RallyAction) => {
-    if (!attackerId || !setter || !zone) return;
+    if (!attackerId || !setter) return;
+    const needsZone =
+      a === "rotation_attack" ||
+      a === "counter_attack" ||
+      a === "attack_neutral" ||
+      a === "counter_neutral" ||
+      a === "attack_error";
+    if (needsZone && !zone) return;
     const keepOpen = onSubmit({
       setterId: setter.id,
       setterQuality: "!",
-      attackZone: zone,
+      attackZone: zone ?? undefined,
       attackerId,
       action: a,
       attackDirection: direction ?? undefined,
@@ -402,45 +443,47 @@ export function IntegratedRallyDialog({
             </span>
             <span className="min-w-0 truncate">
               <span className="block text-sm font-bold">
-                {activeSteps[stepIdx]?.label ?? "Rally"}
+                {startAtAction ? "Acción rápida" : (activeSteps[stepIdx]?.label ?? "Rally")}
               </span>
               <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                {CURRENT_ACTION_TEXT[step]}
+                {startAtAction ? "Seleccioná el resultado" : CURRENT_ACTION_TEXT[step]}
               </span>
             </span>
           </DialogTitle>
         </DialogHeader>
 
-        {/* Barra de progreso */}
-        <ol className="mt-1 flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-2">
-          {activeSteps.map((s, i) => {
-            const done = i < stepIdx;
-            const active = i === stepIdx;
-            return (
-              <li key={s.key} className="flex-1 flex items-center gap-1 min-w-0">
-                <span
-                  className={`shrink-0 grid place-items-center size-5 rounded-full text-[10px] font-bold transition-colors ${
-                    done ? "bg-success text-success-foreground" :
-                    active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {done ? <Check className="size-3" /> : active ? <CircleDot className="size-3" /> : <Circle className="size-3" />}
-                </span>
-                <span className={`text-[10px] font-bold uppercase tracking-wide truncate ${
-                  active ? "text-primary" : done ? "text-success" : "text-muted-foreground"
-                }`}>
-                  {s.label}
-                </span>
-                {i < activeSteps.length - 1 && (
-                  <span className={`hidden sm:block h-px flex-1 ${done ? "bg-success/50" : "bg-border"}`} />
-                )}
-              </li>
-            );
-          })}
-        </ol>
+        {/* Barra de progreso (oculta en modo planillero rápido) */}
+        {!startAtAction && (
+          <ol className="mt-1 flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-2">
+            {activeSteps.map((s, i) => {
+              const done = i < stepIdx;
+              const active = i === stepIdx;
+              return (
+                <li key={s.key} className="flex-1 flex items-center gap-1 min-w-0">
+                  <span
+                    className={`shrink-0 grid place-items-center size-5 rounded-full text-[10px] font-bold transition-colors ${
+                      done ? "bg-success text-success-foreground" :
+                      active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {done ? <Check className="size-3" /> : active ? <CircleDot className="size-3" /> : <Circle className="size-3" />}
+                  </span>
+                  <span className={`text-[10px] font-bold uppercase tracking-wide truncate ${
+                    active ? "text-primary" : done ? "text-success" : "text-muted-foreground"
+                  }`}>
+                    {s.label}
+                  </span>
+                  {i < activeSteps.length - 1 && (
+                    <span className={`hidden sm:block h-px flex-1 ${done ? "bg-success/50" : "bg-border"}`} />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )}
 
         {/* Cuerpo + resumen (md+) */}
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] mt-1">
+        <div className={`grid gap-3 mt-1 ${startAtAction ? "" : "md:grid-cols-[minmax(0,1fr)_180px]"}`}>
           <div key={fadeKey} className="animate-fade-in min-w-0">
             {step === "reception" && receptionPlayer && (
               <div className="space-y-2">
@@ -537,7 +580,14 @@ export function IntegratedRallyDialog({
 
             {step === "action" && (
               <div className="flex flex-wrap gap-2">
-                {ATTACK_RESULT_OPTIONS.map((o) => {
+                {ATTACK_RESULT_OPTIONS.filter((o) => {
+                  const isServeOption = o.key === "serve" || o.key === "serve_error";
+                  // En modo planillero rápido siempre mostramos las 6 opciones;
+                  // el wrapper se encarga de asignar el punto al sacador real.
+                  if (startAtAction) return true;
+                  if (!isServeOption) return true;
+                  return !!serverPlayerId && attackerId === serverPlayerId;
+                }).map((o) => {
                   const tone = o.key === "point"
                     ? "bg-success text-success-foreground hover:bg-success/90"
                     : o.key === "continue"
@@ -560,21 +610,23 @@ export function IntegratedRallyDialog({
 
           </div>
 
-          {/* Resumen lateral */}
-          <aside className="hidden md:flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/30 p-2 self-start">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-1">
-              Resumen del rally
-            </p>
-            {summary.length === 0 && (
-              <p className="text-[11px] text-muted-foreground px-1 py-2">Todavía no hay datos.</p>
-            )}
-            {summary.map((s) => (
-              <div key={s.label} className="flex items-baseline justify-between gap-2 px-1 py-0.5 text-[11px] border-b border-border/40 last:border-0">
-                <span className="text-muted-foreground">{s.label}</span>
-                <span className="font-bold text-right truncate">{s.value}</span>
-              </div>
-            ))}
-          </aside>
+          {/* Resumen lateral (oculto en modo planillero rápido) */}
+          {!startAtAction && (
+            <aside className="hidden md:flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/30 p-2 self-start">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-1">
+                Resumen del rally
+              </p>
+              {summary.length === 0 && (
+                <p className="text-[11px] text-muted-foreground px-1 py-2">Todavía no hay datos.</p>
+              )}
+              {summary.map((s) => (
+                <div key={s.label} className="flex items-baseline justify-between gap-2 px-1 py-0.5 text-[11px] border-b border-border/40 last:border-0">
+                  <span className="text-muted-foreground">{s.label}</span>
+                  <span className="font-bold text-right truncate">{s.value}</span>
+                </div>
+              ))}
+            </aside>
+          )}
         </div>
       </DialogContent>
     </Dialog>

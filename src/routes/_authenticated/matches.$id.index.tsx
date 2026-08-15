@@ -356,7 +356,7 @@ function LiveMatch() {
   const [sanctionSide, setSanctionSide] = useState<"A" | "B" | null>(null);
   const [showLiveStats, setShowLiveStats] = useState(false);
   const [showSettingDialog, setShowSettingDialog] = useState(false);
-  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string; defenderId?: string } | null>(null);
+  const [integratedRally, setIntegratedRally] = useState<{ side: "A" | "B"; receptionQuality?: SettingQuality; receiverId?: string; defenderId?: string; playerId?: string; startAtAction?: boolean } | null>(null);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const [showFormationDialog, setShowFormationDialog] = useState(false);
@@ -718,9 +718,9 @@ function LiveMatch() {
     }
 
     if (isPlanillero) {
-      // In planillero mode, clicking any player on their team opens the integrated rally dialog
-      // starting from the scout step (action) or zone if they want more detail.
-      setIntegratedRally({ side });
+      // Modo planillero rápido: al tocar una jugadora se abre directamente el
+      // selector de acción con esa jugadora preseleccionada como atacante.
+      setIntegratedRally({ side, playerId, startAtAction: true });
       return;
     }
 
@@ -1140,6 +1140,7 @@ function LiveMatch() {
                 recordPoint={recordPoint}
                 recordAttackAttempt={recordAttackAttempt}
                 oppositeSide={oppositeSide}
+                serverPlayerId={server.playerId}
               />
 
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
@@ -1959,6 +1960,7 @@ function LiveMatch() {
             },
           } : undefined}
           onSubmit={(payload) => {
+            if (!payload.attackZone) return;
             const attackZone = settingZoneToAttackZone(payload.attackZone);
             const isNeutral =
               payload.action === "attack_neutral" || payload.action === "counter_neutral";
@@ -3801,6 +3803,7 @@ const IntegratedRallyDialogWrapper = ({
   recordPoint,
   recordAttackAttempt,
   oppositeSide,
+  serverPlayerId,
 }: any) => {
   if (!integratedRally) return null;
 
@@ -3813,6 +3816,9 @@ const IntegratedRallyDialogWrapper = ({
       side={integratedRally.side}
       onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
       receptionQuality={integratedRally.receptionQuality}
+      initialAttackerId={integratedRally.playerId}
+      startAtAction={integratedRally.startAtAction}
+      serverPlayerId={serverPlayerId}
       receptionStep={integratedRally.receiverId ? {
         playerId: integratedRally.receiverId,
         onRegister: (rating: any) => {
@@ -3844,16 +3850,43 @@ const IntegratedRallyDialogWrapper = ({
         }
       } : undefined}
       onSubmit={(data: any) => {
+        // En modo planillero rápido las 6 opciones son puntos directos.
+        if (integratedRally.startAtAction) {
+          const action = data.action as import("@/components/scorer/IntegratedRallyDialog").RallyAction;
+          const side = integratedRally.side;
+          const opposite = oppositeSide(side);
+          const playerId = data.attackerId;
+
+          if (action === "serve") {
+            // Si el clic no fue en el sacador, registramos el punto para el sacador real.
+            const serverId = serverPlayerId ?? playerId;
+            recordPoint(match.id, side, "ace", serverId);
+          } else if (action === "serve_error") {
+            const serverId = serverPlayerId ?? playerId;
+            recordPoint(match.id, opposite, "serve_error", serverId);
+          } else if (action === "rotation_attack" || action === "counter_attack") {
+            recordPoint(match.id, side, "attack", playerId);
+          } else if (action === "attack_error") {
+            recordPoint(match.id, opposite, "attack_error", playerId);
+          } else if (action === "block") {
+            recordPoint(match.id, side, "block", playerId);
+          } else if (action === "unforced_error") {
+            recordPoint(match.id, opposite, "unforced_error", playerId);
+          }
+          return false;
+        }
+
         if (data.action === "serve" || data.action === "serve_error") {
            const pointSide = data.action === "serve" ? integratedRally.side : oppositeSide(integratedRally.side);
            const pointType = data.action === "serve" ? "ace" : "serve_error";
            recordPoint(match.id, pointSide, pointType, data.attackerId);
            return false;
         }
+        const attackZoneNum = data.attackZone ? settingZoneToAttackZone(data.attackZone) : undefined;
         recordAttackAttempt(match.id, integratedRally.side, data.attackerId, {
           setterId: data.setterId,
           setterQuality: data.setterQuality,
-          attackZone: settingZoneToAttackZone(data.attackZone)!,
+          attackZone: attackZoneNum,
           action: data.action,
           attackDirection: data.attackDirection,
           isCounter: data.isCounter,
