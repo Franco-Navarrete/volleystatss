@@ -443,10 +443,10 @@ export function IntegratedRallyDialog({
             </span>
             <span className="min-w-0 truncate">
               <span className="block text-sm font-bold">
-                {activeSteps[stepIdx]?.label ?? "Rally"}
+                {startAtAction ? "Acción rápida" : (activeSteps[stepIdx]?.label ?? "Rally")}
               </span>
               <span className="block text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                {CURRENT_ACTION_TEXT[step]}
+                {startAtAction ? "Seleccioná el resultado" : CURRENT_ACTION_TEXT[step]}
               </span>
             </span>
           </DialogTitle>
