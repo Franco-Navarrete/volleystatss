@@ -688,7 +688,7 @@ function LiveMatch() {
     }
     if (needsSetStart) return;
     if (needsReception && side === receivingSide) {
-      if (isCoach) {
+      if (isCoach || isPlanillero) {
         // Flujo continuo: abrimos el panel único directamente en el paso "Recepción".
         setIntegratedRally({ side, receiverId: playerId });
       } else {
@@ -699,7 +699,7 @@ function LiveMatch() {
     // Continuidad del rally: si toca defender y el usuario clickea a un
     // jugador de ese equipo, abrimos el flujo integrado en el paso "Defensa".
     if (
-      isCoach &&
+      (isCoach || isPlanillero) &&
       rallyCtx &&
       rallyCtx.currentPhase === "defense" &&
       rallyCtx.currentPhaseSide === side &&
@@ -716,6 +716,14 @@ function LiveMatch() {
       setIntegratedRally({ side, defenderId: playerId });
       return;
     }
+
+    if (isPlanillero) {
+      // In planillero mode, clicking any player on their team opens the integrated rally dialog
+      // starting from the scout step (action) or zone if they want more detail.
+      setIntegratedRally({ side });
+      return;
+    }
+
     setPendingPlayer({ side, playerId });
   };
 

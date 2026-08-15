@@ -59,6 +59,8 @@ interface Props {
 }
 
 export type RallyAction =
+  | "serve"
+  | "serve_error"
   | "rotation_attack"
   | "attack_neutral"
   | "counter_attack"
@@ -67,7 +69,7 @@ export type RallyAction =
   | "block"
   | "unforced_error";
 
-type AttackResult = "point" | "continue" | "block" | "attack_error" | "unforced";
+type AttackResult = "serve" | "serve_error" | "point" | "continue" | "block" | "attack_error" | "unforced";
 type Step = "reception" | "defense" | "zone" | "direction" | "action";
 
 const STEPS: { key: Step; label: string }[] = [
@@ -79,9 +81,11 @@ const STEPS: { key: Step; label: string }[] = [
 ];
 
 const ACTION_KIND_LABEL: Record<AttackResult, string> = {
-  point: "Punto",
+  serve: "Saque",
+  serve_error: "Error de saque",
+  point: "Ataque",
   continue: "Continúa el punto",
-  block: "Bloqueo rival",
+  block: "Bloqueo",
   attack_error: "Error de ataque",
   unforced: "Error no forzado",
 };
@@ -127,11 +131,12 @@ const RECEPTION_OPTIONS: ReceptionOption[] = [
 ];
 
 const ATTACK_RESULT_OPTIONS: { key: AttackResult; label: string; hotkey: string }[] = [
-  { key: "point", label: "Punto", hotkey: "1" },
-  { key: "continue", label: "Continúa el punto", hotkey: "2" },
-  { key: "block", label: "Bloqueo rival", hotkey: "3" },
+  { key: "serve", label: "Saque", hotkey: "1" },
+  { key: "serve_error", label: "Error de saque", hotkey: "2" },
+  { key: "point", label: "Ataque", hotkey: "3" },
   { key: "attack_error", label: "Error de ataque", hotkey: "4" },
-  { key: "unforced", label: "Error no forzado", hotkey: "5" },
+  { key: "block", label: "Bloqueo", hotkey: "5" },
+  { key: "unforced", label: "Error no forzado", hotkey: "6" },
 ];
 
 const ZONE_ORDER: SettingAttackZone[] = ["z4", "z3", "z2", "back5", "pipe", "back1"];
@@ -181,6 +186,8 @@ export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | unde
 }
 
 function resolveAction(kind: AttackResult, isCounter: boolean): RallyAction {
+  if (kind === "serve") return "serve";
+  if (kind === "serve_error") return "serve_error";
   if (kind === "block") return "block";
   if (kind === "unforced") return "unforced_error";
   if (kind === "attack_error") return "attack_error";
