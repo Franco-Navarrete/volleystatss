@@ -3777,4 +3777,77 @@ function UniversalRoleDialog({ open, match, teamA, teamB, onConfirm }: {
   );
 }
 
+const IntegratedRallyDialogWrapper = ({
+  integratedRally,
+  setIntegratedRally,
+  match,
+  teamA,
+  teamB,
+  recordReception,
+  recordDefense,
+  recordPoint,
+  recordAttackAttempt,
+  oppositeSide,
+}: any) => {
+  if (!integratedRally) return null;
+
+  return (
+    <IntegratedRallyDialog
+      open={!!integratedRally}
+      onClose={() => setIntegratedRally(null)}
+      match={match}
+      team={integratedRally.side === "A" ? teamA : teamB}
+      side={integratedRally.side}
+      onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
+      receptionQuality={integratedRally.receptionQuality}
+      receptionStep={integratedRally.receiverId ? {
+        playerId: integratedRally.receiverId,
+        onRegister: (rating: any) => {
+          recordReception(match.id, integratedRally.side, integratedRally.receiverId!, rating);
+          const RECEPTION_OPTIONS = [
+            { key: "double_positive", quality: "++" },
+            { key: "positive", quality: "+" },
+            { key: "neutral", quality: "!" },
+            { key: "negative", quality: undefined },
+            { key: "double_negative", quality: undefined },
+            { key: "overpass", quality: undefined },
+          ];
+          const quality = RECEPTION_OPTIONS.find(o => o.key === rating)?.quality;
+          return { proceed: !!quality, quality };
+        }
+      } : undefined}
+      defenseStep={integratedRally.defenderId ? {
+        playerId: integratedRally.defenderId,
+        onRegister: (rating: any) => {
+          recordDefense(match.id, integratedRally.side, integratedRally.defenderId!, rating);
+          const DEFENSE_OPTIONS = [
+            { key: "excellent", quality: "++" },
+            { key: "controlled", quality: "!" },
+            { key: "neutral", quality: "!" },
+            { key: "error", quality: undefined },
+          ];
+          const quality = DEFENSE_OPTIONS.find(o => o.key === rating)?.quality;
+          return { proceed: !!quality, quality };
+        }
+      } : undefined}
+      onSubmit={(data: any) => {
+        if (data.action === "serve" || data.action === "serve_error") {
+           const pointSide = data.action === "serve" ? integratedRally.side : oppositeSide(integratedRally.side);
+           const pointType = data.action === "serve" ? "ace" : "serve_error";
+           recordPoint(match.id, pointSide, pointType, data.attackerId);
+           return false;
+        }
+        recordAttackAttempt(match.id, integratedRally.side, data.attackerId, {
+          setterId: data.setterId,
+          setterQuality: data.setterQuality,
+          attackZone: settingZoneToAttackZone(data.attackZone)!,
+          action: data.action,
+          attackDirection: data.attackDirection,
+          isCounter: data.isCounter,
+        });
+      }}
+    />
+  );
+};
+
 
