@@ -1129,6 +1129,19 @@ function LiveMatch() {
                 formationB={formationB}
               />
 
+              <IntegratedRallyDialogWrapper
+                integratedRally={integratedRally}
+                setIntegratedRally={setIntegratedRally}
+                match={match}
+                teamA={teamA}
+                teamB={teamB}
+                recordReception={recordReception}
+                recordDefense={recordDefense}
+                recordPoint={recordPoint}
+                recordAttackAttempt={recordAttackAttempt}
+                oppositeSide={oppositeSide}
+              />
+
               {/* Diálogo de rol universal que se dispara al abrir el LineupEditor si hay universales */}
               {showLineupEditor && canManageUniversals && (teamA.players.some(p => p.position === "universal") || teamB.players.some(p => p.position === "universal")) && (
                 <UniversalRoleDialog
