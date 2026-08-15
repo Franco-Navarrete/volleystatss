@@ -452,33 +452,35 @@ export function IntegratedRallyDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Barra de progreso */}
-        <ol className="mt-1 flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-2">
-          {activeSteps.map((s, i) => {
-            const done = i < stepIdx;
-            const active = i === stepIdx;
-            return (
-              <li key={s.key} className="flex-1 flex items-center gap-1 min-w-0">
-                <span
-                  className={`shrink-0 grid place-items-center size-5 rounded-full text-[10px] font-bold transition-colors ${
-                    done ? "bg-success text-success-foreground" :
-                    active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {done ? <Check className="size-3" /> : active ? <CircleDot className="size-3" /> : <Circle className="size-3" />}
-                </span>
-                <span className={`text-[10px] font-bold uppercase tracking-wide truncate ${
-                  active ? "text-primary" : done ? "text-success" : "text-muted-foreground"
-                }`}>
-                  {s.label}
-                </span>
-                {i < activeSteps.length - 1 && (
-                  <span className={`hidden sm:block h-px flex-1 ${done ? "bg-success/50" : "bg-border"}`} />
-                )}
-              </li>
-            );
-          })}
-        </ol>
+        {/* Barra de progreso (oculta en modo planillero rápido) */}
+        {!startAtAction && (
+          <ol className="mt-1 flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-2">
+            {activeSteps.map((s, i) => {
+              const done = i < stepIdx;
+              const active = i === stepIdx;
+              return (
+                <li key={s.key} className="flex-1 flex items-center gap-1 min-w-0">
+                  <span
+                    className={`shrink-0 grid place-items-center size-5 rounded-full text-[10px] font-bold transition-colors ${
+                      done ? "bg-success text-success-foreground" :
+                      active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {done ? <Check className="size-3" /> : active ? <CircleDot className="size-3" /> : <Circle className="size-3" />}
+                  </span>
+                  <span className={`text-[10px] font-bold uppercase tracking-wide truncate ${
+                    active ? "text-primary" : done ? "text-success" : "text-muted-foreground"
+                  }`}>
+                    {s.label}
+                  </span>
+                  {i < activeSteps.length - 1 && (
+                    <span className={`hidden sm:block h-px flex-1 ${done ? "bg-success/50" : "bg-border"}`} />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )}
 
         {/* Cuerpo + resumen (md+) */}
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] mt-1">
