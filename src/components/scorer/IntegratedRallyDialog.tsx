@@ -588,11 +588,12 @@ export function IntegratedRallyDialog({
                   if (!isServeOption) return true;
                   return !!serverPlayerId && attackerId === serverPlayerId;
                 }).map((o) => {
-                  const tone = o.key === "point"
-                    ? "bg-success text-success-foreground hover:bg-success/90"
-                    : o.key === "continue"
-                    ? "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                    : "bg-destructive/90 text-destructive-foreground hover:bg-destructive";
+                  const tone =
+                    o.key === "serve" || o.key === "point" || o.key === "block"
+                      ? "bg-success text-success-foreground hover:bg-success/90"
+                      : o.key === "continue"
+                      ? "bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                      : "bg-destructive/90 text-destructive-foreground hover:bg-destructive";
                   return (
                     <button
                       key={o.key}
