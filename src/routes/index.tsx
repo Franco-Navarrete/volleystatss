@@ -1,58 +1,82 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { LiveMatchesFeed } from '@/components/LiveMatchesFeed'
+import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle, MessageCircle } from "lucide-react"
+import { Layout, LogIn } from "lucide-react"
 
 export const Route = createFileRoute('/')({
+  beforeLoad: async ({ location }) => {
+    // Si el usuario está autenticado y accede a la raíz, redirigir al dashboard
+    // PERO permitir ver la raíz si se desea (p.ej. para ver el feed público)
+    // Para simplificar el flujo SaaS, si ya está logueado, el dashboard es el destino natural.
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user && location.pathname === '/') {
+      throw redirect({ to: '/dashboard' });
+    }
+  },
   head: () => ({
-    title: 'BLOQUEADO - ESTA EXTENSIÓN FOI PIRATEADA',
+    title: 'RALLY · Estadísticas de Vóley para Entrenadores',
     meta: [
       {
         name: 'description',
-        content: 'La clave utilizada en esta extensión ha sido bloqueada por uso no autorizado.',
+        content: 'La plataforma definitiva para el scouting y análisis de vóley. Gestiona tus partidos, equipos y estadísticas en tiempo real.',
+      },
+      {
+        property: 'og:title',
+        content: 'RALLY · Estadísticas de Vóley Profesionales',
+      },
+      {
+        property: 'og:description',
+        content: 'Optimiza el rendimiento de tu equipo con datos precisos y scouting avanzado.',
+      },
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
       },
     ],
   }),
-  component: BlockedPage,
+  component: Home,
 })
 
-function BlockedPage() {
+function Home() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-slate-900 border border-red-500/30 rounded-2xl p-8 shadow-2xl text-center space-y-8">
-        <div className="flex justify-center">
-          <div className="p-4 rounded-full bg-red-500/10 text-red-500 animate-pulse">
-            <AlertTriangle className="size-16" />
-          </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <main className="flex-1 container max-w-5xl mx-auto px-4 py-12 flex flex-col items-center justify-center text-center">
+        <div className="mb-8 p-4 rounded-full bg-primary/10 text-primary">
+          <Layout className="size-12" />
         </div>
+        
+        <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
+          RALLY
+        </h1>
+        
+        <p className="text-xl text-muted-foreground max-w-2xl mb-12">
+          La plataforma inteligente para el análisis táctico y scouting de vóley en tiempo real.
+        </p>
 
-        <div className="space-y-4">
-          <h1 className="text-3xl font-black text-white tracking-tight leading-tight uppercase">
-            ESTA EXTENSIÓN FOI PIRATEADA
-          </h1>
+        <div className="flex flex-wrap justify-center gap-4 mb-16">
+          <Button asChild size="lg" className="rounded-full px-8 h-12 text-base font-bold">
+            <Link to="/auth">
+              <LogIn className="mr-2 size-5" />
+              Ingresar a la Plataforma
+            </Link>
+          </Button>
           
-          <div className="text-slate-300 text-lg leading-relaxed font-medium">
-            "A clave utilizada nesta extensão foi bloqueada por uso não autorizado. 
-            Fale com o contato oficial abaixo para adquirir a versão original. 
-            FALAR COM O CONTATO OFICIAL (91) 98583-7992 ou no botão abaixo"
-          </div>
-        </div>
-
-        <div className="pt-4">
-          <Button 
-            asChild 
-            className="w-full h-14 text-lg font-bold bg-green-600 hover:bg-green-500 text-white rounded-xl shadow-[0_0_20px_rgba(22,163,74,0.4)] transition-all hover:scale-[1.02] active:scale-95"
-          >
-            <a href="https://wa.me/91985837992" target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="mr-2 size-6" />
-              CHAMAR NO WHATSAPP
-            </a>
+          <Button asChild variant="outline" size="lg" className="rounded-full px-8 h-12 text-base font-bold">
+            <Link to="/dashboard">
+              Ir a mi Tablero
+            </Link>
           </Button>
         </div>
 
-        <div className="text-slate-500 text-xs uppercase tracking-widest pt-4">
-          ID de Seguridad: ERR_LICENSE_PIRACY_DETECTED
+        <div className="w-full max-w-4xl">
+          <LiveMatchesFeed />
         </div>
-      </div>
+      </main>
+
+      <footer className="py-8 border-t border-border/40 text-center text-sm text-muted-foreground">
+        <p>© {new Date().getFullYear()} RALLY · Volley Stats</p>
+      </footer>
     </div>
   )
 }
