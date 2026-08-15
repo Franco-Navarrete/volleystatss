@@ -579,33 +579,47 @@ export function IntegratedRallyDialog({
             )}
 
             {step === "action" && (
-              <div className="flex flex-wrap gap-2">
-                {ATTACK_RESULT_OPTIONS.filter((o) => {
-                  const isServeOption = o.key === "serve" || o.key === "serve_error";
-                  // En modo planillero rápido siempre mostramos las 6 opciones;
-                  // el wrapper se encarga de asignar el punto al sacador real.
-                  if (startAtAction) return true;
-                  if (!isServeOption) return true;
-                  return !!serverPlayerId && attackerId === serverPlayerId;
-                }).map((o) => {
-                  const tone =
-                    o.key === "serve" || o.key === "point" || o.key === "block"
-                      ? "bg-success text-success-foreground hover:bg-success/90"
-                      : o.key === "continue"
-                      ? "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                      : "bg-destructive/90 text-destructive-foreground hover:bg-destructive";
-                  return (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Positivas: izquierda */}
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="text-[10px] uppercase tracking-widest font-black text-success px-1">Positivas</div>
+                  {ATTACK_RESULT_OPTIONS.filter((o) => {
+                    const isServeOption = o.key === "serve" || o.key === "serve_error";
+                    if (startAtAction) return ["serve", "point", "block"].includes(o.key);
+                    if (!isServeOption) return ["point", "block"].includes(o.key);
+                    return o.key === "serve" && !!serverPlayerId && attackerId === serverPlayerId;
+                  }).map((o) => (
                     <button
                       key={o.key}
                       type="button"
                       onClick={() => pickActionKind(o.key)}
-                      className={`relative flex-1 min-w-[120px] min-h-[56px] rounded-lg font-bold text-sm active:scale-95 transition ${tone}`}
+                      className="relative min-h-[56px] rounded-lg font-bold text-sm active:scale-95 transition bg-success text-success-foreground hover:bg-success/90"
                     >
                       {o.label}
                       <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-70">{o.hotkey}</span>
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
+                {/* Negativas: derecha */}
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="text-[10px] uppercase tracking-widest font-black text-destructive px-1">Negativas</div>
+                  {ATTACK_RESULT_OPTIONS.filter((o) => {
+                    const isServeOption = o.key === "serve" || o.key === "serve_error";
+                    if (startAtAction) return ["serve_error", "attack_error", "unforced"].includes(o.key);
+                    if (!isServeOption) return ["attack_error", "unforced"].includes(o.key);
+                    return o.key === "serve_error" && !!serverPlayerId && attackerId === serverPlayerId;
+                  }).map((o) => (
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() => pickActionKind(o.key)}
+                      className="relative min-h-[56px] rounded-lg font-bold text-sm active:scale-95 transition bg-destructive/90 text-destructive-foreground hover:bg-destructive"
+                    >
+                      {o.label}
+                      <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-70">{o.hotkey}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
