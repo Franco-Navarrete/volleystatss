@@ -1355,7 +1355,7 @@ function LiveMatch() {
               { type: "serve_error", label: "Error de saque", tone: "danger", positive: false },
               { type: "rotation_attack", label: "Ataque", tone: "primary", positive: true },
               { type: "attack_error", label: "Error de ataque", tone: "danger", positive: false },
-              { type: "block", label: "Bloqueo", tone: "primary", positive: true },
+              { type: "block", label: "Finta", tone: "primary", positive: true },
               { type: "unforced_error", label: "Error no forzado", tone: "danger", positive: false },
               { type: "counter_attack", label: "Contraataque", tone: "primary", positive: true },
               { type: "block_error", label: "Error de bloqueo", tone: "danger", positive: false },

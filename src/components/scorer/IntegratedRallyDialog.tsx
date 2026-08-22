@@ -91,7 +91,7 @@ const ACTION_KIND_LABEL: Record<AttackResult, string> = {
   serve_error: "Error de saque",
   point: "Ataque",
   continue: "Continúa el punto",
-  block: "Bloqueo",
+  block: "Finta",
   attack_error: "Error de ataque",
   unforced: "Error no forzado",
 };
@@ -141,7 +141,7 @@ const ATTACK_RESULT_OPTIONS: { key: AttackResult; label: string; hotkey: string 
   { key: "serve_error", label: "Error de saque", hotkey: "2" },
   { key: "point", label: "Ataque", hotkey: "3" },
   { key: "attack_error", label: "Error de ataque", hotkey: "4" },
-  { key: "block", label: "Bloqueo", hotkey: "5" },
+  { key: "block", label: "Finta", hotkey: "5" },
   { key: "unforced", label: "Error no forzado", hotkey: "6" },
 ];
 
