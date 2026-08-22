@@ -2191,25 +2191,23 @@ function CourtView({
       }
     }
 
+    // Índice preservado: cada posición 1..6 conserva su lugar. Duplicados o
+    // huecos se completan primero con suplentes del lineup y, si no alcanza,
+    // con un placeholder — nunca se reordena ni se pierde una posición.
     const seen = new Set<string>();
-    const unique: string[] = arr.map((id) => {
-      if (!id || id.trim() === "" || seen.has(id)) return "";
+    const slots: (string | null)[] = arr.map((id) => {
+      if (!id || id.trim() === "" || seen.has(id)) return null;
       seen.add(id);
       return id;
-    }).filter(Boolean) as string[];
+    });
+    const pool = lineup.filter((pid) => pid && !seen.has(pid));
+    const effective: string[] = slots.map((id, i) => {
+      if (id) return id;
+      const next = pool.shift();
+      if (next) { seen.add(next); return next; }
+      return `empty-${side}-${i}`;
+    });
 
-
-    // Completar hasta 6 con placeholders si algo faltara (garantía visual absoluta).
-    if (unique.length < 6) {
-      for (let i = unique.length; i < 6; i++) {
-        const placeholderId = `empty-${side}-${i}`;
-        if (!seen.has(placeholderId)) {
-          seen.add(placeholderId);
-          unique.push(placeholderId);
-        }
-      }
-    }
-    const effective = unique.slice(0, 6);
     if (import.meta.env.DEV && effective.length !== 6) {
       // eslint-disable-next-line no-console
       console.warn(`[cancha] lado ${side}: efectivos=${effective.length}/6`, {
