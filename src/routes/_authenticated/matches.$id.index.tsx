@@ -2555,7 +2555,7 @@ function FormationSide({
         
         return (
           <div
-            key={slot.role}
+            key={`pos-${slot.posIndex}`}
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-[17%] sm:h-[19%] md:h-[21%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
