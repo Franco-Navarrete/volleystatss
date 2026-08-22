@@ -2151,6 +2151,28 @@ export function getCurrentRallyReceptionSide(match: Match, setNumber: number): "
   return null;
 }
 
+/**
+ * True si el equipo `side` ya salió de la posición de recepción en el rally
+ * actual: es decir, ya se registró un armado o un ataque suyo. Mientras el
+ * rival tiene el saque y todavía no se jugó el balón, la formación de
+ * recepción (W) debe mantenerse en cancha.
+ */
+export function rallyLeftReception(match: Match, setNumber: number, side: "A" | "B"): boolean {
+  const setEvents = match.events.filter((e) => "setNumber" in e && e.setNumber === setNumber);
+  for (let i = setEvents.length - 1; i >= 0; i--) {
+    const ev = setEvents[i];
+    if ("kind" in ev) {
+      if ((ev.kind === "setting" || ev.kind === "attackAttempt") && ev.side === side) return true;
+      continue;
+    }
+    // PointEvent → inicio de un nuevo rally.
+    return false;
+  }
+  return false;
+}
+
+
+
 
 
 export interface StandingRow {

@@ -50,7 +50,8 @@ import {
   formatDurationMs,
   formatLocalTime,
   needsReceptionForRally,
-  getCurrentRallyReceptionSide,
+  
+  rallyLeftReception,
   getMatchStatsMode,
   type PointType,
   type SanctionType,
@@ -478,9 +479,9 @@ function LiveMatch() {
   const actionsDisabledForHook = !isLiveForHook || needsLineupForHook || needsSetStartForHook;
 
   const receivingSideForHook: "A" | "B" = match?.servingSide === "A" ? "B" : "A";
-  const lastReceptionSideForHook = match ? getCurrentRallyReceptionSide(match, match.currentSet) : null;
-  const receptionRegisteredForHook = lastReceptionSideForHook === receivingSideForHook;
-  const receivingPhaseForHook: "reception" | "attack" = receptionRegisteredForHook ? "attack" : "reception";
+  const leftReceptionForHook = match ? rallyLeftReception(match, match.currentSet, receivingSideForHook) : false;
+  const receivingPhaseForHook: "reception" | "attack" = leftReceptionForHook ? "attack" : "reception";
+
   
   const phaseA = isCoachForHook && isLiveForHook && !actionsDisabledForHook
     ? (receivingSideForHook === "A" ? receivingPhaseForHook : "attack")
@@ -647,9 +648,8 @@ function LiveMatch() {
   //         posición táctica de ataque (P1=armadora/opuesta, P6=punta zaguero,
   //         P5=líbero/central; opp→z2, mid→z3, out→z4).
   //   - Equipo que SACA → SIEMPRE formación de ataque.
-  const lastReceptionSide = getCurrentRallyReceptionSide(match, match.currentSet);
-  const receptionRegistered = lastReceptionSide === receivingSide;
-  const receivingPhase: "reception" | "attack" = receptionRegistered ? "attack" : "reception";
+  const receivingPhase: "reception" | "attack" =
+    rallyLeftReception(match, match.currentSet, receivingSide) ? "attack" : "reception";
   const servingSide: "A" | "B" = receivingSide === "A" ? "B" : "A";
   const formationByTeam: Partial<Record<"A" | "B", "reception" | "attack">> =
     isCoach && isLive && !actionsDisabled
@@ -3603,8 +3603,8 @@ function FormationDialog({
   // Moved hooks to top level of LiveMatch for consistency if needed, but here they are called inside a component.
   // The error "Rendered fewer hooks" usually comes from conditional returns in LiveMatch.
   // However, FormationDialog is a separate function component.
-  const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
-  const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
+  const phaseA = (match.servingSide === "B" && !rallyLeftReception(match, match.currentSet, "A")) ? "reception" : "attack";
+  const phaseB = (match.servingSide === "A" && !rallyLeftReception(match, match.currentSet, "B")) ? "reception" : "attack";
   
   // These hooks MUST be called unconditionally if FormationDialog is rendered.
   const formationA = useFormation(match, teamA, "A", "5-1", phaseA as "reception" | "attack");
