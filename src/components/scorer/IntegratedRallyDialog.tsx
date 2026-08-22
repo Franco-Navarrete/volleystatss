@@ -75,7 +75,7 @@ export type RallyAction =
   | "block"
   | "unforced_error";
 
-type AttackResult = "serve" | "serve_error" | "point" | "continue" | "block" | "attack_error" | "unforced";
+type AttackResult = "serve" | "serve_error" | "point" | "continue" | "block" | "attack_error" | "unforced" | "blocked_by_rival" | "defended";
 type Step = "reception" | "defense" | "zone" | "direction" | "action";
 
 const STEPS: { key: Step; label: string }[] = [
@@ -94,6 +94,8 @@ const ACTION_KIND_LABEL: Record<AttackResult, string> = {
   block: "Finta",
   attack_error: "Error de ataque",
   unforced: "Error no forzado",
+  blocked_by_rival: "Bloqueo rival",
+  defended: "Defensa rival",
 };
 
 const CURRENT_ACTION_TEXT: Record<Step, string> = {
@@ -143,6 +145,9 @@ const ATTACK_RESULT_OPTIONS: { key: AttackResult; label: string; hotkey: string 
   { key: "attack_error", label: "Error de ataque", hotkey: "4" },
   { key: "block", label: "Finta", hotkey: "5" },
   { key: "unforced", label: "Error no forzado", hotkey: "6" },
+  { key: "blocked_by_rival", label: "Bloqueo rival", hotkey: "7" },
+  { key: "defended", label: "Defensa rival", hotkey: "8" },
+  { key: "continue", label: "Continuidad", hotkey: "9" },
 ];
 
 const ZONE_ORDER: SettingAttackZone[] = ["z4", "z3", "z2", "back5", "pipe", "back1"];
@@ -211,7 +216,8 @@ function resolveAction(kind: AttackResult, isCounter: boolean): RallyAction {
   if (kind === "serve_error") return "serve_error";
   if (kind === "block") return "block";
   if (kind === "unforced") return "unforced_error";
-  if (kind === "attack_error") return "attack_error";
+  if (kind === "attack_error" || kind === "blocked_by_rival") return "attack_error";
+  if (kind === "defended") return isCounter ? "counter_neutral" : "attack_neutral";
   if (kind === "continue") return isCounter ? "counter_neutral" : "attack_neutral";
   return isCounter ? "counter_attack" : "rotation_attack";
 }
@@ -606,7 +612,7 @@ export function IntegratedRallyDialog({
                   {ATTACK_RESULT_OPTIONS.filter((o) => {
                     const isServeOption = o.key === "serve" || o.key === "serve_error";
                     if (startAtAction) return ["serve_error", "attack_error", "unforced"].includes(o.key);
-                    if (!isServeOption) return ["attack_error", "unforced"].includes(o.key);
+                    if (!isServeOption) return ["attack_error", "unforced", "blocked_by_rival"].includes(o.key);
                     return o.key === "serve_error" && !!serverPlayerId && attackerId === serverPlayerId;
                   }).map((o) => (
                     <button
@@ -620,6 +626,23 @@ export function IntegratedRallyDialog({
                     </button>
                   ))}
                 </div>
+                {/* Continuidad: la jugada sigue */}
+                {!startAtAction && (
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="text-[10px] uppercase tracking-widest font-black text-muted-foreground px-1">Continuidad</div>
+                    {ATTACK_RESULT_OPTIONS.filter((o) => ["defended", "continue"].includes(o.key)).map((o) => (
+                      <button
+                        key={o.key}
+                        type="button"
+                        onClick={() => pickActionKind(o.key)}
+                        className="relative min-h-[56px] rounded-lg font-bold text-sm active:scale-95 transition bg-yellow-400 text-black hover:bg-yellow-400/90"
+                      >
+                        {o.label}
+                        <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-70">{o.hotkey}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

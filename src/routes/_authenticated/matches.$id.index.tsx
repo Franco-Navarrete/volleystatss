@@ -2179,30 +2179,35 @@ function CourtView({
     lineup: string[],
     active: { liberoId: string; replacedPlayerId: string } | null | undefined,
   ): string[] => {
-    let arr = [...raw];
+    // POSICIONES: array indexado [Z1..Z6]. El swap del líbero se hace EN SU MISMA
+    // posición (no se reordena la cancha) para no dejar nunca un hueco.
+    let arr: (string | null)[] = Array.from({ length: 6 }, (_, i) => raw[i] ?? lineup[i] ?? null);
     if (active) {
-      // Garantiza swap: si la central reemplazada está en el array de render, la quitamos.
-      // El líbero ya debería estar en raw gracias a replayMatch, pero nos aseguramos.
-      arr = arr.filter((id) => id !== active.replacedPlayerId);
-      if (!arr.includes(active.liberoId)) {
-        arr.push(active.liberoId);
+      const idx = arr.findIndex((id) => id === active.replacedPlayerId);
+      if (idx >= 0) arr[idx] = active.liberoId;
+      else if (!arr.includes(active.liberoId)) {
+        const free = arr.findIndex((id) => !id);
+        if (free >= 0) arr[free] = active.liberoId;
       }
     }
-    
-    const seen = new Set<string>();
-    const unique = arr.filter((id) => id && id.trim() !== "" && !seen.has(id) && seen.add(id));
 
-    // Completar hasta 6 con placeholders si algo faltara (garantía visual absoluta).
-    if (unique.length < 6) {
-      for (let i = unique.length; i < 6; i++) {
-        const placeholderId = `empty-${side}-${i}`;
-        if (!seen.has(placeholderId)) {
-          seen.add(placeholderId);
-          unique.push(placeholderId);
-        }
-      }
-    }
-    const effective = unique.slice(0, 6);
+    // Índice preservado: cada posición 1..6 conserva su lugar. Duplicados o
+    // huecos se completan primero con suplentes del lineup y, si no alcanza,
+    // con un placeholder — nunca se reordena ni se pierde una posición.
+    const seen = new Set<string>();
+    const slots: (string | null)[] = arr.map((id) => {
+      if (!id || id.trim() === "" || seen.has(id)) return null;
+      seen.add(id);
+      return id;
+    });
+    const pool = lineup.filter((pid) => pid && !seen.has(pid));
+    const effective: string[] = slots.map((id, i) => {
+      if (id) return id;
+      const next = pool.shift();
+      if (next) { seen.add(next); return next; }
+      return `empty-${side}-${i}`;
+    });
+
     if (import.meta.env.DEV && effective.length !== 6) {
       // eslint-disable-next-line no-console
       console.warn(`[cancha] lado ${side}: efectivos=${effective.length}/6`, {
@@ -2488,27 +2493,10 @@ function FormationSide({
     : [match.liberoB1Id, match.liberoB2Id]
   ).filter(Boolean) as string[];
 
-  // El saque siempre sale de P1 (zaguera derecha → coords {x:85, y:82}).
-  // Si la jugadora servidora no coincide con el slot que ya está en P1,
-  // intercambiamos sus coordenadas para que el server quede dibujado en P1
-  // y la jugadora desplazada ocupe la posición original del server.
-  let renderSlots = formation.slots;
-  if (serverPlayerId) {
-    const serverSlot = formation.slots.find((s) => s.playerId === serverPlayerId);
-    const p1Slot = formation.slots.find((s) => s.x === 85 && s.y === 82);
-    if (serverSlot && p1Slot && serverSlot !== p1Slot) {
-      renderSlots = formation.slots.map((s) => {
-        if (s === serverSlot) return { ...s, x: p1Slot.x, y: p1Slot.y };
-        if (s === p1Slot) return { ...s, x: serverSlot.x, y: serverSlot.y };
-        return s;
-      });
-    }
-  }
-
-  // Garantía: siempre se renderiza UN badge por cada jugadora de `onCourt`.
-  // Construimos la lista desde onCourt (no desde formation.slots) para evitar
-  // que una jugadora se pierda cuando la plantilla no le asigna slot (p.ej.
-  // middle_back sin líbero activo, o roles duplicados por lineup ambiguo).
+  // ÚNICA FUENTE DE VERDAD DE LA CANCHA: `onCourt` indexado [Z1..Z6].
+  // La posición del jugador NO depende de la acción del rally ni de la
+  // plantilla táctica: sólo la rotación cambia posiciones. La formación se usa
+  // exclusivamente para el color/rol del badge.
   const POS_COORDS: Array<{ x: number; y: number }> = [
     { x: 85, y: 82 }, // idx 0 → P1
     { x: 85, y: 18 }, // idx 1 → P2
@@ -2517,54 +2505,30 @@ function FormationSide({
     { x: 15, y: 82 }, // idx 4 → P5
     { x: 50, y: 82 }, // idx 5 → P6
   ];
-  const usedSlotIdx = new Set<number>();
-  const finalSlots: typeof renderSlots = [];
-  
-  // Paso 1: Mapear jugadores de onCourt a slots de formación existentes
-  onCourt.forEach((pid, idx) => {
-    if (!pid) return;
-    
-    let slotIdx = -1;
-    // Buscar si hay un slot que ya tenga asignada a esta jugadora
-    for (let i = 0; i < renderSlots.length; i++) {
-      if (!usedSlotIdx.has(i) && renderSlots[i].playerId === pid) {
-        slotIdx = i;
+  const usedRoleSlots = new Set<number>();
+  const renderSlots = POS_COORDS.map((coords, idx) => {
+    const pid = onCourt[idx] ?? `empty-${side}-${idx}`;
+    let roleSlot: (typeof formation.slots)[number] | undefined;
+    for (let i = 0; i < formation.slots.length; i++) {
+      if (!usedRoleSlots.has(i) && formation.slots[i].playerId === pid) {
+        usedRoleSlots.add(i);
+        roleSlot = formation.slots[i];
         break;
       }
     }
-    
-    if (slotIdx >= 0) {
-      usedSlotIdx.add(slotIdx);
-      finalSlots.push(renderSlots[slotIdx]);
-    } else {
-      // Si la jugadora no tiene slot asignado en la plantilla (ej: CZ vs Libero),
-      // le asignamos un slot de emergencia en su posición teórica de rotación
-      const coords = POS_COORDS[idx] ?? { x: 50, y: 50 };
-      finalSlots.push({
-        ...(renderSlots[0] ?? ({} as (typeof renderSlots)[number])),
-        role: `emergency_${pid}` as unknown as (typeof renderSlots)[number]["role"],
-        x: coords.x,
-        y: coords.y,
-        playerId: pid,
-        rotationPosition: (idx + 1) as any,
-        isFrontRow: idx + 1 >= 2 && idx + 1 <= 4,
-        isBackRow: !(idx + 1 >= 2 && idx + 1 <= 4),
-      });
-    }
+    return {
+      ...(roleSlot ?? formation.slots[0] ?? ({} as (typeof formation.slots)[number])),
+      role: (roleSlot?.role ?? `pos_${idx}`) as (typeof formation.slots)[number]["role"],
+      x: coords.x,
+      y: coords.y,
+      playerId: pid,
+      rotationPosition: (idx + 1) as never,
+      isFrontRow: idx + 1 >= 2 && idx + 1 <= 4,
+      isBackRow: !(idx + 1 >= 2 && idx + 1 <= 4),
+      posIndex: idx,
+    };
   });
 
-  renderSlots = finalSlots;
-
-  // Validación final: la cancha SIEMPRE debe mostrar 6 jugadoras.
-  // Si algo se coló hasta acá con menos, el store ya intentó auto-corregir;
-  // avisamos que el badge faltante NO pudo repararse automáticamente.
-  if (renderSlots.length !== 6) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[cancha][auto-fix parcial] ${renderSlots.length}/6 jugadoras renderizadas (equipo=${team.shortName}). onCourt=`,
-      onCourt,
-    );
-  }
 
 
 
@@ -2591,7 +2555,7 @@ function FormationSide({
         
         return (
           <div
-            key={slot.role}
+            key={`pos-${slot.posIndex}`}
             className={`absolute -translate-x-1/2 -translate-y-1/2 h-[17%] sm:h-[19%] md:h-[21%] aspect-square ${bpEligible || bpPicked ? "z-[30]" : ""} ${bpDim ? "opacity-30 grayscale pointer-events-none" : ""}`}
             style={{ left: `${dx}%`, top: `${dy}%` }}
           >
