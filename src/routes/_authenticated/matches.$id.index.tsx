@@ -2265,7 +2265,7 @@ function CourtView({
                 team={teamFor(side)}
                 onCourt={side === "A" ? a : b}
                 formation={formationFor(side)}
-                phase={side === "A" ? phaseA : phaseB}
+                phase={formationByTeam?.[side] ?? "attack"}
                 half={half}
                 match={match}
                 serverPlayerId={serverSide === side ? serverPlayerId : null}
