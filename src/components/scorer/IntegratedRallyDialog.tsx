@@ -571,7 +571,7 @@ export function IntegratedRallyDialog({
 
             {step === "direction" && (
               <div>
-                <AttackDirectionGrid onPick={pickDirection} value={null} />
+                <AttackDirectionGrid onPick={pickDirection} value={direction} />
                 <p className="mt-2 text-[11px] text-center text-muted-foreground">
                   Tocá la zona donde cayó · teclas 1–9
                 </p>
