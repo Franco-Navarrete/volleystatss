@@ -2265,6 +2265,7 @@ function CourtView({
                 team={teamFor(side)}
                 onCourt={side === "A" ? a : b}
                 formation={formationFor(side)}
+                phase={side === "A" ? phaseA : phaseB}
                 half={half}
                 match={match}
                 serverPlayerId={serverSide === side ? serverPlayerId : null}
@@ -2456,11 +2457,12 @@ function CourtView({
 }
 
 function FormationSide({
-  side, team, onCourt, formation, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId, blockPickInfo,
+  side, team, onCourt, formation, phase, half, match, serverPlayerId, needsReception, receivingSide, receiverIds, onPlayerClick, activePlayerId, blockPickInfo,
   updatePlayer, setLiberoA1, setLiberoA2, setLiberoB1, setLiberoB2, setOpponentSetter
 }: {
   side: "A" | "B"; team: Team; onCourt: string[];
   formation: ReturnType<typeof useFormation>;
+  phase: "reception" | "attack";
   half: "left" | "right";
   match: Match; serverPlayerId: string | null;
   needsReception: boolean; receivingSide: "A" | "B"; receiverIds: Set<string>;
