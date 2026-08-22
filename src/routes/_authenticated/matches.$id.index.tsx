@@ -3603,8 +3603,8 @@ function FormationDialog({
   // Moved hooks to top level of LiveMatch for consistency if needed, but here they are called inside a component.
   // The error "Rendered fewer hooks" usually comes from conditional returns in LiveMatch.
   // However, FormationDialog is a separate function component.
-  const phaseA = (match.servingSide === "B" && needsReceptionForRally(match, match.currentSet, "A")) ? "reception" : "attack";
-  const phaseB = (match.servingSide === "A" && needsReceptionForRally(match, match.currentSet, "B")) ? "reception" : "attack";
+  const phaseA = (match.servingSide === "B" && !rallyLeftReception(match, match.currentSet, "A")) ? "reception" : "attack";
+  const phaseB = (match.servingSide === "A" && !rallyLeftReception(match, match.currentSet, "B")) ? "reception" : "attack";
   
   // These hooks MUST be called unconditionally if FormationDialog is rendered.
   const formationA = useFormation(match, teamA, "A", "5-1", phaseA as "reception" | "attack");
