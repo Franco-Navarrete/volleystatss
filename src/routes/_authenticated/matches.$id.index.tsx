@@ -478,9 +478,9 @@ function LiveMatch() {
   const actionsDisabledForHook = !isLiveForHook || needsLineupForHook || needsSetStartForHook;
 
   const receivingSideForHook: "A" | "B" = match?.servingSide === "A" ? "B" : "A";
-  const lastReceptionSideForHook = match ? getCurrentRallyReceptionSide(match, match.currentSet) : null;
-  const receptionRegisteredForHook = lastReceptionSideForHook === receivingSideForHook;
-  const receivingPhaseForHook: "reception" | "attack" = receptionRegisteredForHook ? "attack" : "reception";
+  const leftReceptionForHook = match ? rallyLeftReception(match, match.currentSet, receivingSideForHook) : false;
+  const receivingPhaseForHook: "reception" | "attack" = leftReceptionForHook ? "attack" : "reception";
+
   
   const phaseA = isCoachForHook && isLiveForHook && !actionsDisabledForHook
     ? (receivingSideForHook === "A" ? receivingPhaseForHook : "attack")
