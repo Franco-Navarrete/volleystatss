@@ -2516,11 +2516,15 @@ function FormationSide({
         break;
       }
     }
+    // En fase de RECEPCIÓN usamos las coordenadas de la formación configurada
+    // (plantilla W + overrides del editor). En el resto del rally, las posiciones
+    // oficiales fijas Z1..Z6.
+    const useFormationCoords = phase === "reception" && !!roleSlot;
     return {
       ...(roleSlot ?? formation.slots[0] ?? ({} as (typeof formation.slots)[number])),
       role: (roleSlot?.role ?? `pos_${idx}`) as (typeof formation.slots)[number]["role"],
-      x: coords.x,
-      y: coords.y,
+      x: useFormationCoords ? roleSlot!.x : coords.x,
+      y: useFormationCoords ? roleSlot!.y : coords.y,
       playerId: pid,
       rotationPosition: (idx + 1) as never,
       isFrontRow: idx + 1 >= 2 && idx + 1 <= 4,
