@@ -51,6 +51,7 @@ import {
   formatLocalTime,
   needsReceptionForRally,
   getCurrentRallyReceptionSide,
+  rallyLeftReception,
   getMatchStatsMode,
   type PointType,
   type SanctionType,
