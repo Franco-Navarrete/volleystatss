@@ -6,15 +6,15 @@ interface Props {
 }
 
 /**
- * Grilla 2x3 sobre la cancha rival, siguiendo la solicitud del usuario:
- * Fila superior (cerca de la red): 4 3 2
- * Fila inferior (fondo): 5 6 1
+ * Grilla 3x3 sobre la cancha rival (zonas oficiales + zonas medias):
+ *   4 3 2
+ *   7 8 9
+ *   5 6 1
  */
 export function AttackDirectionGrid({ onPick, value }: Props) {
-  // Fila superior (4, 3, 2) pegada a la red
-  // Fila inferior (5, 6, 1) al fondo
   const rows: AttackDirection[][] = [
     [4, 3, 2],
+    [7, 8, 9],
     [5, 6, 1],
   ];
 
@@ -29,7 +29,7 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
       >
         {/* Red del rival arriba (la fila 4-3-2 está pegada a la red) */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-white shadow" />
-        <div className="grid grid-rows-2 h-full">
+        <div className="grid grid-rows-3 h-full">
           {rows.map((row, r) => (
             <div key={r} className="grid grid-cols-3 gap-[2px] p-[2px]">
               {row.map((d) => (
@@ -37,7 +37,7 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
                   key={d}
                   type="button"
                   onClick={() => onPick(d)}
-                  className={`rounded-md font-black text-xl text-white/90 border-2 transition-all active:scale-95 flex items-center justify-center ${
+                  className={`rounded-md font-black text-lg sm:text-xl text-white/90 border-2 transition-all active:scale-95 flex items-center justify-center ${
                     value === d
                       ? "border-primary bg-primary/60"
                       : "border-white/40 bg-black/20 hover:bg-primary/40 hover:border-primary"
@@ -51,7 +51,7 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        4-3-2 pegado a la red · 5-6-1 al fondo · zonas oficiales de vóley
+        4-3-2 pegado a la red · 7-8-9 zona media · 5-6-1 al fondo
       </p>
     </div>
   );
