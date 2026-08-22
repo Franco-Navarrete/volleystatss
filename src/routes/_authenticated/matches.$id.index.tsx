@@ -2179,18 +2179,25 @@ function CourtView({
     lineup: string[],
     active: { liberoId: string; replacedPlayerId: string } | null | undefined,
   ): string[] => {
-    let arr = [...raw];
+    // POSICIONES: array indexado [Z1..Z6]. El swap del líbero se hace EN SU MISMA
+    // posición (no se reordena la cancha) para no dejar nunca un hueco.
+    let arr: (string | null)[] = Array.from({ length: 6 }, (_, i) => raw[i] ?? lineup[i] ?? null);
     if (active) {
-      // Garantiza swap: si la central reemplazada está en el array de render, la quitamos.
-      // El líbero ya debería estar en raw gracias a replayMatch, pero nos aseguramos.
-      arr = arr.filter((id) => id !== active.replacedPlayerId);
-      if (!arr.includes(active.liberoId)) {
-        arr.push(active.liberoId);
+      const idx = arr.findIndex((id) => id === active.replacedPlayerId);
+      if (idx >= 0) arr[idx] = active.liberoId;
+      else if (!arr.includes(active.liberoId)) {
+        const free = arr.findIndex((id) => !id);
+        if (free >= 0) arr[free] = active.liberoId;
       }
     }
-    
+
     const seen = new Set<string>();
-    const unique = arr.filter((id) => id && id.trim() !== "" && !seen.has(id) && seen.add(id));
+    const unique: string[] = arr.map((id) => {
+      if (!id || id.trim() === "" || seen.has(id)) return "";
+      seen.add(id);
+      return id;
+    }).filter(Boolean) as string[];
+
 
     // Completar hasta 6 con placeholders si algo faltara (garantía visual absoluta).
     if (unique.length < 6) {
