@@ -707,6 +707,29 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const LIBERO_EXIT_INDEXES = new Set([1, 2, 3]);
 const BACK_ROW_REPLACE_PRIORITY = [0, 5, 4] as const;
 
+/** Configuración de líbero por set: qué líbero juega y a qué central reemplaza. */
+export interface LiberoSetConfig {
+  liberoId: string;
+  centralId: string;
+}
+
+export const liberoConfigKey = (side: "A" | "B", setNumber: number) =>
+  `liberoConfig${side}_set${setNumber}`;
+
+/** Devuelve la configuración de líbero guardada para (lado, set), o null. */
+export function getLiberoSetConfig(
+  match: { metadata?: Record<string, any> } | undefined | null,
+  side: "A" | "B",
+  setNumber: number,
+): LiberoSetConfig | null {
+  const raw = match?.metadata?.[liberoConfigKey(side, setNumber)];
+  if (!raw || typeof raw !== "object") return null;
+  const { liberoId, centralId } = raw as Partial<LiberoSetConfig>;
+  if (!liberoId || !centralId || liberoId === centralId) return null;
+  return { liberoId, centralId };
+}
+
+
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
   if (arr.length !== 6) return [...arr];
@@ -791,11 +814,13 @@ function replayMatch(m: Match): {
    * Si no hay líbero asignado en el partido (liberoA1Id/liberoA2Id), esta lógica se omite.
    */
   const syncLiberoAfterRotation = (side: "A" | "B") => {
-    const lib1Id = side === "A" ? m.liberoA1Id : m.liberoB1Id;
-    const lib2Id = side === "A" ? m.liberoA2Id : m.liberoB2Id;
+    const cfg = getLiberoSetConfig(m, side, currentSet);
+    const lib1Id = cfg?.liberoId ?? (side === "A" ? m.liberoA1Id : m.liberoB1Id);
+    const lib2Id = cfg ? null : (side === "A" ? m.liberoA2Id : m.liberoB2Id);
 
     // Si no hay líberos asignados para este equipo en el partido, abortamos.
     if (!lib1Id && !lib2Id) return;
+
 
     const lib = side === "A" ? liberoA : liberoB;
     const arr = side === "A" ? onCourtA : onCourtB;
@@ -1001,10 +1026,13 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
       const team = teams.find((t) => t.id === (side === "A" ? next.teamAId : next.teamBId));
       if (!team) continue;
       
+      const cfg = getLiberoSetConfig(next, side, next.currentSet);
       const libIds = (
-        side === "A"
-          ? [next.liberoA1Id, next.liberoA2Id]
-          : [next.liberoB1Id, next.liberoB2Id]
+        cfg
+          ? [cfg.liberoId]
+          : side === "A"
+            ? [next.liberoA1Id, next.liberoA2Id]
+            : [next.liberoB1Id, next.liberoB2Id]
       ).filter(Boolean) as string[];
       // Si no hay líberos asignados para este equipo en el partido, abortamos.
       if (libIds.length === 0) continue;
@@ -1020,6 +1048,14 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
       let replacedId: string | null = null;
       for (const i of backIdxs) {
         const playerId = onCourt[i];
+        // Con configuración por set, el líbero SOLO entra por su central asociado.
+        if (cfg) {
+          if (playerId === cfg.centralId) {
+            replacedId = playerId;
+            break;
+          }
+          continue;
+        }
         const p = team.players.find((pp) => pp.id === playerId);
         // REGLA: Solo reemplaza a centrales (CENTRAL)
         if (p?.position === "central") {
@@ -1027,6 +1063,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
           break;
         }
       }
+
       
       if (!replacedId) continue;
       

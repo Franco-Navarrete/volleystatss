@@ -66,6 +66,9 @@ import {
   PLAYER_POSITION_LABEL,
   type PlayerPosition,
   repairOnCourt,
+  getLiberoSetConfig,
+  liberoConfigKey,
+  type LiberoSetConfig,
 } from "@/lib/volley-store";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
@@ -1849,14 +1852,17 @@ function LiveMatch() {
               match={match}
               teamA={teamA}
               teamB={teamB}
-              onSave={(lineupA, lineupB, armadorA, armadorB) => {
+              onSave={(lineupA, lineupB, armadorA, armadorB, liberoCfgA, liberoCfgB) => {
                 const metadataUpdate: Record<string, any> = {};
                 if (armadorA !== null) metadataUpdate[`manualArmadorA_set${match.currentSet}`] = armadorA;
                 if (armadorB !== null) metadataUpdate[`manualArmadorB_set${match.currentSet}`] = armadorB;
-                
+                metadataUpdate[liberoConfigKey("A", match.currentSet)] = liberoCfgA ?? null;
+                metadataUpdate[liberoConfigKey("B", match.currentSet)] = liberoCfgB ?? null;
+
                 if (Object.keys(metadataUpdate).length > 0) {
                   updateMatchMetadata(match.id, metadataUpdate);
                 }
+
 
                 if (setNotStarted) {
                   setSetLineup(match.id, "A", lineupA);
@@ -2815,7 +2821,14 @@ function PositionBadge({ position }: { position?: PlayerPosition }) {
 
 function LineupEditor({ match, teamA, teamB, onSave }: {
   match: Match; teamA: Team; teamB: Team;
-  onSave: (lineupA: string[], lineupB: string[], armadorA: number | null, armadorB: number | null) => void;
+  onSave: (
+    lineupA: string[],
+    lineupB: string[],
+    armadorA: number | null,
+    armadorB: number | null,
+    liberoCfgA: LiberoSetConfig | null,
+    liberoCfgB: LiberoSetConfig | null,
+  ) => void;
 }) {
   const currentSetLineup = match.lineupsBySet?.[match.currentSet];
   const [lineupA, setLineupA] = useState<string[]>(() => repairOnCourt(
@@ -2850,6 +2863,14 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     return null;
   });
 
+  // Configuración de líbero por SET (líbero + central asociado), por equipo.
+  const [liberoCfgA, setLiberoCfgA] = useState<LiberoSetConfig | null>(
+    () => getLiberoSetConfig(match, "A", match.currentSet),
+  );
+  const [liberoCfgB, setLiberoCfgB] = useState<LiberoSetConfig | null>(
+    () => getLiberoSetConfig(match, "B", match.currentSet),
+  );
+
   const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l.filter(Boolean)).size === 6;
   const validA = validSide(lineupA);
   const validB = validSide(lineupB);
@@ -2857,8 +2878,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const team = step === 1 ? teamA : teamB;
   const lineup = step === 1 ? lineupA : lineupB;
   const setLineup = step === 1 ? setLineupA : setLineupB;
+  const liberoCfg = step === 1 ? liberoCfgA : liberoCfgB;
+  const setLiberoCfg = step === 1 ? setLiberoCfgA : setLiberoCfgB;
   const manualArmador = step === 1 ? manualArmadorA : manualArmadorB;
   const setManualArmador = step === 1 ? setManualArmadorA : setManualArmadorB;
+
 
   const stepValid = step === 1 ? validA : validB;
   const filled = lineup.filter(Boolean).length;
@@ -3177,6 +3201,73 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         )}
       </div>
 
+      {(() => {
+        const liberos = team.players.filter((p) => p.position === "libero");
+        const centrales = team.players.filter((p) => p.position === "central");
+        if (liberos.length === 0) return null;
+        const selLibero = liberoCfg?.liberoId ?? "";
+        const selCentral = liberoCfg?.centralId ?? "";
+        const liberoName = liberos.find((p) => p.id === selLibero);
+        const centralName = centrales.find((p) => p.id === selCentral);
+        const valid = !!liberoName && !!centralName && selLibero !== selCentral;
+        const selectCls =
+          "flex-1 min-w-0 text-xs rounded-md bg-secondary/60 border border-border/60 px-2 py-1.5 focus:outline-none focus:border-primary";
+        return (
+          <div className="rounded-lg border border-border/60 bg-secondary/30 p-2 space-y-1.5">
+            <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+              Líbero del set {match.currentSet}
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={selLibero}
+                className={selectCls}
+                onChange={(e) => {
+                  const liberoId = e.target.value;
+                  if (!liberoId) return setLiberoCfg(null);
+                  setLiberoCfg({ liberoId, centralId: selCentral && selCentral !== liberoId ? selCentral : "" } as LiberoSetConfig);
+                }}
+              >
+                <option value="">Seleccionar líbero…</option>
+                {liberos.map((p) => (
+                  <option key={p.id} value={p.id}>#{p.number} {p.name}</option>
+                ))}
+              </select>
+              {selLibero && (
+                <select
+                  value={selCentral}
+                  className={selectCls}
+                  onChange={(e) => setLiberoCfg({ liberoId: selLibero, centralId: e.target.value } as LiberoSetConfig)}
+                >
+                  <option value="">Reemplaza a…</option>
+                  {centrales
+                    .filter((p) => p.id !== selLibero)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>#{p.number} {p.name}</option>
+                    ))}
+                </select>
+              )}
+            </div>
+            {selLibero && (
+              valid ? (
+                <div className="text-[10px] leading-tight text-muted-foreground">
+                  <span className="text-success font-bold">● Líbero: #{liberoName!.number} {liberoName!.name}</span>
+                  {" · "}
+                  <span className="text-primary font-bold">● Central: #{centralName!.number} {centralName!.name}</span>
+                  <br />
+                  ↔ Cambio automático: P2 → P1 (entra líbero) / P5 → P4 (vuelve el central)
+                </div>
+              ) : (
+                <div className="text-[10px] text-destructive font-semibold">
+                  Elegí el central asociado para activar el cambio automático.
+                </div>
+              )
+            )}
+          </div>
+        );
+      })()}
+
+
+
 
       <div className="flex items-center gap-2">
         {step === 2 && (
@@ -3186,10 +3277,15 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           <Button disabled={!validA} onClick={() => goToStep(2)} className="flex-1">Siguiente →</Button>
         ) : (
           <Button
-            disabled={!validA || !validB}
-            onClick={() => onSave(lineupA, lineupB, manualArmadorA, manualArmadorB)}
+            disabled={
+              !validA || !validB ||
+              !!(liberoCfgA && (!liberoCfgA.liberoId || !liberoCfgA.centralId || liberoCfgA.liberoId === liberoCfgA.centralId)) ||
+              !!(liberoCfgB && (!liberoCfgB.liberoId || !liberoCfgB.centralId || liberoCfgB.liberoId === liberoCfgB.centralId))
+            }
+            onClick={() => onSave(lineupA, lineupB, manualArmadorA, manualArmadorB, liberoCfgA, liberoCfgB)}
             className="flex-1 bg-gradient-primary text-primary-foreground"
           >
+
             Confirmar formación
           </Button>
         )}
