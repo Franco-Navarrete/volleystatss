@@ -268,7 +268,7 @@ export async function downloadSimplifiedMatchPdf(
 
   // ─────────────── Momentum (rellena la columna derecha) ───────────────
   const gap = cmpH - rotH - 4;
-  if (r.momentum && r.momentum.points.length > 1 && gap >= 18) {
+  if (r.momentum && r.momentum.points.length > 1 && gap >= 12) {
     const my = y + rotH + 4;
     const inner = card(rightX, my, rightW, gap, "Momentum");
     const chartX = rightX + 5;
@@ -436,7 +436,10 @@ export async function downloadSimplifiedMatchPdf(
     const items: { color: RGB; text: string }[] = r.summary
       .slice(0, 4)
       .map((s) => ({ color: s.tone === "good" ? C.good : s.tone === "bad" ? C.bad : C.warn, text: s.text }));
-    for (const s of r.tactical.recommendations.slice(0, 2)) items.push({ color: C.good, text: `Recomendación: ${s}` });
+    for (const s of r.tactical.situation.slice(0, 3)) items.push({ color: C.warn, text: `Situación: ${s}` });
+    for (const s of r.tactical.recommendations.slice(0, 3)) items.push({ color: C.good, text: `Recomendación: ${s}` });
+    if (r.setter) items.push({ color: C.muted, text: `Armador: ${r.setter.conclusion}` });
+    if (r.momentum) items.push({ color: C.muted, text: r.momentum.conclusion });
     if (items.length === 0) items.push({ color: C.muted, text: "Sin conclusiones automáticas disponibles." });
     const wrapped = items.map((it) => ({ color: it.color, lines: doc.splitTextToSize(it.text, W - 12) as string[] }));
     const lines = wrapped.reduce((n, x) => n + x.lines.length, 0);
