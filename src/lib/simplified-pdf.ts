@@ -20,6 +20,7 @@ const C = {
   cardAlt: [30, 39, 58] as RGB,
   row: [28, 36, 54] as RGB,
   border: [51, 65, 85] as RGB,
+  dim: [90, 105, 130] as RGB,
   text: [232, 237, 245] as RGB,
   muted: [148, 163, 184] as RGB,
   home: [249, 115, 22] as RGB,
@@ -148,7 +149,7 @@ export async function downloadSimplifiedMatchPdf(
     const W = pageW - M * 2;
     const HEAD = 26;
 
-    const fk = Math.max(0.55, Math.min(1, K));
+    const fk = Math.max(0.55, Math.min(1.18, K));
     const V = (v: number) => v * K;
     const FS = (v: number) => doc.setFontSize(Math.max(3.4, v * fk));
 
@@ -342,7 +343,7 @@ export async function downloadSimplifiedMatchPdf(
           const isName = i === 1;
           const isPts = i === cells.length - 1;
           doc.setFont("helvetica", isPts || isName ? "bold" : "normal");
-          setText(isPts ? accent : isName ? C.text : cell === 0 || cell === "-" ? C.border : C.text);
+          setText(isPts ? accent : isName ? C.text : cell === 0 || cell === "-" ? C.dim : C.text);
           const txt = String(cell);
           doc.text(
             isName ? doc.splitTextToSize(txt, (inner * WGT[1]) / totalW - 1)[0] : txt,
@@ -729,7 +730,10 @@ export async function downloadSimplifiedMatchPdf(
   const naturalBottom = render(probe, 1);
   const natural = Math.max(1, naturalBottom - HEAD);
 
-  const K = natural <= available ? 1 : Math.max(0.4, available / natural);
+  // Comprime si sobra contenido y expande (con tope) si sobra espacio, para
+  // aprovechar toda la hoja sin pasar a una segunda página.
+  const raw = available / natural;
+  const K = raw >= 1 ? Math.min(1.3, raw) : Math.max(0.4, raw);
 
   const doc = K === 1 ? probe : new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
   if (K !== 1) render(doc, K);
