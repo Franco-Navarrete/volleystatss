@@ -1852,14 +1852,17 @@ function LiveMatch() {
               match={match}
               teamA={teamA}
               teamB={teamB}
-              onSave={(lineupA, lineupB, armadorA, armadorB) => {
+              onSave={(lineupA, lineupB, armadorA, armadorB, liberoCfgA, liberoCfgB) => {
                 const metadataUpdate: Record<string, any> = {};
                 if (armadorA !== null) metadataUpdate[`manualArmadorA_set${match.currentSet}`] = armadorA;
                 if (armadorB !== null) metadataUpdate[`manualArmadorB_set${match.currentSet}`] = armadorB;
-                
+                metadataUpdate[liberoConfigKey("A", match.currentSet)] = liberoCfgA ?? null;
+                metadataUpdate[liberoConfigKey("B", match.currentSet)] = liberoCfgB ?? null;
+
                 if (Object.keys(metadataUpdate).length > 0) {
                   updateMatchMetadata(match.id, metadataUpdate);
                 }
+
 
                 if (setNotStarted) {
                   setSetLineup(match.id, "A", lineupA);
