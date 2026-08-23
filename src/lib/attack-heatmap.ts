@@ -137,6 +137,7 @@ export function buildEnrichedAttacks(
         playerId: se.attackerId ?? null,
         origin,
         direction: (se.attackDirection ?? null) as AttackDirection | null,
+        subzone: (se.attackSubzone ?? null) as AttackSubzone | null,
         result,
         setNumber: se.setNumber,
         rotation: (se.side === "A" ? rotA : rotB) + 1,
