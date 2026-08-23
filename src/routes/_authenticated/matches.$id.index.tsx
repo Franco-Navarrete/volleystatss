@@ -2844,24 +2844,32 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     teamB.players.map((player) => player.id),
   ));
   const [step, setStep] = useState<1 | 2>(1);
+  // El armador se guarda por ID de jugador (no por posición fija): así la
+  // etiqueta "A" (y las diagonales O/C1/C2/P1/P2) acompañan al jugador cuando
+  // el equipo rota.
   const [manualArmadorA, setManualArmadorA] = useState<number | null>(() => {
+    const idFromMeta = match.metadata?.[`manualArmadorIdA_set${match.currentSet}`];
+    if (typeof idFromMeta === "string") {
+      const i = lineupA.indexOf(idFromMeta);
+      if (i >= 0) return i;
+    }
     const fromMeta = match.metadata?.[`manualArmadorA_set${match.currentSet}`];
     if (typeof fromMeta === 'number') return fromMeta;
-    if (currentSetLineup?.A) {
-      const idx = currentSetLineup.A.findIndex(pid => teamA.players.find(p => p.id === pid)?.position === 'armador');
-      return idx >= 0 ? idx : null;
-    }
-    return null;
+    const idx = lineupA.findIndex(pid => teamA.players.find(p => p.id === pid)?.position === 'armador');
+    return idx >= 0 ? idx : null;
   });
   const [manualArmadorB, setManualArmadorB] = useState<number | null>(() => {
+    const idFromMeta = match.metadata?.[`manualArmadorIdB_set${match.currentSet}`];
+    if (typeof idFromMeta === "string") {
+      const i = lineupB.indexOf(idFromMeta);
+      if (i >= 0) return i;
+    }
     const fromMeta = match.metadata?.[`manualArmadorB_set${match.currentSet}`];
     if (typeof fromMeta === 'number') return fromMeta;
-    if (currentSetLineup?.B) {
-      const idx = currentSetLineup.B.findIndex(pid => teamB.players.find(p => p.id === pid)?.position === 'armador');
-      return idx >= 0 ? idx : null;
-    }
-    return null;
+    const idx = lineupB.findIndex(pid => teamB.players.find(p => p.id === pid)?.position === 'armador');
+    return idx >= 0 ? idx : null;
   });
+
 
   // Configuración de líbero por SET (líbero + central asociado), por equipo.
   const [liberoCfgA, setLiberoCfgA] = useState<LiberoSetConfig | null>(
