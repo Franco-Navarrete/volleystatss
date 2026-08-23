@@ -1240,12 +1240,13 @@ export const useVolley = create<VolleyState>()(
       createMatch: (m) => {
         const id = uid();
         const initialServingSide = m.initialServingSide ?? "A";
-        // Aseguramos cardinalidad 6 desde el origen
+        // Aseguramos cardinalidad 6 y unicidad desde el origen
         const repair = (l: string[], side: "A" | "B") => {
-          const arr = [...(l || [])];
+          const arr = sanitizeLineup(l);
           while (arr.length < 6) arr.push(`emergency-slot-${side}-${arr.length}`);
           return arr.slice(0, 6);
         };
+
 
         const match: Match = {
           ...m,
