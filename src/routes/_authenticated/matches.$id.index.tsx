@@ -3002,7 +3002,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
             className="size-7"
             title="Rotar en sentido del saque"
             disabled={lineup.filter(Boolean).length !== 6}
-            onClick={() => setLineup([lineup[1], lineup[2], lineup[3], lineup[4], lineup[5], lineup[0]])}
+            onClick={() => {
+              setLineup([lineup[1], lineup[2], lineup[3], lineup[4], lineup[5], lineup[0]]);
+              setManualArmador((i) => (i === null ? null : (i + 5) % 6));
+            }}
+
           >
             <RotateCw className="size-3.5" />
           </Button>
