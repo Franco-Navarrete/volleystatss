@@ -1935,6 +1935,8 @@ function LiveMatch() {
           team={integratedRally.side === "A" ? teamA : teamB}
           side={integratedRally.side}
           onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
+          opponentTeam={integratedRally.side === "A" ? teamB : teamA}
+          opponentOnCourt={integratedRally.side === "A" ? match.onCourtB : match.onCourtA}
           receptionQuality={integratedRally.receptionQuality}
           receptionStep={integratedRally.receiverId ? {
             playerId: integratedRally.receiverId,
@@ -1983,6 +1985,7 @@ function LiveMatch() {
               receptionQuality: payload.receptionQuality,
               attackDirection: payload.attackDirection,
               attackSubzone: payload.attackSubzone,
+              rivalBlockerId: payload.rivalBlockerId,
             });
             if (isNeutral) {
               useVolley.getState().recordAttackAttempt(
@@ -2013,6 +2016,8 @@ function LiveMatch() {
               undefined,
               payload.attackDirection,
               payload.attackSubzone,
+              undefined,
+              payload.rivalBlockerId,
             );
             setIntegratedRally(null);
           }}
@@ -3787,6 +3792,8 @@ const IntegratedRallyDialogWrapper = ({
       team={integratedRally.side === "A" ? teamA : teamB}
       side={integratedRally.side}
       onCourt={integratedRally.side === "A" ? match.onCourtA : match.onCourtB}
+      opponentTeam={integratedRally.side === "A" ? teamB : teamA}
+      opponentOnCourt={integratedRally.side === "A" ? match.onCourtB : match.onCourtA}
       receptionQuality={integratedRally.receptionQuality}
       initialAttackerId={integratedRally.playerId}
       startAtAction={integratedRally.startAtAction}
@@ -3861,6 +3868,8 @@ const IntegratedRallyDialogWrapper = ({
           attackZone: attackZoneNum,
           action: data.action,
           attackDirection: data.attackDirection,
+          attackSubzone: data.attackSubzone,
+          rivalBlockerId: data.rivalBlockerId,
           isCounter: data.isCounter,
         });
       }}
