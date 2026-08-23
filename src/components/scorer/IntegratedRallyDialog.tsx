@@ -52,6 +52,10 @@ interface Props {
   startAtAction?: boolean;
   /** Jugadora que actualmente saca; se usa para filtrar opciones de saque. */
   serverPlayerId?: string | null;
+  /** Equipo rival (para elegir el bloqueador en "Bloqueo rival"). */
+  opponentTeam?: Team;
+  /** Rotación actual del rival: [Z1, Z2, Z3, Z4, Z5, Z6]. */
+  opponentOnCourt?: string[];
   onSubmit: (payload: {
     setterId: string;
     setterQuality: SettingQuality;
@@ -61,6 +65,8 @@ interface Props {
     attackDirection?: AttackDirection;
     attackSubzone?: AttackSubzone;
     receptionQuality?: SettingQuality;
+    /** Jugador rival que bloqueó (sólo en "Bloqueo rival"). */
+    rivalBlockerId?: string;
     /** true si el flujo fue disparado tras una defensa (contraataque). */
     isCounter?: boolean;
   }) => boolean | void;
@@ -78,7 +84,7 @@ export type RallyAction =
   | "unforced_error";
 
 type AttackResult = "serve" | "serve_error" | "point" | "continue" | "block" | "attack_error" | "unforced" | "blocked_by_rival" | "defended";
-type Step = "reception" | "defense" | "zone" | "direction" | "action";
+type Step = "reception" | "defense" | "zone" | "direction" | "action" | "blocker";
 
 const STEPS: { key: Step; label: string }[] = [
   { key: "reception", label: "Recepción" },
@@ -86,6 +92,7 @@ const STEPS: { key: Step; label: string }[] = [
   { key: "zone", label: "Armado" },
   { key: "direction", label: "Zona" },
   { key: "action", label: "Ataque" },
+  { key: "blocker", label: "Bloqueador" },
 ];
 
 const ACTION_KIND_LABEL: Record<AttackResult, string> = {
@@ -106,6 +113,7 @@ const CURRENT_ACTION_TEXT: Record<Step, string> = {
   zone: "Esperando zona del armado",
   direction: "Esperando zona destino",
   action: "Esperando resultado del ataque",
+  blocker: "Seleccioná el bloqueador rival (zona 4, 3 o 2)",
 };
 
 interface DefenseOption {
@@ -242,6 +250,8 @@ export function IntegratedRallyDialog({
   initialAttackerId,
   startAtAction,
   serverPlayerId,
+  opponentTeam,
+  opponentOnCourt,
   onSubmit,
 }: Props) {
   const playersOnCourt: Player[] = useMemo(
@@ -279,6 +289,7 @@ export function IntegratedRallyDialog({
   const [direction, setDirection] = useState<AttackDirection | null>(null);
   const [subzone, setSubzone] = useState<AttackSubzone | null>(null);
   const [actionKind, setActionKind] = useState<AttackResult | null>(null);
+  const [rivalBlockerId, setRivalBlockerId] = useState<string | null>(null);
   const [receptionValue, setReceptionValue] = useState<ReceptionRating | null>(null);
   const [defenseValue, setDefenseValue] = useState<DefenseRating | null>(null);
   const [effectiveQuality, setEffectiveQuality] = useState<SettingQuality | undefined>(receptionQuality);
@@ -293,10 +304,27 @@ export function IntegratedRallyDialog({
     setDirection(null);
     setSubzone(null);
     setActionKind(null);
+    setRivalBlockerId(null);
     setReceptionValue(null);
     setDefenseValue(null);
     setEffectiveQuality(receptionQuality);
   }, [open, initialStep, initialZone, initialAttackerId, receptionQuality, receptionStep?.playerId, defenseStep?.playerId]);
+
+  /** Bloqueadores rivales: jugadores en zonas delanteras 4, 3 y 2 según la rotación actual. */
+  const rivalBlockers = useMemo(() => {
+    if (!opponentTeam || !opponentOnCourt) return [] as { zone: 4 | 3 | 2; player: Player }[];
+    const zones: { zone: 4 | 3 | 2; idx: number }[] = [
+      { zone: 4, idx: 3 },
+      { zone: 3, idx: 2 },
+      { zone: 2, idx: 1 },
+    ];
+    return zones
+      .map(({ zone, idx }) => {
+        const player = opponentTeam.players.find((p) => p.id === opponentOnCourt[idx]);
+        return player ? { zone, player } : null;
+      })
+      .filter((x): x is { zone: 4 | 3 | 2; player: Player } => !!x);
+  }, [opponentTeam, opponentOnCourt]);
 
   const zoneAssignments = useMemo(
     () => computeZoneAssignments(onCourt, team.players),
@@ -344,7 +372,7 @@ export function IntegratedRallyDialog({
     toast.success(`✓ Zona destino ${d}${sub ? sub.toUpperCase() : ""}`, { duration: 800 });
   }, []);
 
-  const finalize = useCallback((a: RallyAction) => {
+  const finalize = useCallback((a: RallyAction, blockerId?: string | null) => {
     if (!attackerId || !setter) return;
     const needsZone =
       a === "rotation_attack" ||
@@ -362,6 +390,7 @@ export function IntegratedRallyDialog({
       attackDirection: direction ?? undefined,
       attackSubzone: subzone ?? undefined,
       receptionQuality: effectiveQuality,
+      rivalBlockerId: blockerId ?? undefined,
       isCounter: isCounterFlow,
     });
     toast.success("✓ Rally registrado", { duration: 900 });
@@ -370,11 +399,21 @@ export function IntegratedRallyDialog({
 
   const pickActionKind = useCallback((k: AttackResult) => {
     setActionKind(k);
+    if (k === "blocked_by_rival" && rivalBlockers.length > 0) {
+      setStep("blocker");
+      return;
+    }
     finalize(resolveAction(k, isCounterFlow));
+  }, [finalize, isCounterFlow, rivalBlockers.length]);
+
+  const pickRivalBlocker = useCallback((playerId: string) => {
+    setRivalBlockerId(playerId);
+    finalize(resolveAction("blocked_by_rival", isCounterFlow), playerId);
   }, [finalize, isCounterFlow]);
 
   const goBack = useCallback(() => {
-    if (step === "action") setStep("direction");
+    if (step === "blocker") setStep("action");
+    else if (step === "action") setStep("direction");
     else if (step === "direction") setStep("zone");
     else if (step === "zone" && defenseStep) setStep("defense");
     else if (step === "zone" && receptionStep) setStep("reception");
@@ -409,19 +448,26 @@ export function IntegratedRallyDialog({
       } else if (step === "action") {
         const opt = ATTACK_RESULT_OPTIONS.find((o) => o.hotkey === ev.key);
         if (opt) { ev.preventDefault(); pickActionKind(opt.key); }
+      } else if (step === "blocker") {
+        const idx = Number(ev.key) - 1;
+        if (idx >= 0 && idx < rivalBlockers.length) {
+          ev.preventDefault();
+          pickRivalBlocker(rivalBlockers[idx].player.id);
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, direction, pickActionKind, goBack]);
+  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, direction, pickActionKind, pickRivalBlocker, rivalBlockers, goBack]);
 
   const activeSteps: { key: Step; label: string }[] = useMemo(
     () => STEPS.filter((s) => {
       if (s.key === "reception") return !!receptionStep;
       if (s.key === "defense") return !!defenseStep;
+      if (s.key === "blocker") return step === "blocker";
       return true;
     }),
-    [receptionStep, defenseStep],
+    [receptionStep, defenseStep, step],
   );
   const stepIdx = activeSteps.findIndex((s) => s.key === step);
 
@@ -434,6 +480,13 @@ export function IntegratedRallyDialog({
     attackerName && { label: "Atacante", value: `#${attackerName.number} ${attackerName.name}` },
     direction && { label: "Zona destino", value: `${direction}${subzone ? subzone.toUpperCase() : ""}` },
     actionKind && { label: "Acción", value: ACTION_KIND_LABEL[actionKind] },
+    rivalBlockerId && {
+      label: "Bloqueó",
+      value: (() => {
+        const b = rivalBlockers.find((r) => r.player.id === rivalBlockerId);
+        return b ? `#${b.player.number} (Z${b.zone})` : "—";
+      })(),
+    },
   ].filter(Boolean) as { label: string; value: string }[];
 
   return (
@@ -591,6 +644,32 @@ export function IntegratedRallyDialog({
                 <AttackDirectionGrid onPick={pickDirection} value={direction} subValue={subzone} />
                 <p className="mt-2 text-[11px] text-center text-muted-foreground">
                   Tocá la zona (1–9) y luego el cuadrante (A–D)
+                </p>
+              </div>
+            )}
+
+            {step === "blocker" && (
+              <div className="space-y-2">
+                <div className="text-[10px] uppercase tracking-widest font-black text-muted-foreground px-1">
+                  Bloqueador rival {opponentTeam ? `· ${opponentTeam.shortName ?? opponentTeam.name}` : ""}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {rivalBlockers.map((b, i) => (
+                    <button
+                      key={b.player.id}
+                      type="button"
+                      onClick={() => pickRivalBlocker(b.player.id)}
+                      className="relative min-h-[84px] rounded-lg border-2 border-border bg-card px-1 py-2 flex flex-col items-center justify-center transition active:scale-95 hover:border-primary hover:bg-primary/10"
+                    >
+                      <span className="absolute top-1 right-1.5 text-[9px] font-bold text-muted-foreground">{i + 1}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Zona {b.zone}</span>
+                      <span className="scoreboard-digit text-xl font-black leading-none mt-1">#{b.player.number}</span>
+                      <span className="text-[9px] text-muted-foreground truncate max-w-full">{b.player.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-center text-muted-foreground">
+                  Sólo jugadores rivales en zonas delanteras (4, 3 y 2) según la rotación actual.
                 </p>
               </div>
             )}
