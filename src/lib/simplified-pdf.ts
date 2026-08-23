@@ -334,79 +334,95 @@ export async function downloadSimplifiedMatchPdf(
 
     y += Math.max(cmpH, rotH) + V(4);
 
-    // ─────────────── Armador por rotación ───────────────
+    // ─────────────── Armador por rotación (ambos equipos) ───────────────
     {
-      const s = r.setter;
-      const rows = s?.rows ?? [];
-      const h = V(20 + Math.max(1, rows.length) * 4.4);
-      const inner = card(M, y, W, h, `Armador por rotación · ${ownName}`);
-      doc.setFont("helvetica", "normal");
-      FS(6.5);
-      setText(C.muted);
-      const headBits = s
-        ? [
-            s.name ?? "Armadora sin identificar",
-            s.sets > 0 ? `${s.sets} armados` : null,
-            s.positivePct !== null ? `Armado positivo ${Math.round(s.positivePct)}%` : null,
-            s.efficiencyPct !== null ? `Eficiencia ${Math.round(s.efficiencyPct)}%` : null,
-          ].filter(Boolean).join("  ·  ")
-        : "Sin datos de rotación de la armadora";
-      doc.text(headBits, M + 3.5, inner - V(1.5));
+      const cardW = (W - 4) / 2;
+      const sides: { s: (typeof r)["setter"]; name: string; x: number }[] = [
+        { s: r.setters?.A ?? null, name: r.meta.teamAName, x: M },
+        { s: r.setters?.B ?? null, name: r.meta.teamBName, x: M + cardW + 4 },
+      ];
+      const maxRows = Math.max(1, ...sides.map((sd) => sd.s?.rows.length ?? 0));
+      const h = V(20 + maxRows * 4.4);
 
-      const colX = (i: number) => M + 4 + (W - 8) * (i / 6);
-      doc.setFont("helvetica", "bold");
-      FS(6);
-      setText(C.muted);
-      doc.text("ZONA ARMADORA", colX(0), inner + V(4));
-      doc.text("RALLIES", colX(2), inner + V(4));
-      doc.text("A FAVOR", colX(3), inner + V(4));
-      doc.text("EN CONTRA", colX(4), inner + V(4));
-      doc.text("DIF / % GANADOS", colX(5), inner + V(4));
+      for (const sd of sides) {
+        const s = sd.s;
+        const rows = s?.rows ?? [];
+        const inner = card(sd.x, y, cardW, h, `Armador por rotación · ${sd.name}`);
+        doc.setFont("helvetica", "normal");
+        FS(6);
+        setText(C.muted);
+        const headBits = s
+          ? [
+              s.name ?? "Armadora sin identificar",
+              s.sets > 0 ? `${s.sets} armados` : null,
+              s.positivePct !== null ? `Positivo ${Math.round(s.positivePct)}%` : null,
+              s.efficiencyPct !== null ? `Efic. ${Math.round(s.efficiencyPct)}%` : null,
+            ]
+              .filter(Boolean)
+              .join("  ·  ")
+          : "Sin datos de rotación de la armadora";
+        doc.text(headBits, sd.x + 3.5, inner - V(1.5), { maxWidth: cardW - 7 });
 
-      let ry = inner + V(8.6);
-      for (const row of rows) {
-        const isBest = s?.best?.zone === row.zone && row.diff > 0;
-        const isWorst = s?.worst?.zone === row.zone && row.diff < 0;
+        const colX = (i: number) => sd.x + 4 + (cardW - 8) * (i / 6);
         doc.setFont("helvetica", "bold");
-        FS(7.5);
-        setText(isBest ? C.good : isWorst ? C.bad : C.text);
-        doc.text(row.label, colX(0), ry);
-        doc.setFont("helvetica", "normal");
-        FS(7);
-        if (row.rallies === 0) {
-          setText(C.muted);
-          doc.text("Sin datos", colX(2), ry);
-        } else {
-          setText(C.text);
-          doc.text(String(row.rallies), colX(2), ry);
-          doc.text(String(row.pf), colX(3), ry);
-          doc.text(String(row.pc), colX(4), ry);
-          setText(row.diff > 0 ? C.good : row.diff < 0 ? C.bad : C.muted);
+        FS(5.4);
+        setText(C.muted);
+        doc.text("ZONA", colX(0), inner + V(4));
+        doc.text("RALL.", colX(2), inner + V(4));
+        doc.text("A FAV", colX(3), inner + V(4));
+        doc.text("EN C.", colX(4), inner + V(4));
+        doc.text("DIF / %", colX(5), inner + V(4));
+
+        let ry = inner + V(8.6);
+        for (const row of rows) {
+          const isBest = s?.best?.zone === row.zone && row.diff > 0;
+          const isWorst = s?.worst?.zone === row.zone && row.diff < 0;
           doc.setFont("helvetica", "bold");
-          doc.text(`${row.diff > 0 ? "+" : ""}${row.diff}  (${Math.round(row.winPct)}%)`, colX(5), ry);
+          FS(7);
+          setText(isBest ? C.good : isWorst ? C.bad : C.text);
+          doc.text(row.label, colX(0), ry);
+          doc.setFont("helvetica", "normal");
+          FS(6.5);
+          if (row.rallies === 0) {
+            setText(C.muted);
+            doc.text("Sin datos", colX(2), ry);
+          } else {
+            setText(C.text);
+            doc.text(String(row.rallies), colX(2), ry);
+            doc.text(String(row.pf), colX(3), ry);
+            doc.text(String(row.pc), colX(4), ry);
+            setText(row.diff > 0 ? C.good : row.diff < 0 ? C.bad : C.muted);
+            doc.setFont("helvetica", "bold");
+            doc.text(
+              `${row.diff > 0 ? "+" : ""}${row.diff} (${Math.round(row.winPct)}%)`,
+              colX(5),
+              ry,
+            );
+            const maxAbs = Math.max(1, ...rows.map((x) => Math.abs(x.diff)));
+            const barMax = (cardW - 8) / 6 - 6;
+            const bw = (Math.abs(row.diff) / maxAbs) * barMax;
+            setFill(row.diff >= 0 ? C.good : C.bad);
+            doc.roundedRect(colX(1), ry - V(2), Math.max(0.6, bw), V(1.8), 1, 1, "F");
+          }
+          ry += V(4.4);
         }
-        if (row.rallies > 0) {
-          const maxAbs = Math.max(1, ...rows.map((x) => Math.abs(x.diff)));
-          const barMax = (W - 8) / 6 - 10;
-          const bw = (Math.abs(row.diff) / maxAbs) * barMax;
-          setFill(row.diff >= 0 ? C.good : C.bad);
-          doc.roundedRect(colX(1), ry - V(2), Math.max(0.6, bw), V(2), 1, 1, "F");
+        if (rows.length === 0) {
+          doc.setFont("helvetica", "normal");
+          FS(6.5);
+          setText(C.muted);
+          doc.text("Sin rallies registrados para la armadora.", colX(0), ry, {
+            maxWidth: cardW - 8,
+          });
+        } else if (s) {
+          doc.setFont("helvetica", "normal");
+          FS(5.8);
+          setText(C.muted);
+          doc.text(s.conclusion, sd.x + 3.5, ry + V(1.5), { maxWidth: cardW - 8 });
         }
-        ry += V(4.4);
-      }
-      if (rows.length === 0) {
-        doc.setFont("helvetica", "normal");
-        FS(7);
-        setText(C.muted);
-        doc.text("Sin rallies registrados para la armadora.", colX(0), ry);
-      } else if (s) {
-        doc.setFont("helvetica", "normal");
-        FS(6.5);
-        setText(C.muted);
-        doc.text(s.conclusion, M + 3.5, ry + V(1.5), { maxWidth: W - 8 });
       }
       y += h + V(4);
     }
+
 
     // ─────────────── Destacados ───────────────
     {
