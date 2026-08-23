@@ -1854,8 +1854,14 @@ function LiveMatch() {
               teamB={teamB}
               onSave={(lineupA, lineupB, armadorA, armadorB, liberoCfgA, liberoCfgB) => {
                 const metadataUpdate: Record<string, any> = {};
-                if (armadorA !== null) metadataUpdate[`manualArmadorA_set${match.currentSet}`] = armadorA;
-                if (armadorB !== null) metadataUpdate[`manualArmadorB_set${match.currentSet}`] = armadorB;
+                if (armadorA !== null) {
+                  metadataUpdate[`manualArmadorA_set${match.currentSet}`] = armadorA;
+                  if (lineupA[armadorA]) metadataUpdate[`manualArmadorIdA_set${match.currentSet}`] = lineupA[armadorA];
+                }
+                if (armadorB !== null) {
+                  metadataUpdate[`manualArmadorB_set${match.currentSet}`] = armadorB;
+                  if (lineupB[armadorB]) metadataUpdate[`manualArmadorIdB_set${match.currentSet}`] = lineupB[armadorB];
+                }
                 metadataUpdate[liberoConfigKey("A", match.currentSet)] = liberoCfgA ?? null;
                 metadataUpdate[liberoConfigKey("B", match.currentSet)] = liberoCfgB ?? null;
 
@@ -2844,24 +2850,32 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     teamB.players.map((player) => player.id),
   ));
   const [step, setStep] = useState<1 | 2>(1);
+  // El armador se guarda por ID de jugador (no por posición fija): así la
+  // etiqueta "A" (y las diagonales O/C1/C2/P1/P2) acompañan al jugador cuando
+  // el equipo rota.
   const [manualArmadorA, setManualArmadorA] = useState<number | null>(() => {
+    const idFromMeta = match.metadata?.[`manualArmadorIdA_set${match.currentSet}`];
+    if (typeof idFromMeta === "string") {
+      const i = lineupA.indexOf(idFromMeta);
+      if (i >= 0) return i;
+    }
     const fromMeta = match.metadata?.[`manualArmadorA_set${match.currentSet}`];
     if (typeof fromMeta === 'number') return fromMeta;
-    if (currentSetLineup?.A) {
-      const idx = currentSetLineup.A.findIndex(pid => teamA.players.find(p => p.id === pid)?.position === 'armador');
-      return idx >= 0 ? idx : null;
-    }
-    return null;
+    const idx = lineupA.findIndex(pid => teamA.players.find(p => p.id === pid)?.position === 'armador');
+    return idx >= 0 ? idx : null;
   });
   const [manualArmadorB, setManualArmadorB] = useState<number | null>(() => {
+    const idFromMeta = match.metadata?.[`manualArmadorIdB_set${match.currentSet}`];
+    if (typeof idFromMeta === "string") {
+      const i = lineupB.indexOf(idFromMeta);
+      if (i >= 0) return i;
+    }
     const fromMeta = match.metadata?.[`manualArmadorB_set${match.currentSet}`];
     if (typeof fromMeta === 'number') return fromMeta;
-    if (currentSetLineup?.B) {
-      const idx = currentSetLineup.B.findIndex(pid => teamB.players.find(p => p.id === pid)?.position === 'armador');
-      return idx >= 0 ? idx : null;
-    }
-    return null;
+    const idx = lineupB.findIndex(pid => teamB.players.find(p => p.id === pid)?.position === 'armador');
+    return idx >= 0 ? idx : null;
   });
+
 
   // Configuración de líbero por SET (líbero + central asociado), por equipo.
   const [liberoCfgA, setLiberoCfgA] = useState<LiberoSetConfig | null>(
@@ -2980,7 +2994,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
             className="size-7"
             title="Rotar en sentido contrario"
             disabled={lineup.filter(Boolean).length !== 6}
-            onClick={() => setLineup([lineup[5], lineup[0], lineup[1], lineup[2], lineup[3], lineup[4]])}
+            onClick={() => {
+              setLineup([lineup[5], lineup[0], lineup[1], lineup[2], lineup[3], lineup[4]]);
+              setManualArmador((i) => (i === null ? null : (i + 1) % 6));
+            }}
+
           >
             <RotateCcw className="size-3.5" />
           </Button>
@@ -2990,7 +3008,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
             className="size-7"
             title="Rotar en sentido del saque"
             disabled={lineup.filter(Boolean).length !== 6}
-            onClick={() => setLineup([lineup[1], lineup[2], lineup[3], lineup[4], lineup[5], lineup[0]])}
+            onClick={() => {
+              setLineup([lineup[1], lineup[2], lineup[3], lineup[4], lineup[5], lineup[0]]);
+              setManualArmador((i) => (i === null ? null : (i + 5) % 6));
+            }}
+
           >
             <RotateCw className="size-3.5" />
           </Button>
