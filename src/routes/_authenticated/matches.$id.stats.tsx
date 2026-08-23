@@ -247,6 +247,36 @@ function StatsPage() {
     }
   };
 
+  const handleDownloadSimplified = async () => {
+    setPdfStatus({ kind: "generating" });
+    const loadingId = toast.loading("Generando reporte simplificado…");
+    try {
+      const league = leagues.find((l) => l.id === (teamA.leagueId ?? teamB.leagueId));
+      const result = await downloadSimplifiedMatchPdf(match, teamA, teamB, {
+        competition: league?.name ?? null,
+        ownSide: "A",
+      });
+      toast.dismiss(loadingId);
+      if (result.method === "cancelled") {
+        setPdfStatus({ kind: "idle" });
+        toast("Se canceló la descarga del reporte");
+        return;
+      }
+      setPdfStatus({ kind: "awaiting", method: result.method, fileName: result.fileName, sizeKb: result.sizeKb });
+      toast.success("Reporte simplificado generado", {
+        description: `${result.fileName} · ${result.sizeKb} KB`,
+      });
+    } catch (e) {
+      toast.dismiss(loadingId);
+      console.error(e);
+      const reason = e instanceof Error ? e.message : "Error desconocido";
+      setPdfStatus({ kind: "failed", reason });
+      toast.error("No se pudo generar el reporte simplificado", { description: reason });
+    }
+  };
+
+
+
   const confirmPdfOk = () => {
     if (pdfStatus.kind !== "awaiting") return;
     setPdfStatus({ kind: "confirmed", method: pdfStatus.method, fileName: pdfStatus.fileName });
