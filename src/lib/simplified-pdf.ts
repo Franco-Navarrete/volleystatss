@@ -681,7 +681,7 @@ export async function downloadSimplifiedMatchPdf(
       if (strength) lines.push({ label: "Fortaleza", text: strength, color: C.good });
       if (weakness) lines.push({ label: "Debilidad", text: weakness, color: C.bad });
       if (rec) lines.push({ label: "Recomendación", text: rec, color: C.warn });
-      let ry = inner2 + V(3.4);
+      let ry = inner2 + V(2.6);
       if (lines.length === 0) {
         doc.setFont("helvetica", "normal");
         FS(5.4);
@@ -696,7 +696,7 @@ export async function downloadSimplifiedMatchPdf(
         doc.setFont("helvetica", "normal");
         setText(C.text);
         doc.text(doc.splitTextToSize(l.text, rightW - 36)[0], rightX + 30, ry);
-        ry += V(4.4);
+        ry += V(3.6);
       }
 
       y += h;
