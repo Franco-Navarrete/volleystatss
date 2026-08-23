@@ -695,7 +695,7 @@ export async function downloadSimplifiedMatchPdf(
         doc.text(l.label.toUpperCase(), rightX + 2.6, ry);
         doc.setFont("helvetica", "normal");
         setText(C.text);
-        doc.text(doc.splitTextToSize(l.text, rightW - 30)[0], rightX + 24, ry);
+        doc.text(doc.splitTextToSize(l.text, rightW - 36)[0], rightX + 30, ry);
         ry += V(4.4);
       }
 
@@ -735,7 +735,6 @@ export async function downloadSimplifiedMatchPdf(
   const raw = available / natural;
   const K = raw >= 1 ? Math.min(1.3, raw) : Math.max(0.4, raw);
 
-  console.log("[rally-pdf]", { natural, available, K });
   const doc = K === 1 ? probe : new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
   if (K !== 1) render(doc, K);
 
