@@ -327,9 +327,9 @@ export async function downloadSimplifiedMatchPdf(
       doc.setFont("helvetica", "normal");
       FS(5.6);
       setText(C.home);
-      doc.text(`${r.meta.teamAName} ↑`, chartX, inner - 1);
+      doc.text(`+ ${r.meta.teamAName}`, chartX, inner - 1);
       setText(C.away);
-      doc.text(`↓ ${r.meta.teamBName}`, chartX + chartW, inner - 1, { align: "right" });
+      doc.text(`+ ${r.meta.teamBName}`, chartX + chartW, inner - 1, { align: "right" });
     }
 
     y += Math.max(cmpH, rotH) + V(4);
