@@ -128,6 +128,8 @@ export interface SimplifiedReport {
   streaks: { A: number; B: number } | null;
   rotations: { A: RotationRow[]; B: RotationRow[] } | null;
   setter: SetterBlock | null;
+  setters: { A: SetterBlock | null; B: SetterBlock | null };
+
   serve: { A: ServeBlock; B: ServeBlock } | null;
   reception: { A: ReceptionBlock | null; B: ReceptionBlock | null } | null;
   attack: { A: AttackBlock | null; B: AttackBlock | null } | null;
@@ -323,47 +325,46 @@ export function buildSimplifiedReport(
   const rotB = sumSide("B");
   const rotations = rotA.some((r) => r.pf + r.pc > 0) ? { A: rotA, B: rotB } : null;
 
-  // ── Armador por rotación (zona de la armadora A1..A6) ─
-  const setterSide: Side = opts.ownSide ?? "A";
-  const setterTeam = setterSide === "A" ? teamA : teamB;
+  // ── Armador por rotación (zona de la armadora A1..A6) — ambos equipos ─
   const setterStats = computeSetterPositionStats(match, teamA, teamB);
-  const setterAcc = new Map<SetterZone, { pf: number; pc: number }>();
-  for (const s of setterStats) {
-    for (const b of s[setterSide].buckets) {
-      const cur = setterAcc.get(b.zone) ?? { pf: 0, pc: 0 };
-      cur.pf += b.pf;
-      cur.pc += b.pc;
-      setterAcc.set(b.zone, cur);
+  const buildSetter = (side: Side): SetterBlock | null => {
+    const team = side === "A" ? teamA : teamB;
+    const acc = new Map<SetterZone, { pf: number; pc: number }>();
+    for (const s of setterStats) {
+      for (const b of s[side].buckets) {
+        const cur = acc.get(b.zone) ?? { pf: 0, pc: 0 };
+        cur.pf += b.pf;
+        cur.pc += b.pc;
+        acc.set(b.zone, cur);
+      }
     }
-  }
-  const setterRows: SetterRotationRow[] = ([1, 2, 3, 4, 5, 6] as SetterZone[]).map((z) => {
-    const v = setterAcc.get(z) ?? { pf: 0, pc: 0 };
-    const rallies = v.pf + v.pc;
-    return {
-      zone: z,
-      label: SETTER_ZONE_LABEL[z],
-      pf: v.pf,
-      pc: v.pc,
-      diff: v.pf - v.pc,
-      rallies,
-      winPct: pct(v.pf, rallies),
-    };
-  });
-  const setterPlayed = setterRows.filter((r) => r.rallies > 0);
-  let setter: SetterBlock | null = null;
-  if (setterPlayed.length > 0) {
-    const best = [...setterPlayed].sort((x, z) => z.diff - x.diff)[0];
-    const worst = [...setterPlayed].sort((x, z) => x.diff - z.diff)[0];
-    const settingEvents = getSettingEvents(match, setterSide);
+    const rows: SetterRotationRow[] = ([1, 2, 3, 4, 5, 6] as SetterZone[]).map((z) => {
+      const v = acc.get(z) ?? { pf: 0, pc: 0 };
+      const rallies = v.pf + v.pc;
+      return {
+        zone: z,
+        label: SETTER_ZONE_LABEL[z],
+        pf: v.pf,
+        pc: v.pc,
+        diff: v.pf - v.pc,
+        rallies,
+        winPct: pct(v.pf, rallies),
+      };
+    });
+    const played = rows.filter((r) => r.rallies > 0);
+    if (played.length === 0) return null;
+    const best = [...played].sort((x, z) => z.diff - x.diff)[0];
+    const worst = [...played].sort((x, z) => x.diff - z.diff)[0];
+    const settingEvents = getSettingEvents(match, side);
     const dist = [...computeSetterDistribution(settingEvents).values()].sort(
       (x, z) => z.total - x.total,
     )[0];
     const setterPlayer =
-      setterTeam.players.find((p) => p.id === dist?.setterId) ??
-      setterTeam.players.find((p) => p.position === "armador");
-    setter = {
+      team.players.find((p) => p.id === dist?.setterId) ??
+      team.players.find((p) => p.position === "armador");
+    return {
       name: setterPlayer ? `#${setterPlayer.number} ${setterPlayer.name}` : null,
-      rows: setterRows,
+      rows,
       best,
       worst,
       sets: dist?.total ?? 0,
@@ -374,7 +375,10 @@ export function buildSimplifiedReport(
           ? `Mejor rendimiento con la armadora en ${best.label} (${best.diff > 0 ? "+" : ""}${best.diff}); peor en ${worst.label} (${worst.diff}).`
           : `Rendimiento parejo o negativo en todas las zonas; la peor fue ${worst.label} (${worst.diff}).`,
     };
-  }
+  };
+  const setters = { A: buildSetter("A"), B: buildSetter("B") };
+  const setter = setters[opts.ownSide ?? "A"];
+
 
   // ── Saque ─────────────────────────────────────────────
   const seq = serveSequence(match);
@@ -526,6 +530,8 @@ export function buildSimplifiedReport(
     streaks,
     rotations,
     setter,
+    setters,
+
     serve,
     reception,
     attack,
