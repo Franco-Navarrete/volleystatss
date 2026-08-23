@@ -323,6 +323,59 @@ export function buildSimplifiedReport(
   const rotB = sumSide("B");
   const rotations = rotA.some((r) => r.pf + r.pc > 0) ? { A: rotA, B: rotB } : null;
 
+  // ── Armador por rotación (zona de la armadora A1..A6) ─
+  const setterSide: Side = opts.ownSide ?? "A";
+  const setterTeam = setterSide === "A" ? teamA : teamB;
+  const setterStats = computeSetterPositionStats(match, teamA, teamB);
+  const setterAcc = new Map<SetterZone, { pf: number; pc: number }>();
+  for (const s of setterStats) {
+    for (const b of s[setterSide].buckets) {
+      const cur = setterAcc.get(b.zone) ?? { pf: 0, pc: 0 };
+      cur.pf += b.pf;
+      cur.pc += b.pc;
+      setterAcc.set(b.zone, cur);
+    }
+  }
+  const setterRows: SetterRotationRow[] = ([1, 2, 3, 4, 5, 6] as SetterZone[]).map((z) => {
+    const v = setterAcc.get(z) ?? { pf: 0, pc: 0 };
+    const rallies = v.pf + v.pc;
+    return {
+      zone: z,
+      label: SETTER_ZONE_LABEL[z],
+      pf: v.pf,
+      pc: v.pc,
+      diff: v.pf - v.pc,
+      rallies,
+      winPct: pct(v.pf, rallies),
+    };
+  });
+  const setterPlayed = setterRows.filter((r) => r.rallies > 0);
+  let setter: SetterBlock | null = null;
+  if (setterPlayed.length > 0) {
+    const best = [...setterPlayed].sort((x, z) => z.diff - x.diff)[0];
+    const worst = [...setterPlayed].sort((x, z) => x.diff - z.diff)[0];
+    const settingEvents = getSettingEvents(match, setterSide);
+    const dist = [...computeSetterDistribution(settingEvents).values()].sort(
+      (x, z) => z.total - x.total,
+    )[0];
+    const setterPlayer =
+      setterTeam.players.find((p) => p.id === dist?.setterId) ??
+      setterTeam.players.find((p) => p.position === "armador");
+    setter = {
+      name: setterPlayer ? `#${setterPlayer.number} ${setterPlayer.name}` : null,
+      rows: setterRows,
+      best,
+      worst,
+      sets: dist?.total ?? 0,
+      efficiencyPct: dist && dist.total > 0 ? dist.efficiency * 100 : null,
+      positivePct: dist && dist.total > 0 ? dist.positiveRate * 100 : null,
+      conclusion:
+        best.diff > 0
+          ? `Mejor rendimiento con la armadora en ${best.label} (${best.diff > 0 ? "+" : ""}${best.diff}); peor en ${worst.label} (${worst.diff}).`
+          : `Rendimiento parejo o negativo en todas las zonas; la peor fue ${worst.label} (${worst.diff}).`,
+    };
+  }
+
   // ── Saque ─────────────────────────────────────────────
   const seq = serveSequence(match);
   const serveFor = (side: Side): ServeBlock => {
