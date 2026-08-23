@@ -80,20 +80,72 @@ import { adminGetAuditLogs, adminGetSubscriptions } from "@/lib/admin-saas-extra
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
 import { DynamicEntityWizard, type EntityType } from "@/components/admin/DynamicEntityWizard";
 
+function generateTempPassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!*#";
+  const bytes = new Uint32Array(14);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
+}
+
 function PasswordViewer({ userId }: { userId: string }) {
-  // Ya no se permite recuperar contraseñas por seguridad.
+  const setPassword = useServerFn(adminSetPassword);
+  const [generated, setGenerated] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async () => {
+    setBusy(true);
+    setError(null);
+    const pass = generateTempPassword();
+    try {
+      await setPassword({ data: { userId, password: pass } });
+      setGenerated(pass);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo generar la contraseña.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="p-4 rounded-xl border border-border/60 bg-card/50 space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-bold">Contraseña</h4>
         <Lock className="size-4 text-muted-foreground/40" />
       </div>
-      <div className="bg-background/50 border border-border/40 rounded-lg p-3 text-xs text-muted-foreground">
-        Por motivos de seguridad, las contraseñas ya no se almacenan en texto plano y no pueden ser visualizadas.
+      <div className="bg-background/50 border border-border/40 rounded-lg p-3 text-[11px] text-muted-foreground leading-relaxed">
+        Las contraseñas se guardan cifradas (hash irreversible), por lo que nadie —ni el super usuario— puede leerlas.
+        Como super usuario podés generar una contraseña temporal y verla una sola vez para entregársela al usuario.
       </div>
+      {generated ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <code className="flex-1 rounded-lg border border-border/40 bg-background/70 px-3 py-2 text-xs font-mono break-all">
+              {generated}
+            </code>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-9 shrink-0"
+              onClick={() => navigator.clipboard?.writeText(generated)}
+            >
+              <Copy className="size-3" />
+            </Button>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Copiala ahora: no vas a poder volver a verla.
+          </p>
+        </div>
+      ) : null}
+      {error ? <p className="text-[10px] text-destructive">{error}</p> : null}
+      <Button className="w-full h-9 text-xs font-bold" onClick={handleGenerate} disabled={busy}>
+        <Key className="size-3 mr-2" />
+        {busy ? "Generando..." : generated ? "Generar otra" : "Generar contraseña temporal"}
+      </Button>
     </div>
   );
 }
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Panel de Administración · RALLY SaaS" }] }),
