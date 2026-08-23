@@ -270,10 +270,24 @@ function StatsPage() {
         <Button asChild variant="ghost" size="sm">
           <Link to="/matches/$id" params={{ id: match.id }}><ArrowLeft className="size-4" /> Volver al partido</Link>
         </Button>
-        <Button size="sm" onClick={handleDownloadPdf} disabled={pdfStatus.kind === "generating"}>
-          <Download className="size-4" /> {pdfStatus.kind === "generating" ? "Generando…" : "Descargar PDF"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" disabled={pdfStatus.kind === "generating"}>
+              <Download className="size-4" /> {pdfStatus.kind === "generating" ? "Generando…" : "Descargar reporte"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Descargar reporte</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => { void handleDownloadPdf(); }}>
+              📄 Reporte oficial
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => { void handleDownloadSimplified(); }}>
+              📊 Reporte simplificado
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
 
       {pdfStatus.kind === "awaiting" && (
         <div className="mb-4 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
