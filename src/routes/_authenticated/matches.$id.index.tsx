@@ -2818,8 +2818,18 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   onSave: (lineupA: string[], lineupB: string[], armadorA: number | null, armadorB: number | null) => void;
 }) {
   const currentSetLineup = match.lineupsBySet?.[match.currentSet];
-  const [lineupA, setLineupA] = useState<string[]>(currentSetLineup?.A ? [...currentSetLineup.A] : [...match.onCourtA]);
-  const [lineupB, setLineupB] = useState<string[]>(currentSetLineup?.B ? [...currentSetLineup.B] : [...match.onCourtB]);
+  const [lineupA, setLineupA] = useState<string[]>(() => repairOnCourt(
+    match.id,
+    "A",
+    currentSetLineup?.A ?? match.onCourtA,
+    teamA.players.map((player) => player.id),
+  ));
+  const [lineupB, setLineupB] = useState<string[]>(() => repairOnCourt(
+    match.id,
+    "B",
+    currentSetLineup?.B ?? match.onCourtB,
+    teamB.players.map((player) => player.id),
+  ));
   const [step, setStep] = useState<1 | 2>(1);
   const [manualArmadorA, setManualArmadorA] = useState<number | null>(() => {
     const fromMeta = match.metadata?.[`manualArmadorA_set${match.currentSet}`];

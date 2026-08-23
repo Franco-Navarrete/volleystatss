@@ -913,9 +913,9 @@ function replayMatch(m: Match): {
   const hasEventsInSet = m.events.some(e => ("setNumber" in e) && e.setNumber === currentSet);
   if (!hasEventsInSet && m.confirmedLineupSets?.includes(currentSet)) {
     const lA = m.lineupsBySet?.[currentSet]?.A;
-    if (lA && lA.length === 6) onCourtA = [...lA];
+    if (lA) onCourtA = repairOnCourt(m.id, "A", lA, lineupFor(currentSet, "A"));
     const lB = m.lineupsBySet?.[currentSet]?.B;
-    if (lB && lB.length === 6) onCourtB = [...lB];
+    if (lB) onCourtB = repairOnCourt(m.id, "B", lB, lineupFor(currentSet, "B"));
   }
 
   return { sets, currentSet, status, onCourtA, onCourtB, servingSide, liberoActiveA: liberoA, liberoActiveB: liberoB };
