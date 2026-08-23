@@ -74,12 +74,36 @@ export interface RotationRow {
   diff: number;
 }
 
+export interface SetterRotationRow {
+  zone: SetterZone;
+  label: string; // A1..A6
+  pf: number;
+  pc: number;
+  diff: number;
+  rallies: number;
+  /** % de rallies ganados con la armadora en esa zona. */
+  winPct: number;
+}
+
+export interface SetterBlock {
+  name: string | null;
+  rows: SetterRotationRow[];
+  best: SetterRotationRow | null;
+  worst: SetterRotationRow | null;
+  /** Datos de armado detallado (si se cargaron eventos de armado). */
+  sets: number;
+  efficiencyPct: number | null;
+  positivePct: number | null;
+  conclusion: string;
+}
+
 export interface PlayerLine {
   playerId: string;
   label: string;
   value: number;
   detail?: string;
 }
+
 
 export interface SimplifiedReport {
   meta: {
