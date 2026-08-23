@@ -123,6 +123,7 @@ export function CoachAttackPanel({ match, teamA, teamB, attackingSide }: Props) 
         origin.zone,
         undefined,
         destination,
+        undefined,
         finishType,
       );
     } else if (result === "error") {

@@ -1,8 +1,10 @@
-import type { AttackDirection } from "@/lib/volley-store";
+import { useEffect, useState } from "react";
+import type { AttackDirection, AttackSubzone } from "@/lib/volley-store";
 
 interface Props {
-  onPick: (d: AttackDirection) => void;
+  onPick: (d: AttackDirection, sub?: AttackSubzone) => void;
   value?: AttackDirection | null;
+  subValue?: AttackSubzone | null;
 }
 
 /**
@@ -10,13 +12,25 @@ interface Props {
  *   4 3 2
  *   7 8 9
  *   5 6 1
+ * Cada zona se subdivide en 4 cuadrantes:
+ *   C | B
+ *   D | A
+ * Flujo: primero se elige la zona (1-9), luego el cuadrante (a-d).
  */
-export function AttackDirectionGrid({ onPick, value }: Props) {
+const SUB_ROWS: AttackSubzone[][] = [
+  ["c", "b"],
+  ["d", "a"],
+];
+
+export function AttackDirectionGrid({ onPick, value, subValue }: Props) {
   const rows: AttackDirection[][] = [
     [4, 3, 2],
     [7, 8, 9],
     [5, 6, 1],
   ];
+
+  const [pending, setPending] = useState<AttackDirection | null>(value ?? null);
+  useEffect(() => { setPending(value ?? null); }, [value]);
 
   return (
     <div className="space-y-2">
@@ -32,26 +46,61 @@ export function AttackDirectionGrid({ onPick, value }: Props) {
         <div className="grid grid-rows-3 h-full">
           {rows.map((row, r) => (
             <div key={r} className="grid grid-cols-3 gap-[2px] p-[2px]">
-              {row.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => onPick(d)}
-                  className={`rounded-md font-black text-lg sm:text-xl text-white/90 border-2 transition-all active:scale-95 flex items-center justify-center ${
-                    value === d
-                      ? "border-primary bg-primary/60"
-                      : "border-white/40 bg-black/20 hover:bg-primary/40 hover:border-primary"
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
+              {row.map((d) => {
+                const isPending = pending === d;
+                if (isPending) {
+                  return (
+                    <div
+                      key={d}
+                      className="relative rounded-md border-2 border-primary bg-primary/30 overflow-hidden"
+                    >
+                      <span className="absolute top-0.5 left-1 text-[10px] font-black text-white/80">{d}</span>
+                      <div className="grid grid-rows-2 h-full">
+                        {SUB_ROWS.map((srow, si) => (
+                          <div key={si} className="grid grid-cols-2 gap-[2px] p-[2px]">
+                            {srow.map((s) => (
+                              <button
+                                key={s}
+                                type="button"
+                                onClick={() => onPick(d, s)}
+                                className={`rounded-sm font-black text-xs sm:text-sm uppercase text-white border transition-all active:scale-95 flex items-center justify-center ${
+                                  subValue === s && value === d
+                                    ? "border-white bg-primary"
+                                    : "border-white/50 bg-black/25 hover:bg-primary/60"
+                                }`}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setPending(d)}
+                    className={`rounded-md font-black text-lg sm:text-xl text-white/90 border-2 transition-all active:scale-95 flex items-center justify-center ${
+                      value === d
+                        ? "border-primary bg-primary/60"
+                        : "border-white/40 bg-black/20 hover:bg-primary/40 hover:border-primary"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                );
+              })}
             </div>
           ))}
         </div>
       </div>
       <p className="text-[10px] text-center text-muted-foreground">
-        4-3-2 pegado a la red · 7-8-9 zona media · 5-6-1 al fondo
+        {pending
+          ? `Zona ${pending}: elegí el cuadrante (C·B arriba / D·A abajo) · teclas A-D`
+          : "4-3-2 pegado a la red · 7-8-9 zona media · 5-6-1 al fondo"}
       </p>
     </div>
   );

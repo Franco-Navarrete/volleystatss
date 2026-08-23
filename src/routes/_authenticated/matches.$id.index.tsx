@@ -1982,13 +1982,14 @@ function LiveMatch() {
                 : "error",
               receptionQuality: payload.receptionQuality,
               attackDirection: payload.attackDirection,
+              attackSubzone: payload.attackSubzone,
             });
             if (isNeutral) {
               useVolley.getState().recordAttackAttempt(
                 match.id,
                 integratedRally.side,
                 payload.attackerId,
-                { attackZone, attackDirection: payload.attackDirection, isCounter },
+                { attackZone, attackDirection: payload.attackDirection, attackSubzone: payload.attackSubzone, isCounter },
               );
               const defenseSide = integratedRally.side === "A" ? "B" : "A";
               const defenseOnCourt = defenseSide === "A" ? match.onCourtA : match.onCourtB;
@@ -2011,6 +2012,7 @@ function LiveMatch() {
               attackZone,
               undefined,
               payload.attackDirection,
+              payload.attackSubzone,
             );
             setIntegratedRally(null);
           }}

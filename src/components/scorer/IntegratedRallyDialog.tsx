@@ -14,6 +14,7 @@ import {
   type SettingQuality,
   type SettingAttackZone,
   type AttackDirection,
+  type AttackSubzone,
   type AttackZone,
   type ReceptionRating,
   type DefenseRating,
@@ -58,6 +59,7 @@ interface Props {
     attackerId: string;
     action: RallyAction;
     attackDirection?: AttackDirection;
+    attackSubzone?: AttackSubzone;
     receptionQuality?: SettingQuality;
     /** true si el flujo fue disparado tras una defensa (contraataque). */
     isCounter?: boolean;
@@ -275,6 +277,7 @@ export function IntegratedRallyDialog({
   const [zone, setZone] = useState<SettingAttackZone | null>(initialZone);
   const [attackerId, setAttackerId] = useState<string | null>(initialAttackerId ?? null);
   const [direction, setDirection] = useState<AttackDirection | null>(null);
+  const [subzone, setSubzone] = useState<AttackSubzone | null>(null);
   const [actionKind, setActionKind] = useState<AttackResult | null>(null);
   const [receptionValue, setReceptionValue] = useState<ReceptionRating | null>(null);
   const [defenseValue, setDefenseValue] = useState<DefenseRating | null>(null);
@@ -288,6 +291,7 @@ export function IntegratedRallyDialog({
     setZone(initialZone);
     setAttackerId(initialAttackerId ?? null);
     setDirection(null);
+    setSubzone(null);
     setActionKind(null);
     setReceptionValue(null);
     setDefenseValue(null);
@@ -333,10 +337,11 @@ export function IntegratedRallyDialog({
     toast.success(`✓ Armado a ${SETTING_ATTACK_ZONE_LABEL[z]}`, { duration: 800 });
   }, [zoneAssignments, onCourt]);
 
-  const pickDirection = useCallback((d: AttackDirection) => {
+  const pickDirection = useCallback((d: AttackDirection, sub?: AttackSubzone) => {
     setDirection(d);
+    setSubzone(sub ?? null);
     setStep("action");
-    toast.success(`✓ Zona destino ${d}`, { duration: 800 });
+    toast.success(`✓ Zona destino ${d}${sub ? sub.toUpperCase() : ""}`, { duration: 800 });
   }, []);
 
   const finalize = useCallback((a: RallyAction) => {
@@ -355,12 +360,13 @@ export function IntegratedRallyDialog({
       attackerId,
       action: a,
       attackDirection: direction ?? undefined,
+      attackSubzone: subzone ?? undefined,
       receptionQuality: effectiveQuality,
       isCounter: isCounterFlow,
     });
     toast.success("✓ Rally registrado", { duration: 900 });
     if (!keepOpen) onClose();
-  }, [attackerId, setter, zone, direction, effectiveQuality, onSubmit, onClose, isCounterFlow]);
+  }, [attackerId, setter, zone, direction, subzone, effectiveQuality, onSubmit, onClose, isCounterFlow]);
 
   const pickActionKind = useCallback((k: AttackResult) => {
     setActionKind(k);
@@ -394,7 +400,12 @@ export function IntegratedRallyDialog({
         if (idx >= 0 && idx < ZONE_ORDER.length) { ev.preventDefault(); pickZone(ZONE_ORDER[idx]); }
       } else if (step === "direction") {
         const n = Number(ev.key);
-        if (n >= 1 && n <= 9) { ev.preventDefault(); pickDirection(n as AttackDirection); }
+        if (n >= 1 && n <= 9) { ev.preventDefault(); setDirection(n as AttackDirection); return; }
+        const k = ev.key.toLowerCase();
+        if (direction && ["a", "b", "c", "d"].includes(k)) {
+          ev.preventDefault();
+          pickDirection(direction, k as AttackSubzone);
+        }
       } else if (step === "action") {
         const opt = ATTACK_RESULT_OPTIONS.find((o) => o.hotkey === ev.key);
         if (opt) { ev.preventDefault(); pickActionKind(opt.key); }
@@ -402,7 +413,7 @@ export function IntegratedRallyDialog({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, pickActionKind, goBack]);
+  }, [open, step, pickReception, pickDefense, pickZone, pickDirection, direction, pickActionKind, goBack]);
 
   const activeSteps: { key: Step; label: string }[] = useMemo(
     () => STEPS.filter((s) => {
@@ -421,7 +432,7 @@ export function IntegratedRallyDialog({
     setter && { label: "Armó", value: `#${setter.number}` },
     zone && { label: "Zona armado", value: SETTING_ATTACK_ZONE_LABEL[zone] },
     attackerName && { label: "Atacante", value: `#${attackerName.number} ${attackerName.name}` },
-    direction && { label: "Zona destino", value: String(direction) },
+    direction && { label: "Zona destino", value: `${direction}${subzone ? subzone.toUpperCase() : ""}` },
     actionKind && { label: "Acción", value: ACTION_KIND_LABEL[actionKind] },
   ].filter(Boolean) as { label: string; value: string }[];
 
@@ -577,9 +588,9 @@ export function IntegratedRallyDialog({
 
             {step === "direction" && (
               <div>
-                <AttackDirectionGrid onPick={pickDirection} value={direction} />
+                <AttackDirectionGrid onPick={pickDirection} value={direction} subValue={subzone} />
                 <p className="mt-2 text-[11px] text-center text-muted-foreground">
-                  Tocá la zona donde cayó · teclas 1–9
+                  Tocá la zona (1–9) y luego el cuadrante (A–D)
                 </p>
               </div>
             )}
