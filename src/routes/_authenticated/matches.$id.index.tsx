@@ -2850,6 +2850,14 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
     return null;
   });
 
+  // Configuración de líbero por SET (líbero + central asociado), por equipo.
+  const [liberoCfgA, setLiberoCfgA] = useState<LiberoSetConfig | null>(
+    () => getLiberoSetConfig(match, "A", match.currentSet),
+  );
+  const [liberoCfgB, setLiberoCfgB] = useState<LiberoSetConfig | null>(
+    () => getLiberoSetConfig(match, "B", match.currentSet),
+  );
+
   const validSide = (l: string[]) => l.filter(Boolean).length === 6 && new Set(l.filter(Boolean)).size === 6;
   const validA = validSide(lineupA);
   const validB = validSide(lineupB);
@@ -2857,8 +2865,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
   const team = step === 1 ? teamA : teamB;
   const lineup = step === 1 ? lineupA : lineupB;
   const setLineup = step === 1 ? setLineupA : setLineupB;
+  const liberoCfg = step === 1 ? liberoCfgA : liberoCfgB;
+  const setLiberoCfg = step === 1 ? setLiberoCfgA : setLiberoCfgB;
   const manualArmador = step === 1 ? manualArmadorA : manualArmadorB;
   const setManualArmador = step === 1 ? setManualArmadorA : setManualArmadorB;
+
 
   const stepValid = step === 1 ? validA : validB;
   const filled = lineup.filter(Boolean).length;
