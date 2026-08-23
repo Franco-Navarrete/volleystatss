@@ -3274,10 +3274,15 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
           <Button disabled={!validA} onClick={() => goToStep(2)} className="flex-1">Siguiente →</Button>
         ) : (
           <Button
-            disabled={!validA || !validB}
-            onClick={() => onSave(lineupA, lineupB, manualArmadorA, manualArmadorB)}
+            disabled={
+              !validA || !validB ||
+              !!(liberoCfgA && (!liberoCfgA.liberoId || !liberoCfgA.centralId || liberoCfgA.liberoId === liberoCfgA.centralId)) ||
+              !!(liberoCfgB && (!liberoCfgB.liberoId || !liberoCfgB.centralId || liberoCfgB.liberoId === liberoCfgB.centralId))
+            }
+            onClick={() => onSave(lineupA, lineupB, manualArmadorA, manualArmadorB, liberoCfgA, liberoCfgB)}
             className="flex-1 bg-gradient-primary text-primary-foreground"
           >
+
             Confirmar formación
           </Button>
         )}
