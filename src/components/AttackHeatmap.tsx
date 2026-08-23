@@ -31,6 +31,13 @@ const DEST_ROWS: number[][] = [
   [5, 6, 1],
 ];
 
+/** Cuadrantes dentro de cada zona: c|b arriba, d|a abajo. */
+const SUB_KEYS: AttackSubzone[] = ["a", "b", "c", "d"];
+const SUB_ROWS: AttackSubzone[][] = [
+  ["c", "b"],
+  ["d", "a"],
+];
+
 /** 2×3 origen desde la perspectiva del atacante: red arriba. */
 const ORIGIN_ROWS: OriginZone[][] = [
   [4, 3, 2],
