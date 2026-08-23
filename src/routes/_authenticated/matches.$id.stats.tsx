@@ -14,6 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Crown, Download, ExternalLink, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
 import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
+import { downloadSimplifiedMatchPdf } from "@/lib/simplified-pdf";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
@@ -239,6 +247,36 @@ function StatsPage() {
     }
   };
 
+  const handleDownloadSimplified = async () => {
+    setPdfStatus({ kind: "generating" });
+    const loadingId = toast.loading("Generando reporte simplificado…");
+    try {
+      const league = leagues.find((l) => l.id === (teamA.leagueId ?? teamB.leagueId));
+      const result = await downloadSimplifiedMatchPdf(match, teamA, teamB, {
+        competition: league?.name ?? null,
+        ownSide: "A",
+      });
+      toast.dismiss(loadingId);
+      if (result.method === "cancelled") {
+        setPdfStatus({ kind: "idle" });
+        toast("Se canceló la descarga del reporte");
+        return;
+      }
+      setPdfStatus({ kind: "awaiting", method: result.method, fileName: result.fileName, sizeKb: result.sizeKb });
+      toast.success("Reporte simplificado generado", {
+        description: `${result.fileName} · ${result.sizeKb} KB`,
+      });
+    } catch (e) {
+      toast.dismiss(loadingId);
+      console.error(e);
+      const reason = e instanceof Error ? e.message : "Error desconocido";
+      setPdfStatus({ kind: "failed", reason });
+      toast.error("No se pudo generar el reporte simplificado", { description: reason });
+    }
+  };
+
+
+
   const confirmPdfOk = () => {
     if (pdfStatus.kind !== "awaiting") return;
     setPdfStatus({ kind: "confirmed", method: pdfStatus.method, fileName: pdfStatus.fileName });
@@ -262,10 +300,24 @@ function StatsPage() {
         <Button asChild variant="ghost" size="sm">
           <Link to="/matches/$id" params={{ id: match.id }}><ArrowLeft className="size-4" /> Volver al partido</Link>
         </Button>
-        <Button size="sm" onClick={handleDownloadPdf} disabled={pdfStatus.kind === "generating"}>
-          <Download className="size-4" /> {pdfStatus.kind === "generating" ? "Generando…" : "Descargar PDF"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" disabled={pdfStatus.kind === "generating"}>
+              <Download className="size-4" /> {pdfStatus.kind === "generating" ? "Generando…" : "Descargar reporte"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Descargar reporte</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => { void handleDownloadPdf(); }}>
+              📄 Reporte oficial
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => { void handleDownloadSimplified(); }}>
+              📊 Reporte simplificado
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
 
       {pdfStatus.kind === "awaiting" && (
         <div className="mb-4 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
