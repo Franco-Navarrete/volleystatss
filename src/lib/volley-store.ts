@@ -740,7 +740,25 @@ function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
   return playerSide;
 }
 
+/**
+ * Normaliza una alineación: quita vacíos, elimina ids duplicados (un jugador
+ * no puede ocupar dos zonas) y recorta a 6 posiciones.
+ */
+export function sanitizeLineup(lineup: (string | null | undefined)[] | undefined): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of lineup ?? []) {
+    const id = typeof raw === "string" ? raw.trim() : "";
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length === 6) break;
+  }
+  return out;
+}
+
 function replayMatch(m: Match): {
+
   sets: MatchSet[];
   currentSet: number;
   status: MatchStatus;
