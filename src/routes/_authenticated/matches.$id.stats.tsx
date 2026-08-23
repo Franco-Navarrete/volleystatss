@@ -14,6 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, Crown, Download, ExternalLink, Shield, Target, Trophy, Zap, Sparkles } from "lucide-react";
 import { downloadMatchPdf, openPdfDataUrlInNewTab } from "@/lib/match-pdf";
+import { downloadSimplifiedMatchPdf } from "@/lib/simplified-pdf";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ReclassifyEventsPanel } from "@/components/ReclassifyEventsPanel";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
