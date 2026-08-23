@@ -234,6 +234,8 @@ export interface PointEvent {
   blockAssistIds?: string[];
   /** Coach Mode bloqueo: tipo de bloqueo (solo/double/triple). */
   blockKind?: "solo" | "double" | "triple";
+  /** Jugador rival (zona 2/3/4) que bloqueó este ataque. No afecta rotación. */
+  rivalBlockerId?: string;
 }
 
 
@@ -383,6 +385,8 @@ export interface SettingEvent {
   /** Dirección 1..9 en la cancha rival (modo Entrenador). */
   attackDirection?: AttackDirection;
   attackSubzone?: AttackSubzone;
+  /** Jugador rival (zona 2/3/4) que bloqueó este ataque. */
+  rivalBlockerId?: string;
   setNumber: number;
   timestamp: number;
 }
@@ -408,6 +412,8 @@ export interface AttackAttemptEvent {
   attackSubzone?: AttackSubzone;
   /** true si es un contraataque neutro; por defecto false (ataque de rotación). */
   isCounter?: boolean;
+  /** Jugador rival (zona 2/3/4) que bloqueó este ataque. */
+  rivalBlockerId?: string;
 }
 
 // ============= Defensa =============
@@ -599,7 +605,8 @@ interface VolleyState {
     attackType?: import("@/lib/formations/attack-types").AttackType,
     attackDirection?: AttackDirection,
     attackSubzone?: AttackSubzone,
-    finishType?: AttackFinishType
+    finishType?: AttackFinishType,
+    rivalBlockerId?: string
   ) => void;
   /**
    * Coach Mode: registra un punto de bloqueo con 1..3 bloqueadores.
@@ -640,6 +647,7 @@ interface VolleyState {
       attackDirection?: AttackDirection;
       attackSubzone?: AttackSubzone;
       isCounter?: boolean;
+      rivalBlockerId?: string;
     }
   ) => void;
   recordLiberoOut: (matchId: string, side: "A" | "B") => void;
@@ -666,6 +674,7 @@ interface VolleyState {
       attackType?: import("@/lib/formations/attack-types").AttackType;
       attackDirection?: AttackDirection;
       attackSubzone?: AttackSubzone;
+      rivalBlockerId?: string;
     }
   ) => void;
 
@@ -1322,7 +1331,7 @@ export const useVolley = create<VolleyState>()(
           ),
         })),
 
-      recordPoint: (matchId, playerSide, type, playerId, attackZone, attackType, attackDirection, attackSubzone, finishType) => {
+      recordPoint: (matchId, playerSide, type, playerId, attackZone, attackType, attackDirection, attackSubzone, finishType, rivalBlockerId) => {
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId || m.status === "finished") return m;
@@ -1344,6 +1353,7 @@ export const useVolley = create<VolleyState>()(
                 : {}),
               ...(attackSubzone !== undefined && (isAttackType(type) || type === "attack_error") ? { attackSubzone } : {}),
               ...(finishType !== undefined && isAttackType(type) ? { finishType } : {}),
+              ...(rivalBlockerId ? { rivalBlockerId } : {}),
             };
 
 
@@ -1606,6 +1616,7 @@ export const useVolley = create<VolleyState>()(
               ...(payload.attackType ? { attackType: payload.attackType } : {}),
               ...(payload.attackDirection !== undefined ? { attackDirection: payload.attackDirection } : {}),
               ...(payload.attackSubzone !== undefined ? { attackSubzone: payload.attackSubzone } : {}),
+              ...(payload.rivalBlockerId ? { rivalBlockerId: payload.rivalBlockerId } : {}),
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
@@ -1630,6 +1641,7 @@ export const useVolley = create<VolleyState>()(
               ...(opts?.attackDirection !== undefined ? { attackDirection: opts.attackDirection } : {}),
               ...(opts?.attackSubzone !== undefined ? { attackSubzone: opts.attackSubzone } : {}),
               ...(opts?.isCounter ? { isCounter: true } : {}),
+              ...(opts?.rivalBlockerId ? { rivalBlockerId: opts.rivalBlockerId } : {}),
             };
             return { ...m, events: [...m.events, ev] };
           }),
