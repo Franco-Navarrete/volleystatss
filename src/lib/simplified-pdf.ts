@@ -243,6 +243,10 @@ export async function downloadSimplifiedMatchPdf(
       return { set: s.number, saq, ata, bl, erAd, tot: saq + ata + bl + erAd };
     });
 
+  /** Descarta duraciones absurdas (sets abiertos por horas). */
+  const sane = (ms: number | null | undefined) =>
+    ms && ms > 0 && ms < 3 * 60 * 60 * 1000 ? ms : null;
+
   const brkA = setBreakdown("A");
   const brkB = setBreakdown("B");
 
@@ -263,7 +267,7 @@ export async function downloadSimplifiedMatchPdf(
     }
     return {
       set: s.number,
-      duration: s.durationMs ?? getSetDuration(match, s.number),
+      duration: sane(s.durationMs ?? getSetDuration(match, s.number)),
       p8: marks[8] ?? "-",
       p16: marks[16] ?? "-",
       p21: marks[21] ?? "-",
@@ -309,6 +313,10 @@ export async function downloadSimplifiedMatchPdf(
     const V = (v: number) => v * K;
     const FS = (v: number) => doc.setFontSize(Math.max(3.6, v * fk));
 
+    const totalDuration = partials.reduce<number | null>(
+      (acc, p) => (p.duration ? (acc ?? 0) + p.duration : acc),
+      null,
+    );
     const fill = (c: RGB) => doc.setFillColor(c[0], c[1], c[2]);
     const ink = (c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
     const stroke = (c: RGB) => doc.setDrawColor(c[0], c[1], c[2]);
@@ -402,7 +410,7 @@ export async function downloadSimplifiedMatchPdf(
       ["Fecha", r.meta.dateLabel],
       ["Hora", r.meta.timeLabel ? `${r.meta.timeLabel} hs` : "-"],
       ["Ciudad", r.meta.venue ?? "-"],
-      ["Duración", r.duration ? formatDurationMs(r.duration.totalMs) : "-"],
+      ["Duración", totalDuration !== null ? formatDurationMs(totalDuration) : "-"],
       ["Sets", `${r.score.a} - ${r.score.b}`],
     ];
     infoRows.forEach(([k, v], i) => {
@@ -725,7 +733,7 @@ export async function downloadSimplifiedMatchPdf(
 
     // ═══════════ Referencias ═══════════
     {
-      const h = V(14);
+      const h = V(17);
       box(M, y, W, h, C.zebra);
       doc.setFont("helvetica", "bold");
       FS(5.4);
@@ -761,7 +769,7 @@ export async function downloadSimplifiedMatchPdf(
   const available = pageH - 10 - top;
   const natural = Math.max(1, render(probe, 1) - top);
   const raw = available / natural;
-  const K = raw >= 1 ? Math.min(1.15, raw) : Math.max(0.45, raw);
+  const K = raw >= 1 ? Math.min(1.4, raw) : Math.max(0.45, raw);
 
   const doc = K === 1 ? probe : new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   if (K !== 1) render(doc, K);
