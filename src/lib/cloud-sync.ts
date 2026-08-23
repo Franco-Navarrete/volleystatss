@@ -65,10 +65,20 @@ async function saveToCloud(userId: string) {
     cloud?.leagues?.filter((league) => !isDeletedLeagueCandidate(league)),
   );
   const validLeagueIds = new Set(leagues.map((league) => league.id));
-  const cleanTeamLeague = (team: Team): Team =>
-    team.leagueId && !validLeagueIds.has(team.leagueId)
-      ? { ...team, leagueId: undefined }
-      : team;
+  const dedupPlayers = (team: Team): Team => {
+    const seen = new Set<string>();
+    const players = (team.players ?? []).filter((p) => {
+      if (!p?.id || seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+    return players.length === (team.players ?? []).length ? team : { ...team, players };
+  };
+  const cleanTeamLeague = (team: Team): Team => {
+    const t = dedupPlayers(team);
+    return t.leagueId && !validLeagueIds.has(t.leagueId) ? { ...t, leagueId: undefined } : t;
+  };
+
   const teams = mergeById(s.teams.map(cleanTeamLeague), cloud?.teams).map(cleanTeamLeague);
 
   const dedupCI = (arr: string[]) => {
