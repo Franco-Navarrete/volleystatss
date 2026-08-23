@@ -707,6 +707,29 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const LIBERO_EXIT_INDEXES = new Set([1, 2, 3]);
 const BACK_ROW_REPLACE_PRIORITY = [0, 5, 4] as const;
 
+/** Configuración de líbero por set: qué líbero juega y a qué central reemplaza. */
+export interface LiberoSetConfig {
+  liberoId: string;
+  centralId: string;
+}
+
+export const liberoConfigKey = (side: "A" | "B", setNumber: number) =>
+  `liberoConfig${side}_set${setNumber}`;
+
+/** Devuelve la configuración de líbero guardada para (lado, set), o null. */
+export function getLiberoSetConfig(
+  match: { metadata?: Record<string, any> } | undefined | null,
+  side: "A" | "B",
+  setNumber: number,
+): LiberoSetConfig | null {
+  const raw = match?.metadata?.[liberoConfigKey(side, setNumber)];
+  if (!raw || typeof raw !== "object") return null;
+  const { liberoId, centralId } = raw as Partial<LiberoSetConfig>;
+  if (!liberoId || !centralId || liberoId === centralId) return null;
+  return { liberoId, centralId };
+}
+
+
 /** Rotate clockwise: position 2 -> 1, 3 -> 2, etc. */
 function rotateClockwise(arr: string[]): string[] {
   if (arr.length !== 6) return [...arr];
