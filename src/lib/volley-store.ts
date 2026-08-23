@@ -1026,10 +1026,13 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
       const team = teams.find((t) => t.id === (side === "A" ? next.teamAId : next.teamBId));
       if (!team) continue;
       
+      const cfg = getLiberoSetConfig(next, side, next.currentSet);
       const libIds = (
-        side === "A"
-          ? [next.liberoA1Id, next.liberoA2Id]
-          : [next.liberoB1Id, next.liberoB2Id]
+        cfg
+          ? [cfg.liberoId]
+          : side === "A"
+            ? [next.liberoA1Id, next.liberoA2Id]
+            : [next.liberoB1Id, next.liberoB2Id]
       ).filter(Boolean) as string[];
       // Si no hay líberos asignados para este equipo en el partido, abortamos.
       if (libIds.length === 0) continue;
@@ -1045,6 +1048,14 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
       let replacedId: string | null = null;
       for (const i of backIdxs) {
         const playerId = onCourt[i];
+        // Con configuración por set, el líbero SOLO entra por su central asociado.
+        if (cfg) {
+          if (playerId === cfg.centralId) {
+            replacedId = playerId;
+            break;
+          }
+          continue;
+        }
         const p = team.players.find((pp) => pp.id === playerId);
         // REGLA: Solo reemplaza a centrales (CENTRAL)
         if (p?.position === "central") {
@@ -1052,6 +1063,7 @@ function applyAutoLibero(match: Match, teams: Team[]): Match {
           break;
         }
       }
+
       
       if (!replacedId) continue;
       
