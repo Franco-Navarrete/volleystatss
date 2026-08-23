@@ -181,31 +181,24 @@ function computeZoneAssignments(
   onCourt: string[],
   players: Player[],
 ): Record<SettingAttackZone, string | undefined> {
-  const byId = (id: string | undefined) => players.find((p) => p.id === id);
-  const front = [onCourt[1], onCourt[2], onCourt[3]].map(byId).filter((p): p is Player => !!p);
-  const back = [onCourt[0], onCourt[4], onCourt[5]].map(byId).filter((p): p is Player => !!p);
-  const findOne = (arr: Player[], pos: Player["position"]) => arr.find((p) => p.position === pos);
-  const puntaFront = findOne(front, "punta");
-  const centralFront = findOne(front, "central");
-  const opFront = findOne(front, "opuesto");
-  const setterFront = findOne(front, "armador");
-  const puntaBack = findOne(back, "punta");
-  const centralBack = findOne(back, "central") ?? findOne(back, "libero");
-  const opBack = findOne(back, "opuesto");
-  const setterBack = findOne(back, "armador");
-  const z4 = puntaFront?.id ?? onCourt[3];
-  const z3 = centralFront?.id ?? onCourt[2];
-  const pipe = puntaBack?.id ?? onCourt[5];
-  const back5 = centralBack?.id ?? onCourt[4];
-  let z2: string | undefined;
-  let back1: string | undefined;
-  if (opFront) {
-    z2 = opFront.id;
-    back1 = setterFront?.id ?? setterBack?.id ?? opBack?.id ?? onCourt[0];
-  } else {
-    z2 = setterFront?.id ?? onCourt[1];
-    back1 = opBack?.id ?? setterBack?.id ?? onCourt[0];
-  }
+  const validIds = new Set(players.map((player) => player.id));
+  const seen = new Set<string>();
+  const playerAt = (index: number): string | undefined => {
+    const id = onCourt[index];
+    if (!id || !validIds.has(id) || seen.has(id)) return undefined;
+    seen.add(id);
+    return id;
+  };
+
+  // Cada opción representa una posición física única de la rotación actual.
+  // No se reasignan jugadoras por rol porque eso podía mostrar a la misma
+  // atacante simultáneamente, por ejemplo, en Z4 y Z2.
+  const back1 = playerAt(0);
+  const z2 = playerAt(1);
+  const z3 = playerAt(2);
+  const z4 = playerAt(3);
+  const back5 = playerAt(4);
+  const pipe = playerAt(5);
   return { back1, z2, z3, z4, back5, pipe, back: back1 };
 }
 
