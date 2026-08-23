@@ -525,6 +525,7 @@ export function buildSimplifiedReport(
     momentum,
     streaks,
     rotations,
+    setter,
     serve,
     reception,
     attack,
