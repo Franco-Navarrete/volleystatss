@@ -80,7 +80,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(200, 200, 210);
-  const dateStr = match.date ? new Date(match.date).toLocaleDateString("es-AR") : "";
+  const dateStr = match.scheduledAt ? new Date(match.scheduledAt).toLocaleDateString("es-AR") : "";
   doc.text(
     [dateStr, match.status === "finished" ? "Resultado final" : "En progreso"]
       .filter(Boolean)
