@@ -431,35 +431,149 @@ export async function downloadSimplifiedMatchPdf(
     y += h + 4;
   }
 
-  // ─────────────── Conclusiones ───────────────
+  // ─────────────── Ataque y recepción por jugador ───────────────
   {
-    const items: { color: RGB; text: string }[] = r.summary
-      .slice(0, 4)
-      .map((s) => ({ color: s.tone === "good" ? C.good : s.tone === "bad" ? C.bad : C.warn, text: s.text }));
-    for (const s of r.tactical.situation.slice(0, 3)) items.push({ color: C.warn, text: `Situación: ${s}` });
-    for (const s of r.tactical.recommendations.slice(0, 3)) items.push({ color: C.good, text: `Recomendación: ${s}` });
-    if (r.setter) items.push({ color: C.muted, text: `Armador: ${r.setter.conclusion}` });
-    if (r.momentum) items.push({ color: C.muted, text: r.momentum.conclusion });
-    if (items.length === 0) items.push({ color: C.muted, text: "Sin conclusiones automáticas disponibles." });
-    const wrapped = items.map((it) => ({ color: it.color, lines: doc.splitTextToSize(it.text, W - 12) as string[] }));
-    const lines = wrapped.reduce((n, x) => n + x.lines.length, 0);
-    const available = pageH - 10 - y;
-    const needed = 12 + lines * 3.8;
-    const h = available > needed ? available : Math.max(14, Math.min(needed, available));
-    const inner = card(M, y, W, h, "Conclusiones");
-    let ry = inner;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.8);
-    for (const it of wrapped) {
-      if (ry + it.lines.length * 3.8 > y + h - 1) break;
-      setFill(it.color);
-      doc.circle(M + 5, ry - 1, 0.9, "F");
-      setText(C.text);
-      doc.text(it.lines, M + 8, ry);
-      ry += it.lines.length * 3.8;
-    }
-    y += h;
+    const stats = computeMatchStats(match);
+    const enrichTeam = (team: Team) =>
+      [...stats.players.values()]
+        .filter((p) => team.players.some((tp) => tp.id === p.playerId))
+        .map((p) => {
+          const tp = team.players.find((x) => x.id === p.playerId)!;
+          return { ...p, name: tp.name, number: tp.number };
+        })
+        .filter((p) => p.total > 0 || p.serveError + p.attackError + p.unforcedError > 0)
+        .sort((a, b) => b.total - a.total);
+
+    const recRows = (team: Team, side: "A" | "B") =>
+      [...computeReceptionStats(match.events, side).values()]
+        .filter((r) => r.total > 0 && team.players.some((p) => p.id === r.playerId))
+        .map((r) => {
+          const tp = team.players.find((p) => p.id === r.playerId)!;
+          return { ...r, name: tp.name, number: tp.number };
+        })
+        .sort((a, b) => b.total - a.total);
+
+    /** Tabla compacta genérica. */
+    const table = (
+      x: number,
+      ty: number,
+      w: number,
+      title: string,
+      accent: RGB,
+      head: string[],
+      body: (string | number)[][],
+      widths: number[],
+    ) => {
+      const rowH = 3.8;
+      const h = 12 + Math.max(1, body.length) * rowH;
+      const inner = card(x, ty, w, h, null);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.6);
+      setText(accent);
+      doc.text(title.toUpperCase(), x + 3.5, ty + 4.4, { maxWidth: w - 7 });
+      const total = widths.reduce((s, v) => s + v, 0);
+      const colX: number[] = [];
+      let acc = x + 3.5;
+      for (const cw of widths) {
+        colX.push(acc);
+        acc += ((w - 7) * cw) / total;
+      }
+      doc.setFontSize(5.4);
+      setText(C.muted);
+      head.forEach((hd, i) => doc.text(hd, colX[i], inner - 0.5, { align: i <= 1 ? "left" : "center" }));
+      let ry = inner + 3.4;
+      if (body.length === 0) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6);
+        doc.text("Sin registros", colX[0], ry);
+      }
+      for (const row of body) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6);
+        row.forEach((cell, i) => {
+          const isLast = i === row.length - 1;
+          setText(i === 1 ? C.text : isLast ? accent : C.muted);
+          if (isLast) doc.setFont("helvetica", "bold");
+          const txt = String(cell);
+          doc.text(
+            i === 1 ? doc.splitTextToSize(txt, ((w - 7) * widths[1]) / total - 1)[0] : txt,
+            colX[i],
+            ry,
+            { align: i <= 1 ? "left" : "center" },
+          );
+          if (isLast) doc.setFont("helvetica", "normal");
+        });
+        ry += rowH;
+      }
+      return h;
+    };
+
+    const teams: { team: Team; side: "A" | "B"; accent: RGB }[] = [
+      { team: teamA, side: "A", accent: C.home },
+      { team: teamB, side: "B", accent: C.away },
+    ];
+
+    const colW = (W - 4) / 2;
+    // Fila 1: jugadores (ataque / puntos)
+    let maxH = 0;
+    teams.forEach((t, i) => {
+      const rows = enrichTeam(t.team).map((p) => [
+        p.number,
+        p.name,
+        p.attack,
+        p.rotationAttack,
+        p.counterAttack,
+        p.block,
+        p.ace,
+        p.serveError,
+        p.attackError,
+        p.unforcedError,
+        p.total,
+      ]);
+      const h = table(
+        M + i * (colW + 4),
+        y,
+        colW,
+        `${t.team.name} · Jugadores`,
+        t.accent,
+        ["#", "Jugador", "ATA", "A.R", "C.A", "BLO", "S", "E.S", "E.A", "ENF", "TOT"],
+        rows,
+        [4, 20, 5, 5, 5, 5, 4, 5, 5, 5, 5],
+      );
+      maxH = Math.max(maxH, h);
+    });
+    y += maxH + 4;
+
+    // Fila 2: recepción
+    maxH = 0;
+    teams.forEach((t, i) => {
+      const rows = recRows(t.team, t.side).map((r) => [
+        r.number,
+        r.name,
+        r.doublePositive,
+        r.positive,
+        r.neutral,
+        r.negative,
+        r.doubleNegative + r.overpass,
+        r.total,
+        `${Math.round(r.positivity)}%`,
+        `${Math.round(r.efficiency)}%`,
+      ]);
+      const h = table(
+        M + i * (colW + 4),
+        y,
+        colW,
+        `${t.team.name} · Recepción`,
+        t.accent,
+        ["#", "Receptor", "#", "+", "0", "-", "=", "Tot", "Efect%", "Efic%"],
+        rows,
+        [4, 20, 4, 4, 4, 4, 4, 5, 7, 7],
+      );
+      maxH = Math.max(maxH, h);
+    });
+    y += maxH;
   }
+
 
   // ─────────────── Pie ───────────────
   doc.setFont("helvetica", "normal");
