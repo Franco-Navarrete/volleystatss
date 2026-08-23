@@ -396,15 +396,20 @@ export async function downloadSimplifiedMatchPdf(
     if (p.topServe.length) listBlocks.push({ title: "Mejor saque", items: p.topServe.map((x) => `${x.label} — ${x.value} aces`) });
     if (p.topReception.length) listBlocks.push({ title: "Mejor recepción", items: p.topReception.map((x) => `${x.label} — ${x.value}% (${x.detail})`) });
 
-    const maxItems = Math.max(0, ...listBlocks.map((b) => b.items.length));
-    const height = 16 + (p.mvp ? 18 : 0) + Math.ceil(listBlocks.length / 2) * (10 + maxItems * 5);
+    // Altura por fila de dos columnas (según el bloque más largo de esa fila).
+    const rowHeights: number[] = [];
+    for (let i = 0; i < listBlocks.length; i += 2) {
+      const items = Math.max(listBlocks[i].items.length, listBlocks[i + 1]?.items.length ?? 0);
+      rowHeights.push(9 + items * 5);
+    }
+    const height = 14 + (p.mvp ? 18 : 0) + rowHeights.reduce((a, b) => a + b, 0);
     const inner = card("Jugadores destacados", height);
     let ry = inner;
     if (p.mvp) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       setText(C.home);
-      doc.text(`★ ${p.mvp.label}`, M + 6, ry + 3);
+      doc.text(`MVP · ${p.mvp.label}`, M + 6, ry + 3);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       setText(C.muted);
@@ -422,7 +427,7 @@ export async function downloadSimplifiedMatchPdf(
       const col = i % 2;
       const rowIdx = Math.floor(i / 2);
       const bx = M + 6 + col * (colW + 8);
-      const by = ry + rowIdx * (10 + maxItems * 5);
+      const by = ry + rowHeights.slice(0, rowIdx).reduce((a, b) => a + b, 0);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7.5);
       setText(C.muted);
