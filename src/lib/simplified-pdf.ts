@@ -1,33 +1,33 @@
 import type { Match, Player, Team } from "@/lib/volley-store";
-import { computeMatchStats, computeReceptionStats, formatDurationMs } from "@/lib/volley-store";
+import {
+  computeReceptionStats,
+  formatDurationMs,
+  getSetDuration,
+} from "@/lib/volley-store";
 import { buildSimplifiedReport, type SimplifiedReport } from "@/lib/simplified-report";
 
 /**
- * "Reporte simplificado" = planilla técnica completa de UNA sola hoja A4
- * horizontal, inspirada en la estructura de Data Volley pero con el lenguaje
- * visual de RALLY (fondo oscuro, naranja local / azul visitante, tablas densas).
+ * "Reporte simplificado" = planilla técnica estilo Data Volley.
  *
- * Se dibuja en dos pasadas: la primera mide la altura natural y la segunda
- * aplica un factor de compresión K para garantizar una única página sin perder
- * información. Todos los datos provienen de los eventos ya registrados.
+ * Una sola hoja A4 vertical, fondo blanco, cajas con borde fino y cabeceras
+ * agrupadas (Puntos / Saque / Recepción / Ataque / BL), tabla por equipo con
+ * totales, parciales por set y caja de referencias al pie.
+ *
+ * No inventa datos: todo sale de los eventos registrados en el partido.
  */
 
 type RGB = [number, number, number];
 
 const C = {
-  bg: [15, 20, 32] as RGB,
-  card: [23, 30, 46] as RGB,
-  cardAlt: [30, 39, 58] as RGB,
-  row: [28, 36, 54] as RGB,
-  border: [51, 65, 85] as RGB,
-  dim: [90, 105, 130] as RGB,
-  text: [232, 237, 245] as RGB,
-  muted: [148, 163, 184] as RGB,
-  home: [249, 115, 22] as RGB,
-  away: [59, 130, 246] as RGB,
-  good: [34, 197, 94] as RGB,
-  bad: [239, 68, 68] as RGB,
-  warn: [245, 158, 11] as RGB,
+  ink: [17, 24, 39] as RGB,
+  soft: [90, 100, 118] as RGB,
+  line: [110, 120, 135] as RGB,
+  hair: [175, 183, 195] as RGB,
+  head: [226, 232, 240] as RGB,
+  zebra: [243, 246, 250] as RGB,
+  home: [190, 30, 45] as RGB,
+  away: [23, 64, 139] as RGB,
+  white: [255, 255, 255] as RGB,
 };
 
 export type SimplifiedPdfResult = {
@@ -38,8 +38,6 @@ export type SimplifiedPdfResult = {
 };
 
 const safe = (s: string) => s.replace(/[/\\:*?"<>|]/g, "-").replace(/\s+/g, "_");
-const n0 = (x: number | null | undefined, suffix = "") =>
-  x === null || x === undefined ? "-" : `${Math.round(x)}${suffix}`;
 
 const POS_ABBR: Record<string, string> = {
   punta: "P",
@@ -53,71 +51,174 @@ const POS_ABBR: Record<string, string> = {
 interface PlayerRow {
   number: number;
   name: string;
-  sets: string;
   pos: string;
-  ata: number;
-  ar: number;
-  ca: number;
-  ea: number;
-  ace: number;
-  es: number;
-  blo: number;
-  rec: number;
-  posPct: number | null;
-  perPct: number | null;
-  err: number;
-  pts: number;
+  sets: number[];
+  ptsTot: number;
+  bp: number;
+  gp: number;
+  srvTot: number;
+  srvErr: number;
+  srvPts: number;
+  recTot: number;
+  recErr: number;
+  recPos: number | null;
+  recPerf: number | null;
+  atkTot: number;
+  atkErr: number;
+  atkBl: number;
+  atkPts: number;
+  atkPct: number | null;
+  blPts: number;
 }
+
+type SideKey = "A" | "B";
 
 export async function downloadSimplifiedMatchPdf(
   match: Match,
   teamA: Team,
   teamB: Team,
-  opts: { competition?: string | null; ownSide?: "A" | "B" } = {},
+  opts: { competition?: string | null; ownSide?: SideKey } = {},
 ): Promise<SimplifiedPdfResult> {
   const { jsPDF } = await import("jspdf");
   const r = buildSimplifiedReport(match, teamA, teamB, opts);
 
-  const stats = computeMatchStats(match);
-
-  /** Sets en los que el jugador registró alguna acción (dato real). */
-  const setsOf = (playerId: string) => {
-    const set = new Set<number>();
-    for (const ev of match.events) {
-      if ("kind" in ev) continue;
-      if (ev.playerId === playerId) set.add(ev.setNumber);
+  // ── Secuencia de saque (para break points) ───────────────
+  const pointEvents = match.events.filter(
+    (e): e is Extract<Match["events"][number], { scoringSide: SideKey }> => !("kind" in e),
+  );
+  const servingOf = new Map<string, SideKey>();
+  {
+    const bySet = new Map<number, typeof pointEvents>();
+    for (const p of pointEvents) {
+      const arr = bySet.get(p.setNumber) ?? [];
+      arr.push(p);
+      bySet.set(p.setNumber, arr);
     }
-    return [...set].sort((a, b) => a - b).join(" ");
-  };
+    for (const [setNum, evs] of [...bySet.entries()].sort((a, b) => a[0] - b[0])) {
+      const sorted = [...evs].sort((a, b) => a.timestamp - b.timestamp);
+      let serving: SideKey =
+        setNum % 2 === 1
+          ? match.initialServingSide
+          : match.initialServingSide === "A"
+            ? "B"
+            : "A";
+      for (const ev of sorted) {
+        servingOf.set(ev.id, serving);
+        if (ev.scoringSide !== serving) serving = ev.scoringSide;
+      }
+    }
+  }
 
-  const buildRows = (team: Team, side: "A" | "B"): PlayerRow[] => {
+  const buildRows = (team: Team, side: SideKey): PlayerRow[] => {
     const rec = computeReceptionStats(match.events, side);
-    const rows = team.players.map((p: Player) => {
-      const s = stats.players.get(p.id);
-      const rc = rec.get(p.id);
-      return {
-        number: p.number,
-        name: p.name,
-        sets: setsOf(p.id),
-        pos: p.position ? (POS_ABBR[p.position] ?? "-") : "-",
-        ata: s?.attack ?? 0,
-        ar: s?.rotationAttack ?? 0,
-        ca: s?.counterAttack ?? 0,
-        ea: s?.attackError ?? 0,
-        ace: s?.ace ?? 0,
-        es: s?.serveError ?? 0,
-        blo: s?.block ?? 0,
-        rec: rc?.total ?? 0,
-        posPct: rc && rc.total > 0 ? rc.positivity : null,
-        perPct:
-          rc && rc.total > 0 ? (rc.doublePositive / rc.total) * 100 : null,
-        err: (s?.unforcedError ?? 0) + (s?.blockError ?? 0),
-        pts: s?.total ?? 0,
-      } satisfies PlayerRow;
-    });
+    const base = new Map<string, PlayerRow>();
+    const ensure = (p: Player): PlayerRow => {
+      let row = base.get(p.id);
+      if (!row) {
+        row = {
+          number: p.number,
+          name: p.name,
+          pos: p.position ? (POS_ABBR[p.position] ?? "-") : "-",
+          sets: [],
+          ptsTot: 0,
+          bp: 0,
+          gp: 0,
+          srvTot: 0,
+          srvErr: 0,
+          srvPts: 0,
+          recTot: 0,
+          recErr: 0,
+          recPos: null,
+          recPerf: null,
+          atkTot: 0,
+          atkErr: 0,
+          atkBl: 0,
+          atkPts: 0,
+          atkPct: null,
+          blPts: 0,
+        };
+        base.set(p.id, row);
+      }
+      return row;
+    };
+    for (const p of team.players) ensure(p);
+
+    const byId = new Map(team.players.map((p) => [p.id, p]));
+    const touch = (id: string | null | undefined, setNumber: number) => {
+      if (!id) return null;
+      const p = byId.get(id);
+      if (!p) return null;
+      const row = ensure(p);
+      if (!row.sets.includes(setNumber)) row.sets.push(setNumber);
+      return row;
+    };
+
+    const errors = new Map<string, number>();
+    for (const ev of match.events) {
+      if ("kind" in ev) {
+        if (ev.kind === "attackAttempt" && ev.side === side) {
+          const row = touch(ev.playerId, ev.setNumber);
+          if (row) row.atkTot++;
+        }
+        if (ev.kind === "reception" && ev.side === side) touch(ev.playerId, ev.setNumber);
+        continue;
+      }
+      // Ataque bloqueado por el rival: se le cuenta al atacante si se registró.
+      if (ev.type === "block" && ev.scoringSide !== side && ev.playerSide === side) {
+        const row = touch(ev.playerId, ev.setNumber);
+        if (row) {
+          row.atkTot++;
+          row.atkBl++;
+        }
+      }
+      if (ev.scoringSide === side && ev.playerSide === side) {
+        const row = touch(ev.playerId, ev.setNumber);
+        if (row) {
+          row.ptsTot++;
+          if (servingOf.get(ev.id) !== side) row.bp++;
+          if (ev.type === "ace") {
+            row.srvPts++;
+            row.srvTot++;
+          }
+          if (ev.type === "block") row.blPts++;
+          if (ev.type === "attack" || ev.type === "counter_attack" || ev.type === "rotation_attack") {
+            row.atkPts++;
+            row.atkTot++;
+          }
+        }
+      }
+      if (ev.playerSide === side && ev.scoringSide !== side) {
+        const row = touch(ev.playerId, ev.setNumber);
+        if (row) {
+          errors.set(ev.playerId!, (errors.get(ev.playerId!) ?? 0) + 1);
+          if (ev.type === "serve_error") {
+            row.srvErr++;
+            row.srvTot++;
+          }
+          if (ev.type === "attack_error") {
+            row.atkErr++;
+            row.atkTot++;
+          }
+        }
+      }
+    }
+
+    for (const [id, row] of base) {
+      const rc = rec.get(id);
+      if (rc) {
+        row.recTot = rc.total;
+        row.recErr = rc.doubleNegative + rc.overpass;
+        row.recPos = rc.total > 0 ? rc.positivity : null;
+        row.recPerf = rc.total > 0 ? (rc.doublePositive / rc.total) * 100 : null;
+      }
+      row.gp = row.ptsTot - (errors.get(id) ?? 0);
+      row.atkPct = row.atkTot > 0 ? (row.atkPts / row.atkTot) * 100 : null;
+      row.sets.sort((a, b) => a - b);
+    }
+
+    const rows = [...base.values()];
     const active = rows.filter(
-      (x) =>
-        x.pts > 0 || x.rec > 0 || x.err > 0 || x.ea > 0 || x.es > 0 || x.sets.length > 0,
+      (x) => x.sets.length > 0 || x.ptsTot > 0 || x.recTot > 0 || x.atkTot > 0,
     );
     return (active.length > 0 ? active : rows).sort((a, b) => a.number - b.number);
   };
@@ -125,617 +226,552 @@ export async function downloadSimplifiedMatchPdf(
   const rowsA = buildRows(teamA, "A");
   const rowsB = buildRows(teamB, "B");
 
+  /** Puntos ganados por set desglosados por origen (Saq / Ata / Bl / Er.Ad). */
+  const setBreakdown = (side: SideKey) =>
+    r.sets.map((s) => {
+      let saq = 0;
+      let ata = 0;
+      let bl = 0;
+      let erAd = 0;
+      for (const ev of pointEvents) {
+        if (ev.setNumber !== s.number || ev.scoringSide !== side) continue;
+        if (ev.type === "ace") saq++;
+        else if (ev.type === "attack" || ev.type === "counter_attack" || ev.type === "rotation_attack") ata++;
+        else if (ev.type === "block") bl++;
+        else erAd++;
+      }
+      return { set: s.number, saq, ata, bl, erAd, tot: saq + ata + bl + erAd };
+    });
+
+  /** Descarta duraciones absurdas (sets abiertos por horas). */
+  const sane = (ms: number | null | undefined) =>
+    ms && ms > 0 && ms < 3 * 60 * 60 * 1000 ? ms : null;
+
+  const brkA = setBreakdown("A");
+  const brkB = setBreakdown("B");
+
+  /** Parciales 8 / 16 / 21 por set (como Data Volley). */
+  const partials = r.sets.map((s) => {
+    const evs = pointEvents
+      .filter((e) => e.setNumber === s.number)
+      .sort((a, b) => a.timestamp - b.timestamp);
+    let a = 0;
+    let b = 0;
+    const marks: Record<number, string> = {};
+    for (const ev of evs) {
+      if (ev.scoringSide === "A") a++;
+      else b++;
+      for (const t of [8, 16, 21]) {
+        if (!marks[t] && (a === t || b === t)) marks[t] = `${a}-${b}`;
+      }
+    }
+    return {
+      set: s.number,
+      duration: sane(s.durationMs ?? getSetDuration(match, s.number)),
+      p8: marks[8] ?? "-",
+      p16: marks[16] ?? "-",
+      p21: marks[21] ?? "-",
+      result: `${s.scoreA}-${s.scoreB}`,
+      winner: s.winner,
+    };
+  });
+
   const totalsOf = (rows: PlayerRow[]) =>
     rows.reduce(
-      (acc, x) => ({
-        ata: acc.ata + x.ata,
-        ar: acc.ar + x.ar,
-        ca: acc.ca + x.ca,
-        ea: acc.ea + x.ea,
-        ace: acc.ace + x.ace,
-        es: acc.es + x.es,
-        blo: acc.blo + x.blo,
-        rec: acc.rec + x.rec,
-        err: acc.err + x.err,
-        pts: acc.pts + x.pts,
+      (t, x) => ({
+        ptsTot: t.ptsTot + x.ptsTot,
+        bp: t.bp + x.bp,
+        gp: t.gp + x.gp,
+        srvTot: t.srvTot + x.srvTot,
+        srvErr: t.srvErr + x.srvErr,
+        srvPts: t.srvPts + x.srvPts,
+        recTot: t.recTot + x.recTot,
+        recErr: t.recErr + x.recErr,
+        recPos: t.recPos + (x.recPos ?? 0) * x.recTot,
+        recPerf: t.recPerf + (x.recPerf ?? 0) * x.recTot,
+        atkTot: t.atkTot + x.atkTot,
+        atkErr: t.atkErr + x.atkErr,
+        atkBl: t.atkBl + x.atkBl,
+        atkPts: t.atkPts + x.atkPts,
+        blPts: t.blPts + x.blPts,
       }),
-      { ata: 0, ar: 0, ca: 0, ea: 0, ace: 0, es: 0, blo: 0, rec: 0, err: 0, pts: 0 },
+      {
+        ptsTot: 0, bp: 0, gp: 0, srvTot: 0, srvErr: 0, srvPts: 0,
+        recTot: 0, recErr: 0, recPos: 0, recPerf: 0,
+        atkTot: 0, atkErr: 0, atkBl: 0, atkPts: 0, blPts: 0,
+      },
     );
 
+  // ─────────────────────────────────────────────────────────
   const render = (doc: any, K: number): number => {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const M = 7;
+    const M = 6;
     const W = pageW - M * 2;
-    const HEAD = 26;
 
-    const fk = Math.max(0.55, Math.min(1.18, K));
+    const fk = Math.max(0.62, Math.min(1.1, K));
     const V = (v: number) => v * K;
-    const FS = (v: number) => doc.setFontSize(Math.max(3.4, v * fk));
+    const FS = (v: number) => doc.setFontSize(Math.max(3.6, v * fk));
 
-    const setFill = (c: RGB) => doc.setFillColor(c[0], c[1], c[2]);
-    const setText = (c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
-    const setStroke = (c: RGB) => doc.setDrawColor(c[0], c[1], c[2]);
+    const totalDuration = partials.reduce<number | null>(
+      (acc, p) => (p.duration ? (acc ?? 0) + p.duration : acc),
+      null,
+    );
+    const fill = (c: RGB) => doc.setFillColor(c[0], c[1], c[2]);
+    const ink = (c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
+    const stroke = (c: RGB) => doc.setDrawColor(c[0], c[1], c[2]);
 
-    setFill(C.bg);
+    fill(C.white);
     doc.rect(0, 0, pageW, pageH, "F");
 
-    const card = (x: number, y: number, w: number, h: number, title: string | null, accent?: RGB) => {
-      setFill(C.card);
-      setStroke(C.border);
-      doc.setLineWidth(0.2);
-      doc.roundedRect(x, y, w, h, 1.6, 1.6, "FD");
-      if (!title) return y + V(4);
-      doc.setFont("helvetica", "bold");
-      FS(6.2);
-      setText(accent ?? C.muted);
-      doc.text(title.toUpperCase(), x + 2.6, y + V(4), { maxWidth: w - 5 });
-      return y + V(8);
+    const box = (x: number, y: number, w: number, h: number, bg?: RGB) => {
+      if (bg) {
+        fill(bg);
+        doc.rect(x, y, w, h, "F");
+      }
+      stroke(C.line);
+      doc.setLineWidth(0.35);
+      doc.rect(x, y, w, h, "S");
     };
 
-    // ─────────────── Encabezado ───────────────
-    setFill(C.cardAlt);
-    doc.rect(0, 0, pageW, 22, "F");
-    setFill(C.home);
-    doc.rect(0, 0, pageW, 1.2, "F");
+    const label = (txt: string, x: number, y: number, size = 5.6, bold = false, col: RGB = C.soft) => {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      FS(size);
+      ink(col);
+      doc.text(txt, x, y);
+    };
 
+    // ═══════════ Cabecera ═══════════
+    const headH = V(20);
+    // Logo / marca
+    box(M, M, V(26), headH, C.head);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    setText(C.home);
-    doc.text("RALLY", M, 8.5);
+    FS(11);
+    ink(C.home);
+    doc.text("RALLY", M + V(13), M + headH / 2 - V(1), { align: "center" });
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.4);
-    setText(C.muted);
-    doc.text("REPORTE SIMPLIFICADO — INFORME TÉCNICO", M + 18, 8.5);
+    FS(4.4);
+    ink(C.soft);
+    doc.text("VOLLEY STATS", M + V(13), M + headH / 2 + V(3.2), { align: "center" });
 
+    // Título competición
+    const titleX = M + V(26);
+    const titleW = W * 0.42;
+    box(titleX, M, titleW, headH);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    setText(C.text);
-    doc.text(`${r.meta.teamAName}  vs  ${r.meta.teamBName}`, M, 15);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.2);
-    setText(C.muted);
-    const metaBits = [
-      r.meta.dateLabel,
-      r.meta.timeLabel ? `${r.meta.timeLabel} hs` : null,
-      r.meta.competition,
-      r.meta.category ? `Cat. ${r.meta.category}` : null,
-      r.meta.venue,
-      r.duration ? `Duración ${formatDurationMs(r.duration.totalMs)}` : null,
-      r.meta.statusLabel,
-    ].filter(Boolean) as string[];
-    doc.text(metaBits.join("  ·  "), M, 19.5, { maxWidth: pageW * 0.62 });
-
-    // Resultado + parciales (derecha)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(17);
-    setText(C.home);
-    doc.text(String(r.score.a), pageW - M - 12, 12, { align: "right" });
-    setText(C.muted);
-    doc.setFontSize(10);
-    doc.text("-", pageW - M - 8, 11.6, { align: "center" });
-    doc.setFontSize(17);
-    setText(C.away);
-    doc.text(String(r.score.b), pageW - M, 12, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.4);
-    setText(C.muted);
+    FS(9.4);
+    ink(C.ink);
     doc.text(
-      r.sets.map((s) => `${s.scoreA}-${s.scoreB}`).join("  |  ") || "Sin parciales",
-      pageW - M,
-      18,
-      { align: "right" },
+      doc.splitTextToSize(r.meta.competition || "Partido oficial", titleW - 6)[0],
+      titleX + titleW / 2,
+      M + V(6.4),
+      { align: "center" },
     );
+    doc.setFont("helvetica", "italic");
+    FS(6.4);
+    ink(C.soft);
+    doc.text(
+      [r.meta.category ? `Categoría ${r.meta.category}` : null, r.meta.statusLabel]
+        .filter(Boolean)
+        .join(" · "),
+      titleX + titleW / 2,
+      M + V(10.6),
+      { align: "center" },
+    );
+    doc.setFont("helvetica", "bold");
+    FS(7.6);
+    ink(C.ink);
+    doc.text("Tabla", titleX + titleW / 2, M + V(16.4), { align: "center" });
 
-    let y = HEAD;
-
-    // ─────────────── Tabla de sets ───────────────
-    {
-      const h = V(9.5);
-      card(M, y, W, h, null);
-      const cols = Math.max(1, r.sets.length);
-      const cw = (W - 6) / (cols + 1);
+    // Marcador
+    const scoreX = titleX + titleW;
+    const scoreW = pageW - M - scoreX;
+    box(scoreX, M, scoreW, headH);
+    doc.setLineWidth(0.2);
+    stroke(C.hair);
+    doc.line(scoreX, M + headH / 2, scoreX + scoreW, M + headH / 2);
+    const scoreRow = (name: string, val: number, cy: number, col: RGB) => {
       doc.setFont("helvetica", "bold");
-      FS(5.6);
-      setText(C.muted);
-      const ty = y + V(3.6);
-      doc.text("SET", M + 3, ty);
-      doc.text("DURACIÓN", M + 3, y + V(7.2));
-      r.sets.forEach((s, i) => {
-        const x = M + 3 + cw * (i + 1);
-        setText(C.muted);
-        doc.setFont("helvetica", "bold");
-        FS(5.6);
-        doc.text(`SET ${s.number}`, x, ty);
-        doc.setFont("helvetica", "bold");
-        FS(7.4);
-        setText(s.winner === "A" ? C.home : C.muted);
-        doc.text(String(s.scoreA), x + cw * 0.42, ty);
-        setText(C.muted);
-        doc.text("-", x + cw * 0.55, ty);
-        setText(s.winner === "B" ? C.away : C.muted);
-        doc.text(String(s.scoreB), x + cw * 0.62, ty);
-        doc.setFont("helvetica", "normal");
-        FS(5.6);
-        setText(C.muted);
-        doc.text(s.durationMs ? formatDurationMs(s.durationMs) : "-", x, y + V(7.2));
-        setText(s.winner ? (s.winner === "A" ? C.home : C.away) : C.warn);
-        doc.text(
-          s.winner ? (s.winner === "A" ? r.meta.teamAName : r.meta.teamBName) : "En juego",
-          x + cw * 0.42,
-          y + V(7.2),
-          { maxWidth: cw * 0.55 },
-        );
-      });
-      y += h + V(2.5);
+      FS(8);
+      ink(col);
+      doc.text(doc.splitTextToSize(name, scoreW - V(14))[0], scoreX + 2.5, cy);
+      doc.text(String(val), scoreX + scoreW - 3, cy, { align: "right" });
+    };
+    scoreRow(r.meta.teamAName, r.score.a, M + headH / 2 - V(2.4), C.ink);
+    scoreRow(r.meta.teamBName, r.score.b, M + headH / 2 + V(5.6), C.ink);
+
+    let y = M + headH + V(1.6);
+
+    // ═══════════ Datos del partido + parciales ═══════════
+    const infoH = V(24);
+    const infoW = W * 0.44;
+    box(M, y, infoW, infoH);
+    const infoRows: [string, string][] = [
+      ["Fecha", r.meta.dateLabel],
+      ["Hora", r.meta.timeLabel ? `${r.meta.timeLabel} hs` : "-"],
+      ["Ciudad", r.meta.venue ?? "-"],
+      ["Duración", totalDuration !== null ? formatDurationMs(totalDuration) : "-"],
+      ["Sets", `${r.score.a} - ${r.score.b}`],
+    ];
+    infoRows.forEach(([k, v], i) => {
+      const ry = y + V(4.6) + i * V(4);
+      label(k, M + 2.5, ry, 5.8, true, C.ink);
+      label(v, M + V(20), ry, 5.8, false, C.soft);
+    });
+
+    // Tabla de parciales
+    const stX = M + infoW + V(1.6);
+    const stW = pageW - M - stX;
+    box(stX, y, stW, infoH);
+    const stCols = [0.12, 0.2, 0.14, 0.14, 0.14, 0.26];
+    const stX0: number[] = [];
+    {
+      let acc = stX;
+      for (const c of stCols) {
+        stX0.push(acc);
+        acc += stW * c;
+      }
     }
+    fill(C.head);
+    doc.rect(stX + 0.2, y + 0.2, stW - 0.4, V(4.6), "F");
+    stroke(C.hair);
+    doc.setLineWidth(0.2);
+    doc.line(stX, y + V(4.8), stX + stW, y + V(4.8));
+    const stHead = ["Set", "Duración", "8", "16", "21", "Resultado"];
+    stHead.forEach((h, i) => {
+      doc.setFont("helvetica", "bold");
+      FS(5.4);
+      ink(C.ink);
+      doc.text(h, stX0[i] + (stW * stCols[i]) / 2, y + V(3.4), { align: "center" });
+    });
+    partials.forEach((p, i) => {
+      const ry = y + V(8) + i * V(3.5);
+      const cells = [
+        String(p.set),
+        p.duration ? formatDurationMs(p.duration) : "-",
+        p.p8,
+        p.p16,
+        p.p21,
+        p.result,
+      ];
+      cells.forEach((cell, ci) => {
+        doc.setFont("helvetica", ci === 5 ? "bold" : "normal");
+        FS(5.4);
+        ink(ci === 5 ? (p.winner === "A" ? C.home : p.winner === "B" ? C.away : C.ink) : C.soft);
+        doc.text(cell, stX0[ci] + (stW * stCols[ci]) / 2, ry, { align: "center" });
+      });
+    });
+    if (partials.length === 0) label("Sin sets registrados", stX + 3, y + V(9), 5.6);
 
-    // ─────────────── Tablas de jugadores ───────────────
-    const HEADS = ["#", "JUGADOR", "SETS", "POS", "ATA", "A.R", "C.A", "E.A", "ACE", "E.S", "BLO", "REC", "POS%", "PER%", "ERR", "PTS"];
-    const WGT = [4, 24, 8, 5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 5.5, 7, 7, 5.5, 6];
+    y += infoH + V(1.6);
 
-    const playerTable = (
+    // ═══════════ Tablas por equipo ═══════════
+    const GROUPS: { title: string; cols: { key: string; w: number }[] }[] = [
+      {
+        title: "",
+        cols: [
+          { key: "#", w: 5 },
+          { key: "Jugador", w: 38 },
+          { key: "P", w: 5 },
+          { key: "Sets", w: 14 },
+        ],
+      },
+      {
+        title: "Puntos",
+        cols: [
+          { key: "Tot", w: 8 },
+          { key: "BP", w: 7 },
+          { key: "G-P", w: 8 },
+        ],
+      },
+      {
+        title: "Saque",
+        cols: [
+          { key: "Tot", w: 7 },
+          { key: "Err", w: 7 },
+          { key: "Pts", w: 7 },
+        ],
+      },
+      {
+        title: "Recepción",
+        cols: [
+          { key: "Tot", w: 7 },
+          { key: "Err", w: 7 },
+          { key: "Pos%", w: 10 },
+          { key: "Perf%", w: 10 },
+        ],
+      },
+      {
+        title: "Ataque",
+        cols: [
+          { key: "Tot", w: 7 },
+          { key: "Err", w: 7 },
+          { key: "Bl", w: 6 },
+          { key: "Pts", w: 7 },
+          { key: "Pts%", w: 10 },
+        ],
+      },
+      { title: "BL", cols: [{ key: "Pts", w: 7 }] },
+    ];
+    const flatCols = GROUPS.flatMap((g) => g.cols);
+    const totalW = flatCols.reduce((s, c) => s + c.w, 0);
+
+    const teamBlock = (
       x: number,
       ty: number,
       w: number,
       team: Team,
       rows: PlayerRow[],
+      brk: { set: number; saq: number; ata: number; bl: number; erAd: number; tot: number }[],
       accent: RGB,
       tag: string,
-    ) => {
+    ): number => {
       const rowH = V(3.5);
-      const h = V(13.5) + Math.max(1, rows.length) * rowH + V(5);
-      card(x, ty, w, h, null);
-      doc.setFont("helvetica", "bold");
-      FS(6.6);
-      setText(accent);
-      doc.text(`${tag} · ${team.name}`.toUpperCase(), x + 2.6, ty + V(4.2), { maxWidth: w - 5 });
+      const titleH = V(5.2);
+      const headH2 = V(7.4);
+      const setsH = V(4.6) + Math.max(1, brk.length) * V(3.4) + V(1.5);
+      const h = titleH + headH2 + Math.max(1, rows.length) * rowH + V(4.4) + setsH;
+      box(x, ty, w, h);
 
-      const totalW = WGT.reduce((s, v) => s + v, 0);
-      const inner = w - 5;
-      const colStart: number[] = [];
-      let acc = x + 2.6;
-      for (const g of WGT) {
-        colStart.push(acc);
-        acc += (inner * g) / totalW;
+      // Barra de título del equipo
+      fill(C.head);
+      doc.rect(x + 0.2, ty + 0.2, w - 0.4, titleH, "F");
+      fill(accent);
+      doc.rect(x + 0.2, ty + 0.2, V(1.4), titleH, "F");
+      doc.setFont("helvetica", "bold");
+      FS(7.4);
+      ink(accent);
+      doc.text(team.name.toUpperCase(), x + V(3.4), ty + titleH - V(1.4), { maxWidth: w * 0.6 });
+      doc.setFont("helvetica", "normal");
+      FS(5.4);
+      ink(C.soft);
+      doc.text(tag, x + w - 2.5, ty + titleH - V(1.4), { align: "right" });
+
+      // Posiciones de columnas
+      const inner = w - 4;
+      const xs: number[] = [];
+      let acc = x + 2;
+      for (const c of flatCols) {
+        xs.push(acc);
+        acc += (inner * c.w) / totalW;
       }
-      const colCenter = (i: number) => colStart[i] + (inner * WGT[i]) / totalW / 2;
+      const cw = (i: number) => (inner * flatCols[i].w) / totalW;
+      const cx = (i: number) => xs[i] + cw(i) / 2;
 
-      FS(4.9);
-      doc.setFont("helvetica", "bold");
-      setText(C.muted);
-      HEADS.forEach((hd, i) =>
-        doc.text(hd, i <= 1 ? colStart[i] : colCenter(i), ty + V(8.4), {
-          align: i <= 1 ? "left" : "center",
-        }),
-      );
-      setStroke(C.border);
-      doc.setLineWidth(0.15);
-      doc.line(x + 2.4, ty + V(9.8), x + w - 2.4, ty + V(9.8));
+      // Cabeceras agrupadas
+      const gTop = ty + titleH;
+      fill(C.head);
+      doc.rect(x + 0.2, gTop, w - 0.4, headH2, "F");
+      let gi = 0;
+      stroke(C.hair);
+      doc.setLineWidth(0.2);
+      for (const g of GROUPS) {
+        const start = gi;
+        const end = gi + g.cols.length - 1;
+        if (g.title) {
+          const gx = xs[start];
+          const gw = xs[end] + cw(end) - xs[start];
+          doc.setFont("helvetica", "bold");
+          FS(5.4);
+          ink(C.ink);
+          doc.text(g.title, gx + gw / 2, gTop + V(2.9), { align: "center" });
+          doc.line(gx, gTop + V(3.6), gx + gw, gTop + V(3.6));
+          doc.line(gx - 0.6, gTop, gx - 0.6, gTop + headH2);
+        }
+        gi = end + 1;
+      }
+      flatCols.forEach((c, i) => {
+        doc.setFont("helvetica", "bold");
+        FS(5);
+        ink(C.ink);
+        const isLeft = i === 1;
+        doc.text(c.key, isLeft ? xs[i] : cx(i), gTop + headH2 - V(1.6), {
+          align: isLeft ? "left" : "center",
+        });
+      });
+      stroke(C.line);
+      doc.setLineWidth(0.3);
+      doc.line(x, gTop + headH2, x + w, gTop + headH2);
 
-      let ry = ty + V(13);
+      // Filas
+      let ry = gTop + headH2 + rowH - V(1);
       rows.forEach((row, idx) => {
         if (idx % 2 === 1) {
-          setFill(C.row);
-          doc.rect(x + 2.2, ry - rowH + V(1), w - 4.4, rowH, "F");
+          fill(C.zebra);
+          doc.rect(x + 0.4, ry - rowH + V(1), w - 0.8, rowH, "F");
         }
-        const cells: (string | number)[] = [
-          row.number,
+        const setsTxt = row.sets.length > 0 ? row.sets.join(" ") : "·";
+        const cells: string[] = [
+          String(row.number),
           row.name,
-          row.sets || "-",
           row.pos,
-          row.ata,
-          row.ar,
-          row.ca,
-          row.ea,
-          row.ace,
-          row.es,
-          row.blo,
-          row.rec,
-          row.posPct === null ? "-" : `${Math.round(row.posPct)}`,
-          row.perPct === null ? "-" : `${Math.round(row.perPct)}`,
-          row.err,
-          row.pts,
+          setsTxt,
+          row.ptsTot ? String(row.ptsTot) : "·",
+          row.bp ? String(row.bp) : "·",
+          row.gp ? `${row.gp > 0 ? "+" : ""}${row.gp}` : "·",
+          row.srvTot ? String(row.srvTot) : "·",
+          row.srvErr ? String(row.srvErr) : "·",
+          row.srvPts ? String(row.srvPts) : "·",
+          row.recTot ? String(row.recTot) : "·",
+          row.recErr ? String(row.recErr) : "·",
+          row.recPos === null ? "·" : `${Math.round(row.recPos)}%`,
+          row.recPerf === null ? "·" : `${Math.round(row.recPerf)}%`,
+          row.atkTot ? String(row.atkTot) : "·",
+          row.atkErr ? String(row.atkErr) : "·",
+          row.atkBl ? String(row.atkBl) : "·",
+          row.atkPts ? String(row.atkPts) : "·",
+          row.atkPct === null ? "·" : `${Math.round(row.atkPct)}%`,
+          row.blPts ? String(row.blPts) : "·",
         ];
-        FS(5.4);
         cells.forEach((cell, i) => {
           const isName = i === 1;
-          const isPts = i === cells.length - 1;
-          doc.setFont("helvetica", isPts || isName ? "bold" : "normal");
-          setText(isPts ? accent : isName ? C.text : cell === 0 || cell === "-" ? C.dim : C.text);
-          const txt = String(cell);
+          doc.setFont("helvetica", isName || i === 4 ? "bold" : "normal");
+          FS(5.2);
+          ink(cell === "·" ? C.hair : isName ? C.ink : C.soft);
           doc.text(
-            isName ? doc.splitTextToSize(txt, (inner * WGT[1]) / totalW - 1)[0] : txt,
-            i <= 1 ? colStart[i] : colCenter(i),
+            isName ? doc.splitTextToSize(cell, cw(1) - 1)[0] : cell,
+            isName ? xs[i] : cx(i),
             ry,
-            { align: i <= 1 ? "left" : "center" },
+            { align: isName ? "left" : "center" },
           );
         });
         ry += rowH;
       });
       if (rows.length === 0) {
-        doc.setFont("helvetica", "normal");
-        FS(5.6);
-        setText(C.muted);
-        doc.text("Sin jugadores registrados", colStart[0], ry);
+        label("Sin jugadores con acciones registradas", xs[0], ry, 5.4);
         ry += rowH;
       }
 
-      // Totales del equipo
+      // Totales
       const t = totalsOf(rows);
-      setFill(C.cardAlt);
-      doc.rect(x + 2.2, ry - rowH + V(1), w - 4.4, rowH + V(0.6), "F");
-      const tot: (string | number)[] = [
-        "",
-        "TOTALES EQUIPO",
-        "",
-        "",
-        t.ata,
-        t.ar,
-        t.ca,
-        t.ea,
-        t.ace,
-        t.es,
-        t.blo,
-        t.rec,
-        "",
-        "",
-        t.err,
-        t.pts,
+      fill(C.head);
+      doc.rect(x + 0.4, ry - rowH + V(1), w - 0.8, rowH + V(0.6), "F");
+      const totCells: (string | null)[] = [
+        null,
+        "Totales equipo",
+        null,
+        null,
+        String(t.ptsTot),
+        String(t.bp),
+        `${t.gp > 0 ? "+" : ""}${t.gp}`,
+        String(t.srvTot),
+        String(t.srvErr),
+        String(t.srvPts),
+        String(t.recTot),
+        String(t.recErr),
+        t.recTot > 0 ? `${Math.round(t.recPos / t.recTot)}%` : "·",
+        t.recTot > 0 ? `${Math.round(t.recPerf / t.recTot)}%` : "·",
+        String(t.atkTot),
+        String(t.atkErr),
+        String(t.atkBl),
+        String(t.atkPts),
+        t.atkTot > 0 ? `${Math.round((t.atkPts / t.atkTot) * 100)}%` : "·",
+        String(t.blPts),
       ];
-      FS(5.4);
-      doc.setFont("helvetica", "bold");
-      tot.forEach((cell, i) => {
-        if (cell === "") return;
-        setText(i === 1 ? C.muted : i === tot.length - 1 ? accent : C.text);
-        doc.text(String(cell), i <= 1 ? colStart[i] : colCenter(i), ry + V(0.4), {
-          align: i <= 1 ? "left" : "center",
+      totCells.forEach((cell, i) => {
+        if (cell === null) return;
+        doc.setFont("helvetica", "bold");
+        FS(5.2);
+        ink(i === 1 ? accent : C.ink);
+        doc.text(cell, i === 1 ? xs[i] : cx(i), ry + V(0.4), {
+          align: i === 1 ? "left" : "center",
         });
       });
+      ry += V(3.8);
+
+      // Puntos ganados por set
+      stroke(C.hair);
+      doc.setLineWidth(0.2);
+      doc.line(x + 1.5, ry - V(1.4), x + w - 1.5, ry - V(1.4));
+      const bx = x + inner * 0.42;
+      const bw = w - (bx - x) - 2.5;
+      const bcols = ["Set", "Saq", "Ata", "Bl", "Er.Ad", "Tot"];
+      const bcw = bw / bcols.length;
+      doc.setFont("helvetica", "bold");
+      FS(5);
+      ink(C.ink);
+      doc.text("Pts. ganados por set", bx - V(1), ry + V(2.4), { align: "right" });
+      bcols.forEach((c, i) =>
+        doc.text(c, bx + bcw * i + bcw / 2, ry + V(2.4), { align: "center" }),
+      );
+      brk.forEach((b, i) => {
+        const by = ry + V(5.8) + i * V(3.4);
+        const cells = [`${b.set}`, `${b.saq}`, `${b.ata}`, `${b.bl}`, `${b.erAd}`, `${b.tot}`];
+        cells.forEach((cell, ci) => {
+          doc.setFont("helvetica", ci === 0 || ci === 5 ? "bold" : "normal");
+          FS(5);
+          ink(ci === 0 ? C.ink : cell === "0" ? C.hair : C.soft);
+          doc.text(cell, bx + bcw * ci + bcw / 2, by, { align: "center" });
+        });
+      });
+
+      // Bloque izquierdo: armador / mejor rotación
+      const sideInfo = tag === "Local" ? r.setters?.A : r.setters?.B;
+      const rot = tag === "Local" ? r.rotations?.A : r.rotations?.B;
+      const infoLines: string[] = [];
+      if (sideInfo?.name) infoLines.push(`Armadora: ${sideInfo.name}`);
+      if (sideInfo?.best) infoLines.push(`Mejor zona armado: ${sideInfo.best.label} (${sideInfo.best.diff > 0 ? "+" : ""}${sideInfo.best.diff})`);
+      if (rot) {
+        const played = rot.filter((z) => z.pf + z.pc > 0);
+        if (played.length > 0) {
+          const best = [...played].sort((a, b) => b.diff - a.diff)[0];
+          const worst = [...played].sort((a, b) => a.diff - b.diff)[0];
+          infoLines.push(`Rotación: mejor R${best.rotation} (${best.diff > 0 ? "+" : ""}${best.diff}) · peor R${worst.rotation} (${worst.diff})`);
+        }
+      }
+      infoLines.forEach((line, i) =>
+        label(doc.splitTextToSize(line, bx - x - 5)[0], x + 2.5, ry + V(5.8) + i * V(3.6), 5.2, false, C.soft),
+      );
+
       return h;
     };
 
+    const hA = teamBlock(M, y, W, teamA, rowsA, brkA, C.home, "Local");
+    y += hA + V(1.6);
+    const hB = teamBlock(M, y, W, teamB, rowsB, brkB, C.away, "Visitante");
+    y += hB + V(1.6);
+
+    // ═══════════ Referencias ═══════════
     {
-      const colW = (W - 3) / 2;
-      const hA = playerTable(M, y, colW, teamA, rowsA, C.home, "Local");
-      const hB = playerTable(M + colW + 3, y, colW, teamB, rowsB, C.away, "Visitante");
-      y += Math.max(hA, hB) + V(2.5);
-    }
-
-    // ─────────────── Bloques de equipo (puntos por set / saque / recepción / ataque / bloqueo) ───
-    {
-      const miniTable = (
-        x: number,
-        ty: number,
-        w: number,
-        h: number,
-        title: string,
-        head: string[],
-        rowsData: { label: string; accent: RGB; cells: string[] }[],
-      ) => {
-        const inner = card(x, ty, w, h, title);
-        const cols = head.length + 1;
-        const cw = (w - 5) / cols;
-        doc.setFont("helvetica", "bold");
-        FS(4.8);
-        setText(C.muted);
-        head.forEach((hd, i) => doc.text(hd, x + 2.6 + cw * (i + 1) + cw / 2, inner, { align: "center", maxWidth: cw }));
-        let ry = inner + V(4);
-        for (const row of rowsData) {
-          doc.setFont("helvetica", "bold");
-          FS(5.2);
-          setText(row.accent);
-          doc.text(doc.splitTextToSize(row.label, cw * 1.05)[0], x + 2.6, ry);
-          doc.setFont("helvetica", "normal");
-          setText(C.text);
-          row.cells.forEach((cell, i) =>
-            doc.text(cell, x + 2.6 + cw * (i + 1) + cw / 2, ry, { align: "center" }),
-          );
-          ry += V(4);
-        }
-      };
-
-      const shortA = teamA.shortName || teamA.name;
-      const shortB = teamB.shortName || teamB.name;
-      const blockH = V(17);
-      const gaps = 3;
-      const bw = (W - gaps * 3) / 4;
-      const xs = [M, M + bw + 3, M + (bw + 3) * 2, M + (bw + 3) * 3];
-
-      // Puntos por set
-      miniTable(
-        xs[0],
-        y,
-        bw,
-        blockH,
-        "Puntos por set",
-        r.sets.map((s) => `S${s.number}`),
-        [
-          { label: shortA, accent: C.home, cells: r.sets.map((s) => String(s.scoreA)) },
-          { label: shortB, accent: C.away, cells: r.sets.map((s) => String(s.scoreB)) },
-        ],
-      );
-
-      // Saque
-      miniTable(
-        xs[1],
-        y,
-        bw,
-        blockH,
-        "Saque",
-        ["SAQ", "ACE", "ERR", "EFIC%"],
-        [
-          {
-            label: shortA,
-            accent: C.home,
-            cells: r.serve
-              ? [String(r.serve.A.serves), String(r.serve.A.aces), String(r.serve.A.errors), n0(r.serve.A.efficiency)]
-              : ["-", "-", "-", "-"],
-          },
-          {
-            label: shortB,
-            accent: C.away,
-            cells: r.serve
-              ? [String(r.serve.B.serves), String(r.serve.B.aces), String(r.serve.B.errors), n0(r.serve.B.efficiency)]
-              : ["-", "-", "-", "-"],
-          },
-        ],
-      );
-
-      // Recepción
-      miniTable(
-        xs[2],
-        y,
-        bw,
-        blockH,
-        "Recepción",
-        ["TOT", "POS%", "PER%", "ERR"],
-        [
-          {
-            label: shortA,
-            accent: C.home,
-            cells: r.reception?.A
-              ? [String(r.reception.A.total), n0(r.reception.A.positivePct), n0(r.reception.A.perfectPct), String(r.reception.A.errors)]
-              : ["-", "-", "-", "-"],
-          },
-          {
-            label: shortB,
-            accent: C.away,
-            cells: r.reception?.B
-              ? [String(r.reception.B.total), n0(r.reception.B.positivePct), n0(r.reception.B.perfectPct), String(r.reception.B.errors)]
-              : ["-", "-", "-", "-"],
-          },
-        ],
-      );
-
-      // Ataque + bloqueo
-      miniTable(
-        xs[3],
-        y,
-        bw,
-        blockH,
-        "Ataque y bloqueo",
-        ["INT", "PTS", "ERR", "BLQ.R", "EFIC%", "BLO"],
-        [
-          {
-            label: shortA,
-            accent: C.home,
-            cells: [
-              n0(r.attack?.A?.attempts),
-              n0(r.attack?.A?.points),
-              n0(r.attack?.A?.errors),
-              n0(r.attack?.A?.blocked),
-              n0(r.attack?.A?.efficiency),
-              String(r.block?.A.points ?? 0),
-            ],
-          },
-          {
-            label: shortB,
-            accent: C.away,
-            cells: [
-              n0(r.attack?.B?.attempts),
-              n0(r.attack?.B?.points),
-              n0(r.attack?.B?.errors),
-              n0(r.attack?.B?.blocked),
-              n0(r.attack?.B?.efficiency),
-              String(r.block?.B.points ?? 0),
-            ],
-          },
-        ],
-      );
-
-      y += blockH + V(2.5);
-    }
-
-    // ─────────────── Rotaciones | Armadores ───────────────
-    {
-      const h = V(20);
-      const leftW = W * 0.44;
-      const rightX = M + leftW + 3;
-      const rightW = W - leftW - 3;
-
-      // Rotaciones
-      const inner = card(M, y, leftW, h, "Eficiencia por rotación (dif. puntos)");
-      const cw = (leftW - 5) / 7;
+      const h = V(17);
+      box(M, y, W, h, C.zebra);
       doc.setFont("helvetica", "bold");
-      FS(5);
-      setText(C.muted);
-      [1, 2, 3, 4, 5, 6].forEach((n, i) =>
-        doc.text(`R${n}`, M + 2.6 + cw * (i + 1) + cw / 2, inner, { align: "center" }),
-      );
-      const rotRow = (label: string, accent: RGB, rows: { rotation: number; diff: number }[] | null, ry: number) => {
-        doc.setFont("helvetica", "bold");
-        FS(5.2);
-        setText(accent);
-        doc.text(doc.splitTextToSize(label, cw * 1.05)[0], M + 2.6, ry);
-        if (!rows) {
-          doc.setFont("helvetica", "normal");
-          setText(C.muted);
-          doc.text("Sin datos", M + 2.6 + cw * 1.5, ry);
-          return;
-        }
-        rows.forEach((row, i) => {
-          setText(row.diff > 0 ? C.good : row.diff < 0 ? C.bad : C.muted);
-          doc.text(`${row.diff > 0 ? "+" : ""}${row.diff}`, M + 2.6 + cw * (i + 1) + cw / 2, ry, {
-            align: "center",
-          });
-        });
-      };
-      rotRow(teamA.shortName || teamA.name, C.home, r.rotations?.A ?? null, inner + V(4.4));
-      rotRow(teamB.shortName || teamB.name, C.away, r.rotations?.B ?? null, inner + V(8.4));
-
-      const bestWorst = (rows: { rotation: number; diff: number; pf: number; pc: number }[] | undefined) => {
-        const played = (rows ?? []).filter((x) => x.pf + x.pc > 0);
-        if (played.length === 0) return null;
-        const best = [...played].sort((a, b) => b.diff - a.diff)[0];
-        const worst = [...played].sort((a, b) => a.diff - b.diff)[0];
-        return `Mejor R${best.rotation} · Peor R${worst.rotation}`;
-      };
+      FS(5.4);
+      ink(C.ink);
+      doc.text("REFERENCIAS", M + 2.5, y + V(3.6));
       doc.setFont("helvetica", "normal");
-      FS(5);
-      setText(C.muted);
-      const bwA = bestWorst(r.rotations?.A);
-      const bwB = bestWorst(r.rotations?.B);
-      doc.text(
-        [bwA ? `${teamA.shortName || teamA.name}: ${bwA}` : null, bwB ? `${teamB.shortName || teamB.name}: ${bwB}` : null]
-          .filter(Boolean)
-          .join("   ·   ") || "Sin rallies con rotación registrada",
-        M + 2.6,
-        inner + V(12.6),
-        { maxWidth: leftW - 5 },
-      );
-
-      // Armadores
-      const inner2 = card(rightX, y, rightW, h, "Armadores");
-      const setterLine = (label: string, accent: RGB, s: SimplifiedReport["setter"], ry: number) => {
-        doc.setFont("helvetica", "bold");
-        FS(5.4);
-        setText(accent);
-        doc.text(label, rightX + 2.6, ry, { maxWidth: rightW * 0.2 });
-        doc.setFont("helvetica", "normal");
-        setText(C.text);
-        if (!s) {
-          setText(C.muted);
-          doc.text("Sin datos de armado", rightX + 2.6 + rightW * 0.22, ry);
-          return;
-        }
-        const bits = [
-          s.name ?? "Armador sin identificar",
-          s.sets > 0 ? `${s.sets} armados` : null,
-          s.efficiencyPct !== null ? `Efic. ${Math.round(s.efficiencyPct)}%` : null,
-          s.positivePct !== null ? `Pos. ${Math.round(s.positivePct)}%` : null,
-          s.best ? `Mejor ${s.best.label}` : null,
-          s.worst ? `Peor ${s.worst.label}` : null,
-        ].filter(Boolean) as string[];
-        doc.text(bits.join("  ·  "), rightX + 2.6 + rightW * 0.22, ry, { maxWidth: rightW * 0.76 });
-      };
-      setterLine(teamA.shortName || teamA.name, C.home, r.setters?.A ?? null, inner2 + V(4.4));
-      setterLine(teamB.shortName || teamB.name, C.away, r.setters?.B ?? null, inner2 + V(9.4));
-
-      y += h + V(2.5);
-    }
-
-    // ─────────────── Momentum + Análisis RALLY ───────────────
-    {
-      const h = V(20);
-      const hasMomentum = !!(r.momentum && r.momentum.points.length > 1);
-      const leftW = hasMomentum ? W * 0.32 : 0;
-      const rightX = hasMomentum ? M + leftW + 3 : M;
-      const rightW = W - (hasMomentum ? leftW + 3 : 0);
-
-      if (hasMomentum && r.momentum) {
-        const inner = card(M, y, leftW, h, "Momentum");
-        const chartX = M + 4;
-        const chartW = leftW - 8;
-        const chartH = h - (inner - y) - V(3);
-        const midY = inner + chartH / 2;
-        setStroke(C.border);
-        doc.setLineWidth(0.15);
-        doc.line(chartX, midY, chartX + chartW, midY);
-        const pts = r.momentum.points;
-        const maxAbs = Math.max(3, ...pts.map((p) => Math.abs(p.delta)));
-        const stepX = chartW / Math.max(1, pts.length - 1);
-        doc.setLineWidth(0.4);
-        for (let i = 1; i < pts.length; i++) {
-          const x1 = chartX + (i - 1) * stepX;
-          const x2 = chartX + i * stepX;
-          const y1 = midY - (pts[i - 1].delta / maxAbs) * (chartH / 2);
-          const y2 = midY - (pts[i].delta / maxAbs) * (chartH / 2);
-          setStroke(pts[i].delta >= 0 ? C.home : C.away);
-          doc.line(x1, y1, x2, y2);
-        }
-        doc.setFont("helvetica", "normal");
-        FS(4.6);
-        setText(C.home);
-        doc.text(`+ ${teamA.shortName || teamA.name}`, chartX, inner - V(0.6));
-        setText(C.away);
-        doc.text(`+ ${teamB.shortName || teamB.name}`, chartX + chartW, inner - V(0.6), { align: "right" });
-      }
-
-      const inner2 = card(rightX, y, rightW, h, "Análisis RALLY");
-      const strength = r.summary.find((s) => s.tone === "good")?.text ?? null;
-      const weakness = r.summary.find((s) => s.tone === "bad" || s.tone === "warn")?.text ?? null;
-      const rec = r.tactical.recommendations[0] ?? r.tactical.situation[0] ?? null;
-      const lines: { label: string; text: string; color: RGB }[] = [];
-      if (strength) lines.push({ label: "Fortaleza", text: strength, color: C.good });
-      if (weakness) lines.push({ label: "Debilidad", text: weakness, color: C.bad });
-      if (rec) lines.push({ label: "Recomendación", text: rec, color: C.warn });
-      let ry = inner2 + V(2.6);
-      if (lines.length === 0) {
-        doc.setFont("helvetica", "normal");
-        FS(5.4);
-        setText(C.muted);
-        doc.text("Sin datos suficientes para el análisis.", rightX + 2.6, ry);
-      }
-      for (const l of lines) {
-        doc.setFont("helvetica", "bold");
-        FS(5.2);
-        setText(l.color);
-        doc.text(l.label.toUpperCase(), rightX + 2.6, ry);
-        doc.setFont("helvetica", "normal");
-        setText(C.text);
-        doc.text(doc.splitTextToSize(l.text, rightW - 36)[0], rightX + 30, ry);
-        ry += V(3.6);
-      }
-
+      FS(4.8);
+      ink(C.soft);
+      const legend = [
+        "Tot: total · BP: break points (punto con saque rival) · G-P: puntos ganados menos errores propios",
+        "Saque — Tot: saques registrados · Err: errores · Pts: aces",
+        "Recepción — Pos%: recepciones positivas (# y +) · Perf%: recepciones perfectas (#)",
+        "Ataque — Tot: intentos · Bl: ataques bloqueados · Pts%: efectividad · BL Pts: puntos de bloqueo",
+      ];
+      legend.forEach((l, i) => doc.text(l, M + 2.5, y + V(6.8) + i * V(2.4), { maxWidth: W - 5 }));
       y += h;
     }
 
-    // ─────────────── Pie ───────────────
+    // Pie
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(5.6);
-    setText(C.muted);
-    doc.text(
-      "ATA puntos de ataque · A.R ataque de rotación · C.A contraataque · E.A error de ataque · ACE ace · E.S error de saque · BLO bloqueo punto · REC recepciones · POS% positiva · PER% perfecta · ERR errores · PTS puntos",
-      M,
-      pageH - 3.2,
-      { maxWidth: W * 0.72 },
-    );
-    doc.text(
-      `RALLY · Reporte simplificado · ${r.meta.dateLabel}`,
-      pageW - M,
-      pageH - 3.2,
-      { align: "right" },
-    );
+    doc.setFontSize(5.4);
+    ink(C.hair);
+    doc.text(`RALLY · Reporte simplificado · ${r.meta.dateLabel}`, M, pageH - 3);
+    doc.text(`${r.meta.teamAName} vs ${r.meta.teamBName}`, pageW - M, pageH - 3, { align: "right" });
 
     return y;
   };
 
-  // Pasada 1: medir la altura natural del contenido.
-  const probe = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+  // Pasada 1: medir, pasada 2: escalar para entrar en una sola hoja A4.
+  const probe = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageH = probe.internal.pageSize.getHeight();
-  const HEAD = 26;
-  const available = pageH - 7 - HEAD;
-  const naturalBottom = render(probe, 1);
-  const natural = Math.max(1, naturalBottom - HEAD);
-
-  // Comprime si sobra contenido y expande (con tope) si sobra espacio, para
-  // aprovechar toda la hoja sin pasar a una segunda página.
+  const top = 6;
+  const available = pageH - 10 - top;
+  const natural = Math.max(1, render(probe, 1) - top);
   const raw = available / natural;
-  const K = raw >= 1 ? Math.min(1.3, raw) : Math.max(0.4, raw);
+  const K = raw >= 1 ? Math.min(1.4, raw) : Math.max(0.45, raw);
 
-  const doc = K === 1 ? probe : new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+  const doc = K === 1 ? probe : new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   if (K !== 1) render(doc, K);
 
   const fileName = `Reporte_Simplificado_${safe(teamA.shortName || teamA.name)}_vs_${safe(teamB.shortName || teamB.name)}_${r.meta.fileDate}.pdf`;
