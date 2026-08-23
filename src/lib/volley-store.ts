@@ -187,6 +187,9 @@ export function isAttackType(t: PointType): boolean {
 /** Sector 1..9 de la cancha rival (3×3): 1..3 cerca de la red, 7..9 fondo. */
 export type AttackDirection = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
+/** Cuadrante dentro de una zona 1..9 (c|b arriba, d|a abajo). */
+export type AttackSubzone = "a" | "b" | "c" | "d";
+
 /**
  * Tipo de finalización de un ataque ganador (Coach Mode).
  * Enriquece las estadísticas tácticas sin cambiar la lógica del marcador.
