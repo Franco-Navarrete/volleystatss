@@ -1341,8 +1341,8 @@ export const useVolley = create<VolleyState>()(
                 : {}),
               ...(attackDirection !== undefined && (isAttackType(type) || type === "attack_error")
                 ? { attackDirection }
-              ...(attackSubzone !== undefined && (isAttackType(type) || type === "attack_error") ? { attackSubzone } : {}),
                 : {}),
+              ...(attackSubzone !== undefined && (isAttackType(type) || type === "attack_error") ? { attackSubzone } : {}),
               ...(finishType !== undefined && isAttackType(type) ? { finishType } : {}),
             };
 
