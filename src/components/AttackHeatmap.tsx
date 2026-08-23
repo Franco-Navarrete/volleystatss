@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import type { Match, Team } from "@/lib/volley-store";
+import type { Match, Team, AttackSubzone } from "@/lib/volley-store";
 import {
   buildEnrichedAttacks,
   aggregateAttacks,
