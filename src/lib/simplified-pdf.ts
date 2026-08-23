@@ -465,23 +465,29 @@ export async function downloadSimplifiedMatchPdf(
       widths: number[],
     ) => {
       const rowH = 3.8;
-      const h = 12 + Math.max(1, body.length) * rowH;
-      const inner = card(x, ty, w, h, null);
+      const h = 16 + Math.max(1, body.length) * rowH;
+      card(x, ty, w, h, null);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.6);
       setText(accent);
-      doc.text(title.toUpperCase(), x + 3.5, ty + 4.4, { maxWidth: w - 7 });
+      doc.text(title.toUpperCase(), x + 3.5, ty + 4.6, { maxWidth: w - 7 });
       const total = widths.reduce((s, v) => s + v, 0);
       const colX: number[] = [];
       let acc = x + 3.5;
       for (const cw of widths) {
-        colX.push(acc);
+        colX.push(acc + ((w - 7) * cw) / total / 2);
         acc += ((w - 7) * cw) / total;
       }
+      colX[0] = x + 3.5;
+      colX[1] = x + 3.5 + ((w - 7) * widths[0]) / total;
       doc.setFontSize(5.4);
       setText(C.muted);
-      head.forEach((hd, i) => doc.text(hd, colX[i], inner - 0.5, { align: i <= 1 ? "left" : "center" }));
-      let ry = inner + 3.4;
+      head.forEach((hd, i) => doc.text(hd, colX[i], ty + 9.6, { align: i <= 1 ? "left" : "center" }));
+      setStroke(C.border);
+      doc.setLineWidth(0.15);
+      doc.line(x + 3, ty + 11, x + w - 3, ty + 11);
+      let ry = ty + 14.4;
+
       if (body.length === 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(6);
