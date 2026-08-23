@@ -4,6 +4,7 @@ import {
   type SettingEvent,
   type SettingAttackZone,
   type AttackDirection,
+  type AttackSubzone,
   type Team,
   isAttackType,
 } from "./volley-store";
@@ -56,6 +57,7 @@ export interface EnrichedAttack {
   playerId: string | null;
   origin: OriginZone | null;
   direction: AttackDirection | null;
+  subzone: AttackSubzone | null;
   result: "positive" | "neutral" | "negative";
   setNumber: number;
   rotation: number; // 1..6 (rotación del equipo atacante)
@@ -135,6 +137,7 @@ export function buildEnrichedAttacks(
         playerId: se.attackerId ?? null,
         origin,
         direction: (se.attackDirection ?? null) as AttackDirection | null,
+        subzone: (se.attackSubzone ?? null) as AttackSubzone | null,
         result,
         setNumber: se.setNumber,
         rotation: (se.side === "A" ? rotA : rotB) + 1,
@@ -151,6 +154,7 @@ export function buildEnrichedAttacks(
           playerId: ae.playerId,
           origin: ae.attackZone as OriginZone,
           direction: (ae.attackDirection ?? null) as AttackDirection | null,
+          subzone: (ae.attackSubzone ?? null) as AttackSubzone | null,
           result: "neutral",
           setNumber: ae.setNumber,
           rotation: (ae.side === "A" ? rotA : rotB) + 1,
@@ -178,6 +182,7 @@ export function buildEnrichedAttacks(
               playerId: pe.playerId,
               origin,
               direction: (pe.attackDirection ?? null) as AttackDirection | null,
+              subzone: (pe.attackSubzone ?? null) as AttackSubzone | null,
               result: pe.type === "attack_error" ? "negative" : "positive",
               setNumber: pe.setNumber,
               rotation: (side === "A" ? rotA : rotB) + 1,
@@ -218,6 +223,8 @@ export interface HeatmapFilters {
 export interface HeatmapAgg {
   origin: Record<OriginZone, ZoneBucket>;
   destination: Record<number, ZoneBucket>; // 1..9
+  /** Desglose por cuadrante (a/b/c/d) dentro de cada zona 1..9. */
+  destinationSub: Record<number, Record<AttackSubzone, ZoneBucket>>;
   total: number;
   positives: number;
   neutrals: number;
@@ -231,9 +238,14 @@ function emptyAgg(): HeatmapAgg {
   (ORIGIN_ZONES as OriginZone[]).forEach((z) => (origin[z] = emptyBucket()));
   const destination = {} as Record<number, ZoneBucket>;
   for (let i = 1 as number; i <= 9; i++) destination[i] = emptyBucket();
+  const destinationSub = {} as Record<number, Record<AttackSubzone, ZoneBucket>>;
+  for (let i = 1 as number; i <= 9; i++) {
+    destinationSub[i] = { a: emptyBucket(), b: emptyBucket(), c: emptyBucket(), d: emptyBucket() };
+  }
   return {
     origin,
     destination,
+    destinationSub,
     total: 0,
     positives: 0,
     neutrals: 0,
@@ -273,6 +285,13 @@ export function aggregateAttacks(
       if (a.result === "positive") d.positives++;
       else if (a.result === "neutral") d.neutrals++;
       else d.negatives++;
+      if (a.subzone) {
+        const sb = agg.destinationSub[a.direction][a.subzone];
+        sb.count++;
+        if (a.result === "positive") sb.positives++;
+        else if (a.result === "neutral") sb.neutrals++;
+        else sb.negatives++;
+      }
     }
     agg.total++;
     if (a.result === "positive") agg.positives++;
