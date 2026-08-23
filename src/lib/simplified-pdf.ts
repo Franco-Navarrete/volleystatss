@@ -735,6 +735,7 @@ export async function downloadSimplifiedMatchPdf(
   const raw = available / natural;
   const K = raw >= 1 ? Math.min(1.3, raw) : Math.max(0.4, raw);
 
+  console.log("[rally-pdf]", { natural, available, K });
   const doc = K === 1 ? probe : new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
   if (K !== 1) render(doc, K);
 
