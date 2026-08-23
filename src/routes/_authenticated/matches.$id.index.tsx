@@ -3203,16 +3203,21 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
 
       {(() => {
         const liberos = team.players.filter((p) => p.position === "libero");
-        // Sólo se puede reemplazar a alguien que esté en cancha en esta formación.
-        const centrales = lineup
-          .map((id) => team.players.find((p) => p.id === id))
-          .filter((p): p is NonNullable<typeof p> => !!p && p.position === "central");
+        // El reemplazado debe salir directamente de los seis puestos de esta formación.
+        // No filtramos por el rol cargado: algunos planteles históricos no tienen
+        // `position: "central"` aunque el jugador ocupe ese puesto en cancha.
+        const replacementCandidates = lineup
+          .map((id, slot) => ({ player: team.players.find((p) => p.id === id), slot }))
+          .filter(
+            (entry): entry is { player: Team["players"][number]; slot: number } =>
+              !!entry.player,
+          );
         if (liberos.length === 0) return null;
         const selLibero = liberoCfg?.liberoId ?? "";
         const selCentral = liberoCfg?.centralId ?? "";
         const liberoName = liberos.find((p) => p.id === selLibero);
-        const centralName = centrales.find((p) => p.id === selCentral);
-        const valid = !!liberoName && !!centralName && selLibero !== selCentral;
+        const replacedPlayer = replacementCandidates.find(({ player }) => player.id === selCentral)?.player;
+        const valid = !!liberoName && !!replacedPlayer && selLibero !== selCentral;
         const selectCls =
           "flex-1 min-w-0 text-xs rounded-md bg-secondary/60 border border-border/60 px-2 py-1.5 focus:outline-none focus:border-primary";
         return (
@@ -3242,11 +3247,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                   onChange={(e) => setLiberoCfg({ liberoId: selLibero, centralId: e.target.value } as LiberoSetConfig)}
                 >
                   <option value="">Reemplaza a…</option>
-                  {centrales
-                    .filter((p) => p.id !== selLibero)
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        P{lineup.indexOf(p.id) + 1} · #{p.number} {p.name}
+                  {replacementCandidates
+                    .filter(({ player }) => player.id !== selLibero)
+                    .map(({ player, slot }) => (
+                      <option key={`${slot}-${player.id}`} value={player.id}>
+                        P{slot + 1} · #{player.number} {player.name}
                       </option>
                     ))}
 
@@ -3258,13 +3263,13 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                 <div className="text-[10px] leading-tight text-muted-foreground">
                   <span className="text-success font-bold">● Líbero: #{liberoName!.number} {liberoName!.name}</span>
                   {" · "}
-                  <span className="text-primary font-bold">● Central: #{centralName!.number} {centralName!.name}</span>
+                  <span className="text-primary font-bold">● Reemplaza a: #{replacedPlayer!.number} {replacedPlayer!.name}</span>
                   <br />
                   ↔ Cambio automático: P2 → P1 (entra líbero) / P5 → P4 (vuelve el central)
                 </div>
               ) : (
                 <div className="text-[10px] text-destructive font-semibold">
-                  Elegí el central asociado para activar el cambio automático.
+                  Elegí uno de los jugadores de P1–P6 para activar el cambio automático.
                 </div>
               )
             )}
