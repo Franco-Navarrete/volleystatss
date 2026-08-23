@@ -1297,7 +1297,7 @@ export const useVolley = create<VolleyState>()(
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
             const lineupsBySet = { ...(m.lineupsBySet ?? {}) };
-            lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: lineup };
+            lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: sanitizeLineup(lineup) };
             const nextMatch = { ...m, lineupsBySet };
             const r = replayMatch(nextMatch);
             return {
@@ -1560,7 +1560,7 @@ export const useVolley = create<VolleyState>()(
               id: uid(),
               kind: "lineupOverride",
               side,
-              lineup: [...lineup],
+              lineup: sanitizeLineup(lineup),
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };
