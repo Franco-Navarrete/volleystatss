@@ -266,6 +266,38 @@ export async function downloadSimplifiedMatchPdf(
     }
   }
 
+  // ─────────────── Momentum (rellena la columna derecha) ───────────────
+  const gap = cmpH - rotH - 4;
+  if (r.momentum && r.momentum.points.length > 1 && gap >= 18) {
+    const my = y + rotH + 4;
+    const inner = card(rightX, my, rightW, gap, "Momentum");
+    const chartX = rightX + 5;
+    const chartW = rightW - 10;
+    const chartH = gap - (inner - my) - 4;
+    const midY = inner + chartH / 2;
+    setStroke(C.border);
+    doc.setLineWidth(0.15);
+    doc.line(chartX, midY, chartX + chartW, midY);
+    const pts = r.momentum.points;
+    const maxAbs = Math.max(3, ...pts.map((p) => Math.abs(p.delta)));
+    const stepX = chartW / Math.max(1, pts.length - 1);
+    doc.setLineWidth(0.5);
+    for (let i = 1; i < pts.length; i++) {
+      const x1 = chartX + (i - 1) * stepX;
+      const x2 = chartX + i * stepX;
+      const y1 = midY - (pts[i - 1].delta / maxAbs) * (chartH / 2);
+      const y2 = midY - (pts[i].delta / maxAbs) * (chartH / 2);
+      setStroke(pts[i].delta >= 0 ? C.home : C.away);
+      doc.line(x1, y1, x2, y2);
+    }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(5.6);
+    setText(C.home);
+    doc.text(`${r.meta.teamAName} ↑`, chartX, inner - 1);
+    setText(C.away);
+    doc.text(`↓ ${r.meta.teamBName}`, chartX + chartW, inner - 1, { align: "right" });
+  }
+
   y += Math.max(cmpH, rotH) + 4;
 
   // ─────────────── Armador por rotación ───────────────
