@@ -3245,8 +3245,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
                   {centrales
                     .filter((p) => p.id !== selLibero)
                     .map((p) => (
-                      <option key={p.id} value={p.id}>#{p.number} {p.name}</option>
+                      <option key={p.id} value={p.id}>
+                        P{lineup.indexOf(p.id) + 1} · #{p.number} {p.name}
+                      </option>
                     ))}
+
                 </select>
               )}
             </div>
