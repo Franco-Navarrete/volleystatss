@@ -1404,8 +1404,9 @@ export const useVolley = create<VolleyState>()(
               console.warn("[volley] sustitución inválida (duplicaría jugador en cancha)", { playerInId, playerOutId, court });
               return m;
             }
-
+            const ev: SubstitutionEvent = {
               id: uid(),
+
               kind: "sub",
               side,
               playerInId,
