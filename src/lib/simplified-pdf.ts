@@ -528,7 +528,7 @@ export async function downloadSimplifiedMatchPdf(
         y = 12;
       }
     };
-    const estimate = (n: number) => 12 + Math.max(1, n) * 3.8;
+    const estimate = (n: number) => 16 + Math.max(1, n) * 3.8;
 
     // Fila 1: jugadores (ataque / puntos)
     let maxH = 0;
