@@ -358,7 +358,7 @@ export async function downloadSimplifiedMatchPdf(
       // Barra de diferencia
       if (row.rallies > 0) {
         const maxAbs = Math.max(1, ...rows.map((x) => Math.abs(x.diff)));
-        const barMax = (W - 8) / 6 - 4;
+        const barMax = (W - 8) / 6 - 10;
         const bw = (Math.abs(row.diff) / maxAbs) * barMax;
         setFill(row.diff >= 0 ? C.good : C.bad);
         doc.roundedRect(colX(1), ry - 2, Math.max(0.6, bw), 2, 1, 1, "F");
@@ -441,7 +441,8 @@ export async function downloadSimplifiedMatchPdf(
     const wrapped = items.map((it) => ({ color: it.color, lines: doc.splitTextToSize(it.text, W - 12) as string[] }));
     const lines = wrapped.reduce((n, x) => n + x.lines.length, 0);
     const available = pageH - 10 - y;
-    const h = Math.min(12 + lines * 3.8, Math.max(14, available));
+    const needed = 12 + lines * 3.8;
+    const h = available > needed ? available : Math.max(14, Math.min(needed, available));
     const inner = card(M, y, W, h, "Conclusiones");
     let ry = inner;
     doc.setFont("helvetica", "normal");
