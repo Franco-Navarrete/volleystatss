@@ -1396,7 +1396,15 @@ export const useVolley = create<VolleyState>()(
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
-            const ev: SubstitutionEvent = {
+            // INVARIANTE: un jugador no puede ocupar dos zonas. Si el que entra
+            // ya está en cancha, o el que sale no está, la sustitución se ignora.
+            const court = side === "A" ? m.onCourtA : m.onCourtB;
+            if (playerInId === playerOutId || court.includes(playerInId) || !court.includes(playerOutId)) {
+              // eslint-disable-next-line no-console
+              console.warn("[volley] sustitución inválida (duplicaría jugador en cancha)", { playerInId, playerOutId, court });
+              return m;
+            }
+
               id: uid(),
               kind: "sub",
               side,
