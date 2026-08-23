@@ -128,6 +128,8 @@ export interface SimplifiedReport {
   streaks: { A: number; B: number } | null;
   rotations: { A: RotationRow[]; B: RotationRow[] } | null;
   setter: SetterBlock | null;
+  setters: { A: SetterBlock | null; B: SetterBlock | null };
+
   serve: { A: ServeBlock; B: ServeBlock } | null;
   reception: { A: ReceptionBlock | null; B: ReceptionBlock | null } | null;
   attack: { A: AttackBlock | null; B: AttackBlock | null } | null;
@@ -528,6 +530,8 @@ export function buildSimplifiedReport(
     streaks,
     rotations,
     setter,
+    setters,
+
     serve,
     reception,
     attack,
