@@ -751,7 +751,8 @@ function replayMatch(m: Match): {
   liberoActiveB: { liberoId: string; replacedPlayerId: string } | null;
 } {
   const lineupFor = (setNum: number, side: "A" | "B"): string[] =>
-    m.lineupsBySet?.[setNum]?.[side] ?? (side === "A" ? m.startingLineupA : m.startingLineupB);
+    sanitizeLineup(m.lineupsBySet?.[setNum]?.[side] ?? (side === "A" ? m.startingLineupA : m.startingLineupB));
+
   let sets: MatchSet[] = [{ number: 1, scoreA: 0, scoreB: 0, finished: false }];
   let currentSet = 1;
   let status: MatchStatus = m.events.length === 0 && m.status === "scheduled" ? "scheduled" : "live";
