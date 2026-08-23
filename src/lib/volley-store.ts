@@ -814,11 +814,13 @@ function replayMatch(m: Match): {
    * Si no hay líbero asignado en el partido (liberoA1Id/liberoA2Id), esta lógica se omite.
    */
   const syncLiberoAfterRotation = (side: "A" | "B") => {
-    const lib1Id = side === "A" ? m.liberoA1Id : m.liberoB1Id;
-    const lib2Id = side === "A" ? m.liberoA2Id : m.liberoB2Id;
+    const cfg = getLiberoSetConfig(m, side, currentSet);
+    const lib1Id = cfg?.liberoId ?? (side === "A" ? m.liberoA1Id : m.liberoB1Id);
+    const lib2Id = cfg ? null : (side === "A" ? m.liberoA2Id : m.liberoB2Id);
 
     // Si no hay líberos asignados para este equipo en el partido, abortamos.
     if (!lib1Id && !lib2Id) return;
+
 
     const lib = side === "A" ? liberoA : liberoB;
     const arr = side === "A" ? onCourtA : onCourtB;
