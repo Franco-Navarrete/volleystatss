@@ -514,8 +514,21 @@ export async function downloadSimplifiedMatchPdf(
     ];
 
     const colW = (W - 4) / 2;
+    const ensure = (needed: number) => {
+      if (y + needed > pageH - 10) {
+        doc.addPage();
+        setFill(C.bg);
+        doc.rect(0, 0, pageW, pageH, "F");
+        y = 12;
+      }
+    };
+    const estimate = (n: number) => 12 + Math.max(1, n) * 3.8;
+
     // Fila 1: jugadores (ataque / puntos)
     let maxH = 0;
+    ensure(
+      Math.max(...teams.map((t) => estimate(enrichTeam(t.team).length))),
+    );
     teams.forEach((t, i) => {
       const rows = enrichTeam(t.team).map((p) => [
         p.number,
