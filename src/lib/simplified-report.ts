@@ -127,6 +127,7 @@ export interface SimplifiedReport {
   } | null;
   streaks: { A: number; B: number } | null;
   rotations: { A: RotationRow[]; B: RotationRow[] } | null;
+  setter: SetterBlock | null;
   serve: { A: ServeBlock; B: ServeBlock } | null;
   reception: { A: ReceptionBlock | null; B: ReceptionBlock | null } | null;
   attack: { A: AttackBlock | null; B: AttackBlock | null } | null;
