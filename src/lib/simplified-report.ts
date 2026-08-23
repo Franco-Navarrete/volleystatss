@@ -10,6 +10,12 @@ import {
   type Team,
 } from "@/lib/volley-store";
 import { computeRotationStats, type RotationBucket } from "@/lib/rotation-stats";
+import {
+  computeSetterPositionStats,
+  SETTER_ZONE_LABEL,
+  type SetterZone,
+} from "@/lib/setter-position";
+import { computeSetterDistribution, getSettingEvents } from "@/lib/setting-stats";
 import { generateInsights } from "@/lib/coach/insights";
 
 /**
