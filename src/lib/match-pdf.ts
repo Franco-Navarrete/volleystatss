@@ -1,33 +1,14 @@
 import {
   computeMatchStats,
-  computeSetStats,
   computeReceptionStats,
   setsWon,
-  POINT_TYPE_LABEL,
   type Match,
   type PlayerStat,
   type Team,
-  type SubstitutionEvent,
-  
   type PointEvent,
-  type PointType,
   type ReceptionStat,
 } from "@/lib/volley-store";
 
-const PDF_ABBR: Record<PointType, string> = {
-  attack: "ATA",
-  block: "BLO",
-  ace: "S",
-  counter_attack: "C.A",
-  rotation_attack: "A.R",
-  opponent_error: "E.R",
-  opponent_rotation_error: "E.Rot",
-  serve_error: "E.S",
-  unforced_error: "ENF",
-  rotation_error: "E.Rot",
-  attack_error: "E.A",
-  block_error: "E.B",
-};
 
 const MVP_WEIGHTS = { attack: 1, block: 1.2, ace: 1.5, unforcedError: -0.5 };
 const mvpScore = (p: PlayerStat) =>
@@ -61,299 +42,195 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   doc.setProperties({ title: `${teamA.name} vs ${teamB.name}` });
   const pageW = doc.internal.pageSize.getWidth();
-  const margin = 14;
-  let y = 16;
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 10;
+  const innerW = pageW - margin * 2;
+  let y = 10;
 
   const primary: [number, number, number] = [37, 99, 235];
   const dark: [number, number, number] = [30, 30, 40];
+  const grey: [number, number, number] = [120, 120, 130];
 
-  // Header
+  // ---------- Cabecera compacta ----------
   doc.setFillColor(...dark);
-  doc.rect(0, 0, pageW, 38, "F");
+  doc.rect(margin, y, innerW, 14, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text(`${teamA.name} vs ${teamB.name}`, pageW / 2, 13, { align: "center" });
-  doc.setFontSize(11);
-  doc.text(`${w.a} - ${w.b}`, pageW / 2, 20, { align: "center" });
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  const setLine = match.sets.map((s) => `Set ${s.number}: ${s.scoreA}-${s.scoreB}`).join("   ");
-  doc.text(setLine, pageW / 2, 26, { align: "center" });
+  doc.setFontSize(12);
+  doc.text(`${teamA.name}  vs  ${teamB.name}`, margin + 3, y + 6);
   doc.setFontSize(8);
-  doc.setTextColor(180, 180, 190);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(200, 200, 210);
+  const dateStr = match.scheduledAt ? new Date(match.scheduledAt).toLocaleDateString("es-AR") : "";
   doc.text(
-    match.status === "finished" ? "Resultado final" : "Partido en progreso",
-    pageW / 2,
-    32,
-    { align: "center" },
+    [dateStr, match.status === "finished" ? "Resultado final" : "En progreso"]
+      .filter(Boolean)
+      .join("  ·  "),
+    margin + 3,
+    y + 11,
   );
-  y = 46;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(255, 255, 255);
+  doc.text(`${w.a} - ${w.b}`, pageW - margin - 4, y + 9, { align: "right" });
+  y += 17;
 
-  doc.setTextColor(0, 0, 0);
-
-  // MVP
-  const playersA = enrich(teamA, stats.players);
-  const playersB = enrich(teamB, stats.players);
-  const all = [
-    ...playersA.map((p) => ({ ...p, teamName: teamA.name })),
-    ...playersB.map((p) => ({ ...p, teamName: teamB.name })),
-  ];
-  const mvp = [...all].sort((a, b) => mvpScore(b) - mvpScore(a))[0];
-  if (mvp) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...primary);
-    doc.text(`MVP: #${mvp.number} ${mvp.name} (${mvp.teamName})`, margin, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 80);
-    y += 5;
-    doc.text(
-      `Índice ${mvpScore(mvp).toFixed(1)} · ${mvp.attack} ATA · ${mvp.block} BLO · ${mvp.ace} S · ${mvp.unforcedError} ENF`,
-      margin,
-      y,
+  // ---------- Parciales por set ----------
+  const partialsFor = (setNumber: number) => {
+    const pts = match.events.filter(
+      (e): e is PointEvent => !("kind" in e) && (e as PointEvent).setNumber === setNumber,
     );
-    y += 8;
-  }
+    const marks: string[] = [];
+    let a = 0;
+    let b = 0;
+    const targets = [8, 16, 21];
+    let ti = 0;
+    for (const ev of pts) {
+      if (ev.scoringSide === "A") a++;
+      else b++;
+      while (ti < targets.length && Math.max(a, b) >= targets[ti]) {
+        marks.push(`${a}-${b}`);
+        ti++;
+      }
+    }
+    while (marks.length < 3) marks.push("—");
+    return marks;
+  };
 
-  // Team totals
+  autoTable(doc, {
+    startY: y,
+    head: [["Set", "8", "16", "21", "Resultado"]],
+    body: match.sets.map((s) => {
+      const p = partialsFor(s.number);
+      return [String(s.number), p[0], p[1], p[2], `${s.scoreA}-${s.scoreB}`];
+    }),
+    headStyles: { fillColor: primary, fontSize: 6, halign: "center", cellPadding: 0.8 },
+    bodyStyles: { fontSize: 6, halign: "center", cellPadding: 0.8 },
+    columnStyles: { 4: { fontStyle: "bold" } },
+    margin: { left: margin, right: margin + innerW * 0.52 },
+    theme: "grid",
+  });
+  const setsTableY = (doc as any).lastAutoTable.finalY;
+
+  // ---------- Totales de equipo (a la derecha de los parciales) ----------
   const tA = stats.teams.get(teamA.id);
   const tB = stats.teams.get(teamB.id);
   autoTable(doc, {
     startY: y,
-    head: [["Equipo", "PTS", "ATA", "A.R", "C.A", "BLO", "S", "E.R", "E.S", "E.A", "ENF"]],
+    head: [["Equipo", "PTS", "ATA", "BLO", "S", "E.R", "E.S", "E.A", "ENF"]],
     body: [
-      [teamA.name, tA?.total ?? 0, tA?.attack ?? 0, tA?.rotationAttack ?? 0, tA?.counterAttack ?? 0, tA?.block ?? 0, tA?.ace ?? 0, tA?.opponentErrors ?? 0, tA?.serveErrors ?? 0, tA?.attackErrors ?? 0, tA?.unforcedErrors ?? 0],
-      [teamB.name, tB?.total ?? 0, tB?.attack ?? 0, tB?.rotationAttack ?? 0, tB?.counterAttack ?? 0, tB?.block ?? 0, tB?.ace ?? 0, tB?.opponentErrors ?? 0, tB?.serveErrors ?? 0, tB?.attackErrors ?? 0, tB?.unforcedErrors ?? 0],
+      [teamA.shortName || teamA.name, tA?.total ?? 0, (tA?.attack ?? 0) + (tA?.rotationAttack ?? 0) + (tA?.counterAttack ?? 0), tA?.block ?? 0, tA?.ace ?? 0, tA?.opponentErrors ?? 0, tA?.serveErrors ?? 0, tA?.attackErrors ?? 0, tA?.unforcedErrors ?? 0],
+      [teamB.shortName || teamB.name, tB?.total ?? 0, (tB?.attack ?? 0) + (tB?.rotationAttack ?? 0) + (tB?.counterAttack ?? 0), tB?.block ?? 0, tB?.ace ?? 0, tB?.opponentErrors ?? 0, tB?.serveErrors ?? 0, tB?.attackErrors ?? 0, tB?.unforcedErrors ?? 0],
     ],
-    headStyles: { fillColor: primary, fontSize: 7 },
-    bodyStyles: { fontSize: 7 },
-    margin: { left: margin, right: margin },
+    headStyles: { fillColor: dark, fontSize: 6, halign: "center", cellPadding: 0.8 },
+    bodyStyles: { fontSize: 6, halign: "center", cellPadding: 0.8 },
+    columnStyles: { 0: { halign: "left", fontStyle: "bold", cellWidth: 26 } },
+    margin: { left: margin + innerW * 0.5, right: margin },
+    theme: "grid",
   });
-  y = (doc as any).lastAutoTable.finalY + 8;
+  y = Math.max(setsTableY, (doc as any).lastAutoTable.finalY) + 4;
 
-  const playerTable = (title: string, rows: PlayerStat[]) => {
+  // ---------- Tabla combinada por jugador (puntos + recepción) ----------
+  const recA = computeReceptionStats(match.events, "A");
+  const recB = computeReceptionStats(match.events, "B");
+
+  const teamBlock = (team: Team, players: PlayerStat[], recMap: Map<string, ReceptionStat>, teamStat = stats.teams.get(team.id)) => {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(...dark);
-    if (y > 265) {
-      doc.addPage();
-      y = 16;
-    }
-    doc.text(title, margin, y);
-    y += 3;
+    doc.text(team.name, margin, y);
+    y += 1.5;
+
+    const rows = players.map((p) => {
+      const r = recMap.get(p.playerId);
+      return [
+        p.number,
+        p.name,
+        p.attack + p.rotationAttack + p.counterAttack,
+        p.block,
+        p.ace,
+        p.serveError,
+        p.attackError,
+        p.unforcedError,
+        p.total,
+        r?.total ?? 0,
+        r ? `${r.positivity.toFixed(0)}%` : "—",
+        r ? `${r.efficiency.toFixed(0)}%` : "—",
+      ];
+    });
+
+    const recTotals = [...recMap.values()].filter((r) => team.players.some((p) => p.id === r.playerId));
+    const recTot = recTotals.reduce((n, r) => n + r.total, 0);
+    const recPos = recTotals.reduce((n, r) => n + (r.positivity / 100) * r.total, 0);
+
     autoTable(doc, {
       startY: y,
-      head: [["#", "Jugador", "ATA", "A.R", "C.A", "BLO", "S", "E.S", "E.A", "ENF", "TOT"]],
+      head: [["#", "Jugador", "ATA", "BLO", "S", "E.S", "E.A", "ENF", "PTS", "Rec", "Pos%", "Efic%"]],
       body: rows.length
-        ? rows.map((p) => [p.number, p.name, p.attack, p.rotationAttack, p.counterAttack, p.block, p.ace, p.serveError, p.attackError, p.unforcedError, p.total])
-        : [["-", "Sin puntos registrados", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
-      headStyles: { fillColor: dark, fontSize: 7 },
-      bodyStyles: { fontSize: 7 },
-      columnStyles: { 0: { cellWidth: 10 }, 10: { fontStyle: "bold" } },
+        ? rows
+        : [["-", "Sin registros", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
+      foot: [[
+        "",
+        "TOTALES",
+        (teamStat?.attack ?? 0) + (teamStat?.rotationAttack ?? 0) + (teamStat?.counterAttack ?? 0),
+        teamStat?.block ?? 0,
+        teamStat?.ace ?? 0,
+        teamStat?.serveErrors ?? 0,
+        teamStat?.attackErrors ?? 0,
+        teamStat?.unforcedErrors ?? 0,
+        teamStat?.total ?? 0,
+        recTot,
+        recTot ? `${Math.round((recPos / recTot) * 100)}%` : "—",
+        "",
+      ]],
+      headStyles: { fillColor: dark, fontSize: 6, halign: "center", cellPadding: 0.7 },
+      bodyStyles: { fontSize: 6, halign: "center", cellPadding: 0.7 },
+      footStyles: { fillColor: [235, 236, 240], textColor: 20, fontSize: 6, halign: "center", cellPadding: 0.7 },
+      columnStyles: {
+        0: { cellWidth: 8 },
+        1: { halign: "left", cellWidth: 42 },
+        8: { fontStyle: "bold" },
+      },
       margin: { left: margin, right: margin },
+      theme: "grid",
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = (doc as any).lastAutoTable.finalY + 4;
   };
 
-  playerTable(`${teamA.name} · Jugadores`, playersA);
-  playerTable(`${teamB.name} · Jugadores`, playersB);
+  const playersA = enrich(teamA, stats.players);
+  const playersB = enrich(teamB, stats.players);
+  teamBlock(teamA, playersA, recA);
+  teamBlock(teamB, playersB, recB);
 
-  // Reception per team — total del partido
-  const receptionTable = (title: string, team: Team, recMap: Map<string, ReceptionStat>) => {
-    const rows = [...recMap.values()]
-      .filter((r) => team.players.some((p) => p.id === r.playerId))
-      .map((r) => {
-        const tp = team.players.find((p) => p.id === r.playerId)!;
-        return { ...r, name: tp.name, number: tp.number };
-      })
-      .sort((a, b) => b.total - a.total);
-    if (y > 255) { doc.addPage(); y = 16; }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...dark);
-    doc.text(title, margin, y);
-    y += 3;
-    autoTable(doc, {
-      startY: y,
-      head: [["#", "Receptor", "#", "+", "0", "−", "=", "≠", "Tot", "Efect%", "Efic%"]],
-      body: rows.length
-        ? rows.map((r) => [r.number, r.name, r.doublePositive, r.positive, r.neutral, r.negative, r.doubleNegative, r.overpass, r.total, `${r.positivity.toFixed(0)}%`, `${r.efficiency.toFixed(0)}%`])
-        : [["-", "Sin recepciones registradas", "-", "-", "-", "-", "-", "-", "-", "-", "-"]],
-      headStyles: { fillColor: dark, fontSize: 7 },
-      bodyStyles: { fontSize: 7 },
-      columnStyles: { 0: { cellWidth: 10 }, 9: { fontStyle: "bold" }, 10: { fontStyle: "bold" } },
-      margin: { left: margin, right: margin },
-    });
-    y = (doc as any).lastAutoTable.finalY + 8;
-  };
-
-  const recMatchA = computeReceptionStats(match.events, "A");
-  const recMatchB = computeReceptionStats(match.events, "B");
-  receptionTable(`${teamA.name} · Recepción`, teamA, recMatchA);
-  receptionTable(`${teamB.name} · Recepción`, teamB, recMatchB);
-
-  const playerName = (team: Team, id: string | null | undefined) => {
-    if (!id) return "—";
-    const p = team.players.find((x) => x.id === id);
-    return p ? `#${p.number} ${p.name}` : id;
-  };
-
-  for (const s of match.sets) {
-    const setStats = computeSetStats(match, s.number);
-    const spA = enrich(teamA, setStats.players);
-    const spB = enrich(teamB, setStats.players);
-    if (y > 240) {
-      doc.addPage();
-      y = 16;
-    }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...primary);
-    doc.text(`Set ${s.number} (${s.scoreA}-${s.scoreB})`, margin, y);
-    y += 5;
-
-    // Alineación inicial del set
-    const lineupA = match.lineupsBySet?.[s.number]?.A ?? match.startingLineupA;
-    const lineupB = match.lineupsBySet?.[s.number]?.B ?? match.startingLineupB;
-    const fmtLineup = (team: Team, ids: string[]) =>
-      ids.length
-        ? ids.map((id, i) => `P${i + 1}: ${playerName(team, id)}`).join("  ·  ")
-        : "Sin alineación registrada";
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...dark);
-    doc.text(`Alineación inicial · Set ${s.number}`, margin, y);
-    y += 3;
-    autoTable(doc, {
-      startY: y,
-      head: [["Equipo", "Formación (P1 = saca)"]],
-      body: [
-        [teamA.shortName || teamA.name, fmtLineup(teamA, lineupA)],
-        [teamB.shortName || teamB.name, fmtLineup(teamB, lineupB)],
-      ],
-      headStyles: { fillColor: dark, fontSize: 8 },
-      bodyStyles: { fontSize: 8 },
-      columnStyles: { 0: { cellWidth: 24, fontStyle: "bold" } },
-      margin: { left: margin, right: margin },
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
-
-    playerTable(`${teamA.name} · Estadísticas Set ${s.number}`, spA);
-    playerTable(`${teamB.name} · Estadísticas Set ${s.number}`, spB);
-
-    // Recepción del set
-    const setEvents = match.events.filter((e) => "setNumber" in e && e.setNumber === s.number);
-    const recSetA = computeReceptionStats(setEvents, "A");
-    const recSetB = computeReceptionStats(setEvents, "B");
-    if (recSetA.size > 0) receptionTable(`${teamA.name} · Recepción Set ${s.number}`, teamA, recSetA);
-    if (recSetB.size > 0) receptionTable(`${teamB.name} · Recepción Set ${s.number}`, teamB, recSetB);
-
-
-
-    // Punto a punto del set
-    const points = match.events.filter(
-      (e): e is PointEvent =>
-        !("kind" in e) && (e as PointEvent).setNumber === s.number,
-    );
-    if (points.length) {
-      if (y > 240) { doc.addPage(); y = 16; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(...dark);
-      doc.text(`Punto a punto · Set ${s.number}`, margin, y);
-      y += 4;
-
-      // Chips visuales tipo Volleyball Referee: cuadrados redondeados
-      // azules (A) y rojos (B) con el marcador acumulado del equipo que anotó.
-      const colorA: [number, number, number] = [37, 99, 235]; // azul
-      const colorB: [number, number, number] = [185, 28, 28]; // rojo
-      const chipW = 6.5;
-      const chipH = 5;
-      const gapX = 1.2;
-      const gapY = 1.8;
-      const maxX = pageW - margin;
-      let cx = margin;
-      let cy = y;
-      let runA = 0;
-      let runB = 0;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7);
-      for (const ev of points) {
-        if (ev.scoringSide === "A") runA++; else runB++;
-        if (cx + chipW > maxX) {
-          cx = margin;
-          cy += chipH + gapY;
-          if (cy + chipH > 285) { doc.addPage(); cy = 16; }
-        }
-        const fill = ev.scoringSide === "A" ? colorA : colorB;
-        doc.setFillColor(...fill);
-        doc.roundedRect(cx, cy, chipW, chipH, 1, 1, "F");
-        doc.setTextColor(255, 255, 255);
-        const label = String(ev.scoringSide === "A" ? runA : runB);
-        doc.text(label, cx + chipW / 2, cy + chipH / 2 + 1.2, { align: "center" });
-        cx += chipW + gapX;
-      }
-      y = cy + chipH + 6;
-      doc.setTextColor(0, 0, 0);
-    }
-
-    // Cambios y líberos del set
-    const changes = match.events.filter(
-      (e): e is SubstitutionEvent =>
-        "kind" in e &&
-        e.kind === "sub" &&
-        e.setNumber === s.number,
-    );
-    if (changes.length) {
-      if (y > 255) { doc.addPage(); y = 16; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(...dark);
-      doc.text(`Cambios · Set ${s.number}`, margin, y);
-      y += 3;
-      autoTable(doc, {
-        startY: y,
-        head: [["Equipo", "Tipo", "Entra", "Sale"]],
-        body: changes.map((e) => {
-          const team = e.side === "A" ? teamA : teamB;
-          return [team.shortName, "Cambio", playerName(team, e.playerInId), playerName(team, e.playerOutId)];
-        }),
-        headStyles: { fillColor: dark, fontSize: 8 },
-        bodyStyles: { fontSize: 8 },
-        margin: { left: margin, right: margin },
-      });
-      y = (doc as any).lastAutoTable.finalY + 8;
-    }
-  }
-
-  // Observaciones - abreviaturas
-  if (y > 240) { doc.addPage(); y = 16; }
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(...dark);
-  doc.text("Observaciones:", margin, y);
-  y += 5;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
-  const notes = [
-    "PTS: Puntos totales",
-    "ATA: Ataque",
-    "A.R: Ataque de rotación",
-    "C.A: Contraataque",
-    "BLO: Bloqueo",
-    "S: Saque (ace)",
-    "E.R: Error rival",
-    "E.S: Error de saque",
-    "E.A: Error de ataque",
-    "ENF: Error no forzado",
+  // ---------- MVP + referencias al pie ----------
+  const all = [
+    ...playersA.map((p) => ({ ...p, teamName: teamA.shortName || teamA.name })),
+    ...playersB.map((p) => ({ ...p, teamName: teamB.shortName || teamB.name })),
   ];
-  for (const line of notes) {
-    doc.text(line, margin, y);
-    y += 4;
+  const mvp = [...all].sort((a, b) => mvpScore(b) - mvpScore(a))[0];
+
+  const footY = Math.min(y, pageH - 22);
+  if (mvp) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...primary);
+    doc.text(
+      `MVP: #${mvp.number} ${mvp.name} (${mvp.teamName}) · índice ${mvpScore(mvp).toFixed(1)}`,
+      margin,
+      footY,
+    );
   }
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(...grey);
+  doc.text(
+    "ATA: ataque (incluye rotación y contraataque) · BLO: bloqueo · S: ace · E.S: error de saque · E.A: error de ataque · ENF: error no forzado · PTS: puntos · Rec: recepciones · Pos%: positividad · Efic%: eficiencia",
+    margin,
+    footY + 4,
+    { maxWidth: innerW },
+  );
+  y = footY + 10;
+
 
   // Footer
   const pages = doc.getNumberOfPages();
