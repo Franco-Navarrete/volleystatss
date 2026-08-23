@@ -1254,8 +1254,11 @@ export const useVolley = create<VolleyState>()(
           status: "scheduled",
           currentSet: 1,
           sets: [{ number: 1, scoreA: 0, scoreB: 0, finished: false }],
+          startingLineupA: repair(m.startingLineupA, "A"),
+          startingLineupB: repair(m.startingLineupB, "B"),
           onCourtA: repair(m.startingLineupA, "A"),
           onCourtB: repair(m.startingLineupB, "B"),
+
           events: [],
           servingSide: initialServingSide,
           initialServingSide,
