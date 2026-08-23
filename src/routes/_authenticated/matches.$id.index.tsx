@@ -3203,7 +3203,10 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
 
       {(() => {
         const liberos = team.players.filter((p) => p.position === "libero");
-        const centrales = team.players.filter((p) => p.position === "central");
+        // Sólo se puede reemplazar a alguien que esté en cancha en esta formación.
+        const centrales = lineup
+          .map((id) => team.players.find((p) => p.id === id))
+          .filter((p): p is NonNullable<typeof p> => !!p && p.position === "central");
         if (liberos.length === 0) return null;
         const selLibero = liberoCfg?.liberoId ?? "";
         const selCentral = liberoCfg?.centralId ?? "";
