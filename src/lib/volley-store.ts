@@ -1416,6 +1416,15 @@ export const useVolley = create<VolleyState>()(
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
+            // INVARIANTE: el líbero no puede entrar si ya está en cancha
+            // (produciría el mismo id en dos zonas).
+            const court = side === "A" ? m.onCourtA : m.onCourtB;
+            if (court.includes(liberoId) || !court.includes(replacedId)) {
+              // eslint-disable-next-line no-console
+              console.warn("[volley] libero-in inválido (duplicaría jugador en cancha)", { liberoId, replacedId, court });
+              return m;
+            }
+
             const ev: LiberoEvent = {
               id: uid(),
               kind: "libero",
