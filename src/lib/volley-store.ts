@@ -1079,9 +1079,9 @@ interface VolleyState {
   recordReception: (matchId: string, side: "A" | "B", playerId: string, rating: ReceptionRating) => void;
   recordDefense: (matchId: string, side: "A" | "B", playerId: string, rating: DefenseRating) => void;
   recordSetting: (matchId: string, side: "A" | "B", payload: Omit<SettingEvent, "id" | "kind" | "side" | "setNumber" | "timestamp">) => void;
-  recordAttackAttempt: (matchId: string, side: "A" | "B", playerId: string | null, opts?: { attackZone?: AttackZone; attackType?: import("@/lib/formations/attack-types").AttackType; attackDirection?: AttackDirection; attackSubzone?: AttackSubzone; isCounter?: boolean }) => void;
+  recordAttackAttempt: (matchId: string, side: "A" | "B", playerId: string | null, opts?: { attackZone?: AttackZone; attackType?: import("@/lib/formations/attack-types").AttackType; attackDirection?: AttackDirection; attackSubzone?: AttackSubzone; isCounter?: boolean; rivalBlockerId?: string }) => void;
   recordBlock: (matchId: string, side: "A" | "B", playerId: string | null, rating: "point" | "touch" | "error") => void;
-  recordPoint: (matchId: string, playerSide: "A" | "B", type: PointType, playerId: string | null, attackZone?: AttackZone, attackType?: import("@/lib/formations/attack-types").AttackType, attackDirection?: AttackDirection, attackSubzone?: AttackSubzone, finishType?: AttackFinishType) => void;
+  recordPoint: (matchId: string, playerSide: "A" | "B", type: PointType, playerId: string | null, attackZone?: AttackZone, attackType?: import("@/lib/formations/attack-types").AttackType, attackDirection?: AttackDirection, attackSubzone?: AttackSubzone, finishType?: AttackFinishType, rivalBlockerId?: string) => void;
   recordBlockPoint: (matchId: string, scoringSide: "A" | "B", blockerIds: string[]) => void;
   recordSubstitution: (matchId: string, side: "A" | "B", playerInId: string, playerOutId: string) => void;
   recordLiberoIn: (matchId: string, side: "A" | "B", liberoId: string, replacedId: string) => void;
