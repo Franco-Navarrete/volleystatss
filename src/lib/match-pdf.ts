@@ -247,7 +247,7 @@ export async function downloadMatchPdf(match: Match, teamA: Team, teamB: Team, o
   const playerName = (team: Team, id: string | null | undefined) => {
     if (!id) return "—";
     const p = team.players.find((x) => x.id === id);
-    return p ? `#${p.number} ${p.name}` : id;
+    return p ? `#${p.number} ${p.name}` : "—";
   };
 
   for (const s of match.sets) {
