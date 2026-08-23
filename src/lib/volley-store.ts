@@ -740,7 +740,25 @@ function scoringSideFor(playerSide: "A" | "B", type: PointType): "A" | "B" {
   return playerSide;
 }
 
+/**
+ * Normaliza una alineación: quita vacíos, elimina ids duplicados (un jugador
+ * no puede ocupar dos zonas) y recorta a 6 posiciones.
+ */
+export function sanitizeLineup(lineup: (string | null | undefined)[] | undefined): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of lineup ?? []) {
+    const id = typeof raw === "string" ? raw.trim() : "";
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length === 6) break;
+  }
+  return out;
+}
+
 function replayMatch(m: Match): {
+
   sets: MatchSet[];
   currentSet: number;
   status: MatchStatus;
@@ -751,7 +769,8 @@ function replayMatch(m: Match): {
   liberoActiveB: { liberoId: string; replacedPlayerId: string } | null;
 } {
   const lineupFor = (setNum: number, side: "A" | "B"): string[] =>
-    m.lineupsBySet?.[setNum]?.[side] ?? (side === "A" ? m.startingLineupA : m.startingLineupB);
+    sanitizeLineup(m.lineupsBySet?.[setNum]?.[side] ?? (side === "A" ? m.startingLineupA : m.startingLineupB));
+
   let sets: MatchSet[] = [{ number: 1, scoreA: 0, scoreB: 0, finished: false }];
   let currentSet = 1;
   let status: MatchStatus = m.events.length === 0 && m.status === "scheduled" ? "scheduled" : "live";
@@ -1221,12 +1240,13 @@ export const useVolley = create<VolleyState>()(
       createMatch: (m) => {
         const id = uid();
         const initialServingSide = m.initialServingSide ?? "A";
-        // Aseguramos cardinalidad 6 desde el origen
+        // Aseguramos cardinalidad 6 y unicidad desde el origen
         const repair = (l: string[], side: "A" | "B") => {
-          const arr = [...(l || [])];
+          const arr = sanitizeLineup(l);
           while (arr.length < 6) arr.push(`emergency-slot-${side}-${arr.length}`);
           return arr.slice(0, 6);
         };
+
 
         const match: Match = {
           ...m,
@@ -1234,8 +1254,11 @@ export const useVolley = create<VolleyState>()(
           status: "scheduled",
           currentSet: 1,
           sets: [{ number: 1, scoreA: 0, scoreB: 0, finished: false }],
+          startingLineupA: repair(m.startingLineupA, "A"),
+          startingLineupB: repair(m.startingLineupB, "B"),
           onCourtA: repair(m.startingLineupA, "A"),
           onCourtB: repair(m.startingLineupB, "B"),
+
           events: [],
           servingSide: initialServingSide,
           initialServingSide,
@@ -1274,7 +1297,7 @@ export const useVolley = create<VolleyState>()(
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
             const lineupsBySet = { ...(m.lineupsBySet ?? {}) };
-            lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: lineup };
+            lineupsBySet[m.currentSet] = { ...(lineupsBySet[m.currentSet] ?? {}), [side]: sanitizeLineup(lineup) };
             const nextMatch = { ...m, lineupsBySet };
             const r = replayMatch(nextMatch);
             return {
@@ -1396,8 +1419,17 @@ export const useVolley = create<VolleyState>()(
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
+            // INVARIANTE: un jugador no puede ocupar dos zonas. Si el que entra
+            // ya está en cancha, o el que sale no está, la sustitución se ignora.
+            const court = side === "A" ? m.onCourtA : m.onCourtB;
+            if (playerInId === playerOutId || court.includes(playerInId) || !court.includes(playerOutId)) {
+              // eslint-disable-next-line no-console
+              console.warn("[volley] sustitución inválida (duplicaría jugador en cancha)", { playerInId, playerOutId, court });
+              return m;
+            }
             const ev: SubstitutionEvent = {
               id: uid(),
+
               kind: "sub",
               side,
               playerInId,
@@ -1416,6 +1448,15 @@ export const useVolley = create<VolleyState>()(
         set((s) => ({
           matches: s.matches.map((m) => {
             if (m.id !== matchId) return m;
+            // INVARIANTE: el líbero no puede entrar si ya está en cancha
+            // (produciría el mismo id en dos zonas).
+            const court = side === "A" ? m.onCourtA : m.onCourtB;
+            if (court.includes(liberoId) || !court.includes(replacedId)) {
+              // eslint-disable-next-line no-console
+              console.warn("[volley] libero-in inválido (duplicaría jugador en cancha)", { liberoId, replacedId, court });
+              return m;
+            }
+
             const ev: LiberoEvent = {
               id: uid(),
               kind: "libero",
@@ -1519,7 +1560,7 @@ export const useVolley = create<VolleyState>()(
               id: uid(),
               kind: "lineupOverride",
               side,
-              lineup: [...lineup],
+              lineup: sanitizeLineup(lineup),
               setNumber: m.currentSet,
               timestamp: Date.now(),
             };

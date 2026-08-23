@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-auth";
+
 import type { Match, Team, League } from "@/lib/volley-store";
 
 interface AppStateData {
@@ -23,11 +25,32 @@ interface MergedAppState {
 export function useAllUsersAppState() {
   const { isAdmin, user, checking } = useIsAdmin();
   const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
-  
+  const enabled = !checking && (isAdmin || isSuperAdmin);
+  const queryClient = useQueryClient();
+
+  // Tiempo real: cualquier cambio de estado de cualquier usuario refresca la
+  // vista del admin (partidos en vivo se actualizan solos).
+  useEffect(() => {
+    if (!enabled) return;
+    const channel = supabase
+      .channel("admin-app-state-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "app_state" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [enabled, queryClient]);
+
   return useQuery<MergedAppState>({
     queryKey: ["admin-all-app-state"],
-    enabled: !checking && (isAdmin || isSuperAdmin),
-    staleTime: 30_000,
+    enabled,
+    staleTime: 5_000,
+    // Respaldo por si el canal en vivo se cae (redes móviles / payload grande).
+    refetchInterval: enabled ? 8_000 : false,
+    refetchOnWindowFocus: true,
+
     queryFn: async () => {
       const { data, error } = await supabase.from("app_state").select("data");
       if (error) throw error;

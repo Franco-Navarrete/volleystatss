@@ -65,6 +65,7 @@ import {
   ATTACK_ZONE_LABEL,
   PLAYER_POSITION_LABEL,
   type PlayerPosition,
+  repairOnCourt,
 } from "@/lib/volley-store";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
@@ -2514,9 +2515,16 @@ function FormationSide({
     { x: 15, y: 82 }, // idx 4 → P5
     { x: 50, y: 82 }, // idx 5 → P6
   ];
+  // Blindaje de integridad: exactamente 6 jugadores únicos, uno por zona.
+  const safeOnCourt = repairOnCourt(
+    match.id,
+    side,
+    onCourt,
+    team.players.map((p) => p.id),
+  );
   const usedRoleSlots = new Set<number>();
   const renderSlots = POS_COORDS.map((coords, idx) => {
-    const pid = onCourt[idx] ?? `empty-${side}-${idx}`;
+    const pid = safeOnCourt[idx] ?? `empty-${side}-${idx}`;
     let roleSlot: (typeof formation.slots)[number] | undefined;
     for (let i = 0; i < formation.slots.length; i++) {
       if (!usedRoleSlots.has(i) && formation.slots[i].playerId === pid) {
