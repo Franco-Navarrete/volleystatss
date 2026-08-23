@@ -3191,6 +3191,73 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
         )}
       </div>
 
+      {(() => {
+        const liberos = team.players.filter((p) => p.position === "libero");
+        const centrales = team.players.filter((p) => p.position === "central");
+        if (liberos.length === 0) return null;
+        const selLibero = liberoCfg?.liberoId ?? "";
+        const selCentral = liberoCfg?.centralId ?? "";
+        const liberoName = liberos.find((p) => p.id === selLibero);
+        const centralName = centrales.find((p) => p.id === selCentral);
+        const valid = !!liberoName && !!centralName && selLibero !== selCentral;
+        const selectCls =
+          "flex-1 min-w-0 text-xs rounded-md bg-secondary/60 border border-border/60 px-2 py-1.5 focus:outline-none focus:border-primary";
+        return (
+          <div className="rounded-lg border border-border/60 bg-secondary/30 p-2 space-y-1.5">
+            <div className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+              Líbero del set {match.currentSet}
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={selLibero}
+                className={selectCls}
+                onChange={(e) => {
+                  const liberoId = e.target.value;
+                  if (!liberoId) return setLiberoCfg(null);
+                  setLiberoCfg({ liberoId, centralId: selCentral && selCentral !== liberoId ? selCentral : "" } as LiberoSetConfig);
+                }}
+              >
+                <option value="">Seleccionar líbero…</option>
+                {liberos.map((p) => (
+                  <option key={p.id} value={p.id}>#{p.number} {p.name}</option>
+                ))}
+              </select>
+              {selLibero && (
+                <select
+                  value={selCentral}
+                  className={selectCls}
+                  onChange={(e) => setLiberoCfg({ liberoId: selLibero, centralId: e.target.value } as LiberoSetConfig)}
+                >
+                  <option value="">Reemplaza a…</option>
+                  {centrales
+                    .filter((p) => p.id !== selLibero)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>#{p.number} {p.name}</option>
+                    ))}
+                </select>
+              )}
+            </div>
+            {selLibero && (
+              valid ? (
+                <div className="text-[10px] leading-tight text-muted-foreground">
+                  <span className="text-success font-bold">● Líbero: #{liberoName!.number} {liberoName!.name}</span>
+                  {" · "}
+                  <span className="text-primary font-bold">● Central: #{centralName!.number} {centralName!.name}</span>
+                  <br />
+                  ↔ Cambio automático: P2 → P1 (entra líbero) / P5 → P4 (vuelve el central)
+                </div>
+              ) : (
+                <div className="text-[10px] text-destructive font-semibold">
+                  Elegí el central asociado para activar el cambio automático.
+                </div>
+              )
+            )}
+          </div>
+        );
+      })()}
+
+
+
 
       <div className="flex items-center gap-2">
         {step === 2 && (
