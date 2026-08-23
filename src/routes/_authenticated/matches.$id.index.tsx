@@ -2818,7 +2818,14 @@ function PositionBadge({ position }: { position?: PlayerPosition }) {
 
 function LineupEditor({ match, teamA, teamB, onSave }: {
   match: Match; teamA: Team; teamB: Team;
-  onSave: (lineupA: string[], lineupB: string[], armadorA: number | null, armadorB: number | null) => void;
+  onSave: (
+    lineupA: string[],
+    lineupB: string[],
+    armadorA: number | null,
+    armadorB: number | null,
+    liberoCfgA: LiberoSetConfig | null,
+    liberoCfgB: LiberoSetConfig | null,
+  ) => void;
 }) {
   const currentSetLineup = match.lineupsBySet?.[match.currentSet];
   const [lineupA, setLineupA] = useState<string[]>(() => repairOnCourt(
