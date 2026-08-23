@@ -29,6 +29,8 @@ export type AttackType =
   | "media_z2"
   // Opuesto zaguero
   | "zaguero_z1"
+  // Armador
+  | "toque"
   // Cualquier rol
   | "emergencia";
 
@@ -51,6 +53,7 @@ export const ATTACK_TYPE_LABEL: Record<AttackType, string> = {
   alta_z2: "Alta Z2",
   media_z2: "Media Z2",
   zaguero_z1: "Zaguero Z1",
+  toque: "Toque",
   emergencia: "Emergencia",
 };
 
@@ -65,6 +68,7 @@ export const ATTACK_TYPE_SHORT: Record<AttackType, string> = {
   alta_z2: "Alta",
   media_z2: "Media",
   zaguero_z1: "Zaguero",
+  toque: "Toque",
   emergencia: "Emergencia",
 };
 
@@ -96,11 +100,12 @@ export function getAttackTypeLabel(id: string): string {
   );
 }
 
-const PUNTA_FRONT: AttackType[] = ["jatu", "alta_z4", "media_z4", "emergencia"];
+const PUNTA_FRONT: AttackType[] = ["alta_z4", "media_z4", "emergencia"];
 const PUNTA_BACK: AttackType[] = ["pipe", "emergencia"];
 const CENTRAL_FRONT: AttackType[] = ["primer_tiempo", "corta_atras", "v", "emergencia"];
-const OPUESTO_FRONT: AttackType[] = ["jatu", "alta_z4", "media_z4", "emergencia"];
+const OPUESTO_FRONT: AttackType[] = ["alta_z2", "media_z2", "emergencia"];
 const OPUESTO_BACK: AttackType[] = ["pipe", "zaguero_z1", "emergencia"];
+const SETTER_TYPES: AttackType[] = ["toque", "emergencia"];
 const FALLBACK: AttackType[] = ["emergencia"];
 
 /**
@@ -127,7 +132,10 @@ export function getAttackTypeOptions(opts: {
     // Delantero: opciones de punta/opuesto. Zaguero: pipe + zaguero Z1.
     return (isBackRow ? OPUESTO_BACK : PUNTA_FRONT).map(toOption);
   }
-  // armador, líbero, sin posición → emergencia
+  if (position === "armador") {
+    return SETTER_TYPES.map(toOption);
+  }
+  // líbero, sin posición → emergencia
   return FALLBACK.map(toOption);
 }
 
@@ -150,5 +158,6 @@ export const ALL_ATTACK_TYPES: AttackType[] = [
   "alta_z2",
   "media_z2",
   "zaguero_z1",
+  "toque",
   "emergencia",
 ];
