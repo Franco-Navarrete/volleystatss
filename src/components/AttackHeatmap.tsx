@@ -275,15 +275,46 @@ function DestinationCourt({ team, agg, label }: { team: Team; agg: HeatmapAgg; l
               {row.map((d) => {
                 const b = agg.destination[d];
                 const pct = destTotal > 0 ? Math.round((b.count / destTotal) * 100) : 0;
+                const subs = agg.destinationSub[d];
+                const hasSubs = SUB_KEYS.some((k) => subs[k].count > 0);
                 return (
                   <div
                     key={d}
-                    className="relative rounded-md flex flex-col items-center justify-center text-white border-2 border-white/30"
+                    className="relative rounded-md overflow-hidden text-white border-2 border-white/30"
                     style={{ background: heatColor(b.count, max, team.color) }}
                   >
-                    <div className="text-[9px] font-bold opacity-80">{d}</div>
-                    <div className="scoreboard-digit text-base font-black leading-none">{b.count || ""}</div>
-                    {b.count > 0 && <div className="text-[9px] opacity-90">{pct}%</div>}
+                    <span className="absolute top-0.5 left-1 text-[9px] font-bold opacity-80 z-10">{d}</span>
+                    {hasSubs ? (
+                      <div className="grid grid-rows-2 h-full">
+                        {SUB_ROWS.map((srow, si) => (
+                          <div key={si} className="grid grid-cols-2 gap-[1px] p-[1px]">
+                            {srow.map((s) => {
+                              const sb = subs[s];
+                              return (
+                                <div
+                                  key={s}
+                                  className="rounded-sm border border-white/25 flex items-center justify-center gap-0.5 leading-none"
+                                  style={{ background: heatColor(sb.count, max, team.color) }}
+                                >
+                                  <span className="text-[8px] uppercase font-bold opacity-70">{s}</span>
+                                  <span className="scoreboard-digit text-[11px] font-black">{sb.count || ""}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center">
+                        <div className="scoreboard-digit text-base font-black leading-none">{b.count || ""}</div>
+                        {b.count > 0 && <div className="text-[9px] opacity-90">{pct}%</div>}
+                      </div>
+                    )}
+                    {hasSubs && (
+                      <span className="absolute bottom-0.5 right-1 text-[8px] font-bold opacity-80 z-10 tabular-nums">
+                        {b.count} · {pct}%
+                      </span>
+                    )}
                   </div>
                 );
               })}
