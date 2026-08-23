@@ -559,6 +559,7 @@ export async function downloadSimplifiedMatchPdf(
 
     // Fila 2: recepción
     maxH = 0;
+    ensure(Math.max(...teams.map((t) => estimate(recRows(t.team, t.side).length))));
     teams.forEach((t, i) => {
       const rows = recRows(t.team, t.side).map((r) => [
         r.number,
