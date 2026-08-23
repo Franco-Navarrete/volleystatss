@@ -2988,7 +2988,11 @@ function LineupEditor({ match, teamA, teamB, onSave }: {
             className="size-7"
             title="Rotar en sentido contrario"
             disabled={lineup.filter(Boolean).length !== 6}
-            onClick={() => setLineup([lineup[5], lineup[0], lineup[1], lineup[2], lineup[3], lineup[4]])}
+            onClick={() => {
+              setLineup([lineup[5], lineup[0], lineup[1], lineup[2], lineup[3], lineup[4]]);
+              setManualArmador((i) => (i === null ? null : (i + 1) % 6));
+            }}
+
           >
             <RotateCcw className="size-3.5" />
           </Button>
