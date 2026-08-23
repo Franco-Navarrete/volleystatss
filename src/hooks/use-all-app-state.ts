@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-auth";
+
 import type { Match, Team, League } from "@/lib/volley-store";
 
 interface AppStateData {
