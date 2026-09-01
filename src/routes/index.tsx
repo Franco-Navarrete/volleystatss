@@ -56,7 +56,7 @@ function Home() {
 
         <div className="flex flex-wrap justify-center gap-4 mb-16">
           <Button asChild size="lg" className="rounded-full px-8 h-12 text-base font-bold">
-            <Link to="/auth">
+                        <Link to="/dashboard">
               <LogIn className="mr-2 size-5" />
               Ingresar a la Plataforma
             </Link>
