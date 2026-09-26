@@ -22,7 +22,10 @@ export function LiveMatchesFeed() {
   
   const { data, isLoading: queryLoading } = useQuery({
     queryKey: ["live-public-matches"],
-    queryFn: () => fetchLive(),
+    queryFn: async () => {
+      // Si la base está dormida o lenta, no rompemos la pantalla: lista vacía.
+      try { return await fetchLive(); } catch (e) { console.warn("Live feed no disponible:", e); return []; }
+    },
     refetchInterval: 10_000,
     refetchIntervalInBackground: false,
   });

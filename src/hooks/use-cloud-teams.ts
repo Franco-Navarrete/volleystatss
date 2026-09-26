@@ -55,7 +55,10 @@ export function useCloudTeams() {
   const list = useServerFn(listTeams);
   return useQuery<CloudTeam[]>({
     queryKey: teamsKey,
-    queryFn: () => list(),
+    queryFn: async () => {
+      // Sesión vencida o base dormida: devolvemos vacío en vez de romper la pantalla.
+      try { return await list(); } catch (e) { console.warn("Equipos no disponibles:", e); return []; }
+    },
     staleTime: 30_000,
   });
 }
@@ -64,7 +67,9 @@ export function useCloudLeagues() {
   const list = useServerFn(listLeagues);
   return useQuery<CloudLeague[]>({
     queryKey: leaguesKey,
-    queryFn: () => list(),
+    queryFn: async () => {
+      try { return await list(); } catch (e) { console.warn("Ligas no disponibles:", e); return []; }
+    },
     staleTime: 60_000,
   });
 }
