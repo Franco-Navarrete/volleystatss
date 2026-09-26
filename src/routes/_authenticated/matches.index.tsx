@@ -241,7 +241,6 @@ function MatchesIndex() {
                                 className="size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur text-muted-foreground hover:text-amber-500 hover:border-amber-500/60 transition-colors pointer-events-auto shadow-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  e.preventDefault();
                                 }}
                               >
                                 <Flag className="size-4" />
