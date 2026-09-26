@@ -265,8 +265,9 @@ export async function forceReloadFromCloud(userId: string): Promise<{
   if (!cloud) {
     return { ok: false, teams: 0, matches: 0, leagues: 0, totalEvents: 0 };
   }
+  const deletedIds = await getDeletedMatchIds(true);
   const teams = cloud.teams ?? [];
-  const matches = cloud.matches ?? [];
+  const matches = (cloud.matches ?? []).filter((m) => !deletedIds.has(m.id));
   const leagues = cloud.leagues ?? [];
   suppressNextChange = true;
   useVolley.setState({
