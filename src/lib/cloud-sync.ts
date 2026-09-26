@@ -7,6 +7,7 @@ import {
   type CustomReceptionFormations,
 } from "./volley-store";
 import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
+import { getDeletedMatchIds } from "@/lib/match-deletions";
 
 type CloudData = {
   teams?: Team[];
@@ -105,7 +106,7 @@ async function saveToCloud(userId: string) {
   };
   const data = {
     teams,
-    matches: mergeById(s.matches, cloud?.matches),
+    matches: mergeById(s.matches, cloud?.matches).filter((m) => !deletedIds.has(m.id)),
     leagues,
     customReceptionFormations: {
       ...(cloud?.customReceptionFormations ?? {}),
