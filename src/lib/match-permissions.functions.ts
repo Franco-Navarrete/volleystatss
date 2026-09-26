@@ -136,3 +136,92 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+// Finalizar cualquier partido: solo super admin, administradores y planilleros.
+// Marca el partido como "finished" en la copia en la nube de TODOS los usuarios.
+export const authorizeAndFinishMatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => Input.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId, claims } = context;
+
+    const email = (claims as { email?: string } | undefined)?.email ?? null;
+    const isSuperAdmin = email === "franco.e.navarrete@gmail.com";
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const roleSet = new Set((roles ?? []).map((r) => r.role as string));
+    const role = isSuperAdmin || roleSet.has("admin")
+      ? "admin"
+      : roleSet.has("planillero")
+      ? "planillero"
+      : roleSet.has("entrenador")
+      ? "entrenador"
+      : "user";
+
+    const allowed = isSuperAdmin || role === "admin" || role === "planillero";
+
+    await supabase.from("match_deletion_audit").insert({
+      user_id: userId,
+      user_email: email,
+      role,
+      match_id: data.matchId,
+      result: allowed ? "authorized" : "denied",
+      reason: allowed ? "finish_match" : "finish_match_denied",
+    });
+
+    if (!allowed) {
+      throw new Error("No tienes permisos para finalizar partidos.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: allStates, error: fetchError } = await supabaseAdmin
+      .from("app_state")
+      .select("user_id, data");
+
+    if (fetchError) {
+      console.error("Error fetching all states for finish:", fetchError);
+      throw new Error("No se pudo finalizar el partido en la nube.");
+    }
+
+    if (allStates) {
+      await Promise.all(
+        allStates.map(async (row) => {
+          const d = row.data as any;
+          const matches = d?.matches || [];
+          const hasMatch = matches.some((m: any) => m.id === data.matchId);
+          if (!hasMatch) return;
+          const newMatches = matches.map((m: any) =>
+            m.id === data.matchId ? { ...m, status: "finished" } : m
+          );
+          return supabaseAdmin
+            .from("app_state")
+            .update({ data: { ...d, matches: newMatches } })
+            .eq("user_id", row.user_id);
+        })
+      );
+    }
+
+    // Actualizar la copia pública si existe.
+    const { data: snaps } = await supabaseAdmin
+      .from("public_matches")
+      .select("id, data")
+      .eq("match_id", data.matchId);
+    if (snaps) {
+      await Promise.all(
+        snaps.map((s) => {
+          const d = s.data as any;
+          if (d?.match) {
+            return supabaseAdmin
+              .from("public_matches")
+              .update({ data: { ...d, match: { ...d.match, status: "finished" } } })
+              .eq("id", s.id);
+          }
+        })
+      );
+    }
+
+    return { ok: true };
+  });
