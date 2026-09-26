@@ -82,6 +82,13 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
     // RLS solo permite UPDATE de la fila propia, así que la purga global requiere
     // el cliente admin (service role). El caller ya fue autorizado arriba.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Registro global de la eliminación: todos los clientes lo consultan al
+    // sincronizar y descartan este partido para que no reaparezca.
+    await supabaseAdmin
+      .from("match_deletions")
+      .upsert({ match_id: data.matchId, deleted_by: userId });
+
     const { data: allStates, error: fetchError } = await supabaseAdmin
       .from("app_state")
       .select("user_id, data")

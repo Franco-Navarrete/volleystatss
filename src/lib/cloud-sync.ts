@@ -49,6 +49,17 @@ function mergeById<T extends { id: string }>(local: T[], remote: T[] | undefined
 }
 
 async function saveToCloud(userId: string) {
+  // Partidos eliminados por un admin: se descartan del estado local y nunca
+  // se re-suben a la nube (evita que "resuciten" por el merge union).
+  const deletedIds = await getDeletedMatchIds();
+  if (deletedIds.size > 0) {
+    const st = useVolley.getState();
+    const filtered = st.matches.filter((m) => !deletedIds.has(m.id));
+    if (filtered.length !== st.matches.length) {
+      suppressNextChange = true;
+      useVolley.setState({ matches: filtered });
+    }
+  }
   const s = useVolley.getState();
   // Read-modify-write: traemos lo que hay en la nube y hacemos union por id
   // para que cambios hechos en otra pestaña/dispositivo no se pierdan cuando
