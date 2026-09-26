@@ -107,18 +107,36 @@ function MatchesIndex() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [finishingId, setFinishingId] = useState<string | null>(null);
 
+  // Actualización optimista: la tarjeta reacciona al instante mientras el
+  // servidor termina de propagar el cambio a las copias de todos los usuarios.
+  function patchAdminCache(matchId: string, patch: "delete" | "finish") {
+    queryClient.setQueryData(["admin-all-app-state"], (old: any) => {
+      if (!old?.matches) return old;
+      return {
+        ...old,
+        matches:
+          patch === "delete"
+            ? old.matches.filter((m: any) => m.id !== matchId)
+            : old.matches.map((m: any) =>
+                m.id === matchId ? { ...m, status: "finished" } : m
+              ),
+      };
+    });
+  }
+
   async function handleFinish(matchId: string) {
     if (finishingId) return;
     setFinishingId(matchId);
+    patchAdminCache(matchId, "finish");
+    finishMatch(matchId);
     try {
       await finishFn({ data: { matchId } });
-      finishMatch(matchId);
-      // Refrescar la vista global del admin para que el partido pase a Finalizados.
       queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
       toast.success("Partido finalizado");
     } catch (e) {
       console.error("Finish error:", e);
       toast.error(e instanceof Error ? e.message : "Error al finalizar el partido.");
+      queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
     } finally {
       setFinishingId(null);
     }
@@ -127,15 +145,16 @@ function MatchesIndex() {
   async function handleDelete(matchId: string) {
     if (deletingId) return;
     setDeletingId(matchId);
+    patchAdminCache(matchId, "delete");
+    deleteMatch(matchId);
     try {
       await deleteFn({ data: { matchId } });
-      deleteMatch(matchId);
-      // Refrescar la vista global del admin para que el partido no reaparezca.
       queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
       toast.success("Partido eliminado");
     } catch (e) {
       console.error("Delete error:", e);
       toast.error(e instanceof Error ? e.message : "Error al eliminar el partido.");
+      queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
     } finally {
       setDeletingId(null);
     }
