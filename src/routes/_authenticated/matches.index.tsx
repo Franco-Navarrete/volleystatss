@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { LiveMatchesFeed } from "@/components/LiveMatchesFeed";
 import { TeamBadge } from "@/components/TeamBadge";
@@ -100,6 +101,7 @@ function MatchesIndex() {
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleDelete(matchId: string) {
@@ -108,6 +110,8 @@ function MatchesIndex() {
     try {
       await deleteFn({ data: { matchId } });
       deleteMatch(matchId);
+      // Refrescar la vista global del admin para que el partido no reaparezca.
+      queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
       toast.success("Partido eliminado");
     } catch (e) {
       console.error("Delete error:", e);
