@@ -79,7 +79,10 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
 
     // 2. Eliminar de la nube (app_state) de TODOS los usuarios que puedan tenerlo.
     // Esto es necesario porque varios usuarios pueden "ver" el mismo partido si comparten liga.
-    const { data: allStates, error: fetchError } = await supabase
+    // RLS solo permite UPDATE de la fila propia, así que la purga global requiere
+    // el cliente admin (service role). El caller ya fue autorizado arriba.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: allStates, error: fetchError } = await supabaseAdmin
       .from("app_state")
       .select("user_id, data");
 
@@ -122,7 +125,7 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
               return true;
             });
 
-            return supabase
+            return supabaseAdmin
               .from("app_state")
               .update({ data: { ...d, matches: newMatches, teams: newTeams } })
               .eq("user_id", row.user_id);
