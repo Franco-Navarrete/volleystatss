@@ -101,8 +101,27 @@ function MatchesIndex() {
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const finishFn = useServerFn(authorizeAndFinishMatch);
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [finishingId, setFinishingId] = useState<string | null>(null);
+
+  async function handleFinish(matchId: string) {
+    if (finishingId) return;
+    setFinishingId(matchId);
+    try {
+      await finishFn({ data: { matchId } });
+      finishMatch(matchId);
+      // Refrescar la vista global del admin para que el partido pase a Finalizados.
+      queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
+      toast.success("Partido finalizado");
+    } catch (e) {
+      console.error("Finish error:", e);
+      toast.error(e instanceof Error ? e.message : "Error al finalizar el partido.");
+    } finally {
+      setFinishingId(null);
+    }
+  }
 
   async function handleDelete(matchId: string) {
     if (deletingId) return;
