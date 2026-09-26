@@ -125,7 +125,7 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
               return true;
             });
 
-            return supabase
+            return supabaseAdmin
               .from("app_state")
               .update({ data: { ...d, matches: newMatches, teams: newTeams } })
               .eq("user_id", row.user_id);
