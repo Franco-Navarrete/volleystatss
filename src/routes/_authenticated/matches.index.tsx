@@ -7,13 +7,13 @@ import { LiveMatchesFeed } from "@/components/LiveMatchesFeed";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, setsWon } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
-import { Plus, Radio, Trash2 } from "lucide-react";
+import { Flag, Plus, Radio, Trash2 } from "lucide-react";
 import { useCanCreateMatches, useCanDeleteMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
-import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
+import { authorizeAndDeleteMatch, authorizeAndFinishMatch } from "@/lib/match-permissions.functions";
 import { toast } from "sonner";
 import {
   AlertDialog,
