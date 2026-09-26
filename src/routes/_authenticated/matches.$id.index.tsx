@@ -241,8 +241,21 @@ function LiveMatch() {
 
 
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const finishFn = useServerFn(authorizeAndFinishMatch);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const deleteMatch = useVolley.getState().deleteMatch;
+
+  // Finaliza el partido localmente y, si el usuario tiene privilegios
+  // (super admin / admin / planillero), también en la nube de todos los usuarios.
+  const handleFinishMatch = async (matchId: string) => {
+    finishMatch(matchId);
+    try {
+      await finishFn({ data: { matchId } });
+      toast.success("Partido finalizado");
+    } catch (e) {
+      console.warn("[finishMatch] server:", e);
+    }
+  };
 
   const allMatches = adminAll.data?.matches ?? [];
   const allTeams = adminAll.data?.teams ?? [];
