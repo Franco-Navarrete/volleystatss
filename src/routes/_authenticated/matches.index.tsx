@@ -294,7 +294,6 @@ function MatchesIndex() {
                                 className="size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors pointer-events-auto shadow-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  e.preventDefault();
                                 }}
                               >
                                 <Trash2 className="size-4" />
