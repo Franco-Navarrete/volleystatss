@@ -8,6 +8,13 @@
       "when": 1790402154530,
       "tag": "0000_allow_audit_inserts",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790404280931,
+      "tag": "0001_create_match_deletions",
+      "breakpoints": true
     }
   ]
 }
