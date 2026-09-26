@@ -176,10 +176,11 @@ export async function startCloudSync(userId: string, email: string | null) {
 
   if (cloud && cloudTs > localTs) {
     // La nube gana: reemplazamos el estado local íntegramente.
+    const deletedIds = await getDeletedMatchIds();
     suppressNextChange = true;
     useVolley.setState({
       teams: cloud.teams ?? [],
-      matches: cloud.matches ?? [],
+      matches: (cloud.matches ?? []).filter((m) => !deletedIds.has(m.id)),
       leagues: cloud.leagues ?? [],
       customReceptionFormations: cloud.customReceptionFormations ?? {},
       ...(cloud.matchCategories ? { matchCategories: cloud.matchCategories } : {}),
