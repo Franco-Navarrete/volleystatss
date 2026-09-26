@@ -68,26 +68,27 @@ export const authorizeAndDeleteMatch = createServerFn({ method: "POST" })
       .delete()
       .eq("match_id", data.matchId);
 
-    // Búsqueda adicional por ID (slug) por si el matchId en la snapshot no coincide con match_id columna
-    const { data: snaps } = await supabase.from("public_matches").select("id, data");
-    if (snaps) {
-      const toDelete = snaps.filter(s => (s.data as any)?.match?.id === data.matchId).map(s => s.id);
-      if (toDelete.length > 0) {
-        await supabase.from("public_matches").delete().in("id", toDelete);
-      }
+    // Búsqueda adicional por ID dentro de la snapshot (solo filas que lo contienen).
+    const { data: snaps } = await supabase
+      .from("public_matches")
+      .select("id")
+      .contains("data", { match: { id: data.matchId } });
+    if (snaps && snaps.length > 0) {
+      await supabase.from("public_matches").delete().in("id", snaps.map((s) => s.id));
     }
 
-    // 2. Eliminar de la nube (app_state) de TODOS los usuarios que puedan tenerlo.
-    // Esto es necesario porque varios usuarios pueden "ver" el mismo partido si comparten liga.
+    // 2. Eliminar de la nube (app_state) SOLO de los usuarios que tienen el partido.
+    // El filtro de contención jsonb evita traer y reescribir las filas de todos.
     // RLS solo permite UPDATE de la fila propia, así que la purga global requiere
     // el cliente admin (service role). El caller ya fue autorizado arriba.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: allStates, error: fetchError } = await supabaseAdmin
       .from("app_state")
-      .select("user_id, data");
+      .select("user_id, data")
+      .contains("data", { matches: [{ id: data.matchId }] });
 
     if (fetchError) {
-      console.error("Error fetching all states for deletion:", fetchError);
+      console.error("Error fetching states for deletion:", fetchError);
       const { data: myState } = await supabase.from("app_state").select("data").eq("user_id", userId).maybeSingle();
       if (myState) {
         const d = myState.data as any;
@@ -177,12 +178,14 @@ export const authorizeAndFinishMatch = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Solo filas que contienen el partido (contención jsonb): mucho más rápido.
     const { data: allStates, error: fetchError } = await supabaseAdmin
       .from("app_state")
-      .select("user_id, data");
+      .select("user_id, data")
+      .contains("data", { matches: [{ id: data.matchId }] });
 
     if (fetchError) {
-      console.error("Error fetching all states for finish:", fetchError);
+      console.error("Error fetching states for finish:", fetchError);
       throw new Error("No se pudo finalizar el partido en la nube.");
     }
 
@@ -191,8 +194,6 @@ export const authorizeAndFinishMatch = createServerFn({ method: "POST" })
         allStates.map(async (row) => {
           const d = row.data as any;
           const matches = d?.matches || [];
-          const hasMatch = matches.some((m: any) => m.id === data.matchId);
-          if (!hasMatch) return;
           const newMatches = matches.map((m: any) =>
             m.id === data.matchId ? { ...m, status: "finished" } : m
           );
