@@ -230,6 +230,61 @@ function MatchesIndex() {
                           </div>
                         )}
                       </Link>
+                      {canDelete && m.status === "live" && (
+                        <div className="absolute top-2 right-10 z-20">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Finalizar partido"
+                                className="size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur text-muted-foreground hover:text-amber-500 hover:border-amber-500/60 transition-colors pointer-events-auto shadow-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                              >
+                                <Flag className="size-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent
+                              className="rounded-2xl border-border/60"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                              }}
+                            >
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-xl font-bold">¿Finalizar este partido?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-sm">
+                                  El partido pasará a Finalizados para todos los usuarios y no se podrán cargar más acciones.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex gap-2 mt-4">
+                                <AlertDialogCancel
+                                  className="rounded-xl flex-1 mt-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                >
+                                  Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="rounded-xl flex-1"
+                                  disabled={finishingId === m.id}
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    await handleFinish(m.id);
+                                  }}
+                                >
+                                  {finishingId === m.id ? "Finalizando..." : "Finalizar"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
                       {canDelete && (
                         <div className="absolute top-2 right-2 z-20">
                           <AlertDialog>
