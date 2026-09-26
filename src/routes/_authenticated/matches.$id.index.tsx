@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
+import { authorizeAndDeleteMatch, authorizeAndFinishMatch } from "@/lib/match-permissions.functions";
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 
