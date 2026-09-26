@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
+import { authorizeAndDeleteMatch, authorizeAndFinishMatch } from "@/lib/match-permissions.functions";
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 
@@ -241,8 +241,21 @@ function LiveMatch() {
 
 
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const finishFn = useServerFn(authorizeAndFinishMatch);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const deleteMatch = useVolley.getState().deleteMatch;
+
+  // Finaliza el partido localmente y, si el usuario tiene privilegios
+  // (super admin / admin / planillero), también en la nube de todos los usuarios.
+  const handleFinishMatch = async (matchId: string) => {
+    finishMatch(matchId);
+    try {
+      await finishFn({ data: { matchId } });
+      toast.success("Partido finalizado");
+    } catch (e) {
+      console.warn("[finishMatch] server:", e);
+    }
+  };
 
   const allMatches = adminAll.data?.matches ?? [];
   const allTeams = adminAll.data?.teams ?? [];
@@ -913,7 +926,7 @@ function LiveMatch() {
           onOpenFormat={() => setShowFormatDialog(true)}
           onOpenScore={() => setShowScoreDialog(true)}
           onOpenRotate={() => setShowRotateDialog(true)}
-          onFinishMatch={() => finishMatch(match.id)}
+          onFinishMatch={() => handleFinishMatch(match.id)}
           onCambio={(side) => setSubState({ side, playerOutId: "" })}
           onLibero={(side) => setLiberoState({ side, liberoId: null })}
           onTimeout={(side) => handleTimeout(side)}
@@ -1300,7 +1313,7 @@ function LiveMatch() {
               <DropdownMenuItem
                 disabled={match.status === "finished"}
                 onSelect={() => {
-                  if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id);
+                  if (confirm("¿Finalizar el partido manualmente?")) handleFinishMatch(match.id);
                 }}
                 className="text-destructive focus:text-destructive"
               >

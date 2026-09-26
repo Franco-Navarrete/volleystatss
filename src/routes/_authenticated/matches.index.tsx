@@ -7,13 +7,13 @@ import { LiveMatchesFeed } from "@/components/LiveMatchesFeed";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useVolley, setsWon } from "@/lib/volley-store";
 import { Button } from "@/components/ui/button";
-import { Plus, Radio, Trash2 } from "lucide-react";
+import { Flag, Plus, Radio, Trash2 } from "lucide-react";
 import { useCanCreateMatches, useCanDeleteMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { useCoachAccess } from "@/hooks/use-coach-access";
 import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
-import { authorizeAndDeleteMatch } from "@/lib/match-permissions.functions";
+import { authorizeAndDeleteMatch, authorizeAndFinishMatch } from "@/lib/match-permissions.functions";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -36,6 +36,7 @@ function MatchesIndex() {
   const localMatches = useVolley((s) => s.matches);
   const localTeams = useVolley((s) => s.teams);
   const deleteMatch = useVolley((s) => s.deleteMatch);
+  const finishMatch = useVolley((s) => s.finishMatch);
   const clearAllMatches = useVolley((s) => s.clearAllMatches);
   const navigate = useNavigate();
   
@@ -101,8 +102,27 @@ function MatchesIndex() {
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
+  const finishFn = useServerFn(authorizeAndFinishMatch);
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [finishingId, setFinishingId] = useState<string | null>(null);
+
+  async function handleFinish(matchId: string) {
+    if (finishingId) return;
+    setFinishingId(matchId);
+    try {
+      await finishFn({ data: { matchId } });
+      finishMatch(matchId);
+      // Refrescar la vista global del admin para que el partido pase a Finalizados.
+      queryClient.invalidateQueries({ queryKey: ["admin-all-app-state"] });
+      toast.success("Partido finalizado");
+    } catch (e) {
+      console.error("Finish error:", e);
+      toast.error(e instanceof Error ? e.message : "Error al finalizar el partido.");
+    } finally {
+      setFinishingId(null);
+    }
+  }
 
   async function handleDelete(matchId: string) {
     if (deletingId) return;
@@ -210,6 +230,60 @@ function MatchesIndex() {
                           </div>
                         )}
                       </Link>
+                      {canDelete && m.status === "live" && (
+                        <div className="absolute top-2 right-10 z-20">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Finalizar partido"
+                                className="size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur text-muted-foreground hover:text-amber-500 hover:border-amber-500/60 transition-colors pointer-events-auto shadow-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                              >
+                                <Flag className="size-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent
+                              className="rounded-2xl border-border/60"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                              }}
+                            >
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-xl font-bold">¿Finalizar este partido?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-sm">
+                                  El partido pasará a Finalizados para todos los usuarios y no se podrán cargar más acciones.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex gap-2 mt-4">
+                                <AlertDialogCancel
+                                  className="rounded-xl flex-1 mt-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                >
+                                  Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="rounded-xl flex-1"
+                                  disabled={finishingId === m.id}
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    await handleFinish(m.id);
+                                  }}
+                                >
+                                  {finishingId === m.id ? "Finalizando..." : "Finalizar"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
                       {canDelete && (
                         <div className="absolute top-2 right-2 z-20">
                           <AlertDialog>
@@ -220,7 +294,6 @@ function MatchesIndex() {
                                 className="size-8 rounded-full bg-background/80 border border-border/60 backdrop-blur text-muted-foreground hover:text-destructive hover:border-destructive/60 transition-colors pointer-events-auto shadow-sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  e.preventDefault();
                                 }}
                               >
                                 <Trash2 className="size-4" />
