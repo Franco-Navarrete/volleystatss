@@ -926,7 +926,7 @@ function LiveMatch() {
           onOpenFormat={() => setShowFormatDialog(true)}
           onOpenScore={() => setShowScoreDialog(true)}
           onOpenRotate={() => setShowRotateDialog(true)}
-          onFinishMatch={() => finishMatch(match.id)}
+          onFinishMatch={() => handleFinishMatch(match.id)}
           onCambio={(side) => setSubState({ side, playerOutId: "" })}
           onLibero={(side) => setLiberoState({ side, liberoId: null })}
           onTimeout={(side) => handleTimeout(side)}
@@ -1313,7 +1313,7 @@ function LiveMatch() {
               <DropdownMenuItem
                 disabled={match.status === "finished"}
                 onSelect={() => {
-                  if (confirm("¿Finalizar el partido manualmente?")) finishMatch(match.id);
+                  if (confirm("¿Finalizar el partido manualmente?")) handleFinishMatch(match.id);
                 }}
                 className="text-destructive focus:text-destructive"
               >
