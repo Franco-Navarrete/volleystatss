@@ -230,6 +230,24 @@ export type Database = {
         }
         Relationships: []
       }
+      match_deletions: {
+        Row: {
+          deleted_at: string
+          deleted_by: string | null
+          match_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by?: string | null
+          match_id: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string | null
+          match_id?: string
+        }
+        Relationships: []
+      }
       match_events: {
         Row: {
           created_at: string

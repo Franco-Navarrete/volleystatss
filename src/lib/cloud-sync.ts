@@ -7,6 +7,7 @@ import {
   type CustomReceptionFormations,
 } from "./volley-store";
 import { isDeletedLeagueCandidate } from "@/lib/league-deletions";
+import { getDeletedMatchIds } from "@/lib/match-deletions";
 
 type CloudData = {
   teams?: Team[];
@@ -49,6 +50,17 @@ function mergeById<T extends { id: string }>(local: T[], remote: T[] | undefined
 }
 
 async function saveToCloud(userId: string) {
+  // Partidos eliminados por un admin: se descartan del estado local y nunca
+  // se re-suben a la nube (evita que "resuciten" por el merge union).
+  const deletedIds = await getDeletedMatchIds();
+  if (deletedIds.size > 0) {
+    const st = useVolley.getState();
+    const filtered = st.matches.filter((m) => !deletedIds.has(m.id));
+    if (filtered.length !== st.matches.length) {
+      suppressNextChange = true;
+      useVolley.setState({ matches: filtered });
+    }
+  }
   const s = useVolley.getState();
   // Read-modify-write: traemos lo que hay en la nube y hacemos union por id
   // para que cambios hechos en otra pestaña/dispositivo no se pierdan cuando
@@ -94,7 +106,7 @@ async function saveToCloud(userId: string) {
   };
   const data = {
     teams,
-    matches: mergeById(s.matches, cloud?.matches),
+    matches: mergeById(s.matches, cloud?.matches).filter((m) => !deletedIds.has(m.id)),
     leagues,
     customReceptionFormations: {
       ...(cloud?.customReceptionFormations ?? {}),
@@ -164,10 +176,11 @@ export async function startCloudSync(userId: string, email: string | null) {
 
   if (cloud && cloudTs > localTs) {
     // La nube gana: reemplazamos el estado local íntegramente.
+    const deletedIds = await getDeletedMatchIds();
     suppressNextChange = true;
     useVolley.setState({
       teams: cloud.teams ?? [],
-      matches: cloud.matches ?? [],
+      matches: (cloud.matches ?? []).filter((m) => !deletedIds.has(m.id)),
       leagues: cloud.leagues ?? [],
       customReceptionFormations: cloud.customReceptionFormations ?? {},
       ...(cloud.matchCategories ? { matchCategories: cloud.matchCategories } : {}),
@@ -252,8 +265,9 @@ export async function forceReloadFromCloud(userId: string): Promise<{
   if (!cloud) {
     return { ok: false, teams: 0, matches: 0, leagues: 0, totalEvents: 0 };
   }
+  const deletedIds = await getDeletedMatchIds(true);
   const teams = cloud.teams ?? [];
-  const matches = cloud.matches ?? [];
+  const matches = (cloud.matches ?? []).filter((m) => !deletedIds.has(m.id));
   const leagues = cloud.leagues ?? [];
   suppressNextChange = true;
   useVolley.setState({
