@@ -747,6 +747,7 @@ export type Database = {
           created_by: string
           expires_at: string
           id: string
+          intended_role: string
           multi_use: boolean
           status: string
           team_id: string
@@ -760,6 +761,7 @@ export type Database = {
           created_by?: string
           expires_at?: string
           id?: string
+          intended_role?: string
           multi_use?: boolean
           status?: string
           team_id: string
@@ -773,6 +775,7 @@ export type Database = {
           created_by?: string
           expires_at?: string
           id?: string
+          intended_role?: string
           multi_use?: boolean
           status?: string
           team_id?: string

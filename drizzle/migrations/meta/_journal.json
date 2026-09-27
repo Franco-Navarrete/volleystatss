@@ -64,6 +64,13 @@
       "when": 1790482695495,
       "tag": "0008_add_player_app_role",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790482720937,
+      "tag": "0009_invitation_intended_role_player",
+      "breakpoints": true
     }
   ]
 }
