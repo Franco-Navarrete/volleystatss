@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight, Link2, Loader2, Search, Settings2, Trash2, UserMinus, Users, Volleyball } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -271,8 +272,13 @@ function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string;
   const [search, setSearch] = useState("");
   const [manage, setManage] = useState(false);
   const [invite, setInvite] = useState(false);
+  const [status, setStatus] = useState<"" | "linked" | "none" | "invited">("");
+  const [pos, setPos] = useState("");
   const s = search.trim().toLowerCase();
-  const shown = players.filter((p: any) => !s || p.name.toLowerCase().includes(s) || String(p.number) === s);
+  const stOf = (p: any) => (p.hasAccount ? "linked" : p.invited ? "invited" : "none");
+  const shown = players.filter((p: any) =>
+    (!s || p.name.toLowerCase().includes(s) || String(p.number) === s || (POS[p.position] ?? "").toLowerCase().includes(s)) &&
+    (!status || stOf(p) === status) && (!pos || p.position === pos));
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -287,6 +293,12 @@ function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string;
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar jugadora…" className="pl-9" aria-label="Buscar jugadora" />
         </div>
+        <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="h-9 rounded-md border border-input bg-background px-3 text-sm" aria-label="Estado de cuenta">
+          <option value="">Todas</option><option value="linked">Con cuenta</option><option value="none">Sin cuenta</option><option value="invited">Invitación enviada</option>
+        </select>
+        <select value={pos} onChange={(e) => setPos(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm" aria-label="Posición">
+          <option value="">Todas las posiciones</option>{Object.entries(POS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
         <Button variant="secondary" onClick={() => setManage(true)}><Settings2 className="size-4" /> Solicitudes y miembros</Button>
         <Button onClick={() => setInvite(true)}><Link2 className="size-4" /> Invitar jugadoras</Button>
       </div>
@@ -294,12 +306,14 @@ function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string;
       <div className="divide-y divide-border rounded-xl border border-border bg-card">
         {shown.map((p: any) => (
           <div key={p.id} className="flex items-center gap-3 p-3">
+            <Link to="/players/$playerId" params={{ playerId: p.id }} className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-80">
             {p.photoUrl ? <img src={p.photoUrl} alt="" className="size-10 rounded-full object-cover" /> : <div className="size-10 rounded-full bg-secondary flex items-center justify-center text-sm font-bold">{p.name[0]?.toUpperCase()}</div>}
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{p.name}</p>
               <p className="text-xs text-muted-foreground">#{p.number}{p.position ? ` · ${POS[p.position] ?? p.position}` : ""}</p>
             </div>
-            <Badge variant="secondary">{p.hasAccount ? "Activa" : "Sin cuenta"}</Badge>
+            </Link>
+            <Badge variant="secondary">{p.hasAccount ? "🟢 Cuenta vinculada" : p.invited ? "🔵 Invitación enviada" : "🟡 Sin cuenta"}</Badge>
             <Button size="icon" variant="ghost" aria-label="Eliminar jugadora" disabled={delPlayer.isPending}
               onClick={() => { if (confirm(`¿Eliminar a ${p.name} del plantel? Esta acción no se puede deshacer.`)) delPlayer.mutate(p.id); }}>
               <Trash2 className="size-4 text-destructive" />
