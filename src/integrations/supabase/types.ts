@@ -548,6 +548,33 @@ export type Database = {
           },
         ]
       }
+      player_profiles: {
+        Row: {
+          created_at: string
+          first_name: string
+          last_name: string
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          last_name: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          last_name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_registration_links: {
         Row: {
           active: boolean
@@ -715,10 +742,12 @@ export type Database = {
       }
       team_invitations: {
         Row: {
+          club_id: string | null
           created_at: string
           created_by: string
           expires_at: string
           id: string
+          multi_use: boolean
           status: string
           team_id: string
           token: string
@@ -726,10 +755,12 @@ export type Database = {
           used_by: string | null
         }
         Insert: {
+          club_id?: string | null
           created_at?: string
           created_by?: string
           expires_at?: string
           id?: string
+          multi_use?: boolean
           status?: string
           team_id: string
           token?: string
@@ -737,10 +768,12 @@ export type Database = {
           used_by?: string | null
         }
         Update: {
+          club_id?: string | null
           created_at?: string
           created_by?: string
           expires_at?: string
           id?: string
+          multi_use?: boolean
           status?: string
           team_id?: string
           token?: string
@@ -748,6 +781,13 @@ export type Database = {
           used_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "team_invitations_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_invitations_team_id_fkey"
             columns: ["team_id"]
@@ -759,30 +799,56 @@ export type Database = {
       }
       team_members: {
         Row: {
+          club_id: string | null
           id: string
           joined_at: string
+          number: number | null
+          player_id: string | null
+          position: string | null
           role: string
           status: string
           team_id: string
           user_id: string
         }
         Insert: {
+          club_id?: string | null
           id?: string
           joined_at?: string
+          number?: number | null
+          player_id?: string | null
+          position?: string | null
           role?: string
           status?: string
           team_id: string
           user_id: string
         }
         Update: {
+          club_id?: string | null
           id?: string
           joined_at?: string
+          number?: number | null
+          player_id?: string | null
+          position?: string | null
           role?: string
           status?: string
           team_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "team_members_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_members_team_id_fkey"
             columns: ["team_id"]
@@ -983,6 +1049,23 @@ export type Database = {
           valid: boolean
         }[]
       }
+      get_team_invitation_v2: {
+        Args: { _token: string }
+        Returns: {
+          club_name: string
+          first_name: string
+          has_profile: boolean
+          invite_state: string
+          last_name: string
+          member_status: string
+          photo_url: string
+          team_category: string
+          team_gender: string
+          team_id: string
+          team_logo_url: string
+          team_name: string
+        }[]
+      }
       get_user_club: { Args: { _user_id: string }; Returns: string }
       has_league_access: {
         Args: { _league_id: string; _user_id: string }
@@ -1003,6 +1086,25 @@ export type Database = {
           _position: string
           _token: string
         }
+        Returns: string
+      }
+      remove_team_membership: {
+        Args: { _member_id: string }
+        Returns: undefined
+      }
+      request_team_membership: {
+        Args: {
+          _first: string
+          _last: string
+          _number: number
+          _photo: string
+          _position: string
+          _token: string
+        }
+        Returns: string
+      }
+      review_team_membership: {
+        Args: { _approve: boolean; _member_id: string }
         Returns: string
       }
       submit_player_registration:

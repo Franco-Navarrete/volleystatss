@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Volleyball, XCircle } from "lucide-react";
+import { Camera, CheckCircle2, Image as ImageIcon, Loader2, User, Volleyball, XCircle } from "lucide-react";
+import { compressPhoto } from "@/lib/image-compress";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -38,56 +39,88 @@ function JoinPage() {
     queryKey: ["join-invite", code, session?.user.id ?? "anon"],
     enabled: ready,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_team_invitation", { _token: code });
+      const { data, error } = await supabase.rpc("get_team_invitation_v2", { _token: code });
       if (error) throw error;
       return data?.[0] ?? null;
     },
   });
 
-  const [state, setState] = useState<"idle" | "busy" | "joined" | "already">("idle");
+  const inv = invite.data;
+  const [state, setState] = useState<"idle" | "busy" | "sent" | "already">("idle");
   const [err, setErr] = useState<string | null>(null);
-  const [name, setName] = useState("");
+  const [first, setFirst] = useState("");
+  const [last, setLast] = useState("");
   const [number, setNumber] = useState("");
   const [position, setPosition] = useState("");
-  const [birth, setBirth] = useState("");
-  const accept = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setState("busy"); setErr(null);
-    const { data, error } = await supabase.rpc("join_team_as_player", {
-      _token: code, _name: name, _number: Number(number), _position: position, _birth_date: birth,
-    });
-    if (error) { setErr(error.message); setState("idle"); return; }
-    setState(data === "already_member" ? "already" : "joined");
+  const [photo, setPhoto] = useState<string | null>(null);
+  useEffect(() => {
+    if (inv?.has_profile) { setFirst(inv.first_name ?? ""); setLast(inv.last_name ?? ""); setPhoto(inv.photo_url ?? null); }
+  }, [inv?.has_profile]);
+
+  const onPhoto = async (f?: File) => {
+    if (!f) return;
+    try { setPhoto(await compressPhoto(f)); setErr(null); } catch (e) { setErr((e as Error).message); }
   };
 
-  const inv = invite.data;
-  const sub = inv ? [inv.team_gender, inv.team_category].filter(Boolean).join(" · ") : "";
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setState("busy"); setErr(null);
+    const { data, error } = await supabase.rpc("request_team_membership", {
+      _token: code, _first: first, _last: last,
+      _number: number === "" ? (null as unknown as number) : Number(number),
+      _position: (position || null) as unknown as string,
+      _photo: (photo?.startsWith("data:") ? photo : null) as unknown as string,
+    });
+    if (error) { setErr(error.message); setState("idle"); return; }
+    setState(data === "already_member" ? "already" : "sent");
+  };
+
+  const sub = inv ? [inv.team_gender === "F" ? "Femenino" : inv.team_gender === "M" ? "Masculino" : inv.team_gender === "X" ? "Mixto" : null,
+    inv.team_category ? (/^\d+$/.test(inv.team_category) ? `Sub ${inv.team_category}` : inv.team_category) : null].filter(Boolean).join(" · ") : "";
 
   let body: React.ReactNode;
   if (!ready || invite.isLoading) body = <Loader2 className="size-6 animate-spin mx-auto text-muted-foreground" />;
-  else if (state === "joined") body = <Msg ok title="¡Listo! Ya sos parte del equipo." action />;
-  else if (state === "already" || (inv && inv.has_player)) body = <Msg ok title="Ya pertenecés a este equipo." action />;
-  else if (!inv || !inv.valid) body = <Msg title="Esta invitación ya no es válida." />;
+  else if (!inv || inv.invite_state === "revoked") body = <Msg title="Esta invitación ya no es válida." />;
+  else if (state === "already" || inv.member_status === "active") body = <Msg ok title="Ya pertenecés a este equipo." action />;
+  else if (state === "sent" || inv.member_status === "pending") body = <Msg ok title="Solicitud enviada" text="Tu entrenador/a tiene que aprobarla. Cuando lo haga vas a aparecer en el plantel." action />;
+  else if (inv.invite_state === "expired") body = <Msg title="Esta invitación ha expirado." />;
   else if (!session) body = <><TeamCard inv={inv} sub={sub} /><AuthForm /></>;
   else body = (
-    <form onSubmit={accept} className="space-y-4">
+    <form onSubmit={submit} className="space-y-4">
       <TeamCard inv={inv} sub={sub} />
       <p className="text-xs text-center text-muted-foreground">Sesión iniciada como {session.user.email}</p>
-      <div className="space-y-1"><Label>Nombre y apellido</Label><Input required minLength={2} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1"><Label>N° camiseta</Label><Input required type="number" min={0} max={99} value={number} onChange={(e) => setNumber(e.target.value)} /></div>
-        <div className="space-y-1"><Label>Nacimiento</Label><Input required type="date" value={birth} onChange={(e) => setBirth(e.target.value)} /></div>
+      <div className="flex flex-col items-center gap-2">
+        {photo ? <img src={photo} alt="Tu foto" className="size-24 rounded-full object-cover border border-border" />
+          : <div className="size-24 rounded-full bg-secondary flex items-center justify-center"><User className="size-10 text-muted-foreground" /></div>}
+        <div className="flex flex-wrap justify-center gap-2">
+          <label className="md:hidden inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-2 text-sm cursor-pointer">
+            <Camera className="size-4" /> Tomar foto
+            <input type="file" accept="image/jpeg,image/png,image/webp" capture="user" className="sr-only" onChange={(e) => onPhoto(e.target.files?.[0])} />
+          </label>
+          <label className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-2 text-sm cursor-pointer">
+            <ImageIcon className="size-4" /> <span className="md:hidden">Elegir de galería</span><span className="hidden md:inline">Subir foto</span>
+            <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => onPhoto(e.target.files?.[0])} />
+          </label>
+        </div>
+        <p className="text-[11px] text-muted-foreground">La foto es opcional</p>
       </div>
-      <div className="space-y-1">
-        <Label>Posición</Label>
-        <select required value={position} onChange={(e) => setPosition(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-          <option value="" disabled>Elegí tu posición</option>
-          {[["punta","Punta"],["central","Central"],["opuesto","Opuesto"],["armador","Armador"],["libero","Líbero"],["universal","Universal"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label>Nombre *</Label><Input required maxLength={60} value={first} onChange={(e) => setFirst(e.target.value)} autoComplete="given-name" /></div>
+        <div className="space-y-1"><Label>Apellido *</Label><Input required maxLength={60} value={last} onChange={(e) => setLast(e.target.value)} autoComplete="family-name" /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label>N° camiseta</Label><Input type="number" inputMode="numeric" min={0} max={99} value={number} onChange={(e) => setNumber(e.target.value)} /></div>
+        <div className="space-y-1">
+          <Label>Posición</Label>
+          <select value={position} onChange={(e) => setPosition(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+            <option value="">—</option>
+            {[["punta","Punta"],["central","Central"],["opuesto","Opuesto"],["armador","Armador"],["libero","Líbero"],["universal","Universal"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </div>
       </div>
       {err && <p className="text-sm text-destructive text-center">{err}</p>}
       <Button type="submit" className="w-full" disabled={state === "busy"}>
-        {state === "busy" && <Loader2 className="size-4 animate-spin" />} Aceptar invitación
+        {state === "busy" && <Loader2 className="size-4 animate-spin" />} Enviar solicitud
       </Button>
       <button type="button" className="text-xs text-muted-foreground underline w-full" onClick={() => supabase.auth.signOut()}>Usar otra cuenta</button>
     </form>
@@ -108,10 +141,11 @@ function JoinPage() {
   );
 }
 
-function TeamCard({ inv, sub }: { inv: { team_name: string; team_logo_url: string | null }; sub: string }) {
+function TeamCard({ inv, sub }: { inv: { team_name: string; team_logo_url: string | null; club_name: string | null }; sub: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 text-center space-y-2">
-      <p className="text-sm text-muted-foreground">Te invitaron a unirte a:</p>
+      <p className="text-sm text-muted-foreground">Te invitaron a unirte</p>
+      {inv.club_name && <p className="text-xs uppercase tracking-wider text-muted-foreground">{inv.club_name}</p>}
       {inv.team_logo_url && <img src={inv.team_logo_url} alt="" className="size-14 rounded-full object-cover mx-auto" />}
       <p className="text-xl font-bold">{inv.team_name}</p>
       {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
@@ -119,11 +153,12 @@ function TeamCard({ inv, sub }: { inv: { team_name: string; team_logo_url: strin
   );
 }
 
-function Msg({ title, ok, action }: { title: string; ok?: boolean; action?: boolean }) {
+function Msg({ title, text, ok, action }: { title: string; text?: string; ok?: boolean; action?: boolean }) {
   return (
     <div className="rounded-xl border border-border bg-card p-6 text-center space-y-3">
       {ok ? <CheckCircle2 className="size-10 mx-auto text-success" /> : <XCircle className="size-10 mx-auto text-destructive" />}
       <p className="font-semibold">{title}</p>
+      {text && <p className="text-sm text-muted-foreground">{text}</p>}
       {action && <Button asChild className="w-full"><Link to="/dashboard">Ir a la app</Link></Button>}
     </div>
   );
