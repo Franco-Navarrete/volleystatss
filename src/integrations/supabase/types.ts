@@ -1004,6 +1004,69 @@ export type Database = {
     }
     Functions: {
       accept_team_invitation: { Args: { _token: string }; Returns: string }
+      admin_club_directory: {
+        Args: { _limit: number; _offset: number; _search: string }
+        Returns: {
+          categories: number
+          city: string
+          coaches: number
+          id: string
+          logo_url: string
+          name: string
+          pending: number
+          planilleros: number
+          players: number
+          primary_color: string
+          province: string
+          total_count: number
+        }[]
+      }
+      admin_club_staff: {
+        Args: { _club: string }
+        Returns: {
+          team_id: string
+          user_id: string
+        }[]
+      }
+      admin_club_users: {
+        Args: {
+          _club: string
+          _kind: string
+          _limit: number
+          _offset: number
+          _search: string
+        }
+        Returns: {
+          categories: string[]
+          email: string
+          full_name: string
+          kind: string
+          photo_url: string
+          status: string
+          total_count: number
+          user_id: string
+        }[]
+      }
+      admin_user_search: {
+        Args: {
+          _club: string
+          _limit: number
+          _offset: number
+          _role: string
+          _search: string
+          _status: string
+        }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          memberships: Json
+          photo_url: string
+          roles: string[]
+          total_count: number
+          user_id: string
+        }[]
+      }
       can_create_matches: { Args: { _user_id: string }; Returns: boolean }
       can_create_player: { Args: { _user_id: string }; Returns: boolean }
       can_create_team: { Args: { _user_id: string }; Returns: boolean }

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
   Building2, 
@@ -35,7 +35,8 @@ import {
   ExternalLink,
   Ban,
   Trash2,
-  Copy
+  Copy,
+  Volleyball,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { adminListUsers, adminGetPassword, adminSetPassword } from "@/lib/admin.functions";
+import { ClubsDirectory } from "@/components/admin/ClubsDirectory";
+import { UserSearchDirectory } from "@/components/admin/UserSearchDirectory";
 import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-saas.functions";
 import { adminGetAuditLogs, adminGetSubscriptions } from "@/lib/admin-saas-extra.functions";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
@@ -241,7 +244,7 @@ function AdminPage() {
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
   const [selectedAuditLog, setSelectedAuditLog] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<string>("organizations");
+  const [activeTab, setActiveTab] = useState<string>("clubs");
   
   // Wizard de Entidades
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -266,9 +269,18 @@ function AdminPage() {
   // Persistencia de preferencia de vista (simulada con estado, podría ser localStorage)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
+  const queryClient = useQueryClient();
+  const listUsersFn = useServerFn(adminListUsers);
+  const openLegacyUser = async (userId: string) => {
+    const all = await queryClient.fetchQuery({ queryKey: ["admin", "users"], queryFn: () => listUsersFn() });
+    const u = all.find((x: any) => x.id === userId);
+    if (u) setSelectedUser(u);
+  };
+
   const breadcrumbs = useMemo(() => {
     const base = [{ label: "Administración", value: "admin" }];
     const tabs: Record<string, string> = {
+      clubs: "Clubes",
       organizations: "Organizaciones",
       users: "Usuarios",
       modules: "Módulos",
@@ -403,6 +415,9 @@ function AdminPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/50 p-1 rounded-xl h-auto flex flex-wrap gap-1 border border-border/40">
+          <TabsTrigger value="clubs" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
+            <Volleyball className="size-4 mr-2" /> Clubes
+          </TabsTrigger>
           <TabsTrigger value="organizations" className="rounded-lg py-2 px-4 data-[state=active]:shadow-sm">
             <Building2 className="size-4 mr-2" /> Organizaciones
           </TabsTrigger>
@@ -420,12 +435,16 @@ function AdminPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="clubs" className="m-0 focus-visible:outline-none">
+          <ClubsDirectory />
+        </TabsContent>
+
         <TabsContent value="organizations" className="m-0 focus-visible:outline-none">
           <WorkspacesSection onSelect={setSelectedOrg} />
         </TabsContent>
 
         <TabsContent value="users" className="m-0 focus-visible:outline-none">
-          <UsersSection viewMode={viewMode} onSelect={setSelectedUser} />
+          <UserSearchDirectory onManage={openLegacyUser} />
         </TabsContent>
 
         <TabsContent value="modules" className="m-0 focus-visible:outline-none">
