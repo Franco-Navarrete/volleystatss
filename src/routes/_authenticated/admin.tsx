@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { 
   Building2, 
@@ -36,6 +36,7 @@ import {
   Ban,
   Trash2,
   Copy
+  Volleyball,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -268,6 +269,7 @@ function AdminPage() {
   // Persistencia de preferencia de vista (simulada con estado, podría ser localStorage)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
+  const queryClient = useQueryClient();
   const listUsersFn = useServerFn(adminListUsers);
   const openLegacyUser = async (userId: string) => {
     const all = await queryClient.fetchQuery({ queryKey: ["admin", "users"], queryFn: () => listUsersFn() });
