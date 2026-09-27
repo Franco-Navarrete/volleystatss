@@ -99,6 +99,46 @@ export const adminRemoveFromClub = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminDeletePlayer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ playerId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const db = await admin();
+    // Unlink memberships pointing at this roster row, then delete it.
+    await db.from("team_members").update({ player_id: null }).eq("player_id", data.playerId);
+    const { error } = await db.from("players").delete().eq("id", data.playerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.userId === context.userId) throw new Error("No podés eliminar tu propia cuenta.");
+    const db = await admin();
+    // Remove every trace of the account, then the auth user itself.
+    const { data: playerRows } = await db.from("players").select("id").eq("user_id", data.userId);
+    const playerIds = (playerRows ?? []).map((p: any) => p.id);
+    if (playerIds.length) {
+      await db.from("team_members").update({ player_id: null }).in("player_id", playerIds);
+      await db.from("players").delete().in("id", playerIds);
+    }
+    await db.from("team_members").delete().eq("user_id", data.userId);
+    await db.from("team_coaches").delete().eq("user_id", data.userId);
+    await db.from("player_profiles").delete().eq("user_id", data.userId);
+    await db.from("user_roles").delete().eq("user_id", data.userId);
+    await db.from("user_permissions").delete().eq("user_id", data.userId);
+    await db.from("user_league_access").delete().eq("user_id", data.userId);
+    await db.from("app_state").delete().eq("user_id", data.userId);
+    await db.from("intelligence_reports").delete().eq("user_id", data.userId);
+    const { error } = await db.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const adminSearchUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => pageInput.extend({
