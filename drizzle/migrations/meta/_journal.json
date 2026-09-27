@@ -43,6 +43,13 @@
       "when": 1790479869065,
       "tag": "0005_join_team_as_player",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790480876364,
+      "tag": "0006_player_membership_requests",
+      "breakpoints": true
     }
   ]
 }
