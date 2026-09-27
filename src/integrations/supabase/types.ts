@@ -747,6 +747,7 @@ export type Database = {
           created_by: string
           expires_at: string
           id: string
+          intended_role: string
           multi_use: boolean
           status: string
           team_id: string
@@ -760,6 +761,7 @@ export type Database = {
           created_by?: string
           expires_at?: string
           id?: string
+          intended_role?: string
           multi_use?: boolean
           status?: string
           team_id: string
@@ -773,6 +775,7 @@ export type Database = {
           created_by?: string
           expires_at?: string
           id?: string
+          intended_role?: string
           multi_use?: boolean
           status?: string
           team_id?: string
@@ -1146,7 +1149,13 @@ export type Database = {
           }
     }
     Enums: {
-      app_role: "admin" | "user" | "entrenador" | "planillero" | "analyst"
+      app_role:
+        | "admin"
+        | "user"
+        | "entrenador"
+        | "planillero"
+        | "analyst"
+        | "player"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1274,7 +1283,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "entrenador", "planillero", "analyst"],
+      app_role: [
+        "admin",
+        "user",
+        "entrenador",
+        "planillero",
+        "analyst",
+        "player",
+      ],
     },
   },
 } as const
