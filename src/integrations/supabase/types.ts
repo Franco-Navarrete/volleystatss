@@ -554,6 +554,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          short_code: string
           team_id: string
           token: string
           updated_at: string
@@ -563,6 +564,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          short_code?: string
           team_id: string
           token?: string
           updated_at?: string
@@ -572,6 +574,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          short_code?: string
           team_id?: string
           token?: string
           updated_at?: string
@@ -861,17 +864,29 @@ export type Database = {
         Returns: boolean
       }
       can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
-      get_player_registration_team: {
-        Args: { _token: string }
-        Returns: {
-          club_name: string
-          team_color: string
-          team_id: string
-          team_logo_url: string
-          team_name: string
-          team_short_name: string
-        }[]
-      }
+      get_player_registration_team:
+        | {
+            Args: { _code: string }
+            Returns: {
+              club_name: string
+              team_color: string
+              team_id: string
+              team_logo_url: string
+              team_name: string
+              team_short_name: string
+            }[]
+          }
+        | {
+            Args: { _token: string }
+            Returns: {
+              club_name: string
+              team_color: string
+              team_id: string
+              team_logo_url: string
+              team_name: string
+              team_short_name: string
+            }[]
+          }
       get_user_club: { Args: { _user_id: string }; Returns: string }
       has_league_access: {
         Args: { _league_id: string; _user_id: string }
@@ -884,16 +899,27 @@ export type Database = {
         }
         Returns: boolean
       }
-      submit_player_registration: {
-        Args: {
-          _birth_date: string
-          _name: string
-          _number: number
-          _position: string
-          _token: string
-        }
-        Returns: string
-      }
+      submit_player_registration:
+        | {
+            Args: {
+              _birth_date: string
+              _code: string
+              _name: string
+              _number: number
+              _position: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _birth_date: string
+              _name: string
+              _number: number
+              _position: string
+              _token: string
+            }
+            Returns: string
+          }
     }
     Enums: {
       app_role: "admin" | "user" | "entrenador" | "planillero" | "analyst"
