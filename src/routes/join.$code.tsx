@@ -161,7 +161,7 @@ function Msg({ title, text, ok, action }: { title: string; text?: string; ok?: b
       {ok ? <CheckCircle2 className="size-10 mx-auto text-success" /> : <XCircle className="size-10 mx-auto text-destructive" />}
       <p className="font-semibold">{title}</p>
       {text && <p className="text-sm text-muted-foreground">{text}</p>}
-      {action && <Button asChild className="w-full"><Link to="/jugadora">Continuar</Link></Button>}
+      {action && <Button asChild className="w-full"><Link to="/player/dashboard">Continuar</Link></Button>}
     </div>
   );
 }

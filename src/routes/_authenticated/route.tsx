@@ -10,9 +10,9 @@ export const Route = createFileRoute("/_authenticated")({
     const { data, error } = await supabase.auth.getSession();
     if (error || !data.session?.user) throw redirect({ to: "/auth" });
     const role = await getMyAppRole(data.session.user.id);
-    const isPlayerArea = location.pathname.startsWith("/jugadora");
+    const isPlayerArea = location.pathname.startsWith("/player/dashboard") || location.pathname.startsWith("/jugadora");
     if (role === "player" && !isPlayerArea) {
-      throw redirect({ to: "/jugadora", search: { denied: location.pathname !== "/dashboard" ? 1 : undefined } });
+      throw redirect({ to: "/player/dashboard", search: { denied: location.pathname !== "/dashboard" ? 1 : undefined } });
     }
     return { user: data.session.user, role };
   },
