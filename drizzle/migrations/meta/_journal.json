@@ -15,6 +15,13 @@
       "when": 1790404280931,
       "tag": "0001_create_match_deletions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790478302054,
+      "tag": "0002_add_team_coaches_and_player_registration_links",
+      "breakpoints": true
     }
   ]
 }

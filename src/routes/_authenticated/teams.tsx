@@ -70,6 +70,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TeamRegistrationLinkDialog } from "@/components/TeamRegistrationLinkDialog";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({ meta: [{ title: "Equipos · RALLY" }] }),
@@ -176,7 +177,7 @@ function TeamsPage() {
   const needsClubFirst = canCreate && !isAdmin && !myClub;
   const [showClubDialog, setShowClubDialog] = useState(false);
   const canManage = (t?: { ownerId?: string } | null) =>
-    isAdmin || (!!t && !!currentUserId && t.ownerId === currentUserId);
+    isAdmin || (!!t && "canManage" in t && t.canManage === true) || (!!t && !!currentUserId && t.ownerId === currentUserId);
   // Retained for global admin-only operations (e.g. auto-migration of legacy leagues).
   const canEdit = isAdmin || legacyCanEdit;
   const mut = useTeamMutations();
@@ -296,6 +297,7 @@ function TeamsPage() {
   const [editTeamShort, setEditTeamShort] = useState("");
   const [editTeamLogo, setEditTeamLogo] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [registrationTeamId, setRegistrationTeamId] = useState<string | null>(null);
 
   // ============ Club drill-down (view mode: "clubs") ============
   const [openClubKey, setOpenClubKey] = useState<string | null>(null);
@@ -1606,6 +1608,13 @@ function TeamsPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setRegistrationTeamId(activeTeam.id)}
+                    >
+                      <Link2 className="size-3.5" /> Inscripción
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => setDeleteTarget(activeTeam.id)}
                     >
@@ -1821,6 +1830,7 @@ function TeamsPage() {
                           {p.position
                             ? PLAYER_POSITION_LABEL[p.position as PlayerPosition]
                             : "Asignar posición"}
+                          {p.birthDate ? ` · ${new Date(`${p.birthDate}T12:00:00`).toLocaleDateString("es-AR")}` : ""}
                         </div>
                       </button>
                     </>
@@ -1853,6 +1863,15 @@ function TeamsPage() {
           </ul>
         </section>
       ); })()}
+
+      {activeTeam ? (
+        <TeamRegistrationLinkDialog
+          teamId={activeTeam.id}
+          teamName={activeTeam.name}
+          open={registrationTeamId === activeTeam.id}
+          onOpenChange={(open) => { if (!open) setRegistrationTeamId(null); }}
+        />
+      ) : null}
 
       {/* ========== New team dialog ========== */}
       <Dialog open={showNewTeam} onOpenChange={setShowNewTeam}>
