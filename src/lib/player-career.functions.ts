@@ -52,3 +52,40 @@ export const getPublicPlayer = createServerFn({ method: "GET" })
       },
     };
   });
+
+/** Vista administrativa del perfil deportivo de un PLAYER (con o sin cuenta).
+ *  Permitido a administradores y a quien gestiona el equipo de esa jugadora. */
+export const getPlayerProfileForStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ playerId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const db = await admin();
+    const { data: p } = await db.from("players").select("id, team_id, name, number, position, photo_url, user_id, birth_date").eq("id", data.playerId).maybeSingle();
+    if (!p) throw new Error("Jugadora no encontrada.");
+    const { data: u } = await context.supabase.auth.getUser();
+    let allowed = u?.user?.email === "franco.e.navarrete@gmail.com";
+    if (!allowed) { const { data: r } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }); allowed = !!r; }
+    if (!allowed) { const { data: r } = await context.supabase.rpc("can_manage_assigned_team", { _user_id: context.userId, _team_id: p.team_id }); allowed = !!r; }
+    if (!allowed) throw new Error("No tenés permiso para ver esta jugadora.");
+    const [{ data: team }, { data: inv }, prof] = await Promise.all([
+      db.from("teams").select("id, name, category, gender, club, clubs(name), leagues(name, season)").eq("id", p.team_id).maybeSingle(),
+      db.from("team_invitations").select("token").eq("player_id", p.id).eq("status", "pending").gt("expires_at", new Date().toISOString()).limit(1).maybeSingle(),
+      p.user_id ? db.from("player_profiles").select("first_name, last_name, photo_url, alias, visibility").eq("user_id", p.user_id).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
+    const { computeCareerForPlayer } = await import("./player-career.server");
+    const career = await computeCareerForPlayer(db, p.id);
+    const pr = (prof as any).data;
+    return {
+      id: p.id as string, teamId: p.team_id as string,
+      name: (pr ? `${pr.first_name} ${pr.last_name}`.trim() : "") || (p.name as string),
+      number: p.number as number, position: (p.position ?? null) as string | null,
+      photoUrl: (p.photo_url ?? pr?.photo_url ?? null) as string | null,
+      teamName: (team?.name ?? "") as string, category: (team?.category ?? null) as string | null, gender: (team?.gender ?? null) as string | null,
+      club: ((team as any)?.clubs?.name ?? team?.club ?? null) as string | null,
+      season: ((team as any)?.leagues?.season ?? null) as string | null,
+      status: (p.user_id ? "linked" : inv ? "invited" : "none") as "linked" | "invited" | "none",
+      inviteToken: (inv?.token ?? null) as string | null,
+      publicAlias: pr?.visibility === "public" ? (pr.alias as string | null) : null,
+      career,
+    };
+  });

@@ -24,6 +24,19 @@ export const EMPTY_CAREER: Career = {
 /** Carrera completa de una cuenta: suma todas las filas de plantel vinculadas a ese usuario. */
 export async function computeCareerForUser(db: any, userId: string): Promise<Career> {
   const { data: rows } = await db.from("players").select("id, team_id, name, number, position, photo_url").eq("user_id", userId);
+  return computeCareerForRows(db, rows ?? []);
+}
+
+/** Carrera de una identidad deportiva (player_id), con o sin cuenta vinculada. */
+export async function computeCareerForPlayer(db: any, playerId: string): Promise<Career> {
+  const { data: row } = await db.from("players").select("id, team_id, name, number, position, photo_url, user_id").eq("id", playerId).maybeSingle();
+  if (!row) return EMPTY_CAREER;
+  // Con cuenta: el mismo perfil que ve la jugadora (todas sus filas). Sin cuenta: solo esta fila.
+  if (row.user_id) return computeCareerForUser(db, row.user_id);
+  return computeCareerForRows(db, [row]);
+}
+
+async function computeCareerForRows(db: any, rows: any[]): Promise<Career> {
   const linked = (rows ?? []) as { id: string; team_id: string; name: string; number: number; position: string | null; photo_url: string | null }[];
   if (!linked.length) return EMPTY_CAREER;
   const teamIds = [...new Set(linked.map((r) => r.team_id))];
