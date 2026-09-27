@@ -208,6 +208,11 @@ function ClubUsers({ clubId }: { clubId: string }) {
     onSuccess: () => { toast.success("Quitado del club. Su cuenta sigue existiendo."); qc.invalidateQueries({ queryKey: ["admin"] }); },
     onError: (e) => toast.error((e as Error).message),
   });
+  const delUser = useMutation({
+    mutationFn: (userId: string) => useServerFn(adminDeleteUser)({ data: { userId } }),
+    onSuccess: () => { toast.success("Cuenta eliminada definitivamente."); qc.invalidateQueries({ queryKey: ["admin"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
   const groups = ["coach", "planillero", "player"].map((k) => ({ k, rows: (data?.rows ?? []).filter((r: any) => r.kind === k) })).filter((g) => g.rows.length);
   return (
     <div className="space-y-4">
@@ -234,9 +239,13 @@ function ClubUsers({ clubId }: { clubId: string }) {
                   <p className="text-xs text-muted-foreground truncate">{u.full_name ? `${u.email} · ` : ""}{(u.categories ?? []).join(", ") || KIND[u.kind]}</p>
                 </div>
                 <Badge variant={u.status === "active" ? "secondary" : "outline"}>{u.status === "active" ? "Activo" : u.status === "pending" ? "Pendiente" : u.status}</Badge>
-                <Button size="icon" variant="ghost" aria-label="Quitar del club" disabled={del.isPending}
+                <Button size="icon" variant="ghost" aria-label="Quitar del club" disabled={del.isPending || delUser.isPending}
                   onClick={() => { if (confirm(`¿Quitar a ${u.full_name || u.email} de este club? Su cuenta no se elimina.`)) del.mutate(u.user_id); }}>
                   <UserMinus className="size-4" />
+                </Button>
+                <Button size="icon" variant="ghost" aria-label="Eliminar cuenta" disabled={del.isPending || delUser.isPending}
+                  onClick={() => { if (confirm(`¿ELIMINAR definitivamente la cuenta de ${u.full_name || u.email}? Se borran sus datos, membresías y su acceso. Esta acción no se puede deshacer.`)) delUser.mutate(u.user_id); }}>
+                  <Trash2 className="size-4 text-destructive" />
                 </Button>
               </div>
             ))}
