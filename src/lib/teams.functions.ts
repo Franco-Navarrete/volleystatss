@@ -19,6 +19,18 @@ const nameSchema = z.string().trim().min(1).max(80);
 const shortSchema = z.string().trim().min(1).max(8);
 const colorSchema = z.string().trim().max(20);
 const optionalUrl = z.string().max(1_000_000).optional().nullable();
+const teamLogoUrlSchema = optionalUrl.refine(
+  (value) => {
+    if (!value || value.startsWith("data:image/")) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  },
+  "El logo debe ser una imagen cargada o un enlace http/https válido.",
+);
 const positionSchema = z
   .enum(["punta", "central", "opuesto", "armador", "libero", "universal"])
   .optional()
@@ -141,7 +153,7 @@ export const createTeam = createServerFn({ method: "POST" })
         shortName: shortSchema,
         color: colorSchema,
         secondaryColor: secondaryColorSchema,
-        logoUrl: optionalUrl,
+        logoUrl: teamLogoUrlSchema,
         gender: genderSchema,
         category: categorySchema,
         club: clubSchema,
@@ -204,7 +216,7 @@ export const updateTeam = createServerFn({ method: "POST" })
         shortName: shortSchema.optional(),
         color: colorSchema.optional(),
         secondaryColor: secondaryColorSchema,
-        logoUrl: optionalUrl,
+        logoUrl: teamLogoUrlSchema,
         leagueId: leagueIdSchema,
         gender: genderSchema,
         category: categorySchema,
