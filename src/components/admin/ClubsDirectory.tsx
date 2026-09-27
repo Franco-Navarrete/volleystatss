@@ -135,7 +135,7 @@ function ClubDetail({ clubId, onBack, onOpenCategory }: { clubId: string; onBack
         <Logo url={club.logo_url} size="size-14" />
         <div className="min-w-0">
           <h2 className="text-2xl font-black tracking-tight truncate">{club.name}</h2>
-          <p className="text-xs text-muted-foreground">{stats.categories} categorías · {stats.players} jugadoras · {stats.coaches} entrenadores · {stats.planilleros} planilleros</p>
+          <p className="text-xs text-muted-foreground">{stats.categories} categorías · {stats.players} jugadoras · {stats.coaches} {stats.coaches === 1 ? "entrenador/a" : "entrenadores"} · {stats.planilleros} planilleros</p>
         </div>
       </div>
       <Tabs defaultValue="categories">
