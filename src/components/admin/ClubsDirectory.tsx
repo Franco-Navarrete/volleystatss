@@ -208,8 +208,9 @@ function ClubUsers({ clubId }: { clubId: string }) {
     onSuccess: () => { toast.success("Quitado del club. Su cuenta sigue existiendo."); qc.invalidateQueries({ queryKey: ["admin"] }); },
     onError: (e) => toast.error((e as Error).message),
   });
+  const delUserFn = useServerFn(adminDeleteUser);
   const delUser = useMutation({
-    mutationFn: (userId: string) => useServerFn(adminDeleteUser)({ data: { userId } }),
+    mutationFn: (userId: string) => delUserFn({ data: { userId } }),
     onSuccess: () => { toast.success("Cuenta eliminada definitivamente."); qc.invalidateQueries({ queryKey: ["admin"] }); },
     onError: (e) => toast.error((e as Error).message),
   });
@@ -259,7 +260,14 @@ function ClubUsers({ clubId }: { clubId: string }) {
 
 function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string; onBack: () => void }) {
   const list = useServerFn(adminListCategoryPlayers);
+  const delPlayerFn = useServerFn(adminDeletePlayer);
+  const qc = useQueryClient();
   const { data: players = [], isLoading } = useQuery({ queryKey: ["admin", "category-players", cat.id], queryFn: () => list({ data: { teamId: cat.id } }) });
+  const delPlayer = useMutation({
+    mutationFn: (playerId: string) => delPlayerFn({ data: { playerId } }),
+    onSuccess: () => { toast.success("Jugadora eliminada del plantel."); qc.invalidateQueries({ queryKey: ["admin"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
   const [search, setSearch] = useState("");
   const [manage, setManage] = useState(false);
   const [invite, setInvite] = useState(false);
@@ -292,6 +300,10 @@ function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string;
               <p className="text-xs text-muted-foreground">#{p.number}{p.position ? ` · ${POS[p.position] ?? p.position}` : ""}</p>
             </div>
             <Badge variant="secondary">{p.hasAccount ? "Activa" : "Sin cuenta"}</Badge>
+            <Button size="icon" variant="ghost" aria-label="Eliminar jugadora" disabled={delPlayer.isPending}
+              onClick={() => { if (confirm(`¿Eliminar a ${p.name} del plantel? Esta acción no se puede deshacer.`)) delPlayer.mutate(p.id); }}>
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
           </div>
         ))}
         {!isLoading && shown.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No hay jugadoras{s ? " con esa búsqueda" : ""}.</p>}
