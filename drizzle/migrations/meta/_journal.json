@@ -92,6 +92,13 @@
       "when": 1790486247570,
       "tag": "0012_harden_legacy_invitation_rpcs",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790532673664,
+      "tag": "0013_player_linked_invitations",
+      "breakpoints": true
     }
   ]
 }

@@ -773,6 +773,7 @@ export type Database = {
           id: string
           intended_role: string
           multi_use: boolean
+          player_id: string | null
           status: string
           team_id: string
           token: string
@@ -787,6 +788,7 @@ export type Database = {
           id?: string
           intended_role?: string
           multi_use?: boolean
+          player_id?: string | null
           status?: string
           team_id: string
           token?: string
@@ -801,6 +803,7 @@ export type Database = {
           id?: string
           intended_role?: string
           multi_use?: boolean
+          player_id?: string | null
           status?: string
           team_id?: string
           token?: string
@@ -813,6 +816,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
             referencedColumns: ["id"]
           },
           {
@@ -1103,6 +1113,14 @@ export type Database = {
         Returns: boolean
       }
       can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
+      get_invitation_player: {
+        Args: { _token: string }
+        Returns: {
+          player_name: string
+          player_number: number
+          player_position: string
+        }[]
+      }
       get_my_app_role: { Args: never; Returns: string }
       get_my_memberships: {
         Args: never
