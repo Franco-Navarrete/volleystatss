@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import {
@@ -47,10 +45,6 @@ import {
   CloudOff,
   LayoutGrid,
   Link2,
-  Copy,
-  RefreshCw,
-  ToggleLeft,
-  ToggleRight,
   List,
   Loader2,
   Lock,
@@ -76,11 +70,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  createOrRenewTeamRegistrationLink,
-  getTeamRegistrationLink,
-  setTeamRegistrationLinkActive,
-} from "@/lib/player-registration.functions";
+import { TeamRegistrationLinkDialog } from "@/components/TeamRegistrationLinkDialog";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({ meta: [{ title: "Equipos · RALLY" }] }),
@@ -1618,6 +1608,13 @@ function TeamsPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setRegistrationTeamId(activeTeam.id)}
+                    >
+                      <Link2 className="size-3.5" /> Inscripción
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => setDeleteTarget(activeTeam.id)}
                     >
@@ -1865,6 +1862,15 @@ function TeamsPage() {
           </ul>
         </section>
       ); })()}
+
+      {activeTeam ? (
+        <TeamRegistrationLinkDialog
+          teamId={activeTeam.id}
+          teamName={activeTeam.name}
+          open={registrationTeamId === activeTeam.id}
+          onOpenChange={(open) => { if (!open) setRegistrationTeamId(null); }}
+        />
+      ) : null}
 
       {/* ========== New team dialog ========== */}
       <Dialog open={showNewTeam} onOpenChange={setShowNewTeam}>

@@ -79,6 +79,7 @@ import { adminListWorkspaces, adminListPermissionsCatalog } from "@/lib/admin-sa
 import { adminGetAuditLogs, adminGetSubscriptions } from "@/lib/admin-saas-extra.functions";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
 import { DynamicEntityWizard, type EntityType } from "@/components/admin/DynamicEntityWizard";
+import { CoachTeamAssignments } from "@/components/admin/CoachTeamAssignments";
 
 function generateTempPassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!*#";
@@ -763,6 +764,13 @@ function UserDetailDrawer({
             </TabsContent>
 
             <TabsContent value="workspaces" className="m-0 space-y-6">
+              {user.extraRoles?.includes("entrenador") ? (
+                <CoachTeamAssignments userId={user.id} />
+              ) : (
+                <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  Asignale primero el rol Entrenador para vincular equipos.
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary/60">Asignaciones de Liga</h3>
                 <Button 
