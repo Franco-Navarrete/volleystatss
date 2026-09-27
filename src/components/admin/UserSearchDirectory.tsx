@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { adminListClubs, adminSearchUsers } from "@/lib/admin-clubs.functions";
+import { adminDeleteUser, adminListClubs, adminSearchUsers } from "@/lib/admin-clubs.functions";
 import { useDebounced } from "./ClubsDirectory";
 
 const ROLE: Record<string, string> = { admin: "Admin", entrenador: "Entrenador", planillero: "Planillero", analyst: "Analista", player: "Jugador/a", user: "Usuario" };
@@ -22,6 +23,13 @@ export function UserSearchDirectory({ onManage }: { onManage: (userId: string) =
   const [clubId, setClubId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState<Row | null>(null);
+  const delUserFn = useServerFn(adminDeleteUser);
+  const qc = useQueryClient();
+  const delUser = useMutation({
+    mutationFn: (userId: string) => delUserFn({ data: { userId } }),
+    onSuccess: () => { toast.success("Cuenta eliminada definitivamente."); setOpen(null); qc.invalidateQueries({ queryKey: ["admin"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
   const q = useDebounced(text);
   useEffect(() => setPage(0), [q, role, status, clubId]);
   const clubs = useQuery({ queryKey: ["admin", "clubs-picker", clubQ], queryFn: () => clubsFn({ data: { search: clubQ, page: 0 } }) });
@@ -105,6 +113,10 @@ export function UserSearchDirectory({ onManage }: { onManage: (userId: string) =
               </div>
             )}
             <Button className="w-full mt-6" variant="outline" onClick={() => { onManage(open.user_id); setOpen(null); }}>Roles, permisos y contraseña</Button>
+            <Button className="w-full mt-2" variant="destructive" disabled={delUser.isPending}
+              onClick={() => { if (confirm(`¿ELIMINAR definitivamente la cuenta de ${open.full_name || open.email}? Se borran sus datos, membresías y su acceso. Esta acción no se puede deshacer.`)) delUser.mutate(open.user_id); }}>
+              <Trash2 className="size-4" /> Eliminar cuenta
+            </Button>
           </>)}
         </SheetContent>
       </Sheet>

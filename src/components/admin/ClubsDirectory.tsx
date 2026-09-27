@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ChevronRight, Link2, Loader2, Search, Settings2, UserMinus, Users, Volleyball } from "lucide-react";
+import { ArrowLeft, ChevronRight, Link2, Loader2, Search, Settings2, Trash2, UserMinus, Users, Volleyball } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamRegistrationLinkDialog } from "@/components/TeamRegistrationLinkDialog";
 import { CategoryManageDialog } from "@/components/CategoryManageDialog";
-import { adminGetClub, adminListCategoryPlayers, adminListClubs, adminListClubUsers, adminRemoveFromClub } from "@/lib/admin-clubs.functions";
+import { adminDeletePlayer, adminDeleteUser, adminGetClub, adminListCategoryPlayers, adminListClubs, adminListClubUsers, adminRemoveFromClub } from "@/lib/admin-clubs.functions";
 
 export function useDebounced<T>(value: T, ms = 300) {
   const [v, setV] = useState(value);
@@ -208,6 +208,12 @@ function ClubUsers({ clubId }: { clubId: string }) {
     onSuccess: () => { toast.success("Quitado del club. Su cuenta sigue existiendo."); qc.invalidateQueries({ queryKey: ["admin"] }); },
     onError: (e) => toast.error((e as Error).message),
   });
+  const delUserFn = useServerFn(adminDeleteUser);
+  const delUser = useMutation({
+    mutationFn: (userId: string) => delUserFn({ data: { userId } }),
+    onSuccess: () => { toast.success("Cuenta eliminada definitivamente."); qc.invalidateQueries({ queryKey: ["admin"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
   const groups = ["coach", "planillero", "player"].map((k) => ({ k, rows: (data?.rows ?? []).filter((r: any) => r.kind === k) })).filter((g) => g.rows.length);
   return (
     <div className="space-y-4">
@@ -234,9 +240,13 @@ function ClubUsers({ clubId }: { clubId: string }) {
                   <p className="text-xs text-muted-foreground truncate">{u.full_name ? `${u.email} · ` : ""}{(u.categories ?? []).join(", ") || KIND[u.kind]}</p>
                 </div>
                 <Badge variant={u.status === "active" ? "secondary" : "outline"}>{u.status === "active" ? "Activo" : u.status === "pending" ? "Pendiente" : u.status}</Badge>
-                <Button size="icon" variant="ghost" aria-label="Quitar del club" disabled={del.isPending}
+                <Button size="icon" variant="ghost" aria-label="Quitar del club" disabled={del.isPending || delUser.isPending}
                   onClick={() => { if (confirm(`¿Quitar a ${u.full_name || u.email} de este club? Su cuenta no se elimina.`)) del.mutate(u.user_id); }}>
                   <UserMinus className="size-4" />
+                </Button>
+                <Button size="icon" variant="ghost" aria-label="Eliminar cuenta" disabled={del.isPending || delUser.isPending}
+                  onClick={() => { if (confirm(`¿ELIMINAR definitivamente la cuenta de ${u.full_name || u.email}? Se borran sus datos, membresías y su acceso. Esta acción no se puede deshacer.`)) delUser.mutate(u.user_id); }}>
+                  <Trash2 className="size-4 text-destructive" />
                 </Button>
               </div>
             ))}
@@ -250,7 +260,14 @@ function ClubUsers({ clubId }: { clubId: string }) {
 
 function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string; onBack: () => void }) {
   const list = useServerFn(adminListCategoryPlayers);
+  const delPlayerFn = useServerFn(adminDeletePlayer);
+  const qc = useQueryClient();
   const { data: players = [], isLoading } = useQuery({ queryKey: ["admin", "category-players", cat.id], queryFn: () => list({ data: { teamId: cat.id } }) });
+  const delPlayer = useMutation({
+    mutationFn: (playerId: string) => delPlayerFn({ data: { playerId } }),
+    onSuccess: () => { toast.success("Jugadora eliminada del plantel."); qc.invalidateQueries({ queryKey: ["admin"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
   const [search, setSearch] = useState("");
   const [manage, setManage] = useState(false);
   const [invite, setInvite] = useState(false);
@@ -283,6 +300,10 @@ function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string;
               <p className="text-xs text-muted-foreground">#{p.number}{p.position ? ` · ${POS[p.position] ?? p.position}` : ""}</p>
             </div>
             <Badge variant="secondary">{p.hasAccount ? "Activa" : "Sin cuenta"}</Badge>
+            <Button size="icon" variant="ghost" aria-label="Eliminar jugadora" disabled={delPlayer.isPending}
+              onClick={() => { if (confirm(`¿Eliminar a ${p.name} del plantel? Esta acción no se puede deshacer.`)) delPlayer.mutate(p.id); }}>
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
           </div>
         ))}
         {!isLoading && shown.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No hay jugadoras{s ? " con esa búsqueda" : ""}.</p>}
