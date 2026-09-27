@@ -161,13 +161,14 @@ export const adminSetTeamAssignments = createServerFn({ method: "POST" })
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Solo administradores.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: roleError } = await supabaseAdmin
+    const { data: coachRole, error: roleError } = await supabaseAdmin
       .from("user_roles")
       .select("id")
       .eq("user_id", data.userId)
       .eq("role", "entrenador")
       .maybeSingle();
     if (roleError) throw roleError;
+    if (!coachRole) throw new Error("El usuario debe tener el rol Entrenador antes de recibir equipos.");
     const { error: deleteError } = await supabaseAdmin.from("team_coaches").delete().eq("user_id", data.userId);
     if (deleteError) throw deleteError;
     if (data.teamIds.length) {

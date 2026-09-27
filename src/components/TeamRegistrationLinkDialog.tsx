@@ -1,15 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Check, Copy, Link2, Loader2, RefreshCw, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  createOrRenewTeamRegistrationLink,
-  getTeamRegistrationLink,
-  setTeamRegistrationLinkActive,
-} from "@/lib/player-registration.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export function TeamRegistrationLinkDialog({
   teamId,
@@ -22,21 +17,45 @@ export function TeamRegistrationLinkDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const getLink = useServerFn(getTeamRegistrationLink);
-  const createLink = useServerFn(createOrRenewTeamRegistrationLink);
-  const setActive = useServerFn(setTeamRegistrationLinkActive);
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const queryKey = ["team-registration-link", teamId];
   const query = useQuery({
     queryKey,
-    queryFn: () => getLink({ data: { teamId } }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("player_registration_links")
+        .select("token, active, updated_at")
+        .eq("team_id", teamId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? { token: data.token, active: data.active, updatedAt: data.updated_at } : null;
+    },
     enabled: open,
   });
   const refresh = () => queryClient.invalidateQueries({ queryKey });
-  const renew = useMutation({ mutationFn: () => createLink({ data: { teamId } }), onSuccess: refresh });
+  const renew = useMutation({
+    mutationFn: async () => {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData.user) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
+      const { error } = await supabase.from("player_registration_links").upsert({
+        team_id: teamId,
+        token: crypto.randomUUID(),
+        active: true,
+        created_by: authData.user.id,
+      }, { onConflict: "team_id" });
+      if (error) throw error;
+    },
+    onSuccess: refresh,
+  });
   const toggle = useMutation({
-    mutationFn: (active: boolean) => setActive({ data: { teamId, active } }),
+    mutationFn: async (active: boolean) => {
+      const { error } = await supabase
+        .from("player_registration_links")
+        .update({ active })
+        .eq("team_id", teamId);
+      if (error) throw error;
+    },
     onSuccess: refresh,
   });
   const url = useMemo(() => {
