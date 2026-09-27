@@ -23,6 +23,7 @@ export type CloudPlayer = {
   number: number;
   position?: string;
   photoUrl?: string;
+  birthDate?: string;
 };
 
 export type CloudTeam = {
@@ -40,6 +41,7 @@ export type CloudTeam = {
   gender?: "M" | "F" | "X";
   category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre";
   ownerId?: string;
+  canManage?: boolean;
   players: CloudPlayer[];
 };
 

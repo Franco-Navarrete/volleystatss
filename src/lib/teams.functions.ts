@@ -58,13 +58,25 @@ export const listTeams = createServerFn({ method: "GET" })
 
     const isAdmin = !!roleData;
 
+    let assignedTeamIds: string[] = [];
+    if (!isAdmin) {
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from("team_coaches")
+        .select("team_id")
+        .eq("user_id", userId);
+      if (assignmentsError) throw assignmentsError;
+      assignedTeamIds = (assignments ?? []).map((row) => row.team_id);
+    }
+
     let teamsQuery = supabase
       .from("teams")
       .select("id, league_id, club_id, name, short_name, color, logo_url, gender, category, owner_id, secondary_color, club, created_at");
 
     // Si no es admin, filtrar por owner_id en la base de datos para mayor seguridad
     if (!isAdmin) {
-      teamsQuery = teamsQuery.eq("owner_id", userId);
+      teamsQuery = assignedTeamIds.length
+        ? teamsQuery.or(`owner_id.eq.${userId},id.in.(${assignedTeamIds.join(",")})`)
+        : teamsQuery.eq("owner_id", userId);
     }
 
     const [teamsRes, playersRes, clubsRes] = await Promise.all([
@@ -116,6 +128,7 @@ export const listTeams = createServerFn({ method: "GET" })
         clubName: clubInfo?.name ?? undefined,
         clubLogoUrl: clubInfo?.logoUrl ?? undefined,
         ownerId: (raw.owner_id as string | null) ?? undefined,
+        canManage: isAdmin || raw.owner_id === userId || assignedTeamIds.includes(t.id),
         logoUrl: t.logo_url ?? undefined,
         gender,
         category,
@@ -268,6 +281,7 @@ export const createPlayer = createServerFn({ method: "POST" })
     number: number;
     position?: string | null;
     photoUrl?: string | null;
+    birthDate?: string | null;
   }) =>
     z
       .object({
@@ -276,6 +290,7 @@ export const createPlayer = createServerFn({ method: "POST" })
         number: z.number().int().min(0).max(99),
         position: positionSchema,
         photoUrl: optionalUrl,
+        birthDate: z.string().date().optional().nullable(),
       })
       .parse(input),
   )
@@ -288,6 +303,7 @@ export const createPlayer = createServerFn({ method: "POST" })
         number: data.number,
         position: data.position ?? null,
         photo_url: data.photoUrl ?? null,
+        birth_date: data.birthDate ?? null,
       })
       .select("id")
       .single();
