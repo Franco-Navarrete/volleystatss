@@ -44,6 +44,7 @@ import {
   Check,
   CloudOff,
   LayoutGrid,
+  Link2,
   List,
   Loader2,
   Lock,
@@ -82,6 +83,16 @@ const COLORS = TEAM_COLORS_HEX;
 const MAX_PHOTO_BYTES = 800 * 1024;
 const PAGE_SIZE = 20;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidImageUrl(value: string) {
+  if (!value.trim()) return true;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 type SortKey =
   | "name"
@@ -262,6 +273,7 @@ function TeamsPage() {
   const [shortName, setShortName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
   const [logo, setLogo] = useState<string | undefined>(undefined);
+  const [logoLink, setLogoLink] = useState("");
   const [newLeagueId, setNewLeagueId] = useState<string>("");
   const [newGender, setNewGender] = useState<"" | "M" | "F" | "X">("");
   const [newCategory, setNewCategory] = useState<"" | TeamCategory>("");
@@ -282,6 +294,7 @@ function TeamsPage() {
   const [editingTeam, setEditingTeam] = useState(false);
   const [editTeamName, setEditTeamName] = useState("");
   const [editTeamShort, setEditTeamShort] = useState("");
+  const [editTeamLogo, setEditTeamLogo] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // ============ Club drill-down (view mode: "clubs") ============
@@ -589,6 +602,7 @@ function TeamsPage() {
     setNewClub("");
     setNewSecondaryColor("");
     setLogo(undefined);
+    setLogoLink("");
     setColor(COLORS[0]);
   };
 
@@ -1429,6 +1443,20 @@ function TeamsPage() {
                       onChange={(e) => setEditTeamShort(e.target.value.toUpperCase())}
                       placeholder="Abrev."
                     />
+                    <div className="relative">
+                      <Link2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="url"
+                        className="h-8 pl-8 text-xs"
+                        value={editTeamLogo}
+                        onChange={(e) => setEditTeamLogo(e.target.value)}
+                        placeholder="https://sitio.com/logo.png"
+                        aria-invalid={!isValidImageUrl(editTeamLogo)}
+                      />
+                    </div>
+                    {editTeamLogo && !isValidImageUrl(editTeamLogo) && (
+                      <p className="text-[10px] text-destructive">Ingresá un enlace http:// o https:// válido.</p>
+                    )}
                   </div>
                 ) : (
                   <>
@@ -1537,7 +1565,17 @@ function TeamsPage() {
                           alert("Nombre y abreviatura son obligatorios.");
                           return;
                         }
-                        mut.updateTeam.mutate({ id: activeTeam.id, name: n, shortName: sn });
+                        if (!isValidImageUrl(editTeamLogo)) {
+                          alert("Ingresá un enlace de imagen válido.");
+                          return;
+                        }
+                        const currentLogoIsFile = activeTeam.logoUrl?.startsWith("data:");
+                        mut.updateTeam.mutate({
+                          id: activeTeam.id,
+                          name: n,
+                          shortName: sn,
+                          logoUrl: editTeamLogo.trim() || (currentLogoIsFile ? activeTeam.logoUrl : null),
+                        });
                         setEditingTeam(false);
                       }}
                     >
@@ -1555,6 +1593,11 @@ function TeamsPage() {
                       onClick={() => {
                         setEditTeamName(activeTeam.name);
                         setEditTeamShort(activeTeam.shortName);
+                        setEditTeamLogo(
+                          activeTeam.logoUrl?.startsWith("http://") || activeTeam.logoUrl?.startsWith("https://")
+                            ? activeTeam.logoUrl
+                            : "",
+                        );
                         setEditingTeam(true);
                       }}
                     >
@@ -1844,6 +1887,7 @@ function TeamsPage() {
                   if (!f) return;
                   try {
                     setLogo(await fileToCompressedDataUrl(f));
+                    setLogoLink("");
                   } catch {
                     alert("No se pudo procesar la imagen.");
                   }
@@ -1863,6 +1907,28 @@ function TeamsPage() {
                   onChange={(e) => setShortName(e.target.value.toUpperCase())}
                 />
               </div>
+            </div>
+            <div className="space-y-1">
+              <div className="relative">
+                <Link2 className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="url"
+                  inputMode="url"
+                  className="pl-9"
+                  placeholder="Link del logo (https://...)"
+                  value={logoLink}
+                  aria-invalid={!isValidImageUrl(logoLink)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setLogoLink(value);
+                    if (!value.trim()) setLogo(undefined);
+                    else if (isValidImageUrl(value)) setLogo(value.trim());
+                  }}
+                />
+              </div>
+              {logoLink && !isValidImageUrl(logoLink) && (
+                <p className="text-[11px] text-destructive">Ingresá un enlace http:// o https:// válido.</p>
+              )}
             </div>
             <select
               value={newLeagueId}
@@ -1955,7 +2021,7 @@ function TeamsPage() {
             </Button>
             <Button
               className="flex-1"
-              disabled={!name || !shortName || busy}
+              disabled={!name || !shortName || busy || !isValidImageUrl(logoLink)}
               onClick={async () => {
                 try {
                   const res = await mut.createTeam.mutateAsync({
