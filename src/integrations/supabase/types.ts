@@ -548,8 +548,47 @@ export type Database = {
           },
         ]
       }
+      player_registration_links: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          id: string
+          team_id: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          id?: string
+          team_id: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          id?: string
+          team_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_registration_links_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
+          birth_date: string | null
           created_at: string
           id: string
           name: string
@@ -560,6 +599,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string
           id?: string
           name: string
@@ -570,6 +610,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          birth_date?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -636,6 +677,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      team_coaches: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_coaches_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teams: {
         Row: {
@@ -782,11 +852,26 @@ export type Database = {
       can_create_matches: { Args: { _user_id: string }; Returns: boolean }
       can_create_player: { Args: { _user_id: string }; Returns: boolean }
       can_create_team: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_assigned_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_manage_team: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
       can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
+      get_player_registration_team: {
+        Args: { _token: string }
+        Returns: {
+          club_name: string
+          team_color: string
+          team_id: string
+          team_logo_url: string
+          team_name: string
+          team_short_name: string
+        }[]
+      }
       get_user_club: { Args: { _user_id: string }; Returns: string }
       has_league_access: {
         Args: { _league_id: string; _user_id: string }
@@ -798,6 +883,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      submit_player_registration: {
+        Args: {
+          _birth_date: string
+          _name: string
+          _number: number
+          _position: string
+          _token: string
+        }
+        Returns: string
       }
     }
     Enums: {
