@@ -1,179 +1,118 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Building2, Loader2, Plus, UserPlus, Users } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { useVolley } from "@/lib/volley-store";
-import { Building2, Users, Layers, Plus, ChevronRight, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useMemo } from "react";
-import { useAuthUser } from "@/hooks/use-auth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useCloudTeams, useTeamMutations, type CloudTeam } from "@/hooks/use-cloud-teams";
+import { TeamRegistrationLinkDialog } from "@/components/TeamRegistrationLinkDialog";
+import { CategoryManageDialog, useCategoryMembers } from "@/components/CategoryManageDialog";
 
 export const Route = createFileRoute("/_authenticated/my-club")({
-  head: () => ({ meta: [{ title: "Mi Club · RALLY" }] }),
+  head: () => ({
+    meta: [
+      { title: "Mi Club · RALLY" },
+      { name: "description", content: "Administrá las categorías, invitaciones y jugadoras de tu club." },
+      { property: "og:title", content: "Mi Club · RALLY" },
+      { property: "og:description", content: "Categorías, invitaciones y jugadoras de tu club." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: MyClubPage,
 });
 
+const GENDER: Record<string, string> = { F: "Femenino", M: "Masculino", X: "Mixto" };
+const CATS = [["12", "Sub 12"], ["14", "Sub 14"], ["16", "Sub 16"], ["18", "Sub 18"], ["21", "Sub 21"], ["primera", "Primera"], ["libre", "Libre"]] as const;
+
 function MyClubPage() {
-  const { user } = useAuthUser();
-  const teams = useVolley((s) => s.teams);
-  
-  // En RALLY, los clubes se infieren de los equipos que el usuario posee
-  // o donde es coach. Filtramos los equipos del usuario.
-  const myTeams = useMemo(() => {
-    if (!user) return [];
-    return teams.filter(t => t.ownerId === user.id || t.club === user.email);
-  }, [teams, user]);
-
-  // Agrupamos por club
-  const clubName = myTeams.length > 0 ? (myTeams[0].club || "Mi Club") : "Mi Club";
-  
-  const categories = useMemo(() => {
-    const cats = new Set(myTeams.map(t => t.category).filter(Boolean));
-    return Array.from(cats);
-  }, [myTeams]);
-
-  const totalPlayers = useMemo(() => {
-    let count = 0;
-    myTeams.forEach(t => count += t.players.length);
-    return count;
-  }, [myTeams]);
+  const teams = useCloudTeams();
+  const mine = (teams.data ?? []).filter((t) => t.canManage);
+  const clubName = mine.find((t) => t.clubName)?.clubName ?? mine[0]?.club ?? "Mi club";
+  const [creating, setCreating] = useState(false);
 
   return (
     <AppShell>
-      <div className="space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <Building2 className="size-8 text-primary" />
-              {clubName}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gestión deportiva integral de tu institución.
-            </p>
+            <h1 className="text-2xl font-black tracking-tight flex items-center gap-2"><Building2 className="size-7 text-primary" />{clubName}</h1>
+            <p className="text-muted-foreground text-sm mt-1">Mis categorías</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              Editar Club
-            </Button>
-            <Button size="sm" className="shadow-glow" asChild>
-              <Link to="/teams">
-                <Plus className="size-4 mr-2" /> Nueva Categoría
-              </Link>
-            </Button>
+          <Button onClick={() => setCreating(true)}><Plus className="size-4" /> Nueva categoría</Button>
+        </div>
+        {teams.isLoading ? <Loader2 className="size-6 animate-spin" /> : mine.length === 0 ? (
+          <Card className="border-dashed"><CardContent className="py-10 text-center text-sm text-muted-foreground">Todavía no tenés categorías. Creá la primera.</CardContent></Card>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {mine.map((t) => <CategoryCard key={t.id} team={t} />)}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard 
-            icon={Layers} 
-            label="Categorías" 
-            value={categories.length.toString()} 
-            color="text-primary" 
-          />
-          <StatCard 
-            icon={Users} 
-            label="Equipos" 
-            value={myTeams.length.toString()} 
-            color="text-accent" 
-          />
-          <StatCard 
-            icon={UserPlus} 
-            label="Jugadores" 
-            value={totalPlayers.toString()} 
-            color="text-success" 
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <section className="space-y-4">
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              Categorías y Planteles
-            </h2>
-            <div className="grid gap-3">
-              {myTeams.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="py-10 text-center">
-                    <p className="text-sm text-muted-foreground">Aún no tienes equipos o categorías configuradas.</p>
-                    <Button variant="link" className="mt-2" asChild>
-                      <Link to="/teams">Crear mi primer equipo</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                myTeams.map(team => (
-                  <Link key={team.id} to="/teams" search={{ teamId: team.id }}>
-                    <Card className="group hover:border-primary/40 transition-colors cursor-pointer">
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`size-10 rounded-full flex items-center justify-center text-white font-bold`} style={{ backgroundColor: team.color }}>
-                            {team.shortName.substring(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold leading-none">{team.name}</h3>
-                              <Badge variant="secondary" className="text-[10px] h-4 uppercase font-black bg-primary/10 text-primary border-none">
-                                {team.category ? `Sub ${team.category}` : 'Libre'}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {team.players.length} jugadores en el plantel
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))
-              )}
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              Staff y Acceso
-            </h2>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Administradores del Club</CardTitle>
-                <CardDescription>Usuarios con permiso para gestionar este espacio.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                      {user?.email?.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div className="text-sm">
-                      <p className="font-medium">{user?.email}</p>
-                      <Badge variant="outline" className="text-[10px] h-4">Dueño</Badge>
-                    </div>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full text-xs" size="sm">
-                  <UserPlus className="size-3 mr-2" /> Invitar Entrenador
-                </Button>
-              </CardContent>
-            </Card>
-          </section>
-        </div>
+        )}
       </div>
+      <NewCategoryDialog open={creating} onOpenChange={setCreating} clubName={clubName} />
     </AppShell>
   );
 }
 
-function StatCard({ icon: Icon, label, value, color }: { icon: any, label: string, value: string, color: string }) {
+function CategoryCard({ team }: { team: CloudTeam }) {
+  const [manage, setManage] = useState(false);
+  const [invite, setInvite] = useState(false);
+  const members = useCategoryMembers(team.id);
+  const pending = (members.data ?? []).filter((m) => m.status === "pending").length;
   return (
-    <Card className="bg-card/40 backdrop-blur-sm border-border/60">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-            <p className="text-3xl font-black mt-1">{value}</p>
+            <h3 className="font-bold leading-tight">{team.name}</h3>
+            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Users className="size-3.5" /> {team.players.length} jugadoras</p>
           </div>
-          <Icon className={`size-8 ${color} opacity-80`} />
+          {pending > 0 && <Badge className="bg-primary text-primary-foreground">{pending} {pending === 1 ? "solicitud" : "solicitudes"}</Badge>}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" onClick={() => setManage(true)}>Administrar</Button>
+          <Button size="sm" onClick={() => setInvite(true)}><UserPlus className="size-4" /> Invitar</Button>
         </div>
       </CardContent>
+      <CategoryManageDialog teamId={team.id} teamName={team.name} players={team.players} open={manage} onOpenChange={setManage} />
+      <TeamRegistrationLinkDialog teamId={team.id} teamName={team.name} open={invite} onOpenChange={setInvite} />
     </Card>
+  );
+}
+
+function NewCategoryDialog({ open, onOpenChange, clubName }: { open: boolean; onOpenChange: (o: boolean) => void; clubName: string }) {
+  const { createTeam } = useTeamMutations();
+  const [cat, setCat] = useState<(typeof CATS)[number][0]>("16");
+  const [gender, setGender] = useState<"F" | "M" | "X">("F");
+  const label = CATS.find((c) => c[0] === cat)![1];
+  const name = `${label} ${GENDER[gender]}`;
+  const submit = async () => {
+    try {
+      await createTeam.mutateAsync({ name, shortName: label.replace(/\s/g, "").slice(0, 8).toUpperCase(), color: "#2563eb", category: cat, gender });
+      toast.success(`Categoría ${name} creada`);
+      onOpenChange(false);
+    } catch (e) { toast.error((e as Error).message || "No se pudo crear la categoría."); }
+  };
+  const sel = "w-full h-10 rounded-md border border-input bg-background px-3 text-sm";
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>Nueva categoría</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1"><Label>Nombre</Label>
+            <select className={sel} value={cat} onChange={(e) => setCat(e.target.value as typeof cat)}>{CATS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+          <div className="space-y-1"><Label>Género</Label>
+            <select className={sel} value={gender} onChange={(e) => setGender(e.target.value as typeof gender)}>{Object.entries(GENDER).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+          <div className="space-y-1"><Label>Club</Label><Input value={clubName} disabled /></div>
+          <p className="text-sm text-muted-foreground">Se creará: <b>{name}</b></p>
+        </div>
+        <DialogFooter><Button onClick={submit} disabled={createTeam.isPending}>{createTeam.isPending && <Loader2 className="size-4 animate-spin" />} Crear</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
