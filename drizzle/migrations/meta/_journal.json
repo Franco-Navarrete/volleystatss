@@ -71,6 +71,13 @@
       "when": 1790482720937,
       "tag": "0009_invitation_intended_role_player",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790482852656,
+      "tag": "0010_admin_club_directory",
+      "breakpoints": true
     }
   ]
 }
