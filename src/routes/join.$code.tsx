@@ -47,7 +47,14 @@ function JoinPage() {
   });
 
   const inv = invite.data;
-  const [state, setState] = useState<"idle" | "busy" | "sent" | "already">("idle");
+  const linkedPlayer = useQuery({
+    queryKey: ["join-invite-player", code],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_invitation_player", { _token: code });
+      return data?.[0] ?? null;
+    },
+  });
+  const [state, setState] = useState<"idle" | "busy" | "sent" | "already" | "linked">("idle");
   const [err, setErr] = useState<string | null>(null);
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -57,6 +64,14 @@ function JoinPage() {
   useEffect(() => {
     if (inv?.has_profile) { setFirst(inv.first_name ?? ""); setLast(inv.last_name ?? ""); setPhoto(inv.photo_url ?? null); }
   }, [inv?.has_profile]);
+  useEffect(() => {
+    const lp = linkedPlayer.data;
+    if (!lp || inv?.has_profile) return;
+    const [f, ...rest] = (lp.player_name ?? "").trim().split(/\s+/);
+    setFirst((v) => v || f || ""); setLast((v) => v || rest.join(" "));
+    if (lp.player_number != null) setNumber(String(lp.player_number));
+    if (lp.player_position) setPosition(lp.player_position);
+  }, [linkedPlayer.data, inv?.has_profile]);
 
   const onPhoto = async (f?: File) => {
     if (!f) return;
@@ -74,7 +89,7 @@ function JoinPage() {
     });
     if (error) { setErr(error.message); setState("idle"); return; }
     clearAppRoleCache();
-    setState(data === "already_member" ? "already" : "sent");
+    setState(data === "linked" ? "linked" : data === "already_member" ? "already" : "sent");
   };
 
   const sub = inv ? [inv.team_gender === "F" ? "Femenino" : inv.team_gender === "M" ? "Masculino" : inv.team_gender === "X" ? "Mixto" : null,
@@ -83,6 +98,7 @@ function JoinPage() {
   let body: React.ReactNode;
   if (!ready || invite.isLoading) body = <Loader2 className="size-6 animate-spin mx-auto text-muted-foreground" />;
   else if (!inv || inv.invite_state === "revoked") body = <Msg title="Esta invitación ya no es válida." />;
+  else if (state === "linked") body = <Msg ok title={`¡Listo${first ? `, ${first}` : ""}! 🏐`} text="Tu cuenta quedó vinculada a tu ficha de jugadora. Tus partidos y estadísticas anteriores ya están en tu panel." action />;
   else if (state === "already" || inv.member_status === "active") body = <Msg ok title="Ya pertenecés a este equipo." action />;
   else if (state === "sent" || inv.member_status === "pending") body = <Msg ok title={`¡Bienvenida${first ? `, ${first}` : ""}! 👋`} text={`Tu solicitud para unirte a ${inv.club_name ? inv.club_name + " · " : ""}${sub || inv.team_name} fue enviada a tu entrenador/a y está pendiente de aprobación.`} action />;
   else if (inv.invite_state === "expired") body = <Msg title="Esta invitación ha expirado." />;

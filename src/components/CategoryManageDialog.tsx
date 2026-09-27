@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { teamsKey } from "@/hooks/use-cloud-teams";
+import { publicAppOrigin } from "@/lib/app-url";
 
 const POS: Record<string, string> = { punta: "Punta", central: "Central", opuesto: "Opuesto", armador: "Armador", libero: "Líbero", universal: "Universal" };
 
@@ -96,6 +97,33 @@ export function CategoryManageDialog({ teamId, teamName, players, open, onOpenCh
     onSuccess: () => { toast.success("Cuenta desvinculada"); refresh(); qc.invalidateQueries({ queryKey: ["category-roster-links", teamId] }); },
     onError: (e) => toast.error((e as Error).message),
   });
+  const invites = useQuery({
+    queryKey: ["category-player-invites", teamId], enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase.from("team_invitations").select("player_id, token")
+        .eq("team_id", teamId).eq("status", "pending").gt("expires_at", new Date().toISOString()).not("player_id", "is", null);
+      return new Map((data ?? []).map((r) => [r.player_id as string, r.token as string]));
+    },
+  });
+  const invitePlayer = useMutation({
+    mutationFn: async (playerId: string) => {
+      let token = invites.data?.get(playerId);
+      if (!token) {
+        const { data: auth } = await supabase.auth.getUser();
+        const { data, error } = await supabase.from("team_invitations")
+          .insert({ team_id: teamId, created_by: auth.user!.id, player_id: playerId, multi_use: false })
+          .select("token").single();
+        if (error) throw error;
+        token = data.token;
+      }
+      const url = `${publicAppOrigin()}/join/${token}`;
+      try { await navigator.clipboard.writeText(url); } catch { prompt("Copiá el enlace:", url); }
+    },
+    onSuccess: () => { toast.success("Enlace de invitación copiado"); qc.invalidateQueries({ queryKey: ["category-player-invites", teamId] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  const accountStatus = (id: string) =>
+    roster.data?.get(id) ? "🟢 Cuenta vinculada" : invites.data?.has(id) ? "🔵 Invitación enviada" : "🟡 Sin cuenta";
   const unlinkedPlayers = players.filter((p) => roster.data && !roster.data.get(p.id));
 
   const pending = (members.data ?? []).filter((m) => m.status === "pending");
@@ -141,10 +169,15 @@ export function CategoryManageDialog({ teamId, teamName, players, open, onOpenCh
             const mem = memberFor(p);
             return (
               <div key={p.id} className="rounded-lg border border-border p-3 flex items-center justify-between">
-                <Person photo={p.photoUrl} name={p.name} sub={[`#${p.number}`, p.position ? POS[p.position] : null, roster.data?.get(p.id) ? "Con cuenta" : null].filter(Boolean).join(" · ")} />
+                <Person photo={p.photoUrl} name={p.name} sub={[`#${p.number}`, p.position ? POS[p.position] : null, roster.data ? accountStatus(p.id) : null].filter(Boolean).join(" · ")} />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Opciones"><MoreVertical className="size-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {roster.data && !roster.data.get(p.id) && (
+                      <DropdownMenuItem onClick={() => invitePlayer.mutate(p.id)}>
+                        {invites.data?.has(p.id) ? "Copiar invitación" : "Invitar jugadora"}
+                      </DropdownMenuItem>
+                    )}
                     {roster.data?.get(p.id) && (
                       <DropdownMenuItem onClick={() => { if (confirm(`¿Desvincular la cuenta de ${p.name}? Sus partidos quedan en el plantel.`)) unlink.mutate(p.id); }}>Desvincular cuenta</DropdownMenuItem>
                     )}
