@@ -25,11 +25,11 @@ export function TeamRegistrationLinkDialog({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("player_registration_links")
-        .select("token, active, updated_at")
+        .select("token, short_code, active, updated_at")
         .eq("team_id", teamId)
         .maybeSingle();
       if (error) throw error;
-      return data ? { token: data.token, active: data.active, updatedAt: data.updated_at } : null;
+      return data ? { token: data.token, shortCode: data.short_code, active: data.active, updatedAt: data.updated_at } : null;
     },
     enabled: open,
   });
@@ -38,9 +38,11 @@ export function TeamRegistrationLinkDialog({
     mutationFn: async () => {
       const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError || !authData.user) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
+      const shortCode = crypto.randomUUID().replaceAll("-", "").slice(0, 8);
       const { error } = await supabase.from("player_registration_links").upsert({
         team_id: teamId,
         token: crypto.randomUUID(),
+        short_code: shortCode,
         active: true,
         created_by: authData.user.id,
       }, { onConflict: "team_id" });
@@ -59,9 +61,9 @@ export function TeamRegistrationLinkDialog({
     onSuccess: refresh,
   });
   const url = useMemo(() => {
-    if (!query.data?.token || typeof window === "undefined") return "";
-    return `${window.location.origin}/registro-jugador/${query.data.token}`;
-  }, [query.data?.token]);
+    if (!query.data?.shortCode || typeof window === "undefined") return "";
+    return `${window.location.origin}/sumate/${query.data.shortCode}`;
+  }, [query.data?.shortCode]);
 
   useEffect(() => {
     if (!open) setCopied(false);
@@ -81,7 +83,7 @@ export function TeamRegistrationLinkDialog({
           <DialogTitle className="flex items-center gap-2"><Link2 className="size-5 text-primary" /> Inscripción de jugadores</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div><p className="font-semibold">{teamName}</p><p className="text-sm text-muted-foreground">Compartí este enlace para que los jugadores se sumen directamente al plantel.</p></div>
+          <div><p className="font-semibold">{teamName}</p><p className="text-sm text-muted-foreground">Compartí este enlace para que los jugadores se sumen directamente al plantel, sin registrarse ni iniciar sesión.</p></div>
           {query.isLoading ? (
             <div className="h-24 flex items-center justify-center"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
           ) : query.data ? (

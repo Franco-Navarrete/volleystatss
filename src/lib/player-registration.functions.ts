@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
 const uuidSchema = z.string().uuid();
+const registrationCodeSchema = z.string().trim().min(8).max(36);
 const positionSchema = z.enum(["punta", "central", "opuesto", "armador", "libero", "universal"]);
 
 function createPublicClient() {
@@ -25,10 +26,10 @@ function createPublicClient() {
 }
 
 export const getPublicRegistrationTeam = createServerFn({ method: "GET" })
-  .inputValidator((input: { token: string }) => z.object({ token: uuidSchema }).parse(input))
+  .inputValidator((input: { code: string }) => z.object({ code: registrationCodeSchema }).parse(input))
   .handler(async ({ data }) => {
     const { data: rows, error } = await createPublicClient().rpc("get_player_registration_team", {
-      _token: data.token,
+      _code: data.code,
     });
     if (error) throw new Error("No se pudo verificar el enlace.");
     const team = rows?.[0];
@@ -45,13 +46,13 @@ export const getPublicRegistrationTeam = createServerFn({ method: "GET" })
 
 export const submitPublicPlayerRegistration = createServerFn({ method: "POST" })
   .inputValidator((input: {
-    token: string;
+    code: string;
     name: string;
     number: number;
     position: string;
     birthDate: string;
   }) => z.object({
-    token: uuidSchema,
+    code: registrationCodeSchema,
     name: z.string().trim().min(2).max(80),
     number: z.number().int().min(0).max(99),
     position: positionSchema,
@@ -59,7 +60,7 @@ export const submitPublicPlayerRegistration = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data }) => {
     const { data: playerId, error } = await createPublicClient().rpc("submit_player_registration", {
-      _token: data.token,
+      _code: data.code,
       _name: data.name,
       _number: data.number,
       _position: data.position,
@@ -84,11 +85,11 @@ export const getTeamRegistrationLink = createServerFn({ method: "GET" })
     if (permissionError || !allowed) throw new Error("No tenés permisos para administrar este equipo.");
     const { data: link, error } = await context.supabase
       .from("player_registration_links")
-      .select("token, active, updated_at")
+      .select("token, short_code, active, updated_at")
       .eq("team_id", data.teamId)
       .maybeSingle();
     if (error) throw error;
-    return link ? { token: link.token, active: link.active, updatedAt: link.updated_at } : null;
+    return link ? { token: link.token, shortCode: link.short_code, active: link.active, updatedAt: link.updated_at } : null;
   });
 
 export const createOrRenewTeamRegistrationLink = createServerFn({ method: "POST" })
@@ -101,14 +102,16 @@ export const createOrRenewTeamRegistrationLink = createServerFn({ method: "POST"
     });
     if (!allowed) throw new Error("No tenés permisos para administrar este equipo.");
     const token = crypto.randomUUID();
+    const shortCode = crypto.randomUUID().replaceAll("-", "").slice(0, 8);
     const { error } = await context.supabase.from("player_registration_links").upsert({
       team_id: data.teamId,
       token,
+      short_code: shortCode,
       active: true,
       created_by: context.userId,
     }, { onConflict: "team_id" });
     if (error) throw error;
-    return { token, active: true };
+    return { token, shortCode, active: true };
   });
 
 export const setTeamRegistrationLinkActive = createServerFn({ method: "POST" })
