@@ -255,7 +255,7 @@ function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string;
   const [manage, setManage] = useState(false);
   const [invite, setInvite] = useState(false);
   const s = search.trim().toLowerCase();
-  const shown = players.filter((p) => !s || p.name.toLowerCase().includes(s) || String(p.number) === s);
+  const shown = players.filter((p: any) => !s || p.name.toLowerCase().includes(s) || String(p.number) === s);
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -275,7 +275,7 @@ function CategoryDetail({ cat, clubName, onBack }: { cat: Cat; clubName: string;
       </div>
       {isLoading && <Loader2 className="size-5 animate-spin mx-auto text-muted-foreground" />}
       <div className="divide-y divide-border rounded-xl border border-border bg-card">
-        {shown.map((p) => (
+        {shown.map((p: any) => (
           <div key={p.id} className="flex items-center gap-3 p-3">
             {p.photoUrl ? <img src={p.photoUrl} alt="" className="size-10 rounded-full object-cover" /> : <div className="size-10 rounded-full bg-secondary flex items-center justify-center text-sm font-bold">{p.name[0]?.toUpperCase()}</div>}
             <div className="min-w-0 flex-1">
