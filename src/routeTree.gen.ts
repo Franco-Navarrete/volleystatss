@@ -33,6 +33,7 @@ import { Route as LigasIndexRouteImport } from './routes/ligas.index'
 import { Route as LigasIdRouteImport } from './routes/ligas.$id'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as PartidosIdRouteImport } from './routes/partidos.$id'
+import { Route as PlayerAliasRouteImport } from './routes/player.$alias'
 import { Route as RegistroJugadorTokenRouteImport } from './routes/registro-jugador.$token'
 import { Route as SumateCodeRouteImport } from './routes/sumate.$code'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
@@ -170,6 +171,11 @@ const PartidosIdRoute = PartidosIdRouteImport.update({
   path: '/partidos/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayerAliasRoute = PlayerAliasRouteImport.update({
+  id: '/player/$alias',
+  path: '/player/$alias',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegistroJugadorTokenRoute = RegistroJugadorTokenRouteImport.update({
   id: '/registro-jugador/$token',
   path: '/registro-jugador/$token',
@@ -276,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
   '/partidos/$id': typeof PartidosIdRoute
+  '/player/$alias': typeof PlayerAliasRoute
   '/registro-jugador/$token': typeof RegistroJugadorTokenRoute
   '/sumate/$code': typeof SumateCodeRoute
   '/equipos/': typeof EquiposIndexRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
   '/partidos/$id': typeof PartidosIdRoute
+  '/player/$alias': typeof PlayerAliasRoute
   '/registro-jugador/$token': typeof RegistroJugadorTokenRoute
   '/sumate/$code': typeof SumateCodeRoute
   '/equipos': typeof EquiposIndexRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
   '/partidos/$id': typeof PartidosIdRoute
+  '/player/$alias': typeof PlayerAliasRoute
   '/registro-jugador/$token': typeof RegistroJugadorTokenRoute
   '/sumate/$code': typeof SumateCodeRoute
   '/equipos/': typeof EquiposIndexRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/ligas/$id'
     | '/m/$slug'
     | '/partidos/$id'
+    | '/player/$alias'
     | '/registro-jugador/$token'
     | '/sumate/$code'
     | '/equipos/'
@@ -434,6 +444,7 @@ export interface FileRouteTypes {
     | '/ligas/$id'
     | '/m/$slug'
     | '/partidos/$id'
+    | '/player/$alias'
     | '/registro-jugador/$token'
     | '/sumate/$code'
     | '/equipos'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/ligas/$id'
     | '/m/$slug'
     | '/partidos/$id'
+    | '/player/$alias'
     | '/registro-jugador/$token'
     | '/sumate/$code'
     | '/equipos/'
@@ -502,6 +514,7 @@ export interface RootRouteChildren {
   JugadoraIdRoute: typeof JugadoraIdRoute
   MSlugRoute: typeof MSlugRoute
   PartidosIdRoute: typeof PartidosIdRoute
+  PlayerAliasRoute: typeof PlayerAliasRoute
   RegistroJugadorTokenRoute: typeof RegistroJugadorTokenRoute
   SumateCodeRoute: typeof SumateCodeRoute
 }
@@ -674,6 +687,13 @@ declare module '@tanstack/react-router' {
       path: '/partidos/$id'
       fullPath: '/partidos/$id'
       preLoaderRoute: typeof PartidosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/player/$alias': {
+      id: '/player/$alias'
+      path: '/player/$alias'
+      fullPath: '/player/$alias'
+      preLoaderRoute: typeof PlayerAliasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/registro-jugador/$token': {
@@ -901,6 +921,7 @@ const rootRouteChildren: RootRouteChildren = {
   JugadoraIdRoute: JugadoraIdRoute,
   MSlugRoute: MSlugRoute,
   PartidosIdRoute: PartidosIdRoute,
+  PlayerAliasRoute: PlayerAliasRoute,
   RegistroJugadorTokenRoute: RegistroJugadorTokenRoute,
   SumateCodeRoute: SumateCodeRoute,
 }
