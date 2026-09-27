@@ -83,7 +83,7 @@ export const listTeams = createServerFn({ method: "GET" })
       teamsQuery.order("created_at", { ascending: true }),
       supabase
         .from("players")
-        .select("id, team_id, name, number, position, photo_url, created_at")
+        .select("id, team_id, name, number, position, photo_url, birth_date, created_at")
         .order("number", { ascending: true }),
       supabase.from("clubs").select("id, name, logo_url"),
     ]);
@@ -138,6 +138,7 @@ export const listTeams = createServerFn({ method: "GET" })
           number: p.number,
           position: p.position ?? undefined,
           photoUrl: p.photo_url ?? undefined,
+           birthDate: p.birth_date ?? undefined,
         })),
       };
     });

@@ -1830,6 +1830,7 @@ function TeamsPage() {
                           {p.position
                             ? PLAYER_POSITION_LABEL[p.position as PlayerPosition]
                             : "Asignar posición"}
+                          {p.birthDate ? ` · ${new Date(`${p.birthDate}T12:00:00`).toLocaleDateString("es-AR")}` : ""}
                         </div>
                       </button>
                     </>
