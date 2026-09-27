@@ -46,9 +46,16 @@ function JoinPage() {
 
   const [state, setState] = useState<"idle" | "busy" | "joined" | "already">("idle");
   const [err, setErr] = useState<string | null>(null);
-  const accept = async () => {
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [position, setPosition] = useState("");
+  const [birth, setBirth] = useState("");
+  const accept = async (e: React.FormEvent) => {
+    e.preventDefault();
     setState("busy"); setErr(null);
-    const { data, error } = await supabase.rpc("accept_team_invitation", { _token: code });
+    const { data, error } = await supabase.rpc("join_team_as_player", {
+      _token: code, _name: name, _number: Number(number), _position: position, _birth_date: birth,
+    });
     if (error) { setErr(error.message); setState("idle"); return; }
     setState(data === "already_member" ? "already" : "joined");
   };
@@ -59,19 +66,31 @@ function JoinPage() {
   let body: React.ReactNode;
   if (!ready || invite.isLoading) body = <Loader2 className="size-6 animate-spin mx-auto text-muted-foreground" />;
   else if (state === "joined") body = <Msg ok title="¡Listo! Ya sos parte del equipo." action />;
-  else if (state === "already" || (inv && inv.already_member)) body = <Msg ok title="Ya pertenecés a este equipo." action />;
+  else if (state === "already" || (inv && inv.has_player)) body = <Msg ok title="Ya pertenecés a este equipo." action />;
   else if (!inv || !inv.valid) body = <Msg title="Esta invitación ya no es válida." />;
   else if (!session) body = <><TeamCard inv={inv} sub={sub} /><AuthForm /></>;
   else body = (
-    <>
+    <form onSubmit={accept} className="space-y-4">
       <TeamCard inv={inv} sub={sub} />
       <p className="text-xs text-center text-muted-foreground">Sesión iniciada como {session.user.email}</p>
+      <div className="space-y-1"><Label>Nombre y apellido</Label><Input required minLength={2} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label>N° camiseta</Label><Input required type="number" min={0} max={99} value={number} onChange={(e) => setNumber(e.target.value)} /></div>
+        <div className="space-y-1"><Label>Nacimiento</Label><Input required type="date" value={birth} onChange={(e) => setBirth(e.target.value)} /></div>
+      </div>
+      <div className="space-y-1">
+        <Label>Posición</Label>
+        <select required value={position} onChange={(e) => setPosition(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+          <option value="" disabled>Elegí tu posición</option>
+          {[["punta","Punta"],["central","Central"],["opuesto","Opuesto"],["armador","Armador"],["libero","Líbero"],["universal","Universal"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+      </div>
       {err && <p className="text-sm text-destructive text-center">{err}</p>}
-      <Button className="w-full" onClick={accept} disabled={state === "busy"}>
+      <Button type="submit" className="w-full" disabled={state === "busy"}>
         {state === "busy" && <Loader2 className="size-4 animate-spin" />} Aceptar invitación
       </Button>
-      <button className="text-xs text-muted-foreground underline w-full" onClick={() => supabase.auth.signOut()}>Usar otra cuenta</button>
-    </>
+      <button type="button" className="text-xs text-muted-foreground underline w-full" onClick={() => supabase.auth.signOut()}>Usar otra cuenta</button>
+    </form>
   );
 
   return (
