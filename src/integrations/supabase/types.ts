@@ -600,6 +600,7 @@ export type Database = {
           position: string | null
           team_id: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           birth_date?: string | null
@@ -611,6 +612,7 @@ export type Database = {
           position?: string | null
           team_id: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           birth_date?: string | null
@@ -622,6 +624,7 @@ export type Database = {
           position?: string | null
           team_id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -971,6 +974,7 @@ export type Database = {
         Args: { _token: string }
         Returns: {
           already_member: boolean
+          has_player: boolean
           team_category: string
           team_color: string
           team_gender: string
@@ -990,6 +994,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      join_team_as_player: {
+        Args: {
+          _birth_date: string
+          _name: string
+          _number: number
+          _position: string
+          _token: string
+        }
+        Returns: string
       }
       submit_player_registration:
         | {
