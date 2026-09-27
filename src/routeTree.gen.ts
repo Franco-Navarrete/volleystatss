@@ -26,6 +26,7 @@ import { Route as AuthenticatedStatsCombinadasRouteImport } from './routes/_auth
 import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
 import { Route as EquiposIndexRouteImport } from './routes/equipos.index'
 import { Route as EquiposIdRouteImport } from './routes/equipos.$id'
+import { Route as JoinCodeRouteImport } from './routes/join.$code'
 import { Route as JugadoraIdRouteImport } from './routes/jugadora.$id'
 import { Route as LigasIndexRouteImport } from './routes/ligas.index'
 import { Route as LigasIdRouteImport } from './routes/ligas.$id'
@@ -132,6 +133,11 @@ const EquiposIdRoute = EquiposIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => EquiposRoute,
+} as any)
+const JoinCodeRoute = JoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const JugadoraIdRoute = JugadoraIdRouteImport.update({
   id: '/jugadora/$id',
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
   '/teams': typeof AuthenticatedTeamsRoute
   '/equipos/$id': typeof EquiposIdRoute
+  '/join/$code': typeof JoinCodeRoute
   '/jugadora/$id': typeof JugadoraIdRoute
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
   '/teams': typeof AuthenticatedTeamsRoute
   '/equipos/$id': typeof EquiposIdRoute
+  '/join/$code': typeof JoinCodeRoute
   '/jugadora/$id': typeof JugadoraIdRoute
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/_authenticated/stats-combinadas': typeof AuthenticatedStatsCombinadasRoute
   '/_authenticated/teams': typeof AuthenticatedTeamsRoute
   '/equipos/$id': typeof EquiposIdRoute
+  '/join/$code': typeof JoinCodeRoute
   '/jugadora/$id': typeof JugadoraIdRoute
   '/ligas/$id': typeof LigasIdRoute
   '/m/$slug': typeof MSlugRoute
@@ -372,6 +381,7 @@ export interface FileRouteTypes {
     | '/stats-combinadas'
     | '/teams'
     | '/equipos/$id'
+    | '/join/$code'
     | '/jugadora/$id'
     | '/ligas/$id'
     | '/m/$slug'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/stats-combinadas'
     | '/teams'
     | '/equipos/$id'
+    | '/join/$code'
     | '/jugadora/$id'
     | '/ligas/$id'
     | '/m/$slug'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/_authenticated/stats-combinadas'
     | '/_authenticated/teams'
     | '/equipos/$id'
+    | '/join/$code'
     | '/jugadora/$id'
     | '/ligas/$id'
     | '/m/$slug'
@@ -474,6 +486,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   EquiposRoute: typeof EquiposRouteWithChildren
   LigasRoute: typeof LigasRouteWithChildren
+  JoinCodeRoute: typeof JoinCodeRoute
   JugadoraIdRoute: typeof JugadoraIdRoute
   MSlugRoute: typeof MSlugRoute
   PartidosIdRoute: typeof PartidosIdRoute
@@ -601,6 +614,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/equipos/$id'
       preLoaderRoute: typeof EquiposIdRouteImport
       parentRoute: typeof EquiposRoute
+    }
+    '/join/$code': {
+      id: '/join/$code'
+      path: '/join/$code'
+      fullPath: '/join/$code'
+      preLoaderRoute: typeof JoinCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/jugadora/$id': {
       id: '/jugadora/$id'
@@ -856,6 +876,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   EquiposRoute: EquiposRouteWithChildren,
   LigasRoute: LigasRouteWithChildren,
+  JoinCodeRoute: JoinCodeRoute,
   JugadoraIdRoute: JugadoraIdRoute,
   MSlugRoute: MSlugRoute,
   PartidosIdRoute: PartidosIdRoute,
