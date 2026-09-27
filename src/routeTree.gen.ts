@@ -18,6 +18,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAwardsRouteImport } from './routes/_authenticated/awards'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
+import { Route as AuthenticatedJugadoraRouteImport } from './routes/_authenticated/jugadora'
 import { Route as AuthenticatedLeaguesRouteImport } from './routes/_authenticated/leagues'
 import { Route as AuthenticatedMyClubRouteImport } from './routes/_authenticated/my-club'
 import { Route as AuthenticatedRankingsRouteImport } from './routes/_authenticated/rankings'
@@ -93,6 +94,11 @@ const AuthenticatedIntelligenceRoute =
     path: '/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedJugadoraRoute = AuthenticatedJugadoraRouteImport.update({
+  id: '/jugadora',
+  path: '/jugadora',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLeaguesRoute = AuthenticatedLeaguesRouteImport.update({
   id: '/leagues',
   path: '/leagues',
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/awards': typeof AuthenticatedAwardsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/intelligence': typeof AuthenticatedIntelligenceRoute
+  '/jugadora': typeof AuthenticatedJugadoraRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
   '/my-club': typeof AuthenticatedMyClubRoute
   '/rankings': typeof AuthenticatedRankingsRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/awards': typeof AuthenticatedAwardsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/intelligence': typeof AuthenticatedIntelligenceRoute
+  '/jugadora': typeof AuthenticatedJugadoraRoute
   '/leagues': typeof AuthenticatedLeaguesRoute
   '/my-club': typeof AuthenticatedMyClubRoute
   '/rankings': typeof AuthenticatedRankingsRoute
@@ -333,6 +341,7 @@ export interface FileRoutesById {
   '/_authenticated/awards': typeof AuthenticatedAwardsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
+  '/_authenticated/jugadora': typeof AuthenticatedJugadoraRoute
   '/_authenticated/leagues': typeof AuthenticatedLeaguesRoute
   '/_authenticated/my-club': typeof AuthenticatedMyClubRoute
   '/_authenticated/rankings': typeof AuthenticatedRankingsRoute
@@ -374,6 +383,7 @@ export interface FileRouteTypes {
     | '/awards'
     | '/dashboard'
     | '/intelligence'
+    | '/jugadora'
     | '/leagues'
     | '/my-club'
     | '/rankings'
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/awards'
     | '/dashboard'
     | '/intelligence'
+    | '/jugadora'
     | '/leagues'
     | '/my-club'
     | '/rankings'
@@ -449,6 +460,7 @@ export interface FileRouteTypes {
     | '/_authenticated/awards'
     | '/_authenticated/dashboard'
     | '/_authenticated/intelligence'
+    | '/_authenticated/jugadora'
     | '/_authenticated/leagues'
     | '/_authenticated/my-club'
     | '/_authenticated/rankings'
@@ -557,6 +569,13 @@ declare module '@tanstack/react-router' {
       path: '/intelligence'
       fullPath: '/intelligence'
       preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/jugadora': {
+      id: '/_authenticated/jugadora'
+      path: '/jugadora'
+      fullPath: '/jugadora'
+      preLoaderRoute: typeof AuthenticatedJugadoraRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leagues': {
@@ -807,6 +826,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAwardsRoute: typeof AuthenticatedAwardsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
+  AuthenticatedJugadoraRoute: typeof AuthenticatedJugadoraRoute
   AuthenticatedLeaguesRoute: typeof AuthenticatedLeaguesRoute
   AuthenticatedMyClubRoute: typeof AuthenticatedMyClubRoute
   AuthenticatedRankingsRoute: typeof AuthenticatedRankingsRoute
@@ -827,6 +847,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAwardsRoute: AuthenticatedAwardsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
+  AuthenticatedJugadoraRoute: AuthenticatedJugadoraRoute,
   AuthenticatedLeaguesRoute: AuthenticatedLeaguesRoute,
   AuthenticatedMyClubRoute: AuthenticatedMyClubRoute,
   AuthenticatedRankingsRoute: AuthenticatedRankingsRoute,

@@ -1013,6 +1013,22 @@ export type Database = {
         Returns: boolean
       }
       can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
+      get_my_app_role: { Args: never; Returns: string }
+      get_my_memberships: {
+        Args: never
+        Returns: {
+          club_name: string
+          member_id: string
+          number: number
+          position: string
+          status: string
+          team_category: string
+          team_gender: string
+          team_id: string
+          team_logo_url: string
+          team_name: string
+        }[]
+      }
       get_player_registration_team:
         | {
             Args: { _code: string }
