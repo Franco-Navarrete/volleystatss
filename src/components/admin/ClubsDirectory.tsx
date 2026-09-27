@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ChevronRight, Link2, Loader2, Search, Settings2, UserMinus, Users, Volleyball } from "lucide-react";
+import { ArrowLeft, ChevronRight, Link2, Loader2, Search, Settings2, Trash2, UserMinus, Users, Volleyball } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamRegistrationLinkDialog } from "@/components/TeamRegistrationLinkDialog";
 import { CategoryManageDialog } from "@/components/CategoryManageDialog";
-import { adminGetClub, adminListCategoryPlayers, adminListClubs, adminListClubUsers, adminRemoveFromClub } from "@/lib/admin-clubs.functions";
+import { adminDeletePlayer, adminDeleteUser, adminGetClub, adminListCategoryPlayers, adminListClubs, adminListClubUsers, adminRemoveFromClub } from "@/lib/admin-clubs.functions";
 
 export function useDebounced<T>(value: T, ms = 300) {
   const [v, setV] = useState(value);
