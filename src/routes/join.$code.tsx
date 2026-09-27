@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Camera, CheckCircle2, Image as ImageIcon, Loader2, User, Volleyball, XCircle } from "lucide-react";
 import { compressPhoto } from "@/lib/image-compress";
+import { clearAppRoleCache } from "@/lib/app-role";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,7 @@ function JoinPage() {
       _photo: (photo?.startsWith("data:") ? photo : null) as unknown as string,
     });
     if (error) { setErr(error.message); setState("idle"); return; }
+    clearAppRoleCache();
     setState(data === "already_member" ? "already" : "sent");
   };
 
@@ -82,7 +84,7 @@ function JoinPage() {
   if (!ready || invite.isLoading) body = <Loader2 className="size-6 animate-spin mx-auto text-muted-foreground" />;
   else if (!inv || inv.invite_state === "revoked") body = <Msg title="Esta invitación ya no es válida." />;
   else if (state === "already" || inv.member_status === "active") body = <Msg ok title="Ya pertenecés a este equipo." action />;
-  else if (state === "sent" || inv.member_status === "pending") body = <Msg ok title="Solicitud enviada" text="Tu entrenador/a tiene que aprobarla. Cuando lo haga vas a aparecer en el plantel." action />;
+  else if (state === "sent" || inv.member_status === "pending") body = <Msg ok title={`¡Bienvenida${first ? `, ${first}` : ""}! 👋`} text={`Tu solicitud para unirte a ${inv.club_name ? inv.club_name + " · " : ""}${sub || inv.team_name} fue enviada a tu entrenador/a y está pendiente de aprobación.`} action />;
   else if (inv.invite_state === "expired") body = <Msg title="Esta invitación ha expirado." />;
   else if (!session) body = <><TeamCard inv={inv} sub={sub} /><AuthForm /></>;
   else body = (
@@ -102,7 +104,7 @@ function JoinPage() {
             <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => onPhoto(e.target.files?.[0])} />
           </label>
         </div>
-        <p className="text-[11px] text-muted-foreground">La foto es opcional</p>
+        <p className="text-[11px] text-muted-foreground">Foto de perfil (opcional) · podés continuar sin foto</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1"><Label>Nombre *</Label><Input required maxLength={60} value={first} onChange={(e) => setFirst(e.target.value)} autoComplete="given-name" /></div>
@@ -120,7 +122,7 @@ function JoinPage() {
       </div>
       {err && <p className="text-sm text-destructive text-center">{err}</p>}
       <Button type="submit" className="w-full" disabled={state === "busy"}>
-        {state === "busy" && <Loader2 className="size-4 animate-spin" />} Enviar solicitud
+        {state === "busy" && <Loader2 className="size-4 animate-spin" />} {photo ? "Unirme" : "Continuar sin foto y unirme"}
       </Button>
       <button type="button" className="text-xs text-muted-foreground underline w-full" onClick={() => supabase.auth.signOut()}>Usar otra cuenta</button>
     </form>
@@ -159,7 +161,7 @@ function Msg({ title, text, ok, action }: { title: string; text?: string; ok?: b
       {ok ? <CheckCircle2 className="size-10 mx-auto text-success" /> : <XCircle className="size-10 mx-auto text-destructive" />}
       <p className="font-semibold">{title}</p>
       {text && <p className="text-sm text-muted-foreground">{text}</p>}
-      {action && <Button asChild className="w-full"><Link to="/dashboard">Ir a la app</Link></Button>}
+      {action && <Button asChild className="w-full"><Link to="/jugadora">Continuar</Link></Button>}
     </div>
   );
 }
