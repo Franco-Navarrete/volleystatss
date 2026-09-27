@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, MoreVertical, User, X } from "lucide-react";
+import { useState } from "react";
+import { Check, Link2, Loader2, MoreVertical, User, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,32 @@ export function CategoryManageDialog({ teamId, teamName, players, open, onOpenCh
     onError: () => toast.error("No se pudo quitar (puede tener partidos registrados)."),
   });
 
+  const roster = useQuery({
+    queryKey: ["category-roster-links", teamId], enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase.from("players").select("id, user_id").eq("team_id", teamId);
+      return new Map((data ?? []).map((r) => [r.id, r.user_id as string | null]));
+    },
+  });
+  const [linkFor, setLinkFor] = useState<Record<string, string>>({});
+  const link = useMutation({
+    mutationFn: async ({ id, playerId }: { id: string; playerId: string }) => {
+      const { error } = await supabase.rpc("review_team_membership_link", { _member_id: id, _player_id: playerId });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Cuenta vinculada: conserva sus partidos anteriores"); refresh(); qc.invalidateQueries({ queryKey: ["category-roster-links", teamId] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  const unlink = useMutation({
+    mutationFn: async (playerId: string) => {
+      const { error } = await supabase.rpc("unlink_player_account", { _player_id: playerId });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Cuenta desvinculada"); refresh(); qc.invalidateQueries({ queryKey: ["category-roster-links", teamId] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  const unlinkedPlayers = players.filter((p) => roster.data && !roster.data.get(p.id));
+
   const pending = (members.data ?? []).filter((m) => m.status === "pending");
   const memberByPlayerUser = new Map((members.data ?? []).filter((m) => m.status === "active").map((m) => [m.user_id, m.id]));
   // players no tiene user_id en el store: buscamos membresía por nombre+número como vínculo visual
@@ -94,6 +121,16 @@ export function CategoryManageDialog({ teamId, teamName, players, open, onOpenCh
                 <Button size="sm" disabled={review.isPending} onClick={() => review.mutate({ id: m.id, approve: true })}><Check className="size-4" /> Aceptar</Button>
                 <Button size="sm" variant="outline" disabled={review.isPending} onClick={() => review.mutate({ id: m.id, approve: false })}><X className="size-4" /> Rechazar</Button>
               </div>
+              {unlinkedPlayers.length > 0 && (
+                <div className="flex gap-2">
+                  <select className="h-9 flex-1 min-w-0 rounded-md border border-input bg-background px-2 text-sm" value={linkFor[m.id] ?? ""}
+                    onChange={(e) => setLinkFor((s) => ({ ...s, [m.id]: e.target.value }))}>
+                    <option value="">¿Ya estaba en el plantel? Elegila…</option>
+                    {unlinkedPlayers.map((p) => <option key={p.id} value={p.id}>#{p.number} {p.name}</option>)}
+                  </select>
+                  <Button size="sm" variant="secondary" disabled={!linkFor[m.id] || link.isPending} onClick={() => link.mutate({ id: m.id, playerId: linkFor[m.id] })}><Link2 className="size-4" /> Vincular</Button>
+                </div>
+              )}
             </div>
           ))}
         </section>
@@ -104,10 +141,13 @@ export function CategoryManageDialog({ teamId, teamName, players, open, onOpenCh
             const mem = memberFor(p);
             return (
               <div key={p.id} className="rounded-lg border border-border p-3 flex items-center justify-between">
-                <Person photo={p.photoUrl} name={p.name} sub={[`#${p.number}`, p.position ? POS[p.position] : null].filter(Boolean).join(" · ")} />
+                <Person photo={p.photoUrl} name={p.name} sub={[`#${p.number}`, p.position ? POS[p.position] : null, roster.data?.get(p.id) ? "Con cuenta" : null].filter(Boolean).join(" · ")} />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Opciones"><MoreVertical className="size-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {roster.data?.get(p.id) && (
+                      <DropdownMenuItem onClick={() => { if (confirm(`¿Desvincular la cuenta de ${p.name}? Sus partidos quedan en el plantel.`)) unlink.mutate(p.id); }}>Desvincular cuenta</DropdownMenuItem>
+                    )}
                     <DropdownMenuItem className="text-destructive" onClick={() => {
                       if (!confirm(`¿Quitar a ${p.name} de ${teamName}? Su cuenta no se elimina.`)) return;
                       if (mem) removeMember.mutate(mem.id); else removePlayer.mutate(p.id);
