@@ -80,7 +80,9 @@ export const adminListCategoryPlayers = createServerFn({ method: "POST" })
     const db = await admin();
     const { data: rows, error } = await db.from("players").select("id, name, number, position, photo_url, user_id").eq("team_id", data.teamId).order("number");
     if (error) throw new Error(error.message);
-    return (rows ?? []).map((p: any) => ({ id: p.id, name: p.name, number: p.number, position: p.position ?? undefined, photoUrl: p.photo_url ?? undefined, hasAccount: !!p.user_id }));
+    const { data: inv } = await db.from("team_invitations").select("player_id").eq("team_id", data.teamId).eq("status", "pending").gt("expires_at", new Date().toISOString()).not("player_id", "is", null);
+    const invited = new Set((inv ?? []).map((r: any) => r.player_id));
+    return (rows ?? []).map((p: any) => ({ id: p.id, name: p.name, number: p.number, position: p.position ?? undefined, photoUrl: p.photo_url ?? undefined, hasAccount: !!p.user_id, invited: !p.user_id && invited.has(p.id) }));
   });
 
 export const adminRemoveFromClub = createServerFn({ method: "POST" })
