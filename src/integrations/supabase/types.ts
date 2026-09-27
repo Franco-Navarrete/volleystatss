@@ -550,28 +550,52 @@ export type Database = {
       }
       player_profiles: {
         Row: {
+          alias: string | null
+          bio: string | null
+          birth_date: string | null
           created_at: string
+          dominant_hand: string | null
           first_name: string
+          height_cm: number | null
           last_name: string
           photo_url: string | null
+          show_club: boolean
+          show_stats: boolean
           updated_at: string
           user_id: string
+          visibility: string
         }
         Insert: {
+          alias?: string | null
+          bio?: string | null
+          birth_date?: string | null
           created_at?: string
+          dominant_hand?: string | null
           first_name: string
+          height_cm?: number | null
           last_name: string
           photo_url?: string | null
+          show_club?: boolean
+          show_stats?: boolean
           updated_at?: string
           user_id: string
+          visibility?: string
         }
         Update: {
+          alias?: string | null
+          bio?: string | null
+          birth_date?: string | null
           created_at?: string
+          dominant_hand?: string | null
           first_name?: string
+          height_cm?: number | null
           last_name?: string
           photo_url?: string | null
+          show_club?: boolean
+          show_stats?: boolean
           updated_at?: string
           user_id?: string
+          visibility?: string
         }
         Relationships: []
       }
@@ -1189,6 +1213,10 @@ export type Database = {
         Args: { _approve: boolean; _member_id: string }
         Returns: string
       }
+      review_team_membership_link: {
+        Args: { _member_id: string; _player_id: string }
+        Returns: string
+      }
       submit_player_registration:
         | {
             Args: {
@@ -1210,6 +1238,10 @@ export type Database = {
             }
             Returns: string
           }
+      unlink_player_account: {
+        Args: { _player_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
