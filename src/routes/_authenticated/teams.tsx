@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
@@ -1816,9 +1816,11 @@ function TeamsPage() {
                       <div className="size-9 rounded-md bg-background border border-border flex items-center justify-center font-bold scoreboard-digit text-primary shrink-0">
                         {p.number}
                       </div>
-                      <button
-                        onClick={() => canManageActive && setEditingPlayerId(p.id)}
-                        className="flex-1 min-w-0 text-left"
+                      <Link
+                        to="/players/$playerId"
+                        params={{ playerId: p.id }}
+                        className="flex-1 min-w-0 text-left hover:underline"
+                        title="Ver perfil"
                       >
                         <div className="truncate font-medium flex items-center gap-1">
                           {p.name}
@@ -1832,7 +1834,17 @@ function TeamsPage() {
                             : "Asignar posición"}
                           {p.birthDate ? ` · ${new Date(`${p.birthDate}T12:00:00`).toLocaleDateString("es-AR")}` : ""}
                         </div>
-                      </button>
+                      </Link>
+                      {canManageActive && (
+                        <button
+                          onClick={() => setEditingPlayerId(p.id)}
+                          className="text-muted-foreground hover:text-foreground"
+                          title="Editar jugadora"
+                          aria-label="Editar jugadora"
+                        >
+                          <Pencil className="size-4" />
+                        </button>
+                      )}
                     </>
                   )}
 
