@@ -35,7 +35,7 @@ import {
   ExternalLink,
   Ban,
   Trash2,
-  Copy
+  Copy,
   Volleyball,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
