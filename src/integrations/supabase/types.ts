@@ -38,6 +38,7 @@ export type Database = {
           country: string | null
           created_at: string
           id: string
+          intelligence_enabled: boolean
           logo_url: string | null
           name: string
           owner_id: string
@@ -51,6 +52,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           id?: string
+          intelligence_enabled?: boolean
           logo_url?: string | null
           name: string
           owner_id: string
@@ -64,6 +66,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           id?: string
+          intelligence_enabled?: boolean
           logo_url?: string | null
           name?: string
           owner_id?: string
