@@ -13,6 +13,8 @@ import { ArrowRight, CalendarDays, Plus, Trophy } from "lucide-react";
 import { useCanCreateMatches } from "@/hooks/use-permissions";
 import { useIsAdmin } from "@/hooks/use-auth";
 import { useCoachAccess } from "@/hooks/use-coach-access";
+import { useCloudTeams } from "@/hooks/use-cloud-teams";
+import { CoachPerformancePanel } from "@/components/coach/CoachPerformancePanel";
 import { GenderFilter, type GenderFilterValue } from "@/components/GenderFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -87,6 +89,13 @@ function LeaguePage() {
     });
   }, [matches, teams, isAdmin, isCoach, user, teamById]);
 
+  const cloudTeams = useCloudTeams();
+  const showCoachPanel = !isAdmin && isCoach;
+  const coachTeams = useMemo(() => {
+    const ids = new Set((cloudTeams.data ?? []).filter((t) => t.directlyManaged).map((t) => t.id));
+    return teams.filter((t) => ids.has(t.id) || (!!user?.id && t.ownerId === user.id));
+  }, [cloudTeams.data, teams, user?.id]);
+
   const finished = filteredMatches.filter((m) => m.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
   const upcoming = filteredMatches.filter((m) => m.status !== "finished").sort((a, b) => a.scheduledAt - b.scheduledAt);
 
@@ -124,6 +133,11 @@ function LeaguePage() {
         <LiveMatchesFeed />
       </div>
 
+      {showCoachPanel ? (
+        <div className="mt-8">
+          <CoachPerformancePanel teams={coachTeams} allTeams={teams} matches={matches} canCreate={canCreate} />
+        </div>
+      ) : (
       <div className="grid lg:grid-cols-3 gap-6 mt-8">
         {/* Standings */}
         <section className="lg:col-span-2 rounded-2xl bg-card border border-border/60 overflow-hidden">
@@ -263,6 +277,7 @@ function LeaguePage() {
           </section>
         </aside>
       </div>
+      )}
     </AppShell>
   );
 }
