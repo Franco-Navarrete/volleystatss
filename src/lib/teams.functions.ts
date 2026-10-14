@@ -194,6 +194,8 @@ export const createTeam = createServerFn({ method: "POST" })
       .from("clubs")
       .select("id, name")
       .eq("owner_id", context.userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     let clubId = myClub?.id ?? null;
     let clubText = myClub?.name ?? data.club ?? null;
@@ -231,7 +233,8 @@ export const createTeam = createServerFn({ method: "POST" })
       // Entrenador asignado: hereda el club de los equipos que dirige.
       const { data: coached } = await context.supabase
         .from("team_coaches")
-        .select("team_id");
+        .select("team_id")
+        .eq("user_id", context.userId);
       const coachedIds = (coached ?? []).map((r) => r.team_id as string);
       if (coachedIds.length) {
         const { data: cteam } = await context.supabase
@@ -246,6 +249,18 @@ export const createTeam = createServerFn({ method: "POST" })
           clubText = clubText ?? cteam.club ?? null;
         }
       }
+    }
+    // Evitar duplicados: mismo club + categoría + rama ya existente.
+    if (clubId && data.category) {
+      let dupQuery = context.supabase
+        .from("teams")
+        .select("id, name")
+        .eq("club_id", clubId)
+        .eq("category", data.category)
+        .limit(1);
+      dupQuery = data.gender ? dupQuery.eq("gender", data.gender) : dupQuery.is("gender", null);
+      const { data: dup } = await dupQuery.maybeSingle();
+      if (dup) throw new Error(`Ya existe la categoría "${dup.name}" en este club.`);
     }
     const { data: row, error } = await context.supabase
       .from("teams")
