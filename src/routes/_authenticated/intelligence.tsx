@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useCanCreateMatches } from "@/hooks/use-permissions";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
@@ -55,15 +56,20 @@ function IntelligencePage() {
     return new Set(access?.teamIds ?? []);
   }, [teams, user, isAdmin, access]);
 
+  const { allowed: canCreate } = useCanCreateMatches();
   const restricted = !adminChecking && !isAdmin;
   const hasNoTeam = restricted && access !== null && !access.enabled;
 
+  // Partidos autorizados (cualquier estado); se priorizan los finalizados.
   const finishedMatches = useMemo(() => {
     const base = matches
-      .filter((m) => m.status === "finished")
-      .sort((a, b) => b.scheduledAt - a.scheduledAt);
-    if (!restricted) return base;
-    return base.filter((m) => myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId));
+      .filter((m) => m.teamAId !== m.teamBId)
+      .filter((m) => !restricted || myTeamIds.has(m.teamAId) || myTeamIds.has(m.teamBId))
+      .sort((a, b) => {
+        const fa = a.status === "finished" ? 0 : 1, fb = b.status === "finished" ? 0 : 1;
+        return fa - fb || b.scheduledAt - a.scheduledAt;
+      });
+    return base;
   }, [matches, restricted, myTeamIds]);
 
   const [matchId, setMatchId] = useState<string>("");
@@ -104,10 +110,22 @@ function IntelligencePage() {
     else if (myTeamIds.has(match.teamBId)) setSide("B");
   }, [restricted, match, myTeamIds]);
 
+  // Estado D: qué datos faltan para un informe confiable.
+  const missing = useMemo(() => {
+    if (!match) return [] as string[];
+    const out: string[] = [];
+    const points = match.events.filter((e: any) => e.type === "point" || e.kind === "point" || "pointType" in e).length;
+    const scored = match.sets.reduce((n, s) => n + s.scoreA + s.scoreB, 0);
+    if (match.status !== "finished") out.push("El partido todavía no está finalizado.");
+    if (scored === 0) out.push("No hay resultados de sets cargados.");
+    if (match.events.length < 10 && points < 10) out.push("Hay muy pocas acciones registradas (puntos, ataques, saques) para sacar conclusiones.");
+    return out;
+  }, [match]);
+
   const analysis = useMemo(() => {
-    if (!match) return null;
+    if (!match || missing.length > 0) return null;
     return buildMatchAnalysis({ match, side, teams, players, history: matches });
-  }, [match, side, teams, players, matches]);
+  }, [match, side, teams, players, matches, missing]);
 
   const teamName = (id?: string) => (id ? teamById.get(id)?.name ?? "Equipo" : "—");
   const analyzedTeamId = match ? (side === "A" ? match.teamAId : match.teamBId) : undefined;
@@ -200,11 +218,14 @@ function IntelligencePage() {
         <Card className="p-4 space-y-4 bg-card/40">
           <h2 className="text-sm uppercase tracking-widest text-muted-foreground">Analizar partido</h2>
           {finishedMatches.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {restricted
-                ? "Todavía no tenés partidos finalizados con tu equipo."
-                : "Aún no tenés partidos finalizados. Finalizá al menos uno para analizarlo."}
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Todavía no tenés partidos registrados. Registrá un partido de tu equipo para habilitar el análisis.
+              </p>
+              {canCreate && (
+                <Button asChild size="sm"><Link to="/matches/new">Crear partido</Link></Button>
+              )}
+            </div>
           ) : (
             <div className="flex flex-col md:flex-row gap-3 md:items-end">
               <div className="flex-1 min-w-0">
@@ -215,6 +236,7 @@ function IntelligencePage() {
                     {finishedMatches.map((m) => (
                       <SelectItem key={m.id} value={m.id}>
                         {teamName(m.teamAId)} vs {teamName(m.teamBId)} — {new Date(m.scheduledAt).toLocaleDateString()}
+                        {m.status !== "finished" ? (m.status === "live" ? " (en vivo)" : " (programado)") : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -239,13 +261,24 @@ function IntelligencePage() {
                   </Select>
                 )}
               </div>
-              <Button onClick={handleGenerate} disabled={!match || generating} className="gap-2">
+              <Button onClick={handleGenerate} disabled={!match || !analysis || generating} className="gap-2">
                 {generating ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
                 Generar informe con IA
               </Button>
             </div>
           )}
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {match && missing.length > 0 && (
+            <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+              <p className="font-medium mb-1">Este partido todavía no tiene datos suficientes para un informe:</p>
+              <ul className="list-disc pl-5 text-muted-foreground space-y-0.5">
+                {missing.map((x) => <li key={x}>{x}</li>)}
+              </ul>
+              <p className="text-muted-foreground mt-2">
+                Datos disponibles: {match.sets.map((st) => `${st.scoreA}-${st.scoreB}`).join(" · ") || "sin sets"} · {match.events.length} acciones registradas.
+              </p>
+            </div>
+          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </Card>
         )}
 

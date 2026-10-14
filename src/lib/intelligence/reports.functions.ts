@@ -50,24 +50,16 @@ async function enabledTeamIds(
 ): Promise<string[]> {
   const [{ data: owned }, { data: coached }] = await Promise.all([
     supabase.from("teams").select("id, club_id").eq("owner_id", userId),
-    supabase.from("team_coaches").select("team_id"),
+    supabase.from("team_coaches").select("team_id").eq("user_id", userId),
   ]);
   const coachedIds = (coached ?? []).map((r) => r.team_id as string);
   let coachedTeams: Array<{ id: string; club_id: string | null }> = [];
   if (coachedIds.length) {
     const { data } = await supabase.from("teams").select("id, club_id").in("id", coachedIds);
-    coachedTeams = (data ?? []) as Array<{ id: string; club_id: string | null }>;
-  }
+    coachedTeams = (data ?? []) as Array<{ id: string; club_id:   // Rally Intelligence se habilita para todo equipo propio o asignado al entrenador.
   const all = [...((owned ?? []) as Array<{ id: string; club_id: string | null }>), ...coachedTeams];
-  const clubIds = [...new Set(all.map((t) => t.club_id).filter((c): c is string => !!c))];
-  if (!clubIds.length) return [];
-  const { data: clubs } = await supabase
-    .from("clubs")
-    .select("id")
-    .in("id", clubIds)
-    .eq("intelligence_enabled", true);
-  const ok = new Set((clubs ?? []).map((c) => c.id as string));
-  return all.filter((t) => t.club_id && ok.has(t.club_id)).map((t) => t.id);
+  return [...new Set(all.map((t) => t.id))];
+d)).map((t) => t.id);
 }
 
 async function assertCanAnalyzeTeam(
@@ -79,7 +71,7 @@ async function assertCanAnalyzeTeam(
   if (await isAdminUser(supabase, userId)) return;
   const allowed = await enabledTeamIds(supabase, userId);
   if (!allowed.includes(teamId)) {
-    throw new Error("Permisos insuficientes: Inteligencia no está habilitada para tu club o no es tu equipo.");
+    throw new Error("Permisos insuficientes: solo podés analizar equipos que tenés asignados.");
   }
 }
 
