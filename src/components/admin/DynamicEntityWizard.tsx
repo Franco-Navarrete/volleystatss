@@ -380,7 +380,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
             toast.success(`${orgWizardData.type} creado correctamente`);
           }
           
-          await queryClient.invalidateQueries({ queryKey: ["admin", "workspaces"] });
+          await queryClient.invalidateQueries({ queryKey: ["admin"] });
           onClose();
         } catch (error: any) {
           console.error("Error creating organization:", error);
