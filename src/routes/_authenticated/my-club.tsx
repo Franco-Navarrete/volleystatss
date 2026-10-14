@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCloudTeams, useTeamMutations, type CloudTeam } from "@/hooks/use-cloud-teams";
+import { useMyClub } from "@/hooks/use-my-club";
 import { TeamRegistrationLinkDialog } from "@/components/TeamRegistrationLinkDialog";
 import { CategoryManageDialog, useCategoryMembers } from "@/components/CategoryManageDialog";
 
@@ -32,8 +33,9 @@ const CATS = [["12", "Sub 12"], ["14", "Sub 14"], ["16", "Sub 16"], ["18", "Sub 
 
 function MyClubPage() {
   const teams = useCloudTeams();
-  const mine = (teams.data ?? []).filter((t) => t.managesDirectly);
-  const clubName = mine.find((t) => t.clubName)?.clubName ?? mine[0]?.club ?? "Mi club";
+  const myClub = useMyClub();
+  const mine = (teams.data ?? []).filter((t) => t.directlyManaged);
+  const clubName = myClub.data?.name ?? mine.find((t) => t.clubName)?.clubName ?? mine[0]?.name ?? "Mi club";
   const [creating, setCreating] = useState(false);
 
   return (

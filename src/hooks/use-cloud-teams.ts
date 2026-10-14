@@ -44,6 +44,8 @@ export type CloudTeam = {
   canManage?: boolean;
   /** Dueño o entrenador asignado (excluye el acceso global de admin). */
   managesDirectly?: boolean;
+  /** Solo equipos propios o asignados por team_coaches (sin expansión por club). */
+  directlyManaged?: boolean;
   players: CloudPlayer[];
 };
 
