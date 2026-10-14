@@ -252,14 +252,14 @@ export const createTeam = createServerFn({ method: "POST" })
     }
     // Evitar duplicados: mismo club + categoría + rama ya existente.
     if (clubId && data.category) {
-      const { data: dup } = await context.supabase
+      let dupQuery = context.supabase
         .from("teams")
         .select("id, name")
         .eq("club_id", clubId)
         .eq("category", data.category)
-        .eq("gender", data.gender ?? "")
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+      dupQuery = data.gender ? dupQuery.eq("gender", data.gender) : dupQuery.is("gender", null);
+      const { data: dup } = await dupQuery.maybeSingle();
       if (dup) throw new Error(`Ya existe la categoría "${dup.name}" en este club.`);
     }
     const { data: row, error } = await context.supabase
