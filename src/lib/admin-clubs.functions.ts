@@ -37,7 +37,7 @@ export const adminGetClub = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const db = await admin();
-    const { data: club, error } = await db.from("clubs").select("id, name, logo_url, city, province, country, primary_color, owner_id, created_at").eq("id", data.clubId).maybeSingle();
+    const { data: club, error } = await db.from("clubs").select("id, name, logo_url, city, province, country, primary_color, owner_id, created_at, intelligence_enabled").eq("id", data.clubId).maybeSingle();
     if (error) throw new Error(error.message);
     if (!club) throw new Error("Club no encontrado.");
     const [{ data: teams }, { data: summary }] = await Promise.all([
@@ -58,6 +58,17 @@ export const adminGetClub = createServerFn({ method: "POST" })
       stats: { categories: ids.length, players: Number(s?.players ?? 0), coaches: Number(s?.coaches ?? 0), planilleros: Number(s?.planilleros ?? 0) },
       categories: (teams ?? []).map((t: any) => ({ ...t, players: count(pl, t.id), pending: count(mem, t.id) })),
     };
+  });
+
+export const adminSetClubIntelligence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ clubId: z.string().uuid(), enabled: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const db = await admin();
+    const { error } = await db.from("clubs").update({ intelligence_enabled: data.enabled }).eq("id", data.clubId);
+    if (error) throw new Error(error.message);
+    return { ok: true, enabled: data.enabled };
   });
 
 export const adminListClubUsers = createServerFn({ method: "POST" })
