@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, type StatsMode } from "@/lib/volley-store";
-import { useTeamMutations } from "@/hooks/use-cloud-teams";
+import { useTeamMutations, useCloudTeams } from "@/hooks/use-cloud-teams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,16 +44,29 @@ function LeaguesPage() {
   const updateTeam = useVolley((s) => s.updateTeam);
   const updateLeague = useVolley((s) => s.updateLeague);
 
+  const { data: cloudTeams = [] } = useCloudTeams();
+  // Equipos autorizados del entrenador: propios o asignados (sin expansión por club).
+  const myTeamIds = useMemo(() => {
+    const s = new Set<string>();
+    if (!user) return s;
+    for (const t of cloudTeams) if (t.directlyManaged || t.ownerId === user.id) s.add(t.id);
+    for (const t of teams) if (t.ownerId === user.id) s.add(t.id);
+    return s;
+  }, [cloudTeams, teams, user]);
+  // Ligas donde participa realmente al menos un equipo autorizado.
+  const myLeagueIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const t of cloudTeams) if (myTeamIds.has(t.id) && t.leagueId) s.add(t.leagueId);
+    for (const t of teams) if (myTeamIds.has(t.id) && t.leagueId) s.add(t.leagueId);
+    return s;
+  }, [cloudTeams, teams, myTeamIds]);
+
   const leagues = useMemo(() => {
-    if (isAdmin || !user) return rawLeagues;
-    const myOwnedTeamIds = new Set(teams.filter((t) => t.ownerId === user.id).map(t => t.id));
-    const myOwnedTeamLeagueIds = new Set(
-      teams.filter((t) => myOwnedTeamIds.has(t.id) && t.leagueId).map((t) => t.leagueId)
-    );
-    return rawLeagues.filter((l) => myOwnedTeamLeagueIds.has(l.id));
-  }, [rawLeagues, teams, isAdmin, user]);
+    if (isAdmin) return rawLeagues;
+    if (!user) return [];
+    return rawLeagues.filter((l) => myLeagueIds.has(l.id));
+  }, [rawLeagues, isAdmin, user, myLeagueIds]);
   const mutations = useTeamMutations();
-  const currentUserId = user?.id;
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
@@ -68,22 +81,21 @@ function LeaguesPage() {
     if (selected) localStorage.setItem("vstats:leagues:selected", selected);
   }, [selected]);
 
-  const filteredLeagues = useMemo(() => {
-    if (isAdmin) return leagues;
-    const myTeamLeagueIds = new Set(
-      teams.filter((t) => t.ownerId === currentUserId && t.leagueId).map((t) => t.leagueId)
-    );
-    return leagues.filter((l) => myTeamLeagueIds.has(l.id));
-  }, [leagues, teams, isAdmin, currentUserId]);
+  const filteredLeagues = leagues;
+  const visibleTeams = useMemo(
+    () => (isAdmin ? teams : teams.filter((t) => myTeamIds.has(t.id))),
+    [teams, isAdmin, myTeamIds]
+  );
 
   const active =
-    (selected && filteredLeagues.find((l) => l.id === selected)) || filteredLeagues[0] || (isAdmin ? leagues[0] : null);
+    (selected && filteredLeagues.find((l) => l.id === selected)) || filteredLeagues[0] || null;
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
   const standings = useMemo(
-    () => (active ? computeStandings(teams.filter(t => isAdmin || (user?.id && t.ownerId === user.id)), matches, active.id) : []),
-    [teams, matches, active, isAdmin, user?.id]
+    () => (active ? computeStandings(visibleTeams, matches, active.id) : []),
+    [visibleTeams, matches, active]
   );
-  const teamsInLeague = teams.filter((t) => t.leagueId === active?.id);
+  const teams_ = visibleTeams;
+  const teamsInLeague = teams_.filter((t) => t.leagueId === active?.id);
   const teamsAvailable = teams.filter((t) => {
     if (t.leagueId === active?.id) return false;
     if (t.leagueId) return false;
@@ -106,7 +118,7 @@ function LeaguesPage() {
           <ul className="space-y-1.5 mb-5">
             {filteredLeagues.map((l) => {
               const isActive = active?.id === l.id;
-              const count = teams.filter((t) => t.leagueId === l.id).length;
+              const count = visibleTeams.filter((t) => t.leagueId === l.id).length;
               const genderLabel = l.gender === "F" ? "Femenino" : l.gender === "M" ? "Masculino" : "Mixta";
               return (
                 <li key={l.id}>
@@ -126,7 +138,7 @@ function LeaguesPage() {
               );
             })}
             {filteredLeagues.length === 0 && (
-              <li className="text-sm text-muted-foreground py-6 text-center">Aún no hay ligas.</li>
+              <li className="text-sm text-muted-foreground py-6 text-center">{isAdmin ? "Aún no hay ligas." : "Todavía no tenés ligas disponibles: ninguno de tus equipos participa en una liga."}</li>
             )}
           </ul>
           {isAdmin && (
