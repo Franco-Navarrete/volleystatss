@@ -111,6 +111,14 @@ async function saveToCloud(userId: string) {
     }
     return out;
   };
+  {
+    const st = useVolley.getState();
+    const fixed = stickyFinished(st.matches, cloud?.matches);
+    if (fixed.some((m, i) => m !== st.matches[i])) {
+      suppressNextChange = true;
+      useVolley.setState({ matches: fixed });
+    }
+  }
   const data = {
     teams,
     matches: stickyFinished(mergeById(s.matches, cloud?.matches), cloud?.matches).filter((m) => !deletedIds.has(m.id)),
