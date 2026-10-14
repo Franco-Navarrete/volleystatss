@@ -483,7 +483,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="sm:max-w-2xl p-0 flex flex-col h-full border-l border-border/60">
+      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col h-full border-l border-border/60 [&>button:last-child]:hidden">
         {/* Header con Stepper */}
         <div className="p-6 border-b border-border/40 bg-muted/20">
           <div className="flex items-center gap-3 mb-6">
@@ -977,21 +977,21 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-border/40 bg-background flex items-center justify-between">
+        <div className="p-4 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40 bg-background flex flex-wrap items-center justify-between gap-2">
           {currentStep > 0 ? (
-            <Button variant="ghost" onClick={handleBack} className="font-bold">
-              <ChevronLeft className="size-4 mr-2" /> Anterior
+            <Button variant="ghost" onClick={handleBack} className="font-bold px-2 sm:px-4">
+              <ChevronLeft className="size-4 mr-1 sm:mr-2" /> Anterior
             </Button>
           ) : (
-            <div className="w-[100px]" />
+            <div className="hidden sm:block w-[100px]" />
           )}
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3 ml-auto">
             <Button variant="outline" onClick={onClose} className="font-bold">
               Cancelar
             </Button>
             <Button 
               onClick={handleNext} 
-              className={`font-bold px-8 ${currentStep === totalSteps - 1 ? "bg-green-600 hover:bg-green-700 text-white" : "shadow-glow"}`}
+              className={`font-bold px-5 sm:px-8 ${currentStep === totalSteps - 1 ? "bg-green-600 hover:bg-green-700 text-white" : "shadow-glow"}`}
               disabled={isNextDisabled() || isSubmitting} // Solo permitir finalizar si está implementado
             >
               {isSubmitting ? "Procesando..." : (currentStep === totalSteps - 1 ? "Finalizar" : "Siguiente")}

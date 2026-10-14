@@ -41,6 +41,8 @@ export const getMyClub = createServerFn({ method: "GET" })
       .from("clubs")
       .select("*")
       .eq("owner_id", context.userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     if (error) throw error;
     return data ? rowToDTO(data as Record<string, unknown>) : null;
