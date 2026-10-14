@@ -129,6 +129,7 @@ export const listTeams = createServerFn({ method: "GET" })
         clubLogoUrl: clubInfo?.logoUrl ?? undefined,
         ownerId: (raw.owner_id as string | null) ?? undefined,
         canManage: isAdmin || raw.owner_id === userId || assignedTeamIds.includes(t.id),
+        managesDirectly: raw.owner_id === userId || assignedTeamIds.includes(t.id),
         logoUrl: t.logo_url ?? undefined,
         gender,
         category,

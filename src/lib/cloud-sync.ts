@@ -49,6 +49,13 @@ function mergeById<T extends { id: string }>(local: T[], remote: T[] | undefined
   return [...local, ...extras];
 }
 
+/** "finished" es terminal: si la nube lo tiene finalizado (p. ej. por un admin), no se revierte a "live". */
+function stickyFinished<T extends { id: string; status?: string }>(merged: T[], remote: T[] | undefined): T[] {
+  const fin = new Set((remote ?? []).filter((m) => m?.status === "finished").map((m) => m.id));
+  if (fin.size === 0) return merged;
+  return merged.map((m) => (fin.has(m.id) && m.status !== "finished" ? { ...m, status: "finished" } : m));
+}
+
 async function saveToCloud(userId: string) {
   // Partidos eliminados por un admin: se descartan del estado local y nunca
   // se re-suben a la nube (evita que "resuciten" por el merge union).
@@ -106,7 +113,7 @@ async function saveToCloud(userId: string) {
   };
   const data = {
     teams,
-    matches: mergeById(s.matches, cloud?.matches).filter((m) => !deletedIds.has(m.id)),
+    matches: stickyFinished(mergeById(s.matches, cloud?.matches), cloud?.matches).filter((m) => !deletedIds.has(m.id)),
     leagues,
     customReceptionFormations: {
       ...(cloud?.customReceptionFormations ?? {}),

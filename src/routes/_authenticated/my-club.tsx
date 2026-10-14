@@ -32,7 +32,7 @@ const CATS = [["12", "Sub 12"], ["14", "Sub 14"], ["16", "Sub 16"], ["18", "Sub 
 
 function MyClubPage() {
   const teams = useCloudTeams();
-  const mine = (teams.data ?? []).filter((t) => t.canManage);
+  const mine = (teams.data ?? []).filter((t) => t.managesDirectly);
   const clubName = mine.find((t) => t.clubName)?.clubName ?? mine[0]?.club ?? "Mi club";
   const [creating, setCreating] = useState(false);
 

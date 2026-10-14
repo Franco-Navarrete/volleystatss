@@ -66,7 +66,12 @@ function PlayerStaffProfile() {
   });
 
   if (isLoading) return <div className="p-10 flex justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>;
-  if (error || !p) return <div className="p-6 text-sm text-destructive">{(error as Error)?.message ?? "No se pudo cargar la jugadora."}</div>;
+  if (error || !p) return (
+    <div className="p-6 space-y-3 text-sm">
+      <p className="text-destructive">{(error as Error)?.message ?? "No se pudo cargar la jugadora."}</p>
+      <button type="button" onClick={() => window.history.back()} className="underline text-muted-foreground">Volver</button>
+    </div>
+  );
 
   const c = p.career;
   const t = c.totals;

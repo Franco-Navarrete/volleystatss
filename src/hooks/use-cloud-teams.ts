@@ -42,6 +42,8 @@ export type CloudTeam = {
   category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre";
   ownerId?: string;
   canManage?: boolean;
+  /** Dueño o entrenador asignado (excluye el acceso global de admin). */
+  managesDirectly?: boolean;
   players: CloudPlayer[];
 };
 
