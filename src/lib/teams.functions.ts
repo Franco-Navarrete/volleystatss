@@ -67,6 +67,13 @@ export const listTeams = createServerFn({ method: "GET" })
       if (assignmentsError) throw assignmentsError;
       assignedTeamIds = (assignments ?? []).map((row) => row.team_id);
     }
+    let clubIds: string[] = [];
+    if (!isAdmin) {
+      const { data: cids } = await supabase.rpc("user_authorized_club_ids", { _user_id: userId });
+      clubIds = ((cids ?? []) as unknown as (string | { user_authorized_club_ids: string })[])
+        .map((r) => (typeof r === "string" ? r : r.user_authorized_club_ids))
+        .filter(Boolean);
+    }
 
     let teamsQuery = supabase
       .from("teams")
@@ -74,9 +81,10 @@ export const listTeams = createServerFn({ method: "GET" })
 
     // Si no es admin, filtrar por owner_id en la base de datos para mayor seguridad
     if (!isAdmin) {
-      teamsQuery = assignedTeamIds.length
-        ? teamsQuery.or(`owner_id.eq.${userId},id.in.(${assignedTeamIds.join(",")})`)
-        : teamsQuery.eq("owner_id", userId);
+      const ors = [`owner_id.eq.${userId}`];
+      if (assignedTeamIds.length) ors.push(`id.in.(${assignedTeamIds.join(",")})`);
+      if (clubIds.length) ors.push(`club_id.in.(${clubIds.join(",")})`);
+      teamsQuery = teamsQuery.or(ors.join(","));
     }
 
     const [teamsRes, playersRes, clubsRes] = await Promise.all([
@@ -128,8 +136,8 @@ export const listTeams = createServerFn({ method: "GET" })
         clubName: clubInfo?.name ?? undefined,
         clubLogoUrl: clubInfo?.logoUrl ?? undefined,
         ownerId: (raw.owner_id as string | null) ?? undefined,
-        canManage: isAdmin || raw.owner_id === userId || assignedTeamIds.includes(t.id),
-        managesDirectly: raw.owner_id === userId || assignedTeamIds.includes(t.id),
+        canManage: isAdmin || raw.owner_id === userId || assignedTeamIds.includes(t.id) || (!!clubId && clubIds.includes(clubId)),
+        managesDirectly: raw.owner_id === userId || assignedTeamIds.includes(t.id) || (!!clubId && clubIds.includes(clubId)),
         logoUrl: t.logo_url ?? undefined,
         gender,
         category,
@@ -160,9 +168,11 @@ export const createTeam = createServerFn({ method: "POST" })
     gender?: "M" | "F" | "X" | null;
     category?: "12" | "14" | "16" | "18" | "21" | "primera" | "libre" | null;
     club?: string | null;
+    clubId?: string | null;
   }) =>
     z
       .object({
+        clubId: uuidSchema.optional().nullable(),
         leagueId: leagueIdSchema,
         name: nameSchema,
         shortName: shortSchema,
@@ -186,6 +196,22 @@ export const createTeam = createServerFn({ method: "POST" })
       .maybeSingle();
     let clubId = myClub?.id ?? null;
     let clubText = myClub?.name ?? data.club ?? null;
+    if (data.clubId) {
+      // Club elegido explícitamente: debe estar autorizado (admin o club propio/asignado).
+      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+      let ok = !!isAdmin;
+      if (!ok) {
+        const { data: cids } = await context.supabase.rpc("user_authorized_club_ids", { _user_id: context.userId });
+        const ids = ((cids ?? []) as unknown as (string | { user_authorized_club_ids: string })[])
+          .map((r) => (typeof r === "string" ? r : r.user_authorized_club_ids));
+        ok = ids.includes(data.clubId);
+      }
+      if (!ok) throw new Error("No tenés autorización para crear categorías en ese club.");
+      const { data: c } = await context.supabase.from("clubs").select("id, name").eq("id", data.clubId).maybeSingle();
+      if (!c) throw new Error("Club no encontrado.");
+      clubId = c.id;
+      clubText = c.name;
+    }
     if (!clubId) {
       const { data: existing } = await context.supabase
         .from("teams")

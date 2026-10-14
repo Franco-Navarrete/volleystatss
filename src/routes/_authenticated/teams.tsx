@@ -400,7 +400,7 @@ function TeamsPage() {
     const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     
     // Identificar mis equipos y mis ligas si soy entrenador
-    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId) : [];
+    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId || t.managesDirectly) : [];
     const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
     const myLeagueIds = new Set(myOwnedTeams.filter(t => t.leagueId).map(t => t.leagueId));
 
@@ -469,7 +469,7 @@ function TeamsPage() {
   };
   const clubGroups = useMemo<ClubGroup[]>(() => {
     const map = new Map<string, ClubGroup>();
-    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId) : [];
+    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId || t.managesDirectly) : [];
     const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
 
     for (const t of filteredTeams) {
