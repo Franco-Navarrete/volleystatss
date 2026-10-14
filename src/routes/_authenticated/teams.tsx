@@ -1819,8 +1819,9 @@ function TeamsPage() {
                       <Link
                         to="/players/$playerId"
                         params={{ playerId: p.id }}
-                        className="flex-1 min-w-0 text-left hover:underline"
-                        title="Ver perfil"
+                        disabled={!canManageActive}
+                        className={`flex-1 min-w-0 text-left ${canManageActive ? "hover:underline" : "pointer-events-none"}`}
+                        title={canManageActive ? "Ver perfil" : undefined}
                       >
                         <div className="truncate font-medium flex items-center gap-1">
                           {p.name}
