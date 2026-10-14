@@ -14,3 +14,4 @@
 - [x] Fase 4: perfil público /player/<alias>, privacidad, QR y WhatsApp.
 - [ ] Fase 5: clips, mediciones físicas, logros, perfil verificado.
 - [ ] Fase 6: El Ocampense (sin integración existente, esperando definición del usuario), auditoría, revisión general.
+- [ ] Club owner puede crear categorías (Primera, Sub 14…) desde su club
