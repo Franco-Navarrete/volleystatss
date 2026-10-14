@@ -483,7 +483,7 @@ export function DynamicEntityWizard({ isOpen, onClose, entityType, targetEntity 
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col h-full border-l border-border/60 [&>button:last-child]:hidden">
+      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col h-full border-l border-border/60 [&>button:first-child]:hidden">
         {/* Header con Stepper */}
         <div className="p-6 border-b border-border/40 bg-muted/20">
           <div className="flex items-center gap-3 mb-6">
