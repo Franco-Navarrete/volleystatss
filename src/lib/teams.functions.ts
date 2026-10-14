@@ -200,6 +200,26 @@ export const createTeam = createServerFn({ method: "POST" })
         clubText = clubText ?? existing.club ?? null;
       }
     }
+    if (!clubId) {
+      // Entrenador asignado: hereda el club de los equipos que dirige.
+      const { data: coached } = await context.supabase
+        .from("team_coaches")
+        .select("team_id");
+      const coachedIds = (coached ?? []).map((r) => r.team_id as string);
+      if (coachedIds.length) {
+        const { data: cteam } = await context.supabase
+          .from("teams")
+          .select("club_id, club")
+          .in("id", coachedIds)
+          .not("club_id", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (cteam?.club_id) {
+          clubId = cteam.club_id;
+          clubText = clubText ?? cteam.club ?? null;
+        }
+      }
+    }
     const { data: row, error } = await context.supabase
       .from("teams")
       .insert({
