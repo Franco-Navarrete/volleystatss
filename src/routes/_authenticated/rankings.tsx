@@ -17,6 +17,8 @@ import { computeHistoricalStats, RANKING_METRICS, type RankingMetric } from "@/l
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy } from "lucide-react";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+import { useMyClub } from "@/hooks/use-my-club";
+import { useCloudTeams } from "@/hooks/use-cloud-teams";
 
 export const Route = createFileRoute("/_authenticated/rankings")({
   head: () => ({ meta: [{ title: "Rankings · RALLY" }] }),
@@ -31,26 +33,24 @@ function RankingsPage() {
   const { user } = useAuthUser();
   const { isAdmin } = useIsAdmin();
 
-  const allAggregates = useMemo(() => {
-    let filteredMatches = matches;
-    let filteredTeams = teams;
-
-    // Coach restriction: only same league as their club(s) if not admin
-    if (!isAdmin && user) {
-      const myTeams = teams.filter((team) => team.ownerId === user.id);
-      const myLeagueIds = new Set(myTeams.map((team) => team.leagueId).filter(Boolean));
-      if (myLeagueIds.size > 0) {
-        filteredTeams = teams.filter((t) => !t.leagueId || myLeagueIds.has(t.leagueId));
-        filteredMatches = matches.filter((m) => {
-          const leagueA = teams.find(t => t.id === m.teamAId)?.leagueId;
-          const leagueB = teams.find(t => t.id === m.teamBId)?.leagueId;
-          return (leagueA && myLeagueIds.has(leagueA)) || (leagueB && myLeagueIds.has(leagueB));
-        });
-      }
+  const myClub = useMyClub();
+  const cloudTeams = useCloudTeams();
+  const myClubId = myClub.data?.id;
+  const allowedTeamIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of cloudTeams.data ?? []) {
+      if (t.managesDirectly || (myClubId && t.clubId === myClubId)) set.add(t.id);
     }
+    return set;
+  }, [cloudTeams.data, myClubId]);
 
-    return computeHistoricalStats(filteredMatches, filteredTeams);
-  }, [matches, teams, isAdmin, user]);
+  const allAggregates = useMemo(() => {
+    // Rankings limitados a los jugadores del club asignado al usuario.
+    const filteredTeams = teams.filter(
+      (t) => allowedTeamIds.has(t.id) || (!!myClubId && (t as any).clubId === myClubId),
+    );
+    return computeHistoricalStats(matches, filteredTeams);
+  }, [matches, teams, allowedTeamIds, myClubId]);
 
   const { globalGender, setGlobalGender } = useGenderPreference();
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
@@ -82,12 +82,14 @@ function RankingsPage() {
   }, [allAggregates, leagueFilter, teamFilter, genderFilter, categoryFilter, positionFilter]);
 
   const visibleTeams = useMemo(() => {
-    let list = teams;
+    let list = teams.filter(
+      (t) => allowedTeamIds.has(t.id) || (!!myClubId && (t as any).clubId === myClubId),
+    );
     if (leagueFilter !== "all") list = list.filter((t) => t.leagueId === leagueFilter);
     if (genderFilter !== "all") list = list.filter((t) => t.gender === genderFilter);
     if (categoryFilter !== "all") list = list.filter((t) => t.category === categoryFilter);
     return list;
-  }, [teams, leagueFilter, genderFilter, categoryFilter]);
+  }, [teams, allowedTeamIds, myClubId, leagueFilter, genderFilter, categoryFilter]);
 
   const metric = RANKING_METRICS.find((m) => m.key === metricKey) ?? RANKING_METRICS[0];
 
@@ -107,7 +109,7 @@ function RankingsPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black tracking-tight">Rankings históricos</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Rankings históricos se va a formar en base a las estadísticas de los jugadores de la misma liga
+              Rankings históricos se va a formar en base a las estadísticas de los jugadores de tu club
             </p>
           </div>
         </header>
