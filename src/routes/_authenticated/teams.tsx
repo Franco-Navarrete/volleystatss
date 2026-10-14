@@ -174,7 +174,8 @@ function TeamsPage() {
   const { allowed: canCreate } = useCanCreateTeam();
   const myClubQ = useMyClub();
   const myClub = myClubQ.data ?? null;
-  const needsClubFirst = canCreate && !isAdmin && !myClub;
+  const hasManagedTeam = teams.some((t) => t.directlyManaged);
+  const needsClubFirst = canCreate && !isAdmin && !myClub && !hasManagedTeam;
   const [showClubDialog, setShowClubDialog] = useState(false);
   const canManage = (t?: { ownerId?: string } | null) =>
     isAdmin || (!!t && "canManage" in t && t.canManage === true) || (!!t && !!currentUserId && t.ownerId === currentUserId);
