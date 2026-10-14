@@ -15,6 +15,8 @@ import { useIsPlanilleroOnly } from "@/hooks/use-is-planillero";
 import { useAllUsersAppState } from "@/hooks/use-all-app-state";
 import { authorizeAndDeleteMatch, authorizeAndFinishMatch } from "@/lib/match-permissions.functions";
 import { toast } from "sonner";
+import { useCloudTeams } from "@/hooks/use-cloud-teams";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,7 +61,15 @@ function MatchesIndex() {
 
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
-  const matches = useMemo(() => {
+  const cloudTeams = useCloudTeams();
+  const myTeamIds = useMemo(() => {
+    const ids = new Set((cloudTeams.data ?? []).filter((t) => t.directlyManaged).map((t) => t.id));
+    for (const t of localTeams) if (user?.id && t.ownerId === user.id) ids.add(t.id);
+    return ids;
+  }, [cloudTeams.data, localTeams, user?.id]);
+  const [teamFilter, setTeamFilter] = useState<string>("all");
+
+  const allMatches = useMemo(() => {
     // 1. Obtener la base de partidos (Merge de todos los usuarios si es admin)
     let baseMatches = localMatches;
     const isSuperAdmin = user?.email === "franco.e.navarrete@gmail.com";
@@ -78,27 +88,22 @@ function MatchesIndex() {
     // 3. Si es Coach, Planillero u otro rol, filtramos estrictamente por propiedad.
     //    Si es planillero, ve sus partidos (donde m.metadata?.ownerId === user?.id).
     //    Si es coach, ve sus partidos y los de sus equipos.
-    const isPlanillero = isPlanilleroOnly;
-    const myOwnedTeamIds = new Set(localTeams.filter(t => t.ownerId === user?.id).map(t => t.id));
-    const myLeagueIds = new Set(localTeams.filter(t => t.ownerId === user?.id && t.leagueId).map(t => t.leagueId));
-
-    return baseMatches.filter(m => {
-      // 1. Participa un equipo que YO poseo
-      if (myOwnedTeamIds.has(m.teamAId) || myOwnedTeamIds.has(m.teamBId)) return true;
-      
-      // 2. O el partido me pertenece directamente (soy el creador/planillero)
-      if (m.metadata?.ownerId === user?.id) return true;
-
-      // 3. O participa un equipo que está en una liga que YO gestiono/participo
-      const teamA = teamById.get(m.teamAId);
-      const teamB = teamById.get(m.teamBId);
-      if (teamA?.leagueId && myLeagueIds.has(teamA.leagueId)) return true;
-      if (teamB?.leagueId && myLeagueIds.has(teamB.leagueId)) return true;
-      
+    // Entrenador: solo partidos donde juega un equipo propio o asignado
+    // (crearlo no alcanza). Planillero: además los partidos que cargó.
+    const allowed = new Set(myTeamIds);
+    return baseMatches.filter((m) => {
+      if (allowed.has(m.teamAId) || allowed.has(m.teamBId)) return true;
+      if (isPlanilleroOnly && m.metadata?.ownerId === user?.id) return true;
       return false;
     });
-  }, [isAdmin, adminAll.data, localMatches, localTeams, user?.id, user?.email]);
+  }, [isAdmin, adminAll.data, localMatches, myTeamIds, isPlanilleroOnly, user?.id, user?.email]);
 
+  const matches = useMemo(
+    () => (teamFilter === "all" ? allMatches : allMatches.filter((m) => m.teamAId === teamFilter || m.teamBId === teamFilter)),
+    [allMatches, teamFilter],
+  );
+  const restrictedCoach = !isAdmin && user?.email !== "franco.e.navarrete@gmail.com";
+  const myTeamsList = useMemo(() => teams.filter((t) => myTeamIds.has(t.id)), [teams, myTeamIds]);
   const { allowed: canCreate } = useCanCreateMatches();
   const { allowed: canDelete } = useCanDeleteMatches();
   const deleteFn = useServerFn(authorizeAndDeleteMatch);
@@ -186,7 +191,30 @@ function MatchesIndex() {
 
       </div>
 
-      <LiveMatchesFeed />
+      {!restrictedCoach && <LiveMatchesFeed />}
+
+      {restrictedCoach && myTeamsList.length > 1 && (
+        <div className="mb-6">
+          <Select value={teamFilter} onValueChange={setTeamFilter}>
+            <SelectTrigger className="h-9 w-auto min-w-[220px]"><SelectValue placeholder="Equipo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos mis equipos</SelectItem>
+              {myTeamsList.map((t) => (
+                <SelectItem key={t.id} value={t.id}>{t.name}{t.category ? ` · ${t.category === "primera" ? "Primera" : t.category === "libre" ? "Libre" : "Sub " + t.category}` : ""}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {restrictedCoach && allMatches.length === 0 && (
+        <div className="mb-8 rounded-2xl border border-dashed border-border/60 p-8 text-center">
+          <p className="font-semibold">Todavía no hay partidos registrados para tus equipos.</p>
+          {canCreate && (
+            <Button asChild className="mt-4 bg-gradient-primary text-primary-foreground"><Link to="/matches/new"><Plus className="size-4" /> Crear partido</Link></Button>
+          )}
+        </div>
+      )}
 
       <div className="space-y-8">
         {groups.map((g) => (
