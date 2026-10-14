@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { TeamBadge } from "@/components/TeamBadge";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
 import { computeStandings, useVolley, STATS_MODE_LABEL, STATS_MODE_DESCRIPTION, type StatsMode } from "@/lib/volley-store";
-import { useTeamMutations } from "@/hooks/use-cloud-teams";
+import { useTeamMutations, useCloudTeams } from "@/hooks/use-cloud-teams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -118,7 +118,7 @@ function LeaguesPage() {
           <ul className="space-y-1.5 mb-5">
             {filteredLeagues.map((l) => {
               const isActive = active?.id === l.id;
-              const count = teams.filter((t) => t.leagueId === l.id).length;
+              const count = visibleTeams.filter((t) => t.leagueId === l.id).length;
               const genderLabel = l.gender === "F" ? "Femenino" : l.gender === "M" ? "Masculino" : "Mixta";
               return (
                 <li key={l.id}>
@@ -138,7 +138,7 @@ function LeaguesPage() {
               );
             })}
             {filteredLeagues.length === 0 && (
-              <li className="text-sm text-muted-foreground py-6 text-center">Aún no hay ligas.</li>
+              <li className="text-sm text-muted-foreground py-6 text-center">{isAdmin ? "Aún no hay ligas." : "Todavía no tenés ligas disponibles: ninguno de tus equipos participa en una liga."}</li>
             )}
           </ul>
           {isAdmin && (
