@@ -109,7 +109,7 @@ function RankingsPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black tracking-tight">Rankings históricos</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Rankings históricos se va a formar en base a las estadísticas de los jugadores de la misma liga
+              Rankings históricos se va a formar en base a las estadísticas de los jugadores de tu club
             </p>
           </div>
         </header>
