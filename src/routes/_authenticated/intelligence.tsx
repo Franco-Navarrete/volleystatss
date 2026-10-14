@@ -11,6 +11,7 @@ import type { IntelligenceReport } from "@/lib/intelligence/reports.functions";
 import {
   deleteIntelligenceReport,
   generateIntelligenceReport,
+  getIntelligenceAccess,
   listIntelligenceReports,
 } from "@/lib/intelligence/reports.functions";
 import { Brain, Loader2, Sparkles, Trash2, ChevronDown, ChevronRight, ShieldAlert, Lock } from "lucide-react";
@@ -37,14 +38,25 @@ function IntelligencePage() {
   const { user } = useAuthUser();
   const { isAdmin, checking: adminChecking } = useIsAdmin();
 
-  // Equipos propios: los que tienen ownerId === userId. Admin ve todos.
+  // Acceso: admin ve todo; entrenador solo si su club tiene Inteligencia habilitada.
+  const [access, setAccess] = useState<{ enabled: boolean; teamIds: string[] } | null>(null);
+  const accessFn = useServerFn(getIntelligenceAccess);
+  useEffect(() => {
+    let cancel = false;
+    accessFn()
+      .then((a) => { if (!cancel) setAccess(a); })
+      .catch(() => { if (!cancel) setAccess({ enabled: false, teamIds: [] }); });
+    return () => { cancel = true; };
+  }, [accessFn]);
+
   const myTeamIds = useMemo(() => {
     if (!user) return new Set<string>();
-    return new Set(teams.filter((t) => t.ownerId === user.id).map((t) => t.id));
-  }, [teams, user]);
+    if (isAdmin) return new Set(teams.filter((t) => t.ownerId === user.id).map((t) => t.id));
+    return new Set(access?.teamIds ?? []);
+  }, [teams, user, isAdmin, access]);
 
   const restricted = !adminChecking && !isAdmin;
-  const hasNoTeam = restricted && myTeamIds.size === 0;
+  const hasNoTeam = restricted && access !== null && !access.enabled;
 
   const finishedMatches = useMemo(() => {
     const base = matches

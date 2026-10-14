@@ -1,0 +1,1 @@
+alter table public.clubs add column if not exists intelligence_enabled boolean not null default false;

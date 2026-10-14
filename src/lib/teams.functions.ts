@@ -177,15 +177,49 @@ export const createTeam = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     // Regla "1 entrenador = 1 club": si el usuario tiene un club, todos sus
-    // equipos quedan bajo ese club automáticamente. Los admins pueden crear
-    // equipos sin club si aún no crearon uno.
+    // equipos quedan bajo ese club automáticamente. Si no es dueño de un club
+    // pero ya tiene equipos con club asignado, se hereda ese club.
     const { data: myClub } = await context.supabase
       .from("clubs")
       .select("id, name")
       .eq("owner_id", context.userId)
       .maybeSingle();
-    const clubId = myClub?.id ?? null;
-    const clubText = myClub?.name ?? data.club ?? null;
+    let clubId = myClub?.id ?? null;
+    let clubText = myClub?.name ?? data.club ?? null;
+    if (!clubId) {
+      const { data: existing } = await context.supabase
+        .from("teams")
+        .select("club_id, club")
+        .eq("owner_id", context.userId)
+        .not("club_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existing?.club_id) {
+        clubId = existing.club_id;
+        clubText = clubText ?? existing.club ?? null;
+      }
+    }
+    if (!clubId) {
+      // Entrenador asignado: hereda el club de los equipos que dirige.
+      const { data: coached } = await context.supabase
+        .from("team_coaches")
+        .select("team_id");
+      const coachedIds = (coached ?? []).map((r) => r.team_id as string);
+      if (coachedIds.length) {
+        const { data: cteam } = await context.supabase
+          .from("teams")
+          .select("club_id, club")
+          .in("id", coachedIds)
+          .not("club_id", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (cteam?.club_id) {
+          clubId = cteam.club_id;
+          clubText = clubText ?? cteam.club ?? null;
+        }
+      }
+    }
     const { data: row, error } = await context.supabase
       .from("teams")
       .insert({
