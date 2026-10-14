@@ -250,6 +250,18 @@ export const createTeam = createServerFn({ method: "POST" })
         }
       }
     }
+    // Evitar duplicados: mismo club + categoría + rama ya existente.
+    if (clubId && data.category) {
+      const { data: dup } = await context.supabase
+        .from("teams")
+        .select("id, name")
+        .eq("club_id", clubId)
+        .eq("category", data.category)
+        .eq("gender", data.gender ?? "")
+        .limit(1)
+        .maybeSingle();
+      if (dup) throw new Error(`Ya existe la categoría "${dup.name}" en este club.`);
+    }
     const { data: row, error } = await context.supabase
       .from("teams")
       .insert({
