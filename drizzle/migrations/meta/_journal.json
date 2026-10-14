@@ -99,6 +99,13 @@
       "when": 1790532673664,
       "tag": "0013_player_linked_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791945552742,
+      "tag": "0014_clubs_owner_unique_except_admins",
+      "breakpoints": true
     }
   ]
 }
