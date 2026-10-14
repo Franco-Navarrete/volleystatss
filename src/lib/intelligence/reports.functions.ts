@@ -32,27 +32,66 @@ const GenerateInput = z.object({
   teamId: z.string().uuid().optional(),
 });
 
+async function isAdminUser(supabase: import("@supabase/supabase-js").SupabaseClient, userId: string) {
+  const { data: isAdmin } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "admin",
+  });
+  return !!isAdmin;
+}
+
+/**
+ * Equipos del usuario cuyo club tiene Inteligencia habilitada.
+ * Incluye equipos propios (owner_id) y asignados (team_coaches).
+ */
+async function enabledTeamIds(
+  supabase: import("@supabase/supabase-js").SupabaseClient,
+  userId: string,
+): Promise<string[]> {
+  const [{ data: owned }, { data: coached }] = await Promise.all([
+    supabase.from("teams").select("id, club_id").eq("owner_id", userId),
+    supabase.from("team_coaches").select("team_id"),
+  ]);
+  const coachedIds = (coached ?? []).map((r) => r.team_id as string);
+  let coachedTeams: Array<{ id: string; club_id: string | null }> = [];
+  if (coachedIds.length) {
+    const { data } = await supabase.from("teams").select("id, club_id").in("id", coachedIds);
+    coachedTeams = (data ?? []) as Array<{ id: string; club_id: string | null }>;
+  }
+  const all = [...((owned ?? []) as Array<{ id: string; club_id: string | null }>), ...coachedTeams];
+  const clubIds = [...new Set(all.map((t) => t.club_id).filter((c): c is string => !!c))];
+  if (!clubIds.length) return [];
+  const { data: clubs } = await supabase
+    .from("clubs")
+    .select("id")
+    .in("id", clubIds)
+    .eq("intelligence_enabled", true);
+  const ok = new Set((clubs ?? []).map((c) => c.id as string));
+  return all.filter((t) => t.club_id && ok.has(t.club_id)).map((t) => t.id);
+}
+
 async function assertCanAnalyzeTeam(
   supabase: import("@supabase/supabase-js").SupabaseClient,
   userId: string,
   teamId: string | undefined,
 ) {
   if (!teamId) return; // scope=team libre por ahora; scope=match debería pasarlo.
-  const { data: isAdmin } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (isAdmin) return;
-  const { data: team, error } = await supabase
-    .from("teams")
-    .select("id, owner_id")
-    .eq("id", teamId)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!team || team.owner_id !== userId) {
-    throw new Error("Permisos insuficientes: no podés analizar este equipo.");
+  if (await isAdminUser(supabase, userId)) return;
+  const allowed = await enabledTeamIds(supabase, userId);
+  if (!allowed.includes(teamId)) {
+    throw new Error("Permisos insuficientes: Inteligencia no está habilitada para tu club o no es tu equipo.");
   }
 }
+
+export const getIntelligenceAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (await isAdminUser(context.supabase, context.userId)) {
+      return { enabled: true, teamIds: [] as string[] };
+    }
+    const teamIds = await enabledTeamIds(context.supabase, context.userId);
+    return { enabled: teamIds.length > 0, teamIds };
+  });
 
 
 const MODEL = "google/gemini-3.5-flash";
