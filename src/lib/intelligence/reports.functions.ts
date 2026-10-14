@@ -56,10 +56,11 @@ async function enabledTeamIds(
   let coachedTeams: Array<{ id: string; club_id: string | null }> = [];
   if (coachedIds.length) {
     const { data } = await supabase.from("teams").select("id, club_id").in("id", coachedIds);
-    coachedTeams = (data ?? []) as Array<{ id: string; club_id:   // Rally Intelligence se habilita para todo equipo propio o asignado al entrenador.
+    coachedTeams = (data ?? []) as Array<{ id: string; club_id: string | null }>;
+  }
+  // Rally Intelligence se habilita para todo equipo propio o asignado al entrenador.
   const all = [...((owned ?? []) as Array<{ id: string; club_id: string | null }>), ...coachedTeams];
   return [...new Set(all.map((t) => t.id))];
-d)).map((t) => t.id);
 }
 
 async function assertCanAnalyzeTeam(
