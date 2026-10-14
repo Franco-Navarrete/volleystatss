@@ -194,6 +194,8 @@ export const createTeam = createServerFn({ method: "POST" })
       .from("clubs")
       .select("id, name")
       .eq("owner_id", context.userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     let clubId = myClub?.id ?? null;
     let clubText = myClub?.name ?? data.club ?? null;
@@ -231,7 +233,8 @@ export const createTeam = createServerFn({ method: "POST" })
       // Entrenador asignado: hereda el club de los equipos que dirige.
       const { data: coached } = await context.supabase
         .from("team_coaches")
-        .select("team_id");
+        .select("team_id")
+        .eq("user_id", context.userId);
       const coachedIds = (coached ?? []).map((r) => r.team_id as string);
       if (coachedIds.length) {
         const { data: cteam } = await context.supabase
