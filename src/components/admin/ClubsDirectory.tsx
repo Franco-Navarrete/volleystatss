@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamRegistrationLinkDialog } from "@/components/TeamRegistrationLinkDialog";
 import { CategoryManageDialog } from "@/components/CategoryManageDialog";
-import { adminDeletePlayer, adminDeleteUser, adminGetClub, adminListCategoryPlayers, adminListClubs, adminListClubUsers, adminRemoveFromClub } from "@/lib/admin-clubs.functions";
+import { adminDeletePlayer, adminDeleteUser, adminGetClub, adminListCategoryPlayers, adminListClubs, adminListClubUsers, adminRemoveFromClub, adminSetClubIntelligence } from "@/lib/admin-clubs.functions";
 
 export function useDebounced<T>(value: T, ms = 300) {
   const [v, setV] = useState(value);
@@ -146,12 +146,13 @@ function ClubDetail({ clubId, onBack, onOpenCategory }: { clubId: string; onBack
           <TabsTrigger value="categories">Categorías</TabsTrigger>
           <TabsTrigger value="invites">Invitaciones</TabsTrigger>
         </TabsList>
-        <TabsContent value="info" className="mt-4">
+        <TabsContent value="info" className="mt-4 space-y-4">
           <div className="rounded-xl border border-border bg-card p-5 grid sm:grid-cols-2 gap-4 text-sm">
             {[["Nombre", club.name], ["Ciudad", club.city], ["Provincia", club.province], ["País", club.country], ["Creado", new Date(club.created_at).toLocaleDateString("es-AR")]].map(([k, v]) => (
               <div key={k}><p className="text-xs text-muted-foreground">{k}</p><p className="font-medium">{v || "—"}</p></div>
             ))}
           </div>
+          <IntelligenceToggle clubId={clubId} enabled={!!club.intelligence_enabled} />
         </TabsContent>
         <TabsContent value="users" className="mt-4"><ClubUsers clubId={clubId} /></TabsContent>
         <TabsContent value="categories" className="mt-4">
