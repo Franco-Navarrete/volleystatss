@@ -302,6 +302,7 @@ function TeamsPage() {
   // ============ Club drill-down (view mode: "clubs") ============
   const [openClubKey, setOpenClubKey] = useState<string | null>(null);
   const [openClubCategory, setOpenClubCategory] = useState<string | null>(null);
+  const [catForm, setCatForm] = useState<null | { category: TeamCategory; gender: "" | "M" | "F" | "X"; leagueId: string; name: string }>(null);
   const [quickAddByTeam, setQuickAddByTeam] = useState<
     Record<string, { name: string; num: string; pos: PlayerPosition | "" }>
   >({});
@@ -400,7 +401,7 @@ function TeamsPage() {
     const stat = (id: string) => teamStats.get(id) ?? { count: 0, lastAt: 0, nextAt: null };
     
     // Identificar mis equipos y mis ligas si soy entrenador
-    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId) : [];
+    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId || t.managesDirectly) : [];
     const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
     const myLeagueIds = new Set(myOwnedTeams.filter(t => t.leagueId).map(t => t.leagueId));
 
@@ -469,7 +470,7 @@ function TeamsPage() {
   };
   const clubGroups = useMemo<ClubGroup[]>(() => {
     const map = new Map<string, ClubGroup>();
-    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId) : [];
+    const myOwnedTeams = !isAdmin && currentUserId ? teams.filter(t => t.ownerId === currentUserId || t.managesDirectly) : [];
     const myOwnedTeamIds = new Set(myOwnedTeams.map(t => t.id));
 
     for (const t of filteredTeams) {
@@ -1202,9 +1203,70 @@ function TeamsPage() {
 
           {!openClubCategory ? (
             <div className="space-y-2">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-                Categorías
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                  Categorías
+                </div>
+                {canCreate && openClub && (isAdmin || openClub.teams.some((t) => t.canManage)) && !catForm && (
+                  <Button size="sm" onClick={() => setCatForm({ category: "14", gender: openClub.teams[0]?.gender ?? "", leagueId: openClub.teams[0]?.leagueId ?? "", name: "" })}>
+                    <Plus className="size-4 mr-1" /> Crear categoría
+                  </Button>
+                )}
               </div>
+              {catForm && openClub && (
+                <form
+                  className="rounded-xl border border-primary/40 bg-card/60 p-3 space-y-2"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const label = TEAM_CATEGORY_LABEL[catForm.category];
+                    const clubId = openClub.teams.find((t) => t.clubId)?.clubId ?? null;
+                    try {
+                      await mut.createTeam.mutateAsync({
+                        name: (catForm.name.trim() || `${openClub.name} ${label}`).slice(0, 80),
+                        shortName: label.slice(0, 8),
+                        color: openClub.teams[0]?.color ?? "#3b82f6",
+                        secondaryColor: openClub.teams[0]?.secondaryColor ?? null,
+                        category: catForm.category,
+                        gender: catForm.gender || null,
+                        leagueId: catForm.leagueId || null,
+                        clubId,
+                      });
+                      setCatForm(null);
+                      setOpenClubCategory(catForm.category);
+                    } catch { /* handled globally */ }
+                  }}
+                >
+                  <div className="text-sm font-semibold">Nueva categoría · {openClub.name}</div>
+                  <label className="block text-xs text-muted-foreground">Categoría
+                    <select className="mt-1 w-full h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground" value={catForm.category} onChange={(e) => setCatForm({ ...catForm, category: e.target.value as TeamCategory })}>
+                      {TEAM_CATEGORIES.map((c) => <option key={c} value={c}>{TEAM_CATEGORY_LABEL[c]}</option>)}
+                    </select>
+                  </label>
+                  <label className="block text-xs text-muted-foreground">Rama
+                    <select className="mt-1 w-full h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground" value={catForm.gender} onChange={(e) => setCatForm({ ...catForm, gender: e.target.value as "" | "M" | "F" | "X" })}>
+                      <option value="">Sin especificar</option>
+                      <option value="F">Femenino</option>
+                      <option value="M">Masculino</option>
+                      <option value="X">Mixta</option>
+                    </select>
+                  </label>
+                  <label className="block text-xs text-muted-foreground">División / Liga
+                    <select className="mt-1 w-full h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground" value={catForm.leagueId} onChange={(e) => setCatForm({ ...catForm, leagueId: e.target.value })}>
+                      <option value="">Sin liga</option>
+                      {leagues.map((l) => <option key={l.id} value={l.id}>{l.name}{l.season ? ` · ${l.season}` : ""}</option>)}
+                    </select>
+                  </label>
+                  <label className="block text-xs text-muted-foreground">Nombre (opcional)
+                    <input className="mt-1 w-full h-10 rounded-md border border-input bg-background px-2 text-sm text-foreground" maxLength={80} placeholder={`${openClub.name} ${TEAM_CATEGORY_LABEL[catForm.category]}`} value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} />
+                  </label>
+                  <div className="flex gap-2 justify-end pt-1">
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setCatForm(null)}>Cancelar</Button>
+                    <Button type="submit" size="sm" disabled={mut.createTeam.isPending}>
+                      {mut.createTeam.isPending && <Loader2 className="size-4 animate-spin mr-1" />}Guardar
+                    </Button>
+                  </div>
+                </form>
+              )}
               {openClubCategories.length === 0 ? (
                 <div className="text-sm text-muted-foreground py-4 text-center">
                   Este club no tiene equipos.

@@ -1263,6 +1263,10 @@ export type Database = {
         Args: { _player_id: string }
         Returns: undefined
       }
+      user_authorized_club_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
     }
     Enums: {
       app_role:
