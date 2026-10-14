@@ -122,6 +122,34 @@ function ClubList({ onOpen }: { onOpen: (id: string, name: string) => void }) {
   );
 }
 
+function IntelligenceToggle({ clubId, enabled }: { clubId: string; enabled: boolean }) {
+  const setFn = useServerFn(adminSetClubIntelligence);
+  const qc = useQueryClient();
+  const mut = useMutation({
+    mutationFn: (next: boolean) => setFn({ data: { clubId, enabled: next } }),
+    onSuccess: (r) => { toast.success(r.enabled ? "Inteligencia habilitada para este club." : "Inteligencia deshabilitada."); qc.invalidateQueries({ queryKey: ["admin", "club", clubId] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <p className="font-semibold text-sm">Rally Intelligence</p>
+        <p className="text-xs text-muted-foreground">Si está activo, los entrenadores de este club pueden generar informes de rendimiento con IA.</p>
+      </div>
+      <button
+        role="switch"
+        aria-checked={enabled}
+        aria-label="Habilitar Inteligencia"
+        disabled={mut.isPending}
+        onClick={() => mut.mutate(!enabled)}
+        className={`relative shrink-0 h-7 w-12 rounded-full transition-colors ${enabled ? "bg-primary" : "bg-muted"} ${mut.isPending ? "opacity-50" : ""}`}
+      >
+        <span className={`absolute top-0.5 size-6 rounded-full bg-white shadow transition-all ${enabled ? "left-[22px]" : "left-0.5"}`} />
+      </button>
+    </div>
+  );
+}
+
 function ClubDetail({ clubId, onBack, onOpenCategory }: { clubId: string; onBack: () => void; onOpenCategory: (c: Cat) => void }) {
   const get = useServerFn(adminGetClub);
   const { data, isLoading, error } = useQuery({ queryKey: ["admin", "club", clubId], queryFn: () => get({ data: { clubId } }) });
