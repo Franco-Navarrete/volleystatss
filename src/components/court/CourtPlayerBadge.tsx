@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import serveBallAsset from "@/assets/volleyball-serve.png.asset.json";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Pin } from "lucide-react";
 import {
@@ -459,54 +460,15 @@ export function CourtPlayerBadge({
 
           {isServer && (
             <span
-              className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 grid place-items-center size-4 md:size-[18px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] pointer-events-none"
+              className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
               aria-label="Saque"
             >
-              <svg viewBox="0 0 24 24" className="size-full" role="img">
-                <circle cx="12" cy="12" r="9.5" fill="#ffffff" stroke="#12224B" strokeWidth="1.5" />
-                <path
-                  d="M12 12c-1.2-4.4-.2-7.6 2.4-9.6"
-                  fill="none"
-                  stroke="#F97316"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M12 12c-4.3 1-7.4.3-9.4-2.1"
-                  fill="none"
-                  stroke="#F97316"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M12 12c4.3-1 7.4-.3 9.4 2.1"
-                  fill="none"
-                  stroke="#F97316"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M12 12c1.2 4.4.2 7.6-2.4 9.6"
-                  fill="none"
-                  stroke="#12224B"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M14.4 2.4A9.6 9.6 0 0 1 21.4 11"
-                  fill="none"
-                  stroke="#12224B"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M9.6 21.6A9.6 9.6 0 0 1 2.6 13"
-                  fill="none"
-                  stroke="#12224B"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <img
+                src={serveBallAsset.url}
+                alt=""
+                className="size-[18px] md:size-[21px] object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                draggable={false}
+              />
             </span>
           )}
 
