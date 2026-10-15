@@ -162,43 +162,67 @@ const ATTACK_RESULT_OPTIONS: { key: AttackResult; label: string; hotkey: string 
 
 const ZONE_ORDER: SettingAttackZone[] = ["z4", "z3", "z2", "back5", "pipe", "back1"];
 
-function getZoneForPlayer(onCourt: string[], playerId: string): SettingAttackZone | null {
-  const idx = onCourt.indexOf(playerId);
-  if (idx === -1) return null;
-  // onCourt: [P1, P2, P3, P4, P5, P6]
-  const map: Record<number, SettingAttackZone> = {
-    0: "back1",
-    1: "z2",
-    2: "z3",
-    3: "z4",
-    4: "back5",
-    5: "pipe",
-  };
-  return map[idx] ?? null;
+function getZoneForPlayer(
+  onCourt: string[],
+  players: Player[],
+  playerId: string,
+  setRoles: Record<string, PlayerPosition> = {},
+): SettingAttackZone | null {
+  const assignments = computeZoneAssignments(onCourt, players, setRoles);
+  const hit = ZONE_ORDER.find((z) => assignments[z] === playerId);
+  return hit ?? null;
 }
 
+/**
+ * Zona de ATAQUE según la función de cada jugadora (no según su casillero de
+ * rotación). La rotación sólo define quién es delantera (P2/P3/P4) y quién
+ * zaguera (P1/P5/P6):
+ *   Z4 → punta delantera · Z3 → central delantera · Z2 → opuesta delantera
+ *   (o armadora delantera si no hay opuesta adelante).
+ *   Zagueras: Pipe (Z6) → punta zaguera; Z1 → opuesta zaguera o quien esté en P1;
+ *   Z5 → quien esté en P5. Sin roles cargados se usa la posición de rotación.
+ * Cada jugadora aparece en una sola zona.
+ */
 function computeZoneAssignments(
   onCourt: string[],
   players: Player[],
+  setRoles: Record<string, PlayerPosition> = {},
 ): Record<SettingAttackZone, string | undefined> {
-  const validIds = new Set(players.map((player) => player.id));
-  const seen = new Set<string>();
-  const playerAt = (index: number): string | undefined => {
-    const id = onCourt[index];
-    if (!id || !validIds.has(id) || seen.has(id)) return undefined;
-    seen.add(id);
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const used = new Set<string>();
+  const roleOf = (id: string) => setRoles[id] ?? byId.get(id)?.position;
+  const front = [3, 2, 1].map((i) => onCourt[i]).filter((id): id is string => !!id && byId.has(id)); // P4, P3, P2
+  const back = [4, 5, 0].map((i) => onCourt[i]).filter((id): id is string => !!id && byId.has(id)); // P5, P6, P1
+  const take = (pool: string[], role: PlayerPosition): string | undefined => {
+    const id = pool.find((x) => !used.has(x) && roleOf(x) === role);
+    if (id) used.add(id);
+    return id;
+  };
+  const takeIdx = (idx: number): string | undefined => {
+    const id = onCourt[idx];
+    if (!id || !byId.has(id) || used.has(id)) return undefined;
+    used.add(id);
     return id;
   };
 
-  // Cada opción representa una posición física única de la rotación actual.
-  // No se reasignan jugadoras por rol porque eso podía mostrar a la misma
-  // atacante simultáneamente, por ejemplo, en Z4 y Z2.
-  const back1 = playerAt(0);
-  const z2 = playerAt(1);
-  const z3 = playerAt(2);
-  const z4 = playerAt(3);
-  const back5 = playerAt(4);
-  const pipe = playerAt(5);
+  // 1) Por función
+  let z4 = take(front, "punta");
+  let z3 = take(front, "central");
+  let z2 = take(front, "opuesto") ?? take(front, "armador");
+  let pipe = take(back, "punta");
+  let back1 = take(back, "opuesto");
+  // 2) Resto por casillero de rotación (equipos sin roles, líbero, etc.)
+  z4 = z4 ?? takeIdx(3);
+  z3 = z3 ?? takeIdx(2);
+  z2 = z2 ?? takeIdx(1);
+  back1 = back1 ?? takeIdx(0);
+  const back5 = takeIdx(4);
+  pipe = pipe ?? takeIdx(5);
+  // 3) Si alguna delantera quedó sin zona (p.ej. 2 puntas adelante), completa huecos
+  const leftoverFront = front.filter((id) => !used.has(id));
+  if (!z4 && leftoverFront.length) { z4 = leftoverFront.shift(); used.add(z4!); }
+  if (!z3 && leftoverFront.length) { z3 = leftoverFront.shift(); used.add(z3!); }
+  if (!z2 && leftoverFront.length) { z2 = leftoverFront.shift(); used.add(z2!); }
   return { back1, z2, z3, z4, back5, pipe, back: back1 };
 }
 
