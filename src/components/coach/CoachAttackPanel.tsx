@@ -1,3 +1,4 @@
+import { computeZoneAssignments } from "@/components/scorer/IntegratedRallyDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import {
@@ -87,9 +88,10 @@ export function CoachAttackPanel({ match, teamA, teamB, attackingSide }: Props) 
 
   const detectPlayer = (side: "A" | "B", zone: AttackZone): string | null => {
     const onCourt = side === "A" ? match.onCourtA : match.onCourtB;
-    const idx = ZONE_TO_INDEX[zone];
-    const pid = onCourt[idx];
-    return pid ?? null;
+    const roles = (match.setPlayerRoles?.[match.currentSet] ?? {}) as Record<string, import("@/lib/volley-store").PlayerPosition>;
+    const a = computeZoneAssignments(onCourt, teams[side].players, roles);
+    const key = ({ 4: "z4", 3: "z3", 2: "z2", 6: "pipe", 1: "back1", 5: "back5" } as const)[zone];
+    return a[key] ?? onCourt[ZONE_TO_INDEX[zone]] ?? null;
   };
 
   const playerLabel = (side: "A" | "B", pid: string | null): string => {

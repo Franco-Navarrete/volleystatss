@@ -184,7 +184,7 @@ function getZoneForPlayer(
  *   Z5 → quien esté en P5. Sin roles cargados se usa la posición de rotación.
  * Cada jugadora aparece en una sola zona.
  */
-function computeZoneAssignments(
+export function computeZoneAssignments(
   onCourt: string[],
   players: Player[],
   setRoles: Record<string, PlayerPosition> = {},
