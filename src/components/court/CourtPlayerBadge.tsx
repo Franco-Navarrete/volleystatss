@@ -460,7 +460,7 @@ export function CourtPlayerBadge({
 
           {isServer && (
             <span
-              className="absolute -top-[max(12px,16%)] left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[max(22px,32%)] h-[max(22px,32%)]"
+              className="absolute -top-[max(6px,16%)] left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[max(11px,32%)] h-[max(11px,32%)]"
               aria-label="Saque"
             >
               <img
