@@ -47,7 +47,7 @@ function LeaguePage() {
     if (teams.length >= 2 && matches.length === 0) seedMatch();
   }, [teams.length, matches.length, seedMatch]);
 
-  const { isAdmin, user } = useIsAdmin();
+  const { isAdmin, user, checking: adminChecking } = useIsAdmin();
   const { hasAccess: isCoach } = useCoachAccess();
 
   const filteredTeams = useMemo(() => {
@@ -71,7 +71,8 @@ function LeaguePage() {
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
 
   const filteredMatches = useMemo(() => {
-    if (isAdmin || !user || !isCoach) return matches;
+    if (isAdmin) return matches;
+    if (!user) return [];
     
     const myOwnedLeagueIds = new Set(
       teams.filter((t) => t.ownerId === user.id && t.leagueId).map((t) => t.leagueId)
@@ -90,7 +91,8 @@ function LeaguePage() {
   }, [matches, teams, isAdmin, isCoach, user, teamById]);
 
   const cloudTeams = useCloudTeams();
-  const showCoachPanel = !isAdmin && isCoach;
+  // Todo usuario no admin ve solo su panel propio: nunca datos globales como alternativa.
+  const showCoachPanel = !isAdmin;
   const coachTeams = useMemo(() => {
     const ids = new Set((cloudTeams.data ?? []).filter((t) => t.directlyManaged).map((t) => t.id));
     return teams.filter((t) => ids.has(t.id) || (!!user?.id && t.ownerId === user.id));
@@ -133,7 +135,16 @@ function LeaguePage() {
         <LiveMatchesFeed />
       </div>
 
-      {showCoachPanel ? (
+      {adminChecking ? (
+        <div className="mt-8 h-40 rounded-2xl bg-card border border-border/60 animate-pulse" />
+      ) : showCoachPanel && coachTeams.length === 0 && !cloudTeams.isLoading ? (
+        <div className="mt-8 rounded-2xl bg-card border border-border/60 p-10 text-center">
+          <h2 className="font-bold text-lg">Todavía no tenés equipos asignados</h2>
+          <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+            Contactá al administrador de tu club para que te asigne una categoría o equipo. Cuando lo haga, vas a ver acá su rendimiento, partidos y estadísticas.
+          </p>
+        </div>
+      ) : showCoachPanel ? (
         <div className="mt-8">
           <CoachPerformancePanel teams={coachTeams} allTeams={teams} matches={matches} canCreate={canCreate} />
         </div>
