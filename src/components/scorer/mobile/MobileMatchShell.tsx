@@ -12,10 +12,9 @@ import {
   AlertTriangle,
   Flag,
   Play,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-} from "@/components/ui/sheet";
 import { RallyProgressBar } from "@/components/scorer/RallyProgressBar";
 import type { Match, Team } from "@/lib/volley-store";
 import type { RallyContext } from "@/lib/rally-phase";
