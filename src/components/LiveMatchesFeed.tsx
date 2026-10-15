@@ -40,23 +40,14 @@ export function LiveMatchesFeed() {
     // Los admins ven todo el feed global
     if (isAdmin) return rawItems;
     
-    // Si es coach, filtramos el feed global para mostrar partidos de las ligas donde tiene equipos
-    if (isCoach && user) {
-      const myOwnedLeagueIds = new Set(myTeams.filter(t => t.ownerId === user.id && t.leagueId).map(t => t.leagueId));
-      
-      return rawItems.filter(m => {
-        // @ts-ignore - leagueId ha sido añadido en listLivePublicMatches
-        const leagueId = m.leagueId;
-        if (leagueId && myOwnedLeagueIds.has(leagueId)) return true;
-        
-        const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
-        const idA = m.teamA?.id;
-        const idB = m.teamB?.id;
-        return (idA && myOwnedTeamIds.has(idA)) || (idB && myOwnedTeamIds.has(idB));
-      });
-    }
-    
-    return rawItems;
+    // No admin: solo partidos donde juega uno de SUS equipos (nunca liga completa ni feed global).
+    if (!user) return [];
+    const myOwnedTeamIds = new Set(myTeams.filter(t => t.ownerId === user.id).map(t => t.id));
+    return rawItems.filter(m => {
+      const idA = m.teamA?.id;
+      const idB = m.teamB?.id;
+      return (!!idA && myOwnedTeamIds.has(idA)) || (!!idB && myOwnedTeamIds.has(idB));
+    });
   }, [data, isAdmin, isAdminChecking, isCoach, isCoachChecking, user, userLoading, myTeams]);
 
   // ELIMINAMOS los returns tempranos condicionales que causan "Rendered fewer hooks than expected"
