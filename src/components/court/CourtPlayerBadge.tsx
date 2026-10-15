@@ -460,13 +460,13 @@ export function CourtPlayerBadge({
 
           {isServer && (
             <span
-              className="absolute -top-5 md:-top-7 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+              className="absolute -top-[max(12px,16%)] left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[max(22px,32%)] h-[max(22px,32%)]"
               aria-label="Saque"
             >
               <img
                 src={serveBallAsset.url}
                 alt=""
-                className="size-[28px] md:size-[36px] object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
+                className="size-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
                 draggable={false}
               />
             </span>
