@@ -12,14 +12,9 @@ import {
   AlertTriangle,
   Flag,
   Play,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { RallyProgressBar } from "@/components/scorer/RallyProgressBar";
 import type { Match, Team } from "@/lib/volley-store";
 import type { RallyContext } from "@/lib/rally-phase";
@@ -401,13 +396,30 @@ export function MobileMatchShell(p: Props) {
 
 
       {/* Sheet inferior con acciones menos frecuentes */}
-      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <SheetHeader>
-            <SheetTitle>Más acciones</SheetTitle>
-          </SheetHeader>
-
-          <div className="mt-3 space-y-4">
+      {moreOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 p-[max(0.5rem,env(safe-area-inset-top))_max(0.5rem,env(safe-area-inset-right))_0_max(0.5rem,env(safe-area-inset-left))]"
+          onClick={() => setMoreOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Más acciones"
+        >
+          <div
+            className="@container flex w-full max-w-3xl max-h-full flex-col rounded-t-2xl border border-border/60 bg-card shadow-elevated"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-center justify-between px-4 pt-3 pb-2">
+              <h2 className="text-base font-bold">Más acciones</h2>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                onClick={() => setMoreOpen(false)}
+                className="grid size-9 place-items-center rounded-md border border-border/60 hover:bg-secondary"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] grid gap-4 @[560px]:grid-cols-2 @[560px]:gap-x-5 @[560px]:gap-y-3">
             <MenuGroup title={`${leftTeam.shortName} (izq.)`}>
               <MenuBtn
                 icon={<ArrowLeftRight className="size-4" />}
@@ -488,7 +500,7 @@ export function MobileMatchShell(p: Props) {
               />
             </MenuGroup>
 
-            <MenuGroup title="Partido">
+            <div className="@[560px]:col-span-2"><MenuGroup title="Partido" wide>
               <MenuBtn
                 icon={<Users className="size-4" />}
                 label="Formación / Rotación"
@@ -544,10 +556,11 @@ export function MobileMatchShell(p: Props) {
                   }
                 }}
               />
-            </MenuGroup>
+            </MenuGroup></div>
           </div>
-        </SheetContent>
-      </Sheet>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -643,13 +656,13 @@ function NavBtn({
   );
 }
 
-function MenuGroup({ title, children }: { title: string; children: ReactNode }) {
+function MenuGroup({ title, children, wide }: { title: string; children: ReactNode; wide?: boolean }) {
   return (
     <div>
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5">
         {title}
       </div>
-      <div className="grid grid-cols-2 gap-2">{children}</div>
+      <div className={`grid grid-cols-2 gap-2 ${wide ? "@[560px]:grid-cols-3" : ""}`}>{children}</div>
     </div>
   );
 }
