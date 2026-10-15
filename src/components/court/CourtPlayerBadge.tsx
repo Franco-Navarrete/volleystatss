@@ -458,9 +458,55 @@ export function CourtPlayerBadge({
           </span>
 
           {isServer && (
-            <span className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 flex h-3 w-3 items-center justify-center">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary/70 animate-ping" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-primary border border-white" />
+            <span
+              className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 grid place-items-center size-4 md:size-[18px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] pointer-events-none"
+              aria-label="Saque"
+            >
+              <svg viewBox="0 0 24 24" className="size-full" role="img">
+                <circle cx="12" cy="12" r="9.5" fill="#ffffff" stroke="#12224B" strokeWidth="1.5" />
+                <path
+                  d="M12 12c-1.2-4.4-.2-7.6 2.4-9.6"
+                  fill="none"
+                  stroke="#F97316"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M12 12c-4.3 1-7.4.3-9.4-2.1"
+                  fill="none"
+                  stroke="#F97316"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M12 12c4.3-1 7.4-.3 9.4 2.1"
+                  fill="none"
+                  stroke="#F97316"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M12 12c1.2 4.4.2 7.6-2.4 9.6"
+                  fill="none"
+                  stroke="#12224B"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M14.4 2.4A9.6 9.6 0 0 1 21.4 11"
+                  fill="none"
+                  stroke="#12224B"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M9.6 21.6A9.6 9.6 0 0 1 2.6 13"
+                  fill="none"
+                  stroke="#12224B"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+              </svg>
             </span>
           )}
 
