@@ -459,7 +459,7 @@ export function CourtPlayerBadge({
 
           {isServer && (
             <span
-              className="absolute -top-2 left-1/2 -translate-x-1/2 z-10 grid place-items-center size-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] pointer-events-none"
+              className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 grid place-items-center size-4 md:size-[18px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] pointer-events-none"
               aria-label="Saque"
             >
               <svg viewBox="0 0 24 24" className="size-full" role="img">
