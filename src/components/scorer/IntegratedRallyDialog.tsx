@@ -11,6 +11,7 @@ import {
   type Team,
   type Match,
   type Player,
+  type PlayerPosition,
   type SettingQuality,
   type SettingAttackZone,
   type AttackDirection,
@@ -296,9 +297,13 @@ export function IntegratedRallyDialog({
     ? "reception"
     : "zone";
   const isCounterFlow = !!defenseStep;
+  const setRoles = useMemo<Record<string, PlayerPosition>>(
+    () => (_match?.setPlayerRoles?.[_match.currentSet] ?? {}) as Record<string, PlayerPosition>,
+    [_match?.setPlayerRoles, _match?.currentSet],
+  );
   const initialZone = useMemo(
-    () => (initialAttackerId ? getZoneForPlayer(onCourt, initialAttackerId) : null),
-    [initialAttackerId, onCourt],
+    () => (initialAttackerId ? getZoneForPlayer(onCourt, team.players, initialAttackerId, setRoles) : null),
+    [initialAttackerId, onCourt, team.players, setRoles],
   );
   const [step, setStep] = useState<Step>(initialStep);
   const [zone, setZone] = useState<SettingAttackZone | null>(initialZone);
@@ -344,8 +349,8 @@ export function IntegratedRallyDialog({
   }, [opponentTeam, opponentOnCourt]);
 
   const zoneAssignments = useMemo(
-    () => computeZoneAssignments(onCourt, team.players),
-    [onCourt, team.players],
+    () => computeZoneAssignments(onCourt, team.players, setRoles),
+    [onCourt, team.players, setRoles],
   );
 
   const pickReception = useCallback((rating: ReceptionRating) => {
