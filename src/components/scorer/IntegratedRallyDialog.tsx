@@ -180,8 +180,8 @@ function getZoneForPlayer(
  * zaguera (P1/P5/P6):
  *   Z4 → punta delantera · Z3 → central delantera · Z2 → opuesta delantera
  *   (o armadora delantera si no hay opuesta adelante).
- *   Zagueras: Pipe (Z6) → punta zaguera; Z1 → opuesta zaguera o quien esté en P1;
- *   Z5 → quien esté en P5. Sin roles cargados se usa la posición de rotación.
+ *   Zagueras: Pipe (Z6) → punta zaguera; Z1 → zaguera derecha (P1);
+ *   Z5 → zaguera izquierda (P5). Sin roles cargados se usa la posición de rotación.
  * Cada jugadora aparece en una sola zona.
  */
 export function computeZoneAssignments(
@@ -211,19 +211,22 @@ export function computeZoneAssignments(
   let z3 = take(front, "central");
   let z2 = take(front, "opuesto") ?? take(front, "armador");
   let pipe = take(back, "punta");
-  let back1 = take(back, "opuesto");
   // 2) Resto por casillero de rotación (equipos sin roles, líbero, etc.)
   z4 = z4 ?? takeIdx(3);
   z3 = z3 ?? takeIdx(2);
   z2 = z2 ?? takeIdx(1);
-  back1 = back1 ?? takeIdx(0);
-  const back5 = takeIdx(4);
+  let back1 = takeIdx(0);
+  let back5 = takeIdx(4);
   pipe = pipe ?? takeIdx(5);
   // 3) Si alguna delantera quedó sin zona (p.ej. 2 puntas adelante), completa huecos
   const leftoverFront = front.filter((id) => !used.has(id));
   if (!z4 && leftoverFront.length) { z4 = leftoverFront.shift(); used.add(z4!); }
   if (!z3 && leftoverFront.length) { z3 = leftoverFront.shift(); used.add(z3!); }
   if (!z2 && leftoverFront.length) { z2 = leftoverFront.shift(); used.add(z2!); }
+  const leftoverBack = back.filter((id) => !used.has(id));
+  if (!pipe && leftoverBack.length) { pipe = leftoverBack.shift(); used.add(pipe!); }
+  if (!back1 && leftoverBack.length) { back1 = leftoverBack.shift(); used.add(back1!); }
+  if (!back5 && leftoverBack.length) { back5 = leftoverBack.shift(); used.add(back5!); }
   return { back1, z2, z3, z4, back5, pipe, back: back1 };
 }
 
