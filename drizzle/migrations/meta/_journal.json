@@ -141,6 +141,13 @@
       "when": 1792370597731,
       "tag": "0019_protect_confirmed_live_state",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792370799773,
+      "tag": "0020_live_match_finish_consistency",
+      "breakpoints": true
     }
   ]
 }

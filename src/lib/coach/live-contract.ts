@@ -5,13 +5,14 @@ const id = z.string().min(1).max(200);
 const side = z.enum(["A", "B"]);
 const base = z.object({ id, setNumber: z.number().int().min(1).max(99), timestamp: z.number().finite().nonnegative() });
 const direction = z.number().int().min(1).max(9).optional();
-const attack = { attackZone: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6)]).optional(), attackDirection: direction, attackSubzone: z.enum(["a", "b", "c", "d"]).optional(), rivalBlockerId: id.optional() };
-const point = base.extend({ scoringSide: side, playerSide: side.nullable(), playerId: id.nullable(), type: z.enum(["attack", "block", "ace", "counter_attack", "rotation_attack", "opponent_error", "opponent_rotation_error", "serve_error", "unforced_error", "rotation_error", "attack_error", "block_error"]), ...attack }).passthrough();
+const tacticalType = z.string().max(80).optional();
+const attack = { attackZone: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6)]).optional(), attackDirection: direction, attackSubzone: z.enum(["a", "b", "c", "d"]).optional(), rivalBlockerId: id.optional(), attackType: tacticalType };
+const point = base.extend({ scoringSide: side, playerSide: side.nullable(), playerId: id.nullable(), type: z.enum(["attack", "block", "ace", "counter_attack", "rotation_attack", "opponent_error", "opponent_rotation_error", "serve_error", "unforced_error", "rotation_error", "attack_error", "block_error"]), ...attack, finishType: z.string().max(80).optional(), blockAssistIds: z.array(id).max(2).optional(), blockKind: z.enum(["solo", "double", "triple"]).optional() });
 const event = z.union([
   point,
   base.extend({ kind: z.literal("reception"), side, playerId: id, rating: z.enum(["double_positive", "positive", "neutral", "negative", "double_negative", "overpass"]) }),
-  base.extend({ kind: z.literal("setting"), side, setterId: id, quality: z.enum(["++", "+", "!", "-", "="]), attackZone: z.enum(["z4", "z3", "z2", "pipe", "back1", "back5", "back"]), attackerId: id.optional(), attackResult: z.enum(["point", "continuity", "error", "blocked"]).optional(), attackDirection: direction }).passthrough(),
-  base.extend({ kind: z.literal("attackAttempt"), side, playerId: id.nullable(), isCounter: z.boolean().optional(), ...attack }).passthrough(),
+  base.extend({ kind: z.literal("setting"), side, setterId: id, quality: z.enum(["++", "+", "!", "-", "="]), attackZone: z.enum(["z4", "z3", "z2", "pipe", "back1", "back5", "back"]), attackerId: id.optional(), attackResult: z.enum(["point", "continuity", "error", "blocked"]).optional(), attackDirection: direction, attackSubzone: attack.attackSubzone, rivalBlockerId: attack.rivalBlockerId, attackType: tacticalType, receptionQuality: z.enum(["++", "+", "!", "-", "="]).optional() }),
+  base.extend({ kind: z.literal("attackAttempt"), side, playerId: id.nullable(), isCounter: z.boolean().optional(), ...attack }),
   base.extend({ kind: z.literal("defense"), side, playerId: id, rating: z.enum(["excellent", "positive", "controlled", "weak", "error", "neutral"]) }),
   base.extend({ kind: z.literal("sub"), side, playerInId: id, playerOutId: id }),
   base.extend({ kind: z.literal("libero"), side, action: z.enum(["in", "out", "auto_out"]), liberoId: id, replacedId: id, source: z.literal("auto").optional() }),
@@ -26,7 +27,14 @@ export const liveMatchSchema = z.object({
   sets: z.array(z.object({ number: z.number().int().min(1), scoreA: z.number().int().nonnegative(), scoreB: z.number().int().nonnegative(), finished: z.boolean() })).max(99),
   events: z.array(event).max(20000), servingSide: side, initialServingSide: side,
   scheduledAt: z.number().finite(), createdAt: z.number().finite(),
-}).passthrough();
+  lineupsBySet: z.record(z.string(), z.object({ A: z.array(id).length(6).optional(), B: z.array(id).length(6).optional() })).optional(),
+  confirmedLineupSets: z.array(z.number().int().positive()).optional(), sidesFlipped: z.boolean().optional(),
+  captainAId: id.nullable().optional(), captainBId: id.nullable().optional(),
+  liberoA1Id: id.nullable().optional(), liberoA2Id: id.nullable().optional(), liberoB1Id: id.nullable().optional(), liberoB2Id: id.nullable().optional(),
+  setStartTimes: z.record(z.string(), z.number().finite()).optional(), category: z.string().max(200).optional(),
+  mainRefereeName: z.string().max(200).optional(), secondRefereeName: z.string().max(200).optional(), scorekeeperName: z.string().max(200).optional(), statsAssistantName: z.string().max(200).optional(), venue: z.string().max(200).optional(),
+  setPlayerRoles: z.record(z.string(), z.record(z.string(), z.enum(["punta", "central", "opuesto", "armador", "libero", "universal"]))).optional(),
+});
 
 export interface LiveSnapshot { match: Match; teamA: Team; teamB: Team }
 export interface LiveSession { match_id: string; scorer_id: string; version: number; updated_at: string; snapshot: LiveSnapshot }
@@ -49,10 +57,17 @@ export function validateLiveMatch(input: unknown, previous: LiveSnapshot): Match
     const evSide = "side" in ev ? ev.side : ev.playerSide;
     const playerIds = "setterId" in ev ? [ev.setterId, ev.attackerId] : "playerInId" in ev ? [ev.playerInId, ev.playerOutId] : "liberoId" in ev ? [ev.liberoId, ev.replacedId] : "lineup" in ev ? ev.lineup : "playerId" in ev ? [ev.playerId] : [];
     if (evSide && playerIds.some((p) => p && !roster[evSide].has(p))) throw new Error("La jugadora no pertenece al equipo del partido.");
+    if (evSide && "blockAssistIds" in ev && ev.blockAssistIds?.some((p) => !roster[evSide].has(p))) throw new Error("Bloqueadora ajena al equipo.");
+    if (evSide && "rivalBlockerId" in ev && ev.rivalBlockerId && !roster[evSide === "A" ? "B" : "A"].has(ev.rivalBlockerId)) throw new Error("Bloqueadora rival ajena al partido.");
   }
   for (const s of ["A", "B"] as const) {
     const lineup = s === "A" ? parsed.startingLineupA : parsed.startingLineupB;
     if (lineup.some((p) => !roster[s].has(p))) throw new Error("Formación ajena al equipo.");
+    if (new Set(lineup).size !== lineup.length) throw new Error("Formación duplicada.");
+    for (const entry of Object.values(parsed.lineupsBySet ?? {})) {
+      const perSet = entry[s];
+      if (perSet && (perSet.some((p) => !roster[s].has(p)) || new Set(perSet).size !== 6)) throw new Error("Formación del set inválida.");
+    }
   }
   const derived = replayMatch(parsed);
   return { ...parsed, ...derived, status: previous.match.status === "finished" || parsed.status === "finished" ? "finished" : derived.status };

@@ -1277,6 +1277,10 @@ export type Database = {
         }
         Returns: Json
       }
+      finish_confirmed_live_match: {
+        Args: { _actor: string; _match: string }
+        Returns: undefined
+      }
       get_invitation_player: {
         Args: { _token: string }
         Returns: {
