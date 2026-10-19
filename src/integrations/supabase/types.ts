@@ -152,6 +152,153 @@ export type Database = {
         }
         Relationships: []
       }
+      live_match_notes: {
+        Row: {
+          author_id: string
+          body: string
+          context: Json
+          created_at: string
+          id: string
+          match_id: string
+          status: string
+          status_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          context?: Json
+          created_at?: string
+          id?: string
+          match_id: string
+          status?: string
+          status_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          context?: Json
+          created_at?: string
+          id?: string
+          match_id?: string
+          status?: string
+          status_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_match_notes_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "live_match_sessions"
+            referencedColumns: ["match_id"]
+          },
+        ]
+      }
+      live_match_operations: {
+        Row: {
+          actor_id: string
+          after_snapshot: Json
+          before_snapshot: Json
+          created_at: string
+          match_id: string
+          operation_id: string
+          version: number
+        }
+        Insert: {
+          actor_id: string
+          after_snapshot: Json
+          before_snapshot: Json
+          created_at?: string
+          match_id: string
+          operation_id: string
+          version: number
+        }
+        Update: {
+          actor_id?: string
+          after_snapshot?: Json
+          before_snapshot?: Json
+          created_at?: string
+          match_id?: string
+          operation_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_match_operations_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "live_match_sessions"
+            referencedColumns: ["match_id"]
+          },
+        ]
+      }
+      live_match_sessions: {
+        Row: {
+          match_id: string
+          scorer_id: string
+          snapshot: Json
+          team_a_id: string
+          team_b_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          match_id: string
+          scorer_id: string
+          snapshot: Json
+          team_a_id: string
+          team_b_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          match_id?: string
+          scorer_id?: string
+          snapshot?: Json
+          team_a_id?: string
+          team_b_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      live_note_status_audit: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          next_status: string
+          note_id: string
+          previous_status: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          next_status: string
+          note_id: string
+          previous_status: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          next_status?: string
+          note_id?: string
+          previous_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_note_status_audit_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "live_match_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_recordings: {
         Row: {
           chunk_count: number
@@ -1116,6 +1263,20 @@ export type Database = {
         Returns: boolean
       }
       can_manage_teams: { Args: { _user_id: string }; Returns: boolean }
+      can_read_live_match: {
+        Args: { _match: string; _user: string }
+        Returns: boolean
+      }
+      commit_live_match: {
+        Args: {
+          _actor: string
+          _expected: number
+          _match: string
+          _operation: string
+          _snapshot: Json
+        }
+        Returns: Json
+      }
       get_invitation_player: {
         Args: { _token: string }
         Returns: {
@@ -1237,6 +1398,10 @@ export type Database = {
       review_team_membership_link: {
         Args: { _member_id: string; _player_id: string }
         Returns: string
+      }
+      set_live_note_status: {
+        Args: { _actor: string; _note: string; _status: string }
+        Returns: undefined
       }
       submit_player_registration:
         | {

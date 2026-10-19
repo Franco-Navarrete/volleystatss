@@ -127,6 +127,13 @@
       "when": 1791951348900,
       "tag": "0017_leagues_select_for_assigned_teams",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792370285676,
+      "tag": "0018_live_coach_match_transport",
+      "breakpoints": true
     }
   ]
 }
