@@ -25,6 +25,7 @@
 - [ ] Validar la consulta con sesiones de dos entrenadores (bloqueado: falta autorización para probar esas cuentas).
 
 ## Modalidades de scouting
+- [x] Corregir y verificar bloqueo de scouting para equipos del club asignado sin cambiar permisos de sesiones compartidas.
 - [x] Vista de entrenador disponible desde scouting autorizado sin activar consulta compartida, con elección de vista sin perder el rally.
 - [x] Modalidad individual/compartido por sesión (scouting_mode) y tabla de participantes con permisos por sesión.
 - [x] RPC live_match_permissions y commit/observaciones gobernados por permisos efectivos.

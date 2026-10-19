@@ -71,6 +71,8 @@ import {
   type LiberoSetConfig,
 } from "@/lib/volley-store";
 import { useAuthUser, useIsAdmin } from "@/hooks/use-auth";
+import { useCloudTeams } from "@/hooks/use-cloud-teams";
+import { hasManagedMatchTeam } from "@/lib/scouting-access";
 import { Lock } from "lucide-react";
 import { RotationStatsPanel } from "@/components/RotationStatsPanel";
 import { AttackZonesPanel } from "@/components/AttackZonesPanel";
@@ -246,6 +248,7 @@ function LiveMatch() {
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
   const { user } = useAuthUser();
+  const { data: authorizedTeams = [] } = useCloudTeams();
   const adminAll = useAllUsersAppState();
   const { isAdmin } = useIsAdmin();
   const { hasAccess: coachAccess, checking: checkingCoach } = useCoachAccess();
@@ -610,8 +613,7 @@ function LiveMatch() {
     if (!user) return false;
     if (user.email === "franco.e.navarrete@gmail.com") return true;
     if (match?.metadata?.ownerId === user.id) return true;
-    const myTeamIds = new Set(useVolley.getState().teams.filter(t => t.ownerId === user.id).map(t => t.id));
-    return match ? (myTeamIds.has(match.teamAId) || myTeamIds.has(match.teamBId)) : false;
+    return hasManagedMatchTeam(user.id, match, teamsBase, authorizedTeams);
   })();
 
   // Variables calculadas para el renderizado final (después de los hooks)
@@ -635,7 +637,7 @@ function LiveMatch() {
   if (!match || !teamA || !teamB) return null;
 
   // We should render the full match UI here, ensuring all hooks were called above.
-  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
+  const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin || hasManagedMatchTeam(user?.id, match, [], authorizedTeams);
   const isPlanillero = isPlanilleroOnly;
   const canScout = liveAccess.data?.session ? liveAccess.data.canWrite : isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com") || isPlanillero;
 
