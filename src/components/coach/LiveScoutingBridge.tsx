@@ -22,6 +22,7 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
   const commit = useServerFn(commitLiveSession); const read = useServerFn(readLiveSession); const activate = useServerFn(activateLiveSession);
   const [status, setStatus] = useState("confirmed"); const [error, setError] = useState(""); const [showNotes, setShowNotes] = useState(false);
   const [source, setSource] = useState(""); const [scorer, setScorer] = useState(""); const [showActivate, setShowActivate] = useState(false);
+  const [recovery, setRecovery] = useState(0);
   const retryRef = useRef<() => void>(() => {});
   const refresh = () => { void client.invalidateQueries({ queryKey: ["live-coach-session", matchId] }); };
   const activation = useMutation({ mutationFn: activate, onSuccess: () => { setShowActivate(false); refresh(); } });
@@ -31,7 +32,7 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
     const key = `rally-live-pending:${user?.id}:${matchId}`;
     localStorage.removeItem(key);
     useVolley.setState((s) => ({ matches: s.matches.map((m) => m.id === matchId ? result.session?.snapshot.match ?? m : m) }));
-    setError(""); setStatus("confirmed"); refresh();
+    setError(""); setStatus("confirmed"); setRecovery((n) => n + 1); refresh();
   } });
 
   useEffect(() => {
@@ -48,10 +49,11 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
     else useVolley.setState((s) => ({ matches: s.matches.map((m) => m.id === matchId ? pending?.match ?? m : m) }));
     const flush = async () => {
       if (stopped || busy || conflict || !desired) return;
-      if (!navigator.onLine) { setStatus("offline"); return; }
       if (!pending && JSON.stringify(desired) === confirmed) return;
       pending ??= { operationId: crypto.randomUUID(), expectedVersion: version, match: desired };
-      localStorage.setItem(key, JSON.stringify(pending)); busy = true; setStatus("pending");
+      localStorage.setItem(key, JSON.stringify(pending));
+      if (!navigator.onLine) { setStatus("offline"); return; }
+      busy = true; setStatus("pending");
       try {
         const result = await commit({ data: { matchId, ...pending } });
         if (stopped) return;
@@ -76,7 +78,7 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
     if (pending) void flush();
     return () => { stopped = true; unsubscribe(); if (timer) clearTimeout(timer); window.removeEventListener("online", online); window.removeEventListener("offline", offline); };
     // Keep the in-flight operation alive across query updates; recovery deliberately remounts the writer below.
-  }, [session?.match_id, remote.data?.canWrite, user?.id, recover.dataUpdatedAt]);
+  }, [session?.match_id, remote.data?.canWrite, user?.id, recovery]);
 
   return <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-3 py-1 text-xs shrink-0">
     <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }}><Eye /> Vista del entrenador</Link></Button>
