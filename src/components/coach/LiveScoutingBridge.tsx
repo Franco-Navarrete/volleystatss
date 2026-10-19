@@ -22,6 +22,7 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
   const commit = useServerFn(commitLiveSession); const read = useServerFn(readLiveSession); const activate = useServerFn(activateLiveSession);
   const [status, setStatus] = useState("confirmed"); const [error, setError] = useState(""); const [showNotes, setShowNotes] = useState(false);
   const [source, setSource] = useState(""); const [scorer, setScorer] = useState(""); const [showActivate, setShowActivate] = useState(false);
+  const [mode, setMode] = useState<"individual" | "shared">("shared");
   const [recovery, setRecovery] = useState(0);
   const retryRef = useRef<() => void>(() => {});
   const refresh = () => { void client.invalidateQueries({ queryKey: ["live-coach-session", matchId] }); };
@@ -81,20 +82,27 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
   }, [session?.match_id, remote.data?.canWrite, user?.id, recovery]);
 
   return <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-3 py-1 text-xs shrink-0">
-    <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }} search={{ set: "all", side: "A", player: "all", skill: "all", rotation: "all", zone: "all", phase: "all", view: "summary" }}><Eye /> Vista del entrenador</Link></Button>
+    <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }} search={{ set: "all", side: "A", player: "all", skill: "all", rotation: "all", zone: "all", phase: "all", view: "summary" }}><Eye /> {session?.scouting_mode === "individual" ? "Análisis en vivo" : "Vista del entrenador"}</Link></Button>
+    {session && <span className="text-muted-foreground">{session.scouting_mode === "individual" ? "Modo individual" : "Modo compartido"}</span>}
     {!session && remote.data?.canActivate && <Button size="sm" variant="outline" onClick={() => setShowActivate(true)}><CloudUpload /> Habilitar consulta en vivo</Button>}
     {session && remote.data?.canWrite && <>
       <span role="status" className={status === "confirmed" ? "text-success" : "text-warning"}>{status === "confirmed" ? <Check className="inline size-3 mr-1" /> : <WifiOff className="inline size-3 mr-1" />}{({ confirmed: "Confirmado", pending: "Guardado pendiente", failed: "Guardado fallido", offline: "Sin conexión · pendiente", conflict: "Conflicto de versiones" } as Record<string, string>)[status]}</span>
       {status === "failed" && <Button size="sm" variant="ghost" onClick={() => retryRef.current()}>Reintentar</Button>}
       {status === "conflict" && <Button size="sm" variant="outline" disabled={recover.isPending} onClick={() => { if (window.confirm("Se recuperará la versión confirmada; los cambios locales pendientes se descartarán. ¿Continuar?")) recover.mutate({ data: { matchId } }); }}><RotateCcw /> Recuperar confirmado</Button>}
-      <Button size="sm" variant="ghost" onClick={() => setShowNotes(true)}><MessageSquare /> Observación</Button>
+      {remote.data?.permissions.can_create_observations && <Button size="sm" variant="ghost" onClick={() => setShowNotes(true)}><MessageSquare /> Observación</Button>}
     </>}
     {error && <span role="alert" className="text-destructive break-words">{error}</span>}
     <Dialog open={showActivate} onOpenChange={setShowActivate}><DialogContent><DialogHeader><DialogTitle>Habilitar consulta compartida</DialogTitle></DialogHeader>
       <p className="text-sm text-muted-foreground">Se usará el partido guardado. La carga queda asignada explícitamente a un estadista; el entrenador consulta sin modificarlo.</p>
+      <div className="space-y-1"><span className="text-sm">Modalidad de scouting</span>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setMode("individual")} className={`rounded-lg border px-3 py-2 text-sm text-left ${mode === "individual" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}><strong className="block">Individual</strong>Una misma persona carga y analiza.</button>
+          <button type="button" onClick={() => setMode("shared")} className={`rounded-lg border px-3 py-2 text-sm text-left ${mode === "shared" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}><strong className="block">Compartido</strong>Estadista carga; entrenadores consultan.</button>
+        </div>
+      </div>
       <label className="text-sm space-y-1">Usuario de la copia guardada (opcional)<Input aria-label="Usuario de origen" value={source} onChange={(e) => setSource(e.target.value)} placeholder="Mi cuenta" /></label>
       <label className="text-sm space-y-1">Usuario del estadista (opcional)<Input aria-label="Usuario del estadista" value={scorer} onChange={(e) => setScorer(e.target.value)} placeholder="Mi cuenta" /></label>
-      <Button disabled={activation.isPending} onClick={() => activation.mutate({ data: { matchId, ...(source.trim() ? { sourceUserId: source.trim() } : {}), ...(scorer.trim() ? { scorerId: scorer.trim() } : {}) } })}>Habilitar</Button>
+      <Button disabled={activation.isPending} onClick={() => activation.mutate({ data: { matchId, mode, ...(source.trim() ? { sourceUserId: source.trim() } : {}), ...(scorer.trim() ? { scorerId: scorer.trim() } : {}) } })}>Habilitar</Button>
       {activation.error && <p role="alert" className="text-destructive text-sm">{activation.error.message}</p>}
     </DialogContent></Dialog>
     {session && <Dialog open={showNotes} onOpenChange={setShowNotes}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Observaciones del partido</DialogTitle></DialogHeader><LiveNotes matchId={matchId} snapshot={session.snapshot} notes={remote.data?.notes ?? []} canWrite={remote.data?.canWrite} /></DialogContent></Dialog>}
