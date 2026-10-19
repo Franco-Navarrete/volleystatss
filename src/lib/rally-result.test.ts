@@ -19,12 +19,14 @@ describe("Finta closes the rally with an attacking point", () => {
       const match = { ...source, status: "live" as const, events: [], currentSet: 1,
         sets: [{ number: 1, scoreA: 0, scoreB: 0, finished: false }] };
       useVolley.setState({ matches: [match] });
-      useVolley.getState().recordPoint(match.id, "A", resolveAction("block", false), match.onCourtA[0]);
+      const action = resolveAction("block", false);
+      if (action !== "rotation_attack") throw new Error("Finta must be a winning attack");
+      useVolley.getState().recordPoint(match.id, "A", action, match.onCourtA[0]);
       const result = useVolley.getState().matches[0];
       expect(result.sets[0].scoreA).toBe(1);
       expect(result.sets[0].scoreB).toBe(0);
-      expect(result.events.filter(event => event.kind === "point")).toHaveLength(1);
-      expect(result.events.filter(event => event.kind === "attackAttempt")).toHaveLength(0);
+      expect(result.events.filter(event => "scoringSide" in event && event.scoringSide === "A")).toHaveLength(1);
+      expect(result.events.filter(event => "kind" in event && event.kind === "attackAttempt")).toHaveLength(0);
     } finally {
       useVolley.setState(previous);
     }
