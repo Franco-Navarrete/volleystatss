@@ -164,6 +164,7 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 function LiveMatchWrapper() {
   const params = Route.useParams();
   const live = useOptionalLiveSession(params.id);
+  const hasLocalMatch = useVolley((s) => s.matches.some((m) => m.id === params.id));
   useEffect(() => {
     const session = live.data?.session;
     if (!session) return;
@@ -172,7 +173,7 @@ function LiveMatchWrapper() {
       matches: s.matches.some((m) => m.id === params.id) ? s.matches : [...s.matches, snapshot.match],
       teams: [snapshot.teamA, snapshot.teamB].reduce((teams, t) => teams.some((existing) => existing.id === t.id) ? teams : [...teams, t], s.teams),
     }));
-  }, [params.id, live.data?.session?.match_id]);
+  }, [params.id, live.data?.session?.match_id, hasLocalMatch]);
   return (
     <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch key={params.id} />
