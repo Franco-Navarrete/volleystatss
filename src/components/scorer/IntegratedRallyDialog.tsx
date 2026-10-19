@@ -73,18 +73,8 @@ interface Props {
   }) => boolean | void;
 }
 
-export type RallyAction =
-  | "serve"
-  | "serve_error"
-  | "rotation_attack"
-  | "attack_neutral"
-  | "counter_attack"
-  | "counter_neutral"
-  | "attack_error"
-  | "block"
-  | "unforced_error";
-
-type AttackResult = "serve" | "serve_error" | "point" | "continue" | "block" | "attack_error" | "unforced" | "blocked_by_rival" | "defended";
+import { resolveAction, type RallyAction, type AttackResult } from "@/lib/rally-result";
+export type { RallyAction } from "@/lib/rally-result";
 type Step = "reception" | "defense" | "zone" | "direction" | "action" | "blocker";
 
 const STEPS: { key: Step; label: string }[] = [
@@ -240,17 +230,6 @@ export function settingZoneToAttackZone(z: SettingAttackZone): AttackZone | unde
     case "pipe": return 6;
     default: return undefined;
   }
-}
-
-function resolveAction(kind: AttackResult, isCounter: boolean): RallyAction {
-  if (kind === "serve") return "serve";
-  if (kind === "serve_error") return "serve_error";
-  if (kind === "block") return "block";
-  if (kind === "unforced") return "unforced_error";
-  if (kind === "attack_error" || kind === "blocked_by_rival") return "attack_error";
-  if (kind === "defended") return isCounter ? "counter_neutral" : "attack_neutral";
-  if (kind === "continue") return isCounter ? "counter_neutral" : "attack_neutral";
-  return isCounter ? "counter_attack" : "rotation_attack";
 }
 
 /**

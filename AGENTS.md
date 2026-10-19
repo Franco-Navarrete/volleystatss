@@ -1,4 +1,5 @@
 # Architecture decisions
+- Integrated scouting resolves UI results through the shared rally-result module before recording; legacy option keys are not sporting event types. Why: all screen variants must agree on point versus continuity without rewriting history.
 
 - Active live-coach matches use versioned `live_match_sessions` with a single explicitly assigned scorer and transactional idempotent audited commits; historical `app_state` copies cannot prove authorship, so activation is administrator-only from a stored source.
 - Coach live reads and note states use match-scoped RLS plus authenticated server functions; never grant a coach access to another user's complete `app_state` or use the coach screen to invoke scorer controls.

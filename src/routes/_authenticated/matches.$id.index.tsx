@@ -4041,6 +4041,21 @@ const IntegratedRallyDialogWrapper = ({
            return false;
         }
         const attackZoneNum = data.attackZone ? settingZoneToAttackZone(data.attackZone) : undefined;
+        if (data.action === "rotation_attack" || data.action === "counter_attack") {
+          useVolley.getState().recordSetting(match.id, integratedRally.side, {
+            setterId: data.setterId,
+            quality: data.setterQuality,
+            attackZone: data.attackZone,
+            attackerId: data.attackerId,
+            attackResult: "point",
+            receptionQuality: data.receptionQuality,
+            attackDirection: data.attackDirection,
+            attackSubzone: data.attackSubzone,
+          });
+          recordPoint(match.id, integratedRally.side, data.action, data.attackerId,
+            attackZoneNum, undefined, data.attackDirection, data.attackSubzone);
+          return false;
+        }
         recordAttackAttempt(match.id, integratedRally.side, data.attackerId, {
           setterId: data.setterId,
           setterQuality: data.setterQuality,
