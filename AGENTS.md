@@ -1,5 +1,9 @@
 # Architecture decisions
 
+- Active live-coach matches use versioned `live_match_sessions` with a single explicitly assigned scorer and transactional idempotent audited commits; historical `app_state` copies cannot prove authorship, so activation is administrator-only from a stored source.
+- Coach live reads and note states use match-scoped RLS plus authenticated server functions; never grant a coach access to another user's complete `app_state` or use the coach screen to invoke scorer controls.
+- Live tactical filters annotate full event context before selection and reuse verified sporting calculations; incomplete setting records and unknown K1/K2 phases are not presented as observed attacks or inferred certainty.
+
 - Coach access is modeled through `team_coaches`; team ownership remains unchanged so one user can coach multiple assigned teams safely.
 - Public player enrollment uses short revocable random codes backed by legacy UUID compatibility and validated database RPCs; public clients never receive team or user identifiers beyond safe team branding.
 - Player birth dates are stored as dates and public registration writes only through the validated security-definer RPC.

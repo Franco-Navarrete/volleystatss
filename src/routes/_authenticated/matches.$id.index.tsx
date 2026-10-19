@@ -103,6 +103,7 @@ import { CoachHelpDialog } from "@/components/coach/CoachHelpDialog";
 import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
 import { CoachHelpBar } from "@/components/coach/CoachHelpBar";
 import { CoachRallyPanel } from "@/components/coach/CoachRallyPanel";
+import { LiveScoutingBridge } from "@/components/coach/LiveScoutingBridge";
 import { useCoachRally } from "@/lib/coach/rally-machine";
 import { toast } from "sonner";
 import type { CoachAction } from "@/lib/coach-mode-store";
@@ -133,7 +134,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/matches/$id/")({
-  head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }] }),
+  head: () => ({ meta: [{ title: "Partido en vivo · RALLY" }, { name: "description", content: "Scouting oficial de vóley, cancha y marcador del partido en vivo." }, { property: "og:title", content: "RALLY · Partido en vivo" }, { property: "og:description", content: "Scouting oficial y marcador del partido autorizado." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   errorComponent: ({ error, reset }) => {
     console.error("Route ErrorBoundary caught error:", error);
     return (
@@ -886,6 +887,7 @@ function LiveMatch() {
 
   return (
     <InternalCompactShell isReadOnly={!canScout}>
+      <LiveScoutingBridge matchId={match.id} />
       <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />

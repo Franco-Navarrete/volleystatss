@@ -46,6 +46,7 @@ import { Route as AuthenticatedSessionNewRouteImport } from './routes/_authentic
 import { Route as AuthenticatedVideoIndexRouteImport } from './routes/_authenticated/video.index'
 import { Route as AuthenticatedVideoMatchIdRouteImport } from './routes/_authenticated/video.$matchId'
 import { Route as AuthenticatedMatchesIdIndexRouteImport } from './routes/_authenticated/matches.$id.index'
+import { Route as AuthenticatedMatchesIdCoachRouteImport } from './routes/_authenticated/matches.$id.coach'
 import { Route as AuthenticatedMatchesIdStatsRouteImport } from './routes/_authenticated/matches.$id.stats'
 import { Route as AuthenticatedVideoMatchIdIndexRouteImport } from './routes/_authenticated/video.$matchId.index'
 import { Route as AuthenticatedVideoMatchIdAnalysisRouteImport } from './routes/_authenticated/video.$matchId.analysis'
@@ -243,6 +244,12 @@ const AuthenticatedMatchesIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMatchesIdRoute,
   } as any)
+const AuthenticatedMatchesIdCoachRoute =
+  AuthenticatedMatchesIdCoachRouteImport.update({
+    id: '/coach',
+    path: '/coach',
+    getParentRoute: () => AuthenticatedMatchesIdRoute,
+  } as any)
 const AuthenticatedMatchesIdStatsRoute =
   AuthenticatedMatchesIdStatsRouteImport.update({
     id: '/stats',
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/video/$matchId': typeof AuthenticatedVideoMatchIdRouteWithChildren
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/video/': typeof AuthenticatedVideoIndexRoute
+  '/matches/$id/coach': typeof AuthenticatedMatchesIdCoachRoute
   '/matches/$id/stats': typeof AuthenticatedMatchesIdStatsRoute
   '/video/$matchId/analysis': typeof AuthenticatedVideoMatchIdAnalysisRoute
   '/video/$matchId/live': typeof AuthenticatedVideoMatchIdLiveRoute
@@ -349,6 +357,7 @@ export interface FileRoutesByTo {
   '/session/new': typeof AuthenticatedSessionNewRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/video': typeof AuthenticatedVideoIndexRoute
+  '/matches/$id/coach': typeof AuthenticatedMatchesIdCoachRoute
   '/matches/$id/stats': typeof AuthenticatedMatchesIdStatsRoute
   '/video/$matchId/analysis': typeof AuthenticatedVideoMatchIdAnalysisRoute
   '/video/$matchId/live': typeof AuthenticatedVideoMatchIdLiveRoute
@@ -394,6 +403,7 @@ export interface FileRoutesById {
   '/_authenticated/video/$matchId': typeof AuthenticatedVideoMatchIdRouteWithChildren
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/video/': typeof AuthenticatedVideoIndexRoute
+  '/_authenticated/matches/$id/coach': typeof AuthenticatedMatchesIdCoachRoute
   '/_authenticated/matches/$id/stats': typeof AuthenticatedMatchesIdStatsRoute
   '/_authenticated/video/$matchId/analysis': typeof AuthenticatedVideoMatchIdAnalysisRoute
   '/_authenticated/video/$matchId/live': typeof AuthenticatedVideoMatchIdLiveRoute
@@ -439,6 +449,7 @@ export interface FileRouteTypes {
     | '/video/$matchId'
     | '/matches/'
     | '/video/'
+    | '/matches/$id/coach'
     | '/matches/$id/stats'
     | '/video/$matchId/analysis'
     | '/video/$matchId/live'
@@ -478,6 +489,7 @@ export interface FileRouteTypes {
     | '/session/new'
     | '/matches'
     | '/video'
+    | '/matches/$id/coach'
     | '/matches/$id/stats'
     | '/video/$matchId/analysis'
     | '/video/$matchId/live'
@@ -522,6 +534,7 @@ export interface FileRouteTypes {
     | '/_authenticated/video/$matchId'
     | '/_authenticated/matches/'
     | '/_authenticated/video/'
+    | '/_authenticated/matches/$id/coach'
     | '/_authenticated/matches/$id/stats'
     | '/_authenticated/video/$matchId/analysis'
     | '/_authenticated/video/$matchId/live'
@@ -806,6 +819,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMatchesIdIndexRouteImport
       parentRoute: typeof AuthenticatedMatchesIdRoute
     }
+    '/_authenticated/matches/$id/coach': {
+      id: '/_authenticated/matches/$id/coach'
+      path: '/coach'
+      fullPath: '/matches/$id/coach'
+      preLoaderRoute: typeof AuthenticatedMatchesIdCoachRouteImport
+      parentRoute: typeof AuthenticatedMatchesIdRoute
+    }
     '/_authenticated/matches/$id/stats': {
       id: '/_authenticated/matches/$id/stats'
       path: '/stats'
@@ -845,12 +865,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedMatchesIdRouteChildren {
+  AuthenticatedMatchesIdCoachRoute: typeof AuthenticatedMatchesIdCoachRoute
   AuthenticatedMatchesIdStatsRoute: typeof AuthenticatedMatchesIdStatsRoute
   AuthenticatedMatchesIdIndexRoute: typeof AuthenticatedMatchesIdIndexRoute
 }
 
 const AuthenticatedMatchesIdRouteChildren: AuthenticatedMatchesIdRouteChildren =
   {
+    AuthenticatedMatchesIdCoachRoute: AuthenticatedMatchesIdCoachRoute,
     AuthenticatedMatchesIdStatsRoute: AuthenticatedMatchesIdStatsRoute,
     AuthenticatedMatchesIdIndexRoute: AuthenticatedMatchesIdIndexRoute,
   }

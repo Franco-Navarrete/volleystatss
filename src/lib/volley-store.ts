@@ -780,7 +780,7 @@ export function sanitizeLineup(lineup: (string | null | undefined)[] | undefined
   return out;
 }
 
-function replayMatch(m: Match): {
+export function replayMatch(m: Match): {
 
   sets: MatchSet[];
   currentSet: number;
