@@ -186,6 +186,8 @@ export const authorizeAndFinishMatch = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Solo filas que contienen el partido (contención jsonb): mucho más rápido.
+    const { error: liveFinishError } = await supabaseAdmin.rpc("finish_confirmed_live_match", { _match: data.matchId, _actor: userId });
+    if (liveFinishError) throw new Error("No se pudo confirmar la finalización compartida.");
     const { data: allStates, error: fetchError } = await supabaseAdmin
       .from("app_state")
       .select("user_id, data")
