@@ -23,3 +23,9 @@
 - [x] Confirmar persistencia, idempotencia, auditoría y recuperación de conexión.
 - [x] Probar dos pantallas, correcciones, reintentos y observaciones auditadas con administrador.
 - [ ] Validar la consulta con sesiones de dos entrenadores (bloqueado: falta autorización para probar esas cuentas).
+
+## Modalidades de scouting
+- [x] Modalidad individual/compartido por sesión (scouting_mode) y tabla de participantes con permisos por sesión.
+- [x] RPC live_match_permissions y commit/observaciones gobernados por permisos efectivos.
+- [x] Selección de modalidad al habilitar, indicador de modalidad y permisos en la vista del entrenador.
+- [x] Probado: permisos por rol (estadista/entrenador/observador), commit permitido solo con permiso de carga, diálogo e indicador en pantalla.
