@@ -37,7 +37,10 @@ export const liveMatchSchema = z.object({
 });
 
 export interface LiveSnapshot { match: Match; teamA: Team; teamB: Team }
-export interface LiveSession { match_id: string; scorer_id: string; version: number; updated_at: string; snapshot: LiveSnapshot }
+export type ScoutingMode = "individual" | "shared";
+export interface LiveSession { match_id: string; scorer_id: string; version: number; updated_at: string; scouting_mode: ScoutingMode; snapshot: LiveSnapshot }
+export interface LivePermissions { can_record_events: boolean; can_edit_events: boolean; can_view_live_stats: boolean; can_create_observations: boolean; can_manage_match: boolean }
+export const NO_LIVE_PERMISSIONS: LivePermissions = { can_record_events: false, can_edit_events: false, can_view_live_stats: false, can_create_observations: false, can_manage_match: false };
 export interface LiveNote { id: string; body: string; context: { set?: number; rotation?: number; playerId?: string; rallyId?: string; videoSec?: number }; status: "new" | "read" | "resolved"; author_id: string; created_at: string }
 
 /** Only sporting identity is shared; never birth dates, measurements or user metadata. */
