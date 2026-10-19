@@ -70,5 +70,5 @@ export function validateLiveMatch(input: unknown, previous: LiveSnapshot): Match
     }
   }
   const derived = replayMatch(parsed);
-  return { ...parsed, ...derived, metadata: previous.match.metadata, status: previous.match.status === "finished" || parsed.status === "finished" ? "finished" : derived.status };
+  return { ...parsed, ...derived, status: previous.match.status === "finished" || parsed.status === "finished" ? "finished" : derived.status };
 }
