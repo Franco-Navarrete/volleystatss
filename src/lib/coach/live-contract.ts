@@ -32,6 +32,7 @@ export const liveMatchSchema = z.object({
   captainAId: id.nullable().optional(), captainBId: id.nullable().optional(),
   liberoA1Id: id.nullable().optional(), liberoA2Id: id.nullable().optional(), liberoB1Id: id.nullable().optional(), liberoB2Id: id.nullable().optional(),
   setStartTimes: z.record(z.string(), z.number().finite()).optional(), category: z.string().max(200).optional(),
+  mainRefereeName: z.string().max(200).optional(), secondRefereeName: z.string().max(200).optional(), scorekeeperName: z.string().max(200).optional(), statsAssistantName: z.string().max(200).optional(), venue: z.string().max(200).optional(),
   setPlayerRoles: z.record(z.string(), z.record(z.string(), z.enum(["punta", "central", "opuesto", "armador", "libero", "universal"]))).optional(),
 });
 
@@ -69,5 +70,5 @@ export function validateLiveMatch(input: unknown, previous: LiveSnapshot): Match
     }
   }
   const derived = replayMatch(parsed);
-  return { ...parsed, ...derived, status: previous.match.status === "finished" || parsed.status === "finished" ? "finished" : derived.status };
+  return { ...parsed, ...derived, metadata: previous.match.metadata, status: previous.match.status === "finished" || parsed.status === "finished" ? "finished" : derived.status };
 }

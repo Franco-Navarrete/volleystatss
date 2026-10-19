@@ -104,6 +104,7 @@ import { CoachModeBadge } from "@/components/coach/CoachModeBadge";
 import { CoachHelpBar } from "@/components/coach/CoachHelpBar";
 import { CoachRallyPanel } from "@/components/coach/CoachRallyPanel";
 import { LiveScoutingBridge } from "@/components/coach/LiveScoutingBridge";
+import { useOptionalLiveSession } from "@/hooks/use-live-coach-session";
 import { useCoachRally } from "@/lib/coach/rally-machine";
 import { toast } from "sonner";
 import type { CoachAction } from "@/lib/coach-mode-store";
@@ -162,6 +163,16 @@ export const Route = createFileRoute("/_authenticated/matches/$id/")({
 
 function LiveMatchWrapper() {
   const params = Route.useParams();
+  const live = useOptionalLiveSession(params.id);
+  useEffect(() => {
+    const session = live.data?.session;
+    if (!session) return;
+    const snapshot = session.snapshot;
+    useVolley.setState((s) => ({
+      matches: s.matches.some((m) => m.id === params.id) ? s.matches : [...s.matches, snapshot.match],
+      teams: [snapshot.teamA, snapshot.teamB].reduce((teams, t) => teams.some((existing) => existing.id === t.id) ? teams : [...teams, t], s.teams),
+    }));
+  }, [params.id, live.data?.session?.match_id]);
   return (
     <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-background"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <LiveMatch key={params.id} />
@@ -229,6 +240,7 @@ function playerIdAtZone(onCourt: string[], zone: 1 | 2 | 3 | 4 | 5 | 6): string 
 
 function LiveMatch() {
   const { id: matchIdParam } = Route.useParams();
+  const liveAccess = useOptionalLiveSession(matchIdParam);
   const volleyMatches = useVolley((s) => s.matches);
   const teamsBase = useVolley((s) => s.teams);
   const leagues = useVolley((s) => s.leagues);
@@ -622,7 +634,7 @@ function LiveMatch() {
   // We should render the full match UI here, ensuring all hooks were called above.
   const isCoach = statsMode === "entrenador" || coachAccess || isSuperAdmin;
   const isPlanillero = isPlanilleroOnly;
-  const canScout = isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com") || isPlanillero;
+  const canScout = liveAccess.data?.session ? liveAccess.data.canWrite : isAdmin || (isCoach && isMyMatch) || (user?.email === "franco.e.navarrete@gmail.com") || isPlanillero;
 
   // Re-verify that no hooks are called after this point in the main component.
 
