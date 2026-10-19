@@ -275,7 +275,7 @@ function LiveMatch() {
   const allTeams = adminAll.data?.teams ?? [];
 
   const match = volleyMatches.find((m) => m.id === matchIdParam) || 
-    (isSuperAdmin ? allMatches.find((m: Match) => m.id === matchIdParam) : undefined);
+    liveAccess.data?.session?.snapshot.match || (isSuperAdmin ? allMatches.find((m: Match) => m.id === matchIdParam) : undefined);
 
 
   const startMatch = useVolley((s) => s.startMatch);
@@ -422,6 +422,7 @@ function LiveMatch() {
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
+    if (liveAccess.data?.session) return liveAccess.data.session.snapshot.teamA;
     if (isSuperAdmin && allTeams.length > 0) {
       return allTeams.find((t: Team) => t.id === targetId);
     }
@@ -433,6 +434,7 @@ function LiveMatch() {
     if (!targetId) return undefined;
     const local = teamsBase.find((t) => t.id === targetId);
     if (local) return local;
+    if (liveAccess.data?.session) return liveAccess.data.session.snapshot.teamB;
     if (isSuperAdmin && allTeams.length > 0) {
       return allTeams.find((t: Team) => t.id === targetId);
     }
@@ -529,8 +531,8 @@ function LiveMatch() {
   const analysisMode = useWorkspaceStore((s) => s.analysisMode);
 
   const isLoadingGlobal = isSuperAdmin && adminAll.isLoading;
-  const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
-  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero;
+  const showSyncing = ((!match || !teamA || !teamB) && (isLoadingGlobal || checkingCoach || checkingPlanillero || liveAccess.isPending)) || (isSuperAdmin && (checkingCoach || checkingPlanillero));
+  const showNotFound = (!match || !teamA || !teamB) && !isLoadingGlobal && !checkingCoach && !checkingPlanillero && !liveAccess.isPending;
 
   useEffect(() => {
     if (match?.status === "finished") return;
