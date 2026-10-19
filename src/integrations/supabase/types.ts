@@ -234,10 +234,55 @@ export type Database = {
           },
         ]
       }
+      live_match_participants: {
+        Row: {
+          assigned_by: string | null
+          can_create_observations: boolean
+          can_edit_events: boolean
+          can_manage_match: boolean
+          can_record_events: boolean
+          can_view_live_stats: boolean
+          created_at: string
+          match_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          can_create_observations?: boolean
+          can_edit_events?: boolean
+          can_manage_match?: boolean
+          can_record_events?: boolean
+          can_view_live_stats?: boolean
+          created_at?: string
+          match_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          can_create_observations?: boolean
+          can_edit_events?: boolean
+          can_manage_match?: boolean
+          can_record_events?: boolean
+          can_view_live_stats?: boolean
+          created_at?: string
+          match_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_match_participants_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "live_match_sessions"
+            referencedColumns: ["match_id"]
+          },
+        ]
+      }
       live_match_sessions: {
         Row: {
           match_id: string
           scorer_id: string
+          scouting_mode: string
           snapshot: Json
           team_a_id: string
           team_b_id: string
@@ -247,6 +292,7 @@ export type Database = {
         Insert: {
           match_id: string
           scorer_id: string
+          scouting_mode?: string
           snapshot: Json
           team_a_id: string
           team_b_id: string
@@ -256,6 +302,7 @@ export type Database = {
         Update: {
           match_id?: string
           scorer_id?: string
+          scouting_mode?: string
           snapshot?: Json
           team_a_id?: string
           team_b_id?: string
@@ -1379,6 +1426,10 @@ export type Database = {
           _token: string
         }
         Returns: string
+      }
+      live_match_permissions: {
+        Args: { _match: string; _user: string }
+        Returns: Json
       }
       remove_team_membership: {
         Args: { _member_id: string }
