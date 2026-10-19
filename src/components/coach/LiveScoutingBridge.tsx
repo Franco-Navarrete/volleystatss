@@ -81,7 +81,7 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
   }, [session?.match_id, remote.data?.canWrite, user?.id, recovery]);
 
   return <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-3 py-1 text-xs shrink-0">
-    <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }}><Eye /> Vista del entrenador</Link></Button>
+    <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }} search={{ set: "all", side: "A", player: "all", skill: "all", rotation: "all", zone: "all", phase: "all", view: "summary" }}><Eye /> Vista del entrenador</Link></Button>
     {!session && remote.data?.canActivate && <Button size="sm" variant="outline" onClick={() => setShowActivate(true)}><CloudUpload /> Habilitar consulta en vivo</Button>}
     {session && remote.data?.canWrite && <>
       <span role="status" className={status === "confirmed" ? "text-success" : "text-warning"}>{status === "confirmed" ? <Check className="inline size-3 mr-1" /> : <WifiOff className="inline size-3 mr-1" />}{({ confirmed: "Confirmado", pending: "Guardado pendiente", failed: "Guardado fallido", offline: "Sin conexión · pendiente", conflict: "Conflicto de versiones" } as Record<string, string>)[status]}</span>

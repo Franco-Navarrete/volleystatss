@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/matches/$id/coach")({
   validateSearch: (s: Record<string, unknown>): CoachFilters => ({ set: typeof s.set === "string" ? s.set : "all", side: s.side === "B" ? "B" : "A", player: typeof s.player === "string" ? s.player : "all", skill: typeof s.skill === "string" ? s.skill : "all", rotation: typeof s.rotation === "string" ? s.rotation : "all", zone: typeof s.zone === "string" ? s.zone : "all", phase: s.phase === "K1" || s.phase === "K2" ? s.phase : "all", view: s.view === "full" ? "full" : "summary" }),
   loader: ({ params, context }) => context.queryClient.ensureQueryData(liveSessionOptions(params.id)),
   head: () => ({ meta: [{ title: "Vista de entrenador en vivo · RALLY" }, { name: "description", content: "Consulta táctica privada del partido autorizado, marcador confirmado y observaciones en vivo." }, { property: "og:title", content: "RALLY · Entrenador en vivo" }, { property: "og:description", content: "Marcador, estadísticas y observaciones del partido autorizado." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
-  errorComponent: ({ error }) => <AppShell><p role="alert">{error.message}</p></AppShell>,
+  errorComponent: ({ error }) => <AppShell><p role="alert">{error instanceof Error ? error.message : "No se pudo consultar el partido."}</p></AppShell>,
   notFoundComponent: () => <AppShell><p>Partido no disponible.</p></AppShell>,
   component: LiveCoachRoute,
 });
