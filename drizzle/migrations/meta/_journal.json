@@ -134,6 +134,13 @@
       "when": 1792370285676,
       "tag": "0018_live_coach_match_transport",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792370597731,
+      "tag": "0019_protect_confirmed_live_state",
+      "breakpoints": true
     }
   ]
 }
