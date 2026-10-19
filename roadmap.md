@@ -18,7 +18,8 @@
 
 ## Vista de entrenador en vivo
 - [x] Revisar scouting, estadísticas, permisos y sincronización existentes.
-- [ ] Acordar implementación segura sin alterar cancha ni registros históricos.
-- [ ] Incorporar consulta independiente, filtros, alertas con evidencia y observaciones.
-- [ ] Confirmar persistencia, idempotencia, auditoría y recuperación de conexión.
-- [ ] Probar dos dispositivos, correcciones, reintentos y permisos.
+- [x] Acordar implementación segura sin alterar cancha ni registros históricos.
+- [x] Incorporar consulta independiente, filtros, alertas con evidencia y observaciones.
+- [x] Confirmar persistencia, idempotencia, auditoría y recuperación de conexión.
+- [x] Probar dos pantallas, correcciones, reintentos y observaciones auditadas con administrador.
+- [ ] Validar la consulta con sesiones de dos entrenadores (bloqueado: falta autorización para probar esas cuentas).
