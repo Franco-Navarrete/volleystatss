@@ -3,6 +3,7 @@
 - Active live-coach matches use versioned `live_match_sessions` with a single explicitly assigned scorer and transactional idempotent audited commits; historical `app_state` copies cannot prove authorship, so activation is administrator-only from a stored source.
 - Coach live reads and note states use match-scoped RLS plus authenticated server functions; never grant a coach access to another user's complete `app_state` or use the coach screen to invoke scorer controls.
 - Live sessions carry a `scouting_mode` (individual/shared) and per-session `live_match_participants` permissions resolved server-side by `live_match_permissions`; writes (commits, notes) must check those effective permissions, never just the scorer id.
+- In-device coach analysis reuses CoachLiveDashboard from the authorized scouting screen without unmounting its controls; independent shared reads remain session-scoped. Why: choosing a view must neither lose an unfinished rally nor grant live-session permissions.
 - Live tactical filters annotate full event context before selection and reuse verified sporting calculations; incomplete setting records and unknown K1/K2 phases are not presented as observed attacks or inferred certainty.
 
 - Coach access is modeled through `team_coaches`; team ownership remains unchanged so one user can coach multiple assigned teams safely.

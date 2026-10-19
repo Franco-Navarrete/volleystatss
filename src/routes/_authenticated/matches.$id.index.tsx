@@ -902,7 +902,7 @@ function LiveMatch() {
 
   return (
     <InternalCompactShell isReadOnly={!canScout}>
-      <LiveScoutingBridge matchId={match.id} />
+      <LiveScoutingBridge matchId={match.id} snapshot={{ match, teamA, teamB }} canViewLocal={isCoach && isMyMatch} />
       <CoachRallyPanel match={match} teamA={teamA} teamB={teamB} />
       <CoachHelpDialog />
       <CoachHelpBar />

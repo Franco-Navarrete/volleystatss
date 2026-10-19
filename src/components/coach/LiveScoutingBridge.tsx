@@ -11,12 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LiveNotes } from "./LiveNotes";
+import { CoachLiveDashboard } from "@/components/live/CoachLiveDashboard";
+import { useCloudTeams } from "@/hooks/use-cloud-teams";
+import { useCoachAccess } from "@/hooks/use-coach-access";
+import type { LiveSnapshot } from "@/lib/coach/live-contract";
 
 type Pending = { operationId: string; expectedVersion: number; match: Match };
 
 /** Opt-in transport. The existing writer remains untouched until an administrator activates the session. */
-export function LiveScoutingBridge({ matchId }: { matchId: string }) {
+export function LiveScoutingBridge({ matchId, snapshot, canViewLocal = false }: { matchId: string; snapshot: LiveSnapshot; canViewLocal?: boolean }) {
   const { user } = useAuthUser();
+  const { hasAccess } = useCoachAccess();
+  const teams = useCloudTeams();
+  const [showCoach, setShowCoach] = useState(false);
+  const assignedTeam = teams.data?.find((t) => t.directlyManaged && (t.id === snapshot.teamA.id || t.id === snapshot.teamB.id));
+  const localAvailable = canViewLocal || (hasAccess && !!assignedTeam);
   const remote = useOptionalLiveSession(matchId);
   const client = useQueryClient();
   const commit = useServerFn(commitLiveSession); const read = useServerFn(readLiveSession); const activate = useServerFn(activateLiveSession);
@@ -82,7 +91,11 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
   }, [session?.match_id, remote.data?.canWrite, user?.id, recovery]);
 
   return <div className="flex flex-wrap items-center gap-2 border-b border-border bg-background px-3 py-1 text-xs shrink-0">
-    <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }} search={{ set: "all", side: "A", player: "all", skill: "all", rotation: "all", zone: "all", phase: "all", view: "summary" }}><Eye /> {session?.scouting_mode === "individual" ? "Análisis en vivo" : "Vista del entrenador"}</Link></Button>
+    {(localAvailable || session) && <div role="group" aria-label="Vista del partido" className="flex flex-wrap items-center gap-1">
+      <Button size="sm" variant={showCoach ? "ghost" : "secondary"} aria-pressed={!showCoach} onClick={() => setShowCoach(false)}>Scouting</Button>
+      {localAvailable ? <Button size="sm" variant={showCoach ? "secondary" : "ghost"} aria-pressed={showCoach} onClick={() => setShowCoach(true)}><Eye /> Vista de entrenador</Button> : <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }} search={{ set: "all", side: "A", player: "all", skill: "all", rotation: "all", zone: "all", phase: "all", view: "summary" }}><Eye /> Vista de entrenador</Link></Button>}
+    </div>}
+    {session && localAvailable && <Button size="sm" variant="ghost" asChild><Link to="/matches/$id/coach" params={{ id: matchId }} search={{ set: "all", side: "A", player: "all", skill: "all", rotation: "all", zone: "all", phase: "all", view: "summary" }}>Abrir vista independiente</Link></Button>}
     {session && <span className="text-muted-foreground">{session.scouting_mode === "individual" ? "Modo individual" : "Modo compartido"}</span>}
     {!session && remote.data?.canActivate && <Button size="sm" variant="outline" onClick={() => setShowActivate(true)}><CloudUpload /> Habilitar consulta en vivo</Button>}
     {session && remote.data?.canWrite && <>
@@ -92,6 +105,7 @@ export function LiveScoutingBridge({ matchId }: { matchId: string }) {
       {remote.data?.permissions.can_create_observations && <Button size="sm" variant="ghost" onClick={() => setShowNotes(true)}><MessageSquare /> Observación</Button>}
     </>}
     {error && <span role="alert" className="text-destructive break-words">{error}</span>}
+    {localAvailable && <Dialog open={showCoach} onOpenChange={setShowCoach}><DialogContent className="max-w-7xl max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Vista de entrenador</DialogTitle></DialogHeader><div><Button size="sm" variant="outline" onClick={() => setShowCoach(false)}><RotateCcw /> Volver al scouting</Button></div><CoachLiveDashboard match={snapshot.match} teamA={snapshot.teamA} teamB={snapshot.teamB} coachSide={assignedTeam?.id === snapshot.teamB.id ? "B" : "A"} /></DialogContent></Dialog>}
     <Dialog open={showActivate} onOpenChange={setShowActivate}><DialogContent><DialogHeader><DialogTitle>Habilitar consulta compartida</DialogTitle></DialogHeader>
       <p className="text-sm text-muted-foreground">Se usará el partido guardado. La carga queda asignada explícitamente a un estadista; el entrenador consulta sin modificarlo.</p>
       <div className="space-y-1"><span className="text-sm">Modalidad de scouting</span>
