@@ -15,3 +15,10 @@
 - [ ] Fase 5: clips, mediciones físicas, logros, perfil verificado.
 - [ ] Fase 6: El Ocampense (sin integración existente, esperando definición del usuario), auditoría, revisión general.
 - [x] Club owner puede crear categorías (hereda club propio o de equipos asignados)
+
+## Vista de entrenador en vivo
+- [ ] Revisar scouting, estadísticas, permisos y sincronización existentes.
+- [ ] Acordar implementación segura sin alterar cancha ni registros históricos.
+- [ ] Incorporar consulta independiente, filtros, alertas con evidencia y observaciones.
+- [ ] Confirmar persistencia, idempotencia, auditoría y recuperación de conexión.
+- [ ] Probar dos dispositivos, correcciones, reintentos y permisos.
