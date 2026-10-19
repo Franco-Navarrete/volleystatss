@@ -148,6 +148,13 @@
       "when": 1792370799773,
       "tag": "0020_live_match_finish_consistency",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792379291734,
+      "tag": "0021_live_scouting_modes_and_participants",
+      "breakpoints": true
     }
   ]
 }
