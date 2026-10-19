@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Corregir Finta para sumar punto al atacante y cerrar la jugada; verificar recepción y contraataque.
 
 - [x] Add secure coach-to-team assignments.
 - [x] Add revocable registration links per team.
