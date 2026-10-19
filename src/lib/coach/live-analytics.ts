@@ -15,7 +15,9 @@ export function eventContexts(match: Match) {
   for (const ev of [...match.events].sort((a, b) => a.timestamp - b.timestamp)) {
     if (set !== ev.setNumber) { set = ev.setNumber; A = 1; B = 1; serving = set % 2 === 1 ? match.initialServingSide : match.initialServingSide === "A" ? "B" : "A"; phaseA = null; phaseB = null; }
     if ("kind" in ev && (ev.kind === "reception" || ev.kind === "defense")) {
+      if (ev.kind === "defense" && ev.rating === "neutral") { contexts.set(ev.id, { A, B, phaseA, phaseB }); continue; }
       const phase = ev.kind === "reception" ? "K1" : "K2";
+      if (ev.kind === "defense") { if (ev.side === "A") phaseB = null; else phaseA = null; }
       if (ev.side === "A") phaseA = phase; else phaseB = phase;
     }
     if ("kind" in ev && ev.kind === "attackAttempt" && ev.isCounter) { if (ev.side === "A") phaseA = "K2"; else phaseB = "K2"; }
@@ -58,8 +60,7 @@ export function filteredAttacks(match: Match, a: Team, b: Team, f: CoachFilters)
   const eligible = { ...match, events: match.events.filter((e) => !("kind" in e && e.kind === "setting" && !e.attackResult)) };
   const contexts = eventContexts(match);
   return buildEnrichedAttacks(eligible, a, b).map((attack) => {
-    const source = match.events.find((e) => e.timestamp === attack.timestamp && ("side" in e ? e.side : e.playerSide) === attack.side);
-    const ctx = source ? contexts.get(source.id) : undefined;
+    const ctx = attack.eventId ? contexts.get(attack.eventId) : undefined;
     return { ...attack, phase: (attack.side === "A" ? ctx?.phaseA : ctx?.phaseB) === "K1" ? "K1" as const : (attack.side === "A" ? ctx?.phaseA : ctx?.phaseB) === "K2" ? "K2" as const : null };
   }).filter((at) => at.side === f.side && (f.set === "all" || at.setNumber === Number(f.set)) &&
     (f.player === "all" || at.playerId === f.player) && (f.rotation === "all" || at.rotation === Number(f.rotation)) &&
@@ -74,6 +75,21 @@ export function receptionSummary(events: MatchEvent[], side: "A" | "B") {
   return { total, positive, positivity: total ? positive / total * 100 : null };
 }
 
+/** Rally balance includes opponents' points, preserving the selected team's rotation. */
+export function rotationEvidence(match: Match, f: CoachFilters) {
+  const contexts = eventContexts(match);
+  const selected = new Set(filteredEvents(match, f).map((e) => e.id));
+  return Array.from({ length: 6 }, (_, i) => {
+    const rotation = i + 1;
+    const points = match.events.filter((e) => "scoringSide" in e && contexts.get(e.id)?.[f.side] === rotation &&
+      (f.set === "all" || e.setNumber === Number(f.set)) && (f.rotation === "all" || rotation === Number(f.rotation)) &&
+      (f.phase === "all" || (f.side === "A" ? contexts.get(e.id)?.phaseA : contexts.get(e.id)?.phaseB) === f.phase) &&
+      ((f.player === "all" && f.skill === "all" && f.zone === "all") || selected.has(e.id)));
+    const pf = points.filter((e) => "scoringSide" in e && e.scoringSide === f.side).length;
+    return { rotation, sample: points.length, pf, pc: points.length - pf };
+  }).filter((r) => f.rotation === "all" || r.rotation === Number(f.rotation));
+}
+
 export function evidenceAlerts(match: Match, events: MatchEvent[], attacks: EnrichedAttack[], f: CoachFilters, rules: AlertRules): EvidenceAlert[] {
   const period = f.set === "all" ? "Todos los sets seleccionados" : `Set ${f.set}`;
   const out: EvidenceAlert[] = [];
@@ -82,12 +98,8 @@ export function evidenceAlerts(match: Match, events: MatchEvent[], attacks: Enri
   const playerCounts = new Map<string, number>();
   for (const at of attacks) if (at.playerId) playerCounts.set(at.playerId, (playerCounts.get(at.playerId) ?? 0) + 1);
   for (const [id, count] of playerCounts) if (attacks.length >= rules.minimum && count / attacks.length * 100 >= rules.concentration) out.push({ id: `player:${id}`, title: "Concentración por atacante", sample: attacks.length, period, evidence: `${count}/${attacks.length} ataques de la misma jugadora`, rule: `≥${rules.concentration}%; mínimo ${rules.minimum} ataques` });
-  const contexts = eventContexts(match);
-  for (let rotation = 1; rotation <= 6; rotation++) {
-    const points = events.filter((e) => "scoringSide" in e && contexts.get(e.id)?.[f.side] === rotation);
-    const pf = points.filter((e) => "scoringSide" in e && e.scoringSide === f.side).length;
-    const pc = points.length - pf;
-    if (points.length >= rules.minimum && pc - pf >= rules.rotationDeficit) out.push({ id: `rotation:${rotation}`, title: `Rotación R${rotation} en desventaja`, sample: points.length, period, evidence: `${pf} puntos a favor / ${pc} en contra`, rule: `Déficit ≥${rules.rotationDeficit}; mínimo ${rules.minimum} rallies` });
+  for (const { rotation, sample, pf, pc } of rotationEvidence(match, f)) {
+    if (sample >= rules.minimum && pc - pf >= rules.rotationDeficit) out.push({ id: `rotation:${rotation}`, title: `Rotación R${rotation} en desventaja`, sample, period, evidence: `${pf} puntos a favor / ${pc} en contra`, rule: `Déficit ≥${rules.rotationDeficit}; mínimo ${rules.minimum} rallies` });
   }
   const receptions = events.filter((e) => "kind" in e && e.kind === "reception").sort((a, b) => a.timestamp - b.timestamp);
   if (receptions.length >= rules.minimum * 2) {

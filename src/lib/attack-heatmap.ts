@@ -53,6 +53,7 @@ export type AttackPhase = "K1" | "K2";
 
 /** Un ataque enriquecido con rotación al momento y metadatos filtrables. */
 export interface EnrichedAttack {
+  eventId?: string;
   side: "A" | "B";
   playerId: string | null;
   origin: OriginZone | null;
@@ -133,6 +134,7 @@ export function buildEnrichedAttacks(
           ? "neutral"
           : "neutral";
       out.push({
+        eventId: se.id,
         side: se.side,
         playerId: se.attackerId ?? null,
         origin,
@@ -150,6 +152,7 @@ export function buildEnrichedAttacks(
       const ae = ev;
       if (ae.attackZone !== undefined) {
         out.push({
+          eventId: ae.id,
           side: ae.side,
           playerId: ae.playerId,
           origin: ae.attackZone as OriginZone,
@@ -176,8 +179,9 @@ export function buildEnrichedAttacks(
           // Evitar duplicados si ya se registró vía setting o attempt
           const alreadyExists = out.some(a => Math.abs(a.timestamp - pe.timestamp) < 500 && a.side === pe.playerSide);
           if (!alreadyExists) {
-            const side = pe.playerSide!;
+            const side = pe.playerSide;
             out.push({
+              eventId: pe.id,
               side,
               playerId: pe.playerId,
               origin,
